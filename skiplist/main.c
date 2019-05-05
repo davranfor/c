@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include "skiplist.h"
 
 char *words[] = {
@@ -74,7 +73,6 @@ int main(void)
     struct data *data;
     struct data temp;
 
-    srand((unsigned)time(NULL));
     list = skiplist_create(comp_key);
     if (list == NULL) {
         perror("skiplist_create");
