@@ -370,19 +370,19 @@ static json *json_parse(json *node, const char *text)
                 break;
             /* Si hemos llegado al final */
             default:
-				if (text != token) {
-                                        /* Puede consistir en un solo elemento, p.ej: "Texto" ó 123 */
-					if (node->type != JSON_EMPTY) {
-						return NULL;
-					}
-			        if (json_set_value(node, text, text + strlen(text) - 1) == NULL) {
-			            return NULL;
-			        }
-				}
-				/* No puede estar vacío */
-				if (node->type == JSON_EMPTY) {
-					return NULL;
-				}
+                if (text != token) {
+                    /* Puede consistir en un solo elemento, p.ej: "Texto" ó 123 */ 
+                    if (node->type != JSON_EMPTY) {
+                        return NULL;
+                    }
+                    if (json_set_value(node, text, text + strlen(text) - 1) == NULL) {
+                    return NULL;
+                    }
+                }
+                /* No puede estar vacío */
+                if (node->type == JSON_EMPTY) {
+                    return NULL;
+                }
                 /* Si no está bien cerrado */
                 if (node->parent != NULL) {
                     return NULL;
@@ -722,4 +722,3 @@ void json_free(json *node)
     }
 }
 */
-
