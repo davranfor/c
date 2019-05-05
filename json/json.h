@@ -1,6 +1,6 @@
 /*!
  *  \brief     JSON parser
- *  \author    David Ranieri (davranfor)
+ *  \author    David Ranieri <davranfor@gmail.com>
  *  \copyright GNU Public License.
  */
 
