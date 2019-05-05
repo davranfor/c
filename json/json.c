@@ -595,7 +595,7 @@ json *json_parent(const json *node)
 /* Localiza un nodo por clave recorriendo los nodos derechos del nodo pasado */
 json *json_node(const json *root, const char *name)
 {
-	json *node;
+    json *node;
 
     if ((root != NULL) && (node = root->left)) {
         while (node != NULL) {
@@ -634,7 +634,7 @@ json *json_next(const json *node)
 /* Localiza un nodo por offset recorriendo los nodos derechos del nodo pasado */
 json *json_item(const json *root, size_t item)
 {
-	json *node;
+    json *node;
     size_t count = 0;
 
     if ((root != NULL) && (node = root->left)) {
@@ -685,7 +685,7 @@ static void print(const json *node, int level)
  */ 
 void json_print(const json *node)
 {
-	print(node, 0);
+    print(node, 0);
 }
 
 /* Libera toda la memoria reservada para el árbol */
