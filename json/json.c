@@ -365,7 +365,7 @@ static json *json_parse(json *node, const char *text)
                     if (text != token) {
                         return NULL;
                     }
-				}
+                }
                 node = node->parent;
                 break;
             /* Si hemos llegado al final */
@@ -376,7 +376,7 @@ static json *json_parse(json *node, const char *text)
                         return NULL;
                     }
                     if (json_set_value(node, text, text + strlen(text) - 1) == NULL) {
-                    return NULL;
+                        return NULL;
                     }
                 }
                 /* No puede estar vacío */
