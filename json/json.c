@@ -285,7 +285,7 @@ static json *json_parse(json *node, const char *text)
             /* Crea un nodo a la izquierda (hijo) */
             case '{':
             case '[':
-				/* No puede haber nada entre los dos puntos (:) o la coma (,) y el token */
+                /* No puede haber nada entre los dos puntos (:) o la coma (,) y el token */
                 if (text != token) {
                     return NULL;
                 }
@@ -371,7 +371,7 @@ static json *json_parse(json *node, const char *text)
             /* Si hemos llegado al final */
             default:
 				if (text != token) {
-			        /* Puede consistir en un solo elemento, p.ej: "Texto" ó 123 */ 
+                                        /* Puede consistir en un solo elemento, p.ej: "Texto" ó 123 */
 					if (node->type != JSON_EMPTY) {
 						return NULL;
 					}
@@ -387,7 +387,7 @@ static json *json_parse(json *node, const char *text)
                 if (node->parent != NULL) {
                     return NULL;
                 }
-				/* El documento es correcto */
+                /* El documento es correcto */
                 return node;
         }
         /* Seguimos avanzando */
