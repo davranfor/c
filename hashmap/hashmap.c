@@ -16,7 +16,7 @@ struct hashmap {
     struct node *list;
     int (*comp)(const void *, const void *);
     size_t (*hash)(const void *);
-    size_t capacity;
+    size_t room;
     size_t size;
 };
 
@@ -53,7 +53,7 @@ hashmap *hashmap_create(
         }
         map->comp = comp;
         map->hash = hash;
-        map->capacity = size;
+        map->room = size;
         map->size = 0;
     }
     return map;
@@ -63,7 +63,7 @@ static void hashmap_move(hashmap *head, hashmap *tail)
 {
     free(head->list);
     head->list = tail->list;
-    head->capacity = tail->capacity;
+    head->room = tail->room;
     head->size = tail->size;
     free(tail);
 }
@@ -94,8 +94,8 @@ void *hashmap_insert(hashmap *map, void *data)
     size_t size = 0;
     size_t hash;
 
-    hash = map->hash(data) % map->capacity;
-    tail = map->list + map->capacity;
+    hash = map->hash(data) % map->room;
+    tail = map->list + map->room;
     node = map->list + hash;
     if (tail->data != NULL) {
         if (node->data != NULL) {
@@ -127,8 +127,8 @@ void *hashmap_insert(hashmap *map, void *data)
     }
     node->data = data;
     map->size++;
-    if (map->size > map->capacity - map->capacity / 4) {
-        tail->data = hashmap_create(map->comp, map->hash, map->capacity);
+    if (map->size > map->room - map->room / 4) {
+        tail->data = hashmap_create(map->comp, map->hash, map->room);
         if (tail->data == NULL) {
             return NULL;
         }
@@ -142,7 +142,7 @@ void *hashmap_delete(hashmap *map, const void *data)
     size_t hash;
     void *res;
     
-    hash = map->hash(data) % map->capacity;
+    hash = map->hash(data) % map->room;
     node = map->list + hash;
     if (node->data != NULL)
     do {
@@ -167,7 +167,7 @@ void *hashmap_delete(hashmap *map, const void *data)
         temp = node;
         node = node->next;
     } while (node != NULL);
-    node = map->list + map->capacity;
+    node = map->list + map->room;
     if (node->data != NULL) {
         return hashmap_delete(node->data, data);
     }
@@ -179,7 +179,7 @@ void *hashmap_search(hashmap *map, const void *data)
     struct node *node;
     size_t hash;
     
-    hash = map->hash(data) % map->capacity;
+    hash = map->hash(data) % map->room;
     node = map->list + hash;
     if (node->data != NULL)
     do {
@@ -188,7 +188,7 @@ void *hashmap_search(hashmap *map, const void *data)
         }
         node = node->next;
     } while (node != NULL);
-    node = map->list + map->capacity;
+    node = map->list + map->room;
     if (node->data != NULL) {
         return hashmap_search(node->data, data);
     }
@@ -201,7 +201,7 @@ void hashmap_destroy(hashmap *map, void (*func)(void *))
     size_t iter;
 
     if (map->size > 0) {
-        for (iter = 0; iter < map->capacity; iter++) {
+        for (iter = 0; iter < map->room; iter++) {
             node = map->list + iter;
             if (node->data != NULL) {
                 if (func != NULL) {
@@ -221,7 +221,7 @@ void hashmap_destroy(hashmap *map, void (*func)(void *))
             }
         }
     }
-    node = map->list + map->capacity;
+    node = map->list + map->room;
     if (node->data != NULL) {
         hashmap_destroy(node->data, func);
     }
@@ -255,4 +255,3 @@ size_t hashmap_hash_ulong(unsigned long int key)
     key = (key ^ (key >> 31));
     return key;
 }
-
