@@ -126,27 +126,27 @@ void *vsearch(const void *key, const void *base, int (*comp)(const void *, const
 
 static char *strdup_vprintf(const char *fmt, va_list args)
 {
-	va_list copy;
-	size_t size;
-	char *data;
+    va_list copy;
+    size_t size;
+    char *data;
 
-	va_copy(copy, args);
-	size = (size_t)vsnprintf(NULL, 0, fmt, args) + 1;
-        data = malloc(size);
-	if (data == NULL) {
-            return NULL;
-	}
-	vsprintf(data, fmt, copy);
-	return data;
+    va_copy(copy, args);
+    size = (size_t)vsnprintf(NULL, 0, fmt, args) + 1;
+    data = malloc(size);
+    if (data == NULL) {
+        return NULL;
+    }
+    vsprintf(data, fmt, copy);
+    return data;
 }
 
 char *strdup_printf(const char *fmt, ...)
 {
-	va_list args;
-	char *data;
+    va_list args;
+    char *data;
 
-	va_start(args, fmt);
-	data = strdup_vprintf(fmt, args);
-	va_end(args);
-	return data;
+    va_start(args, fmt);
+    data = strdup_vprintf(fmt, args);
+    va_end(args);
+    return data;
 }
