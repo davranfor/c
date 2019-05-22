@@ -134,7 +134,7 @@ static char *strdup_vprintf(const char *fmt, va_list args)
 	size = (size_t)vsnprintf(NULL, 0, fmt, args) + 1;
         data = malloc(size);
 	if (data == NULL) {
-		return NULL;
+            return NULL;
 	}
 	vsprintf(data, fmt, copy);
 	return data;
