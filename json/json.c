@@ -149,7 +149,7 @@ static const char *json_scan(const char **text)
     if (quoted != 0) {
         return NULL;
     }
-	/* Si no hay contenido delante del token */
+    /* Si no hay contenido delante del token */
     if (*text == NULL) {
         *text = str;
     }
