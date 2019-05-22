@@ -132,7 +132,7 @@ static char *strdup_vprintf(const char *fmt, va_list args)
 
 	va_copy(copy, args);
 	size = (size_t)vsnprintf(NULL, 0, fmt, args) + 1;
-    data = malloc(size);
+        data = malloc(size);
 	if (data == NULL) {
 		return NULL;
 	}
@@ -150,4 +150,3 @@ char *strdup_printf(const char *fmt, ...)
 	va_end(args);
 	return data;
 }
-
