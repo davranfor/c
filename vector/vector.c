@@ -64,9 +64,9 @@ size_t vsize(const void *data)
     return CONST_VECTOR(data)->size;
 }
 
-static void *grow(void *data)
+void *vadd(void *data)
 {
-    struct vector *vector = VECTOR(data);
+    struct vector *vector = VECTOR(*(void **)data);
 
     if (vector->size >= vector->room) {
         vector = vresize(vector, vector->room * 2);
@@ -74,18 +74,28 @@ static void *grow(void *data)
             return NULL;
         }
     }
-    vector->size++;
-    return vector->data;
+    *(void **)data = vector->data;
+    return VECTOR_ITEM(vector, vector->size++);
 }
 
-void *vgrow(void *data)
+void *vcat(void *data, const void *value)
 {
-    return *(void **)data = grow(*(void **)data);
+    struct vector *vector = VECTOR(*(void **)data);
+
+    if (vector->size >= vector->room) {
+        vector = vresize(vector, vector->room * 2);
+        if (vector == NULL) {
+            return NULL;
+        }
+    }
+    *(void **)data = vector->data;
+    memcpy(VECTOR_ITEM(vector, vector->size), value, vector->szof);
+    return VECTOR_ITEM(vector, vector->size++);
 }
 
-static void *add(void *data, size_t size)
+void *vnew(void *data, size_t size)
 {
-    struct vector *vector = VECTOR(data);
+    struct vector *vector = VECTOR(*(void **)data);
     void *item;
 
     if (vector->size >= vector->room) {
@@ -94,27 +104,20 @@ static void *add(void *data, size_t size)
             return NULL;
         }
     }
+    *(void **)data = vector->data;
     item = calloc(1, size);
     if (item == NULL) {
         return NULL;
     }
     memcpy(VECTOR_ITEM(vector, vector->size), &item, vector->szof);
-    vector->size++;
-    return vector->data;
-}
-
-void *vadd(void *data, size_t size)
-{
-    return *(void **)data = add(*(void **)data, size);
+    return VECTOR_ITEM(vector, vector->size++);
 }
 
 void vsort(void *base, int (*comp)(const void *, const void *))
 {
     struct vector *vector = VECTOR(base);
 
-    if (vector->size > 1) {
-        qsort(vector->data, vector->size, vector->szof, comp);
-    }
+    qsort(vector->data, vector->size, vector->szof, comp);
 }
 
 void *vsearch(const void *key, const void *base, int (*comp)(const void *, const void *))
@@ -150,3 +153,4 @@ char *strdup_printf(const char *fmt, ...)
     va_end(args);
     return data;
 }
+

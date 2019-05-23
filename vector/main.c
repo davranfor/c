@@ -37,8 +37,8 @@ static void demo_stack(void)
     n = (size_t)rand() % 10 + 1;
     printf("%zu items\n", n);
     for (i = 0; i < n; i++) {
-        if (vgrow(&data) == NULL) {
-            perror("vgrow");
+        if (vadd(&data) == NULL) {
+            perror("vadd");
             exit(EXIT_FAILURE);
         }
         data[i].key = rand() % 1000;
@@ -80,8 +80,8 @@ static void demo_heap(void)
     n = (size_t)rand() % 10 + 1;
     printf("%zu items\n", n);
     for (i = 0; i < n; i++) {
-        if (vadd(&data, sizeof **data) == NULL) {
-            perror("vadd");
+        if (vnew(&data, sizeof **data) == NULL) {
+            perror("vnew");
             exit(EXIT_FAILURE);
         }
         data[i]->key = rand() % 1000;
@@ -94,6 +94,42 @@ static void demo_heap(void)
     vdestroy(data, free_heap);
 }
 
+static int comp_primitive(const void *pa, const void *pb)
+{
+    const int *a = pa;
+    const int *b = pb;
+
+    return *a - *b;
+}
+
+static void demo_primitive(void)
+{
+    int *data, r;
+    size_t n, i;
+
+    data = vcreate(sizeof *data);
+    if (data == NULL) {
+        perror("vcreate");
+        exit(EXIT_FAILURE);
+    }
+    n = (size_t)rand() % 10 + 1;
+    printf("%zu items\n", n);
+    for (i = 0; i < n; i++) {
+        r = rand();
+        if (vcat(&data, &r) == NULL) {
+            perror("vcat");
+            exit(EXIT_FAILURE);
+        }
+    }
+    vsort(data, comp_primitive);
+    for (i = 0; i < vsize(data); i++) {
+        printf("%d\n", data[i]);
+    }
+    printf("Searching %d\n", r);
+    printf("%d\n", *(int *)vsearch(&r, data, comp_primitive));
+    vdestroy(data, NULL);
+}
+
 int main(void)
 {
     srand((unsigned)time(NULL));
@@ -101,6 +137,8 @@ int main(void)
     demo_stack();
     puts("Sample on heap:");
     demo_heap();
+    puts("Sample on primitive:");
+    demo_primitive();
     return 0;
 }
 
