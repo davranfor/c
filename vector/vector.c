@@ -48,13 +48,13 @@ void vector_destroy(void *data, void (*func)(void *))
     free(vector);
 }
 
-static void *vector_resize(struct vector *vector, size_t size)
+static void *vector_resize(struct vector *vector, size_t room)
 {
     struct vector *new;
 
-    new = realloc(vector, sizeof(*vector) + vector->szof * size);
+    new = realloc(vector, sizeof(*vector) + vector->szof * room);
     if (new != NULL) {
-        new->room = size;
+        new->room = room;
     }
     return new;
 }
