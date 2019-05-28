@@ -7,14 +7,14 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-void *vcreate(size_t);
-void vdestroy(void *, void (*)(void *));
-size_t vsize(const void *);
-void *vadd(void *);
-void *vcat(void *, const void *);
-void *vnew(void *, size_t);
-void vsort(void *, int (*)(const void *, const void *));
-void *vsearch(const void *, const void *, int (*)(const void *, const void *));
+void *vector_create(size_t);
+void vector_destroy(void *, void (*)(void *));
+size_t vector_size(const void *);
+void *vector_add(void *);
+void *vector_cat(void *, const void *);
+void *vector_new(void *, size_t);
+void vector_sort(void *, int (*)(const void *, const void *));
+void *vector_search(const void *, const void *, int (*)(const void *, const void *));
 char *strdup_printf(const char *, ...);
 
 #endif /* VECTOR_H */

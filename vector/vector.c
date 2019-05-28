@@ -22,7 +22,7 @@ struct vector {
 #define VECTOR(v) ((struct vector *)((unsigned char *)v - offsetof(struct vector, data)))
 #define VECTOR_ITEM(v, i) ((unsigned char *)v->data + v->szof * i)
 
-void *vcreate(size_t szof)
+void *vector_create(size_t szof)
 {
     struct vector *vector;
 
@@ -36,7 +36,7 @@ void *vcreate(size_t szof)
     return vector->data;
 }
 
-void vdestroy(void *data, void (*func)(void *))
+void vector_destroy(void *data, void (*func)(void *))
 {
     struct vector *vector = VECTOR(data);
 
@@ -48,7 +48,7 @@ void vdestroy(void *data, void (*func)(void *))
     free(vector);
 }
 
-static void *vresize(struct vector *vector, size_t size)
+static void *vector_resize(struct vector *vector, size_t size)
 {
     struct vector *new;
 
@@ -59,17 +59,17 @@ static void *vresize(struct vector *vector, size_t size)
     return new;
 }
 
-size_t vsize(const void *data)
+size_t vector_size(const void *data)
 {
     return CONST_VECTOR(data)->size;
 }
 
-void *vadd(void *data)
+void *vector_add(void *data)
 {
     struct vector *vector = VECTOR(*(void **)data);
 
     if (vector->size >= vector->room) {
-        vector = vresize(vector, vector->room * 2);
+        vector = vector_resize(vector, vector->room * 2);
         if (vector == NULL) {
             return NULL;
         }
@@ -78,12 +78,12 @@ void *vadd(void *data)
     return VECTOR_ITEM(vector, vector->size++);
 }
 
-void *vcat(void *data, const void *value)
+void *vector_cat(void *data, const void *value)
 {
     struct vector *vector = VECTOR(*(void **)data);
 
     if (vector->size >= vector->room) {
-        vector = vresize(vector, vector->room * 2);
+        vector = vector_resize(vector, vector->room * 2);
         if (vector == NULL) {
             return NULL;
         }
@@ -93,13 +93,13 @@ void *vcat(void *data, const void *value)
     return VECTOR_ITEM(vector, vector->size++);
 }
 
-void *vnew(void *data, size_t size)
+void *vector_new(void *data, size_t size)
 {
     struct vector *vector = VECTOR(*(void **)data);
     void *item;
 
     if (vector->size >= vector->room) {
-        vector = vresize(vector, vector->room * 2);
+        vector = vector_resize(vector, vector->room * 2);
         if (vector == NULL) {
             return NULL;
         }
@@ -113,14 +113,14 @@ void *vnew(void *data, size_t size)
     return VECTOR_ITEM(vector, vector->size++);
 }
 
-void vsort(void *base, int (*comp)(const void *, const void *))
+void vector_sort(void *base, int (*comp)(const void *, const void *))
 {
     struct vector *vector = VECTOR(base);
 
     qsort(vector->data, vector->size, vector->szof, comp);
 }
 
-void *vsearch(const void *key, const void *base, int (*comp)(const void *, const void *))
+void *vector_search(const void *key, const void *base, int (*comp)(const void *, const void *))
 {
     const struct vector *vector = CONST_VECTOR(base);
 
