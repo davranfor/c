@@ -48,7 +48,7 @@ void vector_destroy(void *data, void (*func)(void *))
     free(vector);
 }
 
-static void *vector_resize(struct vector *vector, size_t room)
+static struct vector *vector_resize(struct vector *vector, size_t room)
 {
     struct vector *new;
 
