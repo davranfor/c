@@ -73,8 +73,8 @@ void *vector_add(void *data)
         if (vector == NULL) {
             return NULL;
         }
+        *(void **)data = vector->data;
     }
-    *(void **)data = vector->data;
     return VECTOR_ITEM(vector, vector->size++);
 }
 
@@ -87,8 +87,8 @@ void *vector_cat(void *data, const void *value)
         if (vector == NULL) {
             return NULL;
         }
+        *(void **)data = vector->data;
     }
-    *(void **)data = vector->data;
     memcpy(VECTOR_ITEM(vector, vector->size), value, vector->szof);
     return VECTOR_ITEM(vector, vector->size++);
 }
@@ -103,9 +103,9 @@ void *vector_new(void *data, size_t size)
         if (vector == NULL) {
             return NULL;
         }
+        *(void **)data = vector->data;
     }
-    *(void **)data = vector->data;
-    item = calloc(1, size);
+    item = malloc(size);
     if (item == NULL) {
         return NULL;
     }
