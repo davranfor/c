@@ -48,46 +48,42 @@ void vector_destroy(void *data, void (*func)(void *))
     free(vector);
 }
 
-static struct vector *vector_resize(struct vector *vector, size_t room)
-{
-    struct vector *new;
-
-    new = realloc(vector, sizeof(*vector) + vector->szof * room);
-    if (new != NULL) {
-        new->room = room;
-    }
-    return new;
-}
-
 size_t vector_size(const void *data)
 {
     return CONST_VECTOR(data)->size;
 }
 
-void *vector_add(void *data)
+static struct vector *resize(void *data)
 {
     struct vector *vector = VECTOR(*(void **)data);
+    struct vector *new = vector;
 
     if (vector->size >= vector->room) {
-        vector = vector_resize(vector, vector->room * 2);
-        if (vector == NULL) {
-            return NULL;
+        vector->room *= 2;
+        new = realloc(vector, sizeof(*vector) + vector->szof * vector->room);
+        if (new != NULL) {
+            *(void **)data = new->data;
         }
-        *(void **)data = vector->data;
+    }
+    return new;
+}
+
+void *vector_add(void *data)
+{
+    struct vector *vector = resize(data);
+
+    if (vector == NULL) {
+        return NULL;
     }
     return VECTOR_ITEM(vector, vector->size++);
 }
 
 void *vector_cat(void *data, const void *value)
 {
-    struct vector *vector = VECTOR(*(void **)data);
+    struct vector *vector = resize(data);
 
-    if (vector->size >= vector->room) {
-        vector = vector_resize(vector, vector->room * 2);
-        if (vector == NULL) {
-            return NULL;
-        }
-        *(void **)data = vector->data;
+    if (vector == NULL) {
+        return NULL;
     }
     memcpy(VECTOR_ITEM(vector, vector->size), value, vector->szof);
     return VECTOR_ITEM(vector, vector->size++);
@@ -95,15 +91,11 @@ void *vector_cat(void *data, const void *value)
 
 void *vector_new(void *data, size_t size)
 {
-    struct vector *vector = VECTOR(*(void **)data);
+    struct vector *vector = resize(data);
     void *item;
 
-    if (vector->size >= vector->room) {
-        vector = vector_resize(vector, vector->room * 2);
-        if (vector == NULL) {
-            return NULL;
-        }
-        *(void **)data = vector->data;
+    if (vector == NULL) {
+        return NULL;
     }
     item = malloc(size);
     if (item == NULL) {
