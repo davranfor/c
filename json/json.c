@@ -571,7 +571,7 @@ int json_is_null(const json *node)
     return node->type == JSON_NULL;
 }
 
-/* Devuelve 0 o 1 dependiend de si la cadena pasada coincide con el valor del nodo */
+/* Devuelve 0 o 1 dependiendo de si la cadena pasada coincide con el valor del nodo */
 int json_streq(const json *node, const char *str)
 {
     if ((node == NULL) || (node->value == NULL)) {
