@@ -168,10 +168,10 @@ void *hashmap_delete(hashmap *map, const void *data)
         node = node->next;
     } while (node != NULL);
     node = map->list + map->room;
-    if (node->data != NULL) {
-        return hashmap_delete(node->data, data);
+    if (node->data == NULL) {
+        return NULL;
     }
-    return NULL;
+    return hashmap_delete(node->data, data);
 }
 
 void *hashmap_search(hashmap *map, const void *data)
@@ -189,10 +189,10 @@ void *hashmap_search(hashmap *map, const void *data)
         node = node->next;
     } while (node != NULL);
     node = map->list + map->room;
-    if (node->data != NULL) {
-        return hashmap_search(node->data, data);
+    if (node->data == NULL) {
+        return NULL;
     }
-    return NULL;
+    return hashmap_search(node->data, data);
 }
 
 void hashmap_destroy(hashmap *map, void (*func)(void *))
