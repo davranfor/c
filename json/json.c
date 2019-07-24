@@ -259,9 +259,9 @@ static char *json_set_value(json *node, const char *left, const char *right)
     } else {
         strtod(left, &end);
         if (end > right) {
-	        node->type = JSON_NUMBER;
+            node->type = JSON_NUMBER;
         } else {
-	        return NULL;
+            return NULL;
         }
     }
     /* Asigna el valor */
@@ -662,6 +662,10 @@ size_t json_items(const json *node)
     return count;
 }
 
+/*
+ * Imprime el árbol de forma recursiva
+ * Los nodos izquierdos son los que marcan el cambio de nivel
+ */ 
 static void print(const json *node, int level)
 {
     int i;
@@ -679,10 +683,6 @@ static void print(const json *node, int level)
     }
 }
 
-/*
- * Imprime el árbol de forma recursiva
- * Los nodos izquierdos son los que marcan el cambio de nivel
- */ 
 void json_print(const json *node)
 {
     print(node, 0);
