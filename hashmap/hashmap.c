@@ -15,7 +15,7 @@ struct node {
 struct hashmap {
     struct node *list;
     int (*comp)(const void *, const void *);
-    size_t (*hash)(const void *);
+    unsigned long (*hash)(const void *);
     size_t room;
     size_t size;
 };
@@ -32,7 +32,7 @@ static const size_t primes[] = {
 
 hashmap *hashmap_create(
     int (*comp)(const void *, const void *),
-    size_t (*hash)(const void *),
+    unsigned long (*hash)(const void *),
     size_t size)
 {
     hashmap *map;
@@ -229,10 +229,10 @@ void hashmap_destroy(hashmap *map, void (*func)(void *))
     free(map);
 }
 
-size_t hashmap_hash_str(unsigned char *key)
+unsigned long hashmap_hash_str(unsigned char *key)
 {
-    size_t hash = 5381;
-    size_t chr;
+    unsigned long hash = 5381;
+    unsigned long chr;
 
     while ((chr = *key++)) {
         hash = ((hash << 5) + hash) + chr;
@@ -240,7 +240,7 @@ size_t hashmap_hash_str(unsigned char *key)
     return hash;
 }
 
-size_t hashmap_hash_uint(unsigned int key)
+unsigned long hashmap_hash_uint(unsigned int key)
 {
     key = ((key >> 16) ^ key) * 0x45d9f3b;
     key = ((key >> 16) ^ key) * 0x45d9f3b;
@@ -248,10 +248,11 @@ size_t hashmap_hash_uint(unsigned int key)
     return key;
 }
 
-size_t hashmap_hash_ulong(unsigned long int key)
+unsigned long hashmap_hash_ulong(unsigned long int key)
 {
     key = (key ^ (key >> 30)) * 0xbf58476d1ce4e5b9;
     key = (key ^ (key >> 27)) * 0x94d049bb133111eb;
     key = (key ^ (key >> 31));
     return key;
 }
+

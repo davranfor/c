@@ -32,7 +32,7 @@ static int comp_key(const void *pa, const void *pb)
     return a->key - b->key;
 }
 
-static size_t hash_key(const void *item)
+static unsigned long hash_key(const void *item)
 {
     const struct data *data = item;
 
@@ -47,7 +47,7 @@ static int comp_value(const void *pa, const void *pb)
     return strcmp(a->value, b->value);
 }
 
-static size_t hash_value(const void *item)
+static unsigned long hash_value(const void *item)
 {
     const struct data *data = item;
 
@@ -99,3 +99,4 @@ int main(void)
     hashmap_destroy(map, free);
     return 0;
 }
+
