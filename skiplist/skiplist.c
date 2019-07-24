@@ -22,13 +22,13 @@ struct skiplist {
 
 static int skiplist_level(void)
 {
-    int bits = rand();
-    int level = 0;
+    unsigned long bits = (unsigned long)rand();
+    unsigned long level = 0;
 
-    while ((level < SKIPLIST_MAX_LEVEL - 1) && (bits & (1 << level))) {
+    while ((level < SKIPLIST_MAX_LEVEL - 1) && (bits & (1UL << level))) {
         level++;
     }
-    return level;
+    return (int)level;
 }
 
 static struct node *skiplist_create_node(int levels)
@@ -191,4 +191,3 @@ void skiplist_destroy(skiplist *list, void (*func)(void *))
     free(list->head);
     free(list);
 }
-
