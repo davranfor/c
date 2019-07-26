@@ -328,7 +328,7 @@ static json *json_parse(json *node, const char *text)
                     if (text != token) {
                         return NULL;
                     }
-				}
+                }
                 node->right = json_create_node();
                 if (node->right == NULL) {
                     return NULL;
