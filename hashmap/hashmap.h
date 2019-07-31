@@ -18,9 +18,9 @@ void *hashmap_insert(hashmap *, void *);
 void *hashmap_delete(hashmap *, const void *);
 void *hashmap_search(hashmap *, const void *);
 void hashmap_destroy(hashmap *, void (*)(void *));
-unsigned long hashmap_hash_str(unsigned char *);
-unsigned long hashmap_hash_uint(unsigned int);
+unsigned long hashmap_hash_string(unsigned char *);
 unsigned long hashmap_hash_ulong(unsigned long);
+unsigned long hashmap_hash_ullong(unsigned long long);
 
 #endif /* HASHMAP_H */
 

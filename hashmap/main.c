@@ -36,7 +36,7 @@ static unsigned long hash_key(const void *item)
 {
     const struct data *data = item;
 
-    return hashmap_hash_uint((unsigned int)data->key);
+    return hashmap_hash_ulong((unsigned long)data->key);
 }
 
 static int comp_value(const void *pa, const void *pb)
@@ -51,7 +51,7 @@ static unsigned long hash_value(const void *item)
 {
     const struct data *data = item;
 
-    return hashmap_hash_str((unsigned char *)data->value);
+    return hashmap_hash_string((unsigned char *)data->value);
 }
 
 int main(void)

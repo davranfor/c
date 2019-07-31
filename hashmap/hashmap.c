@@ -229,10 +229,10 @@ void hashmap_destroy(hashmap *map, void (*func)(void *))
     free(map);
 }
 
-unsigned long hashmap_hash_str(unsigned char *key)
+unsigned long hashmap_hash_string(unsigned char *key)
 {
     unsigned long hash = 5381;
-    unsigned long chr;
+    unsigned int chr;
 
     while ((chr = *key++)) {
         hash = ((hash << 5) + hash) + chr;
@@ -240,7 +240,7 @@ unsigned long hashmap_hash_str(unsigned char *key)
     return hash;
 }
 
-unsigned long hashmap_hash_uint(unsigned int key)
+unsigned long hashmap_hash_ulong(unsigned long key)
 {
     key = ((key >> 16) ^ key) * 0x45d9f3b;
     key = ((key >> 16) ^ key) * 0x45d9f3b;
@@ -248,11 +248,11 @@ unsigned long hashmap_hash_uint(unsigned int key)
     return key;
 }
 
-unsigned long hashmap_hash_ulong(unsigned long int key)
+unsigned long hashmap_hash_ullong(unsigned long long int key)
 {
     key = (key ^ (key >> 30)) * 0xbf58476d1ce4e5b9;
     key = (key ^ (key >> 27)) * 0x94d049bb133111eb;
     key = (key ^ (key >> 31));
-    return key;
+    return (unsigned long)key;
 }
 
