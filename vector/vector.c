@@ -11,16 +11,16 @@
 #include <string.h>
 #include "vector.h"
 
+#define CONST_VECTOR(v) ((const struct vector *)((const unsigned char *)(v) - offsetof(struct vector, data)))
+#define VECTOR(v) ((struct vector *)((unsigned char *)(v) - offsetof(struct vector, data)))
+#define VECTOR_ITEM(v, i) ((unsigned char *)(v)->data + (v)->szof * (i))
+
 struct vector {
     size_t room;
     size_t size;
     size_t szof;
     max_align_t data[];
 };
-
-#define CONST_VECTOR(v) ((const struct vector *)((const unsigned char *)v - offsetof(struct vector, data)))
-#define VECTOR(v) ((struct vector *)((unsigned char *)v - offsetof(struct vector, data)))
-#define VECTOR_ITEM(v, i) ((unsigned char *)v->data + v->szof * i)
 
 void *vector_create(size_t szof)
 {
