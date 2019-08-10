@@ -119,7 +119,8 @@ void *skiplist_delete(skiplist *list, const void *data)
         }
         nodes[level]->next[level] = node->next[level];
     }
-    while ((list->levels > 0) && (list->head->next[list->levels] == list->head)) {
+    while ((list->levels > 0)
+        && (list->head->next[list->levels] == list->head)) {
         list->levels--;
     }
     res = node->data;
@@ -191,3 +192,4 @@ void skiplist_destroy(skiplist *list, void (*func)(void *))
     free(list->head);
     free(list);
 }
+
