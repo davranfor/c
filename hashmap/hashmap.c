@@ -30,16 +30,16 @@ static const size_t primes[] = {
     805306457ul, 1610612741ul, 3221225473ul, 4294967291ul
 };
 
+#define HASHMAP_NPRIMES (sizeof primes / sizeof *primes)
+
 hashmap *hashmap_create(
     int (*comp)(const void *, const void *),
     unsigned long (*hash)(const void *),
     size_t size)
 {
     hashmap *map;
-    size_t iter, nprimes;
 
-    nprimes = sizeof primes / sizeof *primes;
-    for (iter = 0; iter < nprimes; iter++) {
+    for (size_t iter = 0; iter < HASHMAP_NPRIMES; iter++) {
         if (size < primes[iter]) {
             size = primes[iter];
             break;
@@ -70,18 +70,18 @@ static void hashmap_move(hashmap *head, hashmap *tail)
 
 static size_t hashmap_rehash(hashmap *map, struct node *node)
 {
-    struct node *temp;
+    struct node *next;
     size_t size = 0;
 
     while (node != NULL) {
         if (hashmap_insert(map, node->data) == NULL) {
             return 0;
         }
-        temp = node->next;
+        next = node->next;
         if (size > 0) {
             free(node);
         }
-        node = temp;
+        node = next;
         size++;
     }
     return size;
@@ -197,11 +197,11 @@ void *hashmap_search(hashmap *map, const void *data)
 
 void hashmap_destroy(hashmap *map, void (*func)(void *))
 {   
-    struct node *node, *temp;
-    size_t iter;
+    struct node *node;
+    struct node *temp;
 
     if (map->size > 0) {
-        for (iter = 0; iter < map->room; iter++) {
+        for (size_t iter = 0; iter < map->room; iter++) {
             node = map->list + iter;
             if (node->data != NULL) {
                 if (func != NULL) {
