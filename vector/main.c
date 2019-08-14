@@ -4,10 +4,28 @@
 #include <time.h>
 #include "vector.h"
 
-struct data {
+struct data
+{
     int key;
     char *value;
 };
+
+static char *keytostr(int key)
+{
+    char buf[32];
+    size_t len;
+
+    len = (size_t)snprintf(buf, sizeof buf, "(%d)", key);
+
+    char *str = malloc(len + 1);
+
+    if (str == NULL)
+    {
+        return NULL;
+    }
+    memcpy(str, buf, len + 1);
+    return str;
+}
 
 static int comp_stack(const void *pa, const void *pb)
 {
@@ -17,7 +35,7 @@ static int comp_stack(const void *pa, const void *pb)
     return a->key - b->key;
 }
 
-static void free_stack(void *ptr)
+static void destroy_stack(void *ptr)
 {
     struct data *data = ptr;
 
@@ -26,29 +44,34 @@ static void free_stack(void *ptr)
 
 static void demo_stack(void)
 {
-    struct data *data;
-    size_t n, i;
+    struct data *data = vector_create(sizeof *data);
 
-    data = vector_create(sizeof *data);
-    if (data == NULL) {
+    if (data == NULL)
+    {
         perror("vector_create");
         exit(EXIT_FAILURE);
     }
-    n = (size_t)rand() % 10 + 1;
-    printf("%zu items\n", n);
-    for (i = 0; i < n; i++) {
-        if (vector_add(&data) == NULL) {
+
+    size_t size = (size_t)rand() % 10 + 1;
+
+    printf("%zu items\n", size);
+    for (size_t i = 0; i < size; i++)
+    {
+        if (vector_add(&data) == NULL)
+        {
             perror("vector_add");
             exit(EXIT_FAILURE);
         }
         data[i].key = rand() % 1000;
-        data[i].value = strdup_printf("Item #%zu", i);
+        data[i].value = keytostr(data[i].key);
     }
     vector_sort(data, comp_stack);
-    for (i = 0; i < vector_size(data); i++) {
+    size = vector_size(data);
+    for (size_t i = 0; i < size; i++)
+    {
         printf("%03d %s\n", data[i].key, data[i].value);
     }
-    vector_destroy(data, free_stack);
+    vector_destroy(data, destroy_stack);
 }
 
 static int comp_heap(const void *pa, const void *pb)
@@ -59,7 +82,7 @@ static int comp_heap(const void *pa, const void *pb)
     return (*a)->key - (*b)->key;
 }
 
-static void free_heap(void *ptr)
+static void destroy_heap(void *ptr)
 {
     struct data **data = ptr;
 
@@ -69,29 +92,34 @@ static void free_heap(void *ptr)
 
 static void demo_heap(void)
 {
-    struct data **data;
-    size_t n, i;
+    struct data **data = vector_create(sizeof *data);
 
-    data = vector_create(sizeof *data);
-    if (data == NULL) {
+    if (data == NULL)
+    {
         perror("vector_create");
         exit(EXIT_FAILURE);
     }
-    n = (size_t)rand() % 10 + 1;
-    printf("%zu items\n", n);
-    for (i = 0; i < n; i++) {
-        if (vector_new(&data, sizeof **data) == NULL) {
+
+    size_t size = (size_t)rand() % 10 + 1;
+
+    printf("%zu items\n", size);
+    for (size_t i = 0; i < size; i++)
+    {
+        if (vector_new(&data, sizeof **data) == NULL)
+        {
             perror("vector_new");
             exit(EXIT_FAILURE);
         }
         data[i]->key = rand() % 1000;
-        data[i]->value = strdup_printf("Item #%zu", i);
+        data[i]->value = keytostr(data[i]->key);
     }
     vector_sort(data, comp_heap);
-    for (i = 0; i < vector_size(data); i++) {
+    size = vector_size(data);
+    for (size_t i = 0; i < size; i++)
+    {
         printf("%03d %s\n", data[i]->key, data[i]->value);
     }
-    vector_destroy(data, free_heap);
+    vector_destroy(data, destroy_heap);
 }
 
 static int comp_primitive(const void *pa, const void *pb)
@@ -104,25 +132,31 @@ static int comp_primitive(const void *pa, const void *pb)
 
 static void demo_primitive(void)
 {
-    int *data, r;
-    size_t n, i;
+    int *data = vector_create(sizeof *data);
 
-    data = vector_create(sizeof *data);
-    if (data == NULL) {
+    if (data == NULL)
+    {
         perror("vector_create");
         exit(EXIT_FAILURE);
     }
-    n = (size_t)rand() % 10 + 1;
-    printf("%zu items\n", n);
-    for (i = 0; i < n; i++) {
+
+    size_t size = (size_t)rand() % 10 + 1;
+    int r = 0;
+
+    printf("%zu items\n", size);
+    for (size_t i = 0; i < size; i++)
+    {
         r = rand();
-        if (vector_cat(&data, &r) == NULL) {
+        if (vector_cat(&data, &r) == NULL)
+        {
             perror("vector_cat");
             exit(EXIT_FAILURE);
         }
     }
     vector_sort(data, comp_primitive);
-    for (i = 0; i < vector_size(data); i++) {
+    size = vector_size(data);
+    for (size_t i = 0; i < size; i++)
+    {
         printf("%d\n", data[i]);
     }
     printf("Searching %d\n", r);

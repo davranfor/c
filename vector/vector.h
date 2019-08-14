@@ -15,7 +15,6 @@ void *vector_cat(void *, const void *);
 void *vector_new(void *, size_t);
 void vector_sort(void *, int (*)(const void *, const void *));
 void *vector_search(const void *, const void *, int (*)(const void *, const void *));
-char *strdup_printf(const char *, ...);
 
 #endif /* VECTOR_H */
 
