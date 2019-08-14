@@ -6,7 +6,8 @@
 
 #define NELEMS 1000000
 
-struct data {
+struct data
+{
     int key;
     char *value;
 };
@@ -26,7 +27,7 @@ static unsigned long hash_key(const void *item)
     return hashmap_hash_ulong((unsigned long)data->key);
 }
 
-/* The compare value version
+/* The compare by value version
 static int comp_value(const void *pa, const void *pb)
 {
     const struct data *a = pa;
@@ -47,11 +48,13 @@ static char *keytostr(int key)
 {
     char buf[32];
     size_t len;
-    char *str;
 
     len = (size_t)snprintf(buf, sizeof buf, "(%d)", key);
-    str = malloc(len + 1);
-    if (str == NULL) {
+
+    char *str = malloc(len + 1);
+
+    if (str == NULL)
+    {
         return NULL;
     }
     memcpy(str, buf, len + 1);
@@ -73,57 +76,78 @@ static void clean(void)
 
 int main(void)
 {
-    struct data *data;
-    struct data *item;
-
     atexit(clean);
     srand((unsigned)time(NULL));
+
     map = hashmap_create(comp_key, hash_key, NELEMS);
-    if (map == NULL) {
+    if (map == NULL)
+    {
         perror("hashmap_create");
         exit(EXIT_FAILURE);
     }
-    data = malloc(sizeof *data);
-    if (data == NULL) {
+
+    struct data *data = malloc(sizeof *data);
+
+    if (data == NULL)
+    {
         perror("malloc");
         exit(EXIT_FAILURE);
     }
-    for (int iter = 0; iter < NELEMS; iter++) {
+
+    struct data *item;
+
+    // Insert records
+    for (int iter = 0; iter < NELEMS; iter++)
+    {
         data->key = rand() % NELEMS;
         item = hashmap_insert(map, data);
-        if (item == NULL) {
+        if (item == NULL)
+        {
             perror("hashmap_insert");
             exit(EXIT_FAILURE);
         }
-        if (data == item) {
+        if (data == item)
+        {
             data->value = keytostr(data->key);
-            if (data->value == NULL) {
+            if (data->value == NULL)
+            {
                 perror("keytostr");
                 exit(EXIT_FAILURE);
             }
             data = malloc(sizeof *data);
-            if (data == NULL) {
+            if (data == NULL)
+            {
                 perror("malloc");
                 exit(EXIT_FAILURE);
             }
         }
     }
+
+    // Search records
     data->key = NELEMS / 2;
     item = hashmap_search(map, data);
-    if (item == NULL) {
+    if (item == NULL)
+    {
         printf("%d not found\n", data->key);
-    } else {
+    }
+    else
+    {
         printf("%d %s found\n", item->key, item->value);
     }
-    for (int key = 0; key < 10; key++) {
+
+    // Delete records
+    for (int key = 0; key < 10; key++)
+    {
         data->key = key;
         item = hashmap_delete(map, data);
-        if (item != NULL) {
+        if (item != NULL)
+        {
             printf("%d %s deleted\n", item->key, item->value);
             free(item->value);
             free(item);
         }
     }
+
     free(data);
     return 0;
 }

@@ -7,12 +7,14 @@
 #include <stdlib.h>
 #include "hashmap.h"
 
-struct node {
+struct node
+{
     void *data;
     struct node *next;
 };
 
-struct hashmap {
+struct hashmap
+{
     struct node *list;
     int (*comp)(const void *, const void *);
     unsigned long (*hash)(const void *);
@@ -20,7 +22,8 @@ struct hashmap {
     size_t size;
 };
 
-static const size_t primes[] = {
+static const size_t primes[] =
+{
     53ul,        97ul,         193ul,        389ul,
     769ul,       1543ul,       3079ul,       6151ul,
     12289ul,     24593ul,      49157ul,      98317ul, 
@@ -37,18 +40,22 @@ hashmap *hashmap_create(
     unsigned long (*hash)(const void *),
     size_t size)
 {
-    hashmap *map;
-
-    for (size_t iter = 0; iter < HASHMAP_NPRIMES; iter++) {
-        if (size < primes[iter]) {
+    for (size_t iter = 0; iter < HASHMAP_NPRIMES; iter++)
+    {
+        if (size < primes[iter])
+        {
             size = primes[iter];
             break;
         }
     }
-    map = malloc(sizeof *map);
-    if (map != NULL) {
+
+    hashmap *map = malloc(sizeof *map);
+
+    if (map != NULL)
+    {
         map->list = calloc(size + 1, sizeof(struct node));
-        if (map->list == NULL) {
+        if (map->list == NULL)
+        {
             return NULL;
         }
         map->comp = comp;
@@ -70,19 +77,21 @@ static void hashmap_move(hashmap *head, hashmap *tail)
 
 static size_t hashmap_rehash(hashmap *map, struct node *node)
 {
-    struct node *next;
+    struct node *temp;
     size_t size = 0;
 
-    while (node != NULL) {
-        if (hashmap_insert(map, node->data) == NULL) {
+    while (node != NULL)
+    {
+        if (hashmap_insert(map, node->data) == NULL)
+        {
             return 0;
         }
-        next = node->next;
-        if (size > 0) {
-            free(node);
+        temp = node;
+        node = node->next;
+        if (size++ > 0)
+        {
+            free(temp);
         }
-        node = next;
-        size++;
     }
     return size;
 }
@@ -91,45 +100,60 @@ void *hashmap_insert(hashmap *map, void *data)
 {
     struct node *node;
     struct node *tail;
-    size_t size = 0;
     size_t hash;
 
     hash = map->hash(data) % map->room;
     tail = map->list + map->room;
     node = map->list + hash;
-    if (tail->data != NULL) {
-        if (node->data != NULL) {
-            size = hashmap_rehash(tail->data, node);
-            if (size == 0) {
+
+    // We are not in the last table
+    if (tail->data != NULL)
+    {
+        if (node->data != NULL)
+        {
+            size_t size = hashmap_rehash(tail->data, node);
+
+            if (size == 0)
+            {
                 return NULL;
             }
-            map->size -= size;
             node->next = NULL;
             node->data = NULL;
+            map->size -= size;
+            if (map->size == 0)
+            {
+                hashmap_move(map, tail->data);
+                return hashmap_insert(map, data);
+            }
         }
-        data = hashmap_insert(tail->data, data);
-        if (map->size == 0) {
-            hashmap_move(map, tail->data);
-        }
-        return data;
+        return hashmap_insert(tail->data, data);
     }
-    while (node->data != NULL) {
-        if (map->comp(node->data, data) == 0) {
+
+    // We are in the last table
+    while (node->data != NULL)
+    {
+        if (map->comp(node->data, data) == 0)
+        {
             return node->data;
         }
-        if (node->next == NULL) {
+        if (node->next == NULL)
+        {
             node->next = calloc(1, sizeof *node);
-            if (node->next == NULL) {
+            if (node->next == NULL)
+            {
                 return NULL;
             }
         }
         node = node->next;
     }
     node->data = data;
-    map->size++;
-    if (map->size > map->room - map->room / 4) {
+
+    // If more than 75% occupied then create a new table
+    if (++map->size > map->room - map->room / 4)
+    {
         tail->data = hashmap_create(map->comp, map->hash, map->room);
-        if (tail->data == NULL) {
+        if (tail->data == NULL)
+        {
             return NULL;
         }
     }
@@ -139,39 +163,53 @@ void *hashmap_insert(hashmap *map, void *data)
 void *hashmap_delete(hashmap *map, const void *data)
 {
     struct node *node, *temp = NULL;
+    struct node *tail;
     size_t hash;
-    void *res;
     
     hash = map->hash(data) % map->room;
+    tail = map->list + map->room;
     node = map->list + hash;
-    if (node->data != NULL)
-    do {
-        if (map->comp(node->data, data) == 0) {
-            res = node->data;
-            if (temp == NULL) {
-                if (node->next == NULL) {
+    if (node->data != NULL) do
+    {
+        if (map->comp(node->data, data) == 0)
+        {
+            void *result = node->data;
+
+            if (temp == NULL)
+            {
+                if (node->next == NULL)
+                {
                     node->data = NULL;
-                } else {
+                }
+                else
+                {
                     temp = node->next;
                     node->data = temp->data;
                     node->next = temp->next;
                     free(temp);
                 }
-            } else {
+            }
+            else
+            {
                 temp->next = node->next;
                 free(node);
             }
-            map->size--;
-            return res;
+            if ((--map->size == 0) && (tail->data != NULL))
+            {
+                hashmap_move(map, tail->data);
+            }
+            return result;
         }
         temp = node;
         node = node->next;
     } while (node != NULL);
-    node = map->list + map->room;
-    if (node->data == NULL) {
+
+    // Not found in this table, try in the next one
+    if (tail->data == NULL)
+    {
         return NULL;
     }
-    return hashmap_delete(node->data, data);
+    return hashmap_delete(tail->data, data);
 }
 
 void *hashmap_search(hashmap *map, const void *data)
@@ -181,15 +219,19 @@ void *hashmap_search(hashmap *map, const void *data)
     
     hash = map->hash(data) % map->room;
     node = map->list + hash;
-    if (node->data != NULL)
-    do {
-        if (map->comp(node->data, data) == 0) {
+    if (node->data != NULL) do
+    {
+        if (map->comp(node->data, data) == 0)
+        {
             return node->data;
         }
         node = node->next;
     } while (node != NULL);
+
+    // Not found in this table, try in the next one
     node = map->list + map->room;
-    if (node->data == NULL) {
+    if (node->data == NULL)
+    {
         return NULL;
     }
     return hashmap_search(node->data, data);
@@ -198,35 +240,41 @@ void *hashmap_search(hashmap *map, const void *data)
 void hashmap_destroy(hashmap *map, void (*func)(void *))
 {   
     struct node *node;
-    struct node *temp;
+    size_t index = 0;
 
-    if (map->size > 0) {
-        for (size_t iter = 0; iter < map->room; iter++) {
-            node = map->list + iter;
-            if (node->data != NULL) {
-                if (func != NULL) {
-                    func(node->data);
-                }
+    while (map->size > 0)
+    {
+        node = map->list + index;
+        if (node->data != NULL) do
+        {
+            struct node *temp;
+
+            if (func != NULL)
+            {
+                func(node->data);
             }
-            if (node->next != NULL) {
-                node = node->next;
-                while (node != NULL) {
-                    if (func != NULL) {
-                        func(node->data);
-                    }
-                    temp = node;
-                    node = node->next;
-                    free(temp);
-                }
+            map->size--;
+            temp = node;
+            node = node->next;
+            // The pointer in the table can not be freed
+            if (temp != map->list + index)
+            {
+                free(temp);
             }
-        }
+        } while (node != NULL);
+        index++;
     }
-    node = map->list + map->room;
-    if (node->data != NULL) {
-        hashmap_destroy(node->data, func);
-    }
+
+    void *next = (struct node *)(map->list + map->room)->data;
+
     free(map->list);
     free(map);
+
+    // If there are more tables then destroy them also
+    if (next != NULL)
+    {
+        hashmap_destroy(next, func);
+    }
 }
 
 unsigned long hashmap_hash_string(unsigned char *key)
@@ -234,7 +282,8 @@ unsigned long hashmap_hash_string(unsigned char *key)
     unsigned long hash = 5381;
     unsigned int chr;
 
-    while ((chr = *key++)) {
+    while ((chr = *key++))
+    {
         hash = ((hash << 5) + hash) + chr;
     }
     return hash;
