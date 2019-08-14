@@ -9,7 +9,8 @@
 
 typedef struct json json;
 
-enum json_type {
+enum json_type
+{
     JSON_EMPTY,     /* Nodo reservado sin usar */
     JSON_OBJECT,    /* {Propiedad} */
     JSON_ARRAY,     /* [Matriz] */

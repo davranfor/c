@@ -5,33 +5,40 @@
 
 static char *file_read(const char *path)
 {
-    FILE *file;
-    long size;
-    char *str;
+    FILE *file = fopen(path, "rb");
 
-    file = fopen(path, "rb");
-    if (file == NULL) {
+    if (file == NULL)
+    {
         perror("fopen");
         return NULL;
     }
-    if (fseek(file, 0, SEEK_END) == -1) {
+    if (fseek(file, 0, SEEK_END) == -1)
+    {
         perror("fseek");
         return NULL;
     }
-    size = ftell(file);
-    if (size == -1) {
+
+    long size = ftell(file);
+
+    if (size == -1)
+    {
         perror("ftell");
         return NULL;
     }
-    if (fseek(file, 0, SEEK_SET) == -1) {
+    if (fseek(file, 0, SEEK_SET) == -1)
+    {
         perror("fseek");
         return NULL;
     }
-    str = malloc((size_t)size + 1);
-    if (str == NULL) {
+
+    char *str = malloc((size_t)size + 1);
+
+    if (str == NULL)
+    {
         return NULL;
     }
-    if (fread(str, 1, (size_t)size, file) != (size_t)size) {
+    if (fread(str, 1, (size_t)size, file) != (size_t)size)
+    {
         perror("fread");
         return NULL;
     }
@@ -42,17 +49,19 @@ static char *file_read(const char *path)
 
 int main(void)
 {
-    json *node;
-    char *text;
+    char *text = file_read("ui.json");
 
-    text = file_read("ui.json");
-    if (text == NULL) {
+    if (text == NULL)
+    {
         fprintf(stderr, "Error reading ui.json\n");
         exit(EXIT_FAILURE);
     }
-    node = json_create(text);
+
+    json *node = json_create(text);
+
     free(text);
-    if (node == NULL) {
+    if (node == NULL)
+    {
         fprintf(stderr, "Error parsing ui.json\n");
         exit(EXIT_FAILURE);
     }
