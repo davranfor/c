@@ -7,7 +7,8 @@
 #ifndef LIST_H
 #define LIST_H
 
-struct cursor {
+struct cursor
+{
     void *node;
     int (*comp)(const void *, const void *);
     const void *data;

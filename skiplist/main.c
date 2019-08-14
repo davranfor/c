@@ -6,7 +6,8 @@
 
 #define NELEMS 1000000
 
-struct data {
+struct data
+{
     int key;
     char *value;
 };
@@ -34,7 +35,8 @@ static void walk(skiplist *list)
     int count = 0;
  
     printf("First 5 records:\n");
-    while ((data = skiplist_fetch(list, &cursor))) {
+    while ((data = skiplist_fetch(list, &cursor)))
+    {
         printf("%d %s fetched\n", data->key, data->value);
         if (++count > 4) {
             break;
@@ -49,7 +51,8 @@ static void filter(skiplist *list, int min, int max)
     struct data *data;
 
     printf("Filtering records from %d to %d\n", min, max);
-    while ((data = skiplist_fetch(list, &cursor))) {
+    while ((data = skiplist_fetch(list, &cursor)))
+    {
         printf("%d %s fetched\n", data->key, data->value);
     }
     printf("\n");
@@ -59,11 +62,13 @@ static char *keytostr(int key)
 {
     char buf[32];
     size_t len;
-    char *str;
 
     len = (size_t)snprintf(buf, sizeof buf, "(%d)", key);
-    str = malloc(len + 1);
-    if (str == NULL) {
+
+    char *str = malloc(len + 1);
+
+    if (str == NULL)
+    {
         return NULL;
     }
     memcpy(str, buf, len + 1);
@@ -85,59 +90,81 @@ static void clean(void)
 
 int main(void)
 {
-    struct data *data;
-    struct data *item;
-
     atexit(clean);
     srand((unsigned)time(NULL));
+
     list = skiplist_create(comp_key);
-    if (list == NULL) {
+    if (list == NULL)
+    {
         perror("skiplist_create");
         exit(EXIT_FAILURE);
     }
-    data = malloc(sizeof *data);
-    if (data == NULL) {
+
+    struct data *data = malloc(sizeof *data);
+
+    if (data == NULL)
+    {
         perror("malloc");
         exit(EXIT_FAILURE);
     }
-    for (int iter = 0; iter < NELEMS; iter++) {
+
+    struct data *item;
+
+    // Insert records
+    for (int iter = 0; iter < NELEMS; iter++)
+    {
         data->key = rand() % NELEMS;
         item = skiplist_insert(list, data);
-        if (item == NULL) {
+        if (item == NULL)
+        {
             perror("skiplist_insert");
             exit(EXIT_FAILURE);
         }
-        if (data == item) {
+        if (data == item)
+        {
             data->value = keytostr(data->key);
-            if (data->value == NULL) {
+            if (data->value == NULL)
+            {
                 perror("keytostr");
                 exit(EXIT_FAILURE);
             }
             data = malloc(sizeof *data);
-            if (data == NULL) {
+            if (data == NULL)
+            {
                 perror("malloc");
                 exit(EXIT_FAILURE);
             }
         }
     }
+
+    // Search records
     data->key = NELEMS / 2;
     item = skiplist_search(list, data);
-    if (item == NULL) {
+    if (item == NULL)
+    {
         printf("%d not found\n", data->key);
-    } else {
+    }
+    else
+    {
         printf("%d %s found\n", item->key, item->value);
     }
-    for (int key = 0; key < 10; key++) {
+
+    // Delete records
+    for (int key = 0; key < 10; key++)
+    {
         data->key = key;
         item = skiplist_delete(list, data);
-        if (item != NULL) {
+        if (item != NULL)
+        {
             printf("%d %s deleted\n", item->key, item->value);
             free(item->value);
             free(item);
         }
     }
+
     walk(list);
     filter(list, NELEMS - 6, NELEMS - 1);
+
     free(data);
     return 0;
 }
