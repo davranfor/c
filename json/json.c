@@ -140,9 +140,9 @@ static const char *json_scan(const char **text)
             {
                 return NULL;
             }
-        } else
+        }
         /* Si es una comilla cambiamos el estado */
-        if (*str == '"')
+        else if (*str == '"')
         {
             quoted ^= 1;
         }
