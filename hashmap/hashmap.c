@@ -77,11 +77,12 @@ static void hashmap_move(hashmap *head, hashmap *tail)
 
 static size_t hashmap_rehash(hashmap *map, struct node *node)
 {
-    struct node *temp;
     size_t size = 0;
 
     while (node != NULL)
     {
+        struct node *temp;
+
         if (hashmap_insert(map, node->data) == NULL)
         {
             return 0;
@@ -98,13 +99,9 @@ static size_t hashmap_rehash(hashmap *map, struct node *node)
 
 void *hashmap_insert(hashmap *map, void *data)
 {
-    struct node *node;
-    struct node *tail;
-    size_t hash;
-
-    hash = map->hash(data) % map->room;
-    tail = map->list + map->room;
-    node = map->list + hash;
+    size_t hash = map->hash(data) % map->room;
+    struct node *tail = map->list + map->room;
+    struct node *node = map->list + hash;
 
     // We are not in the last table
     if (tail->data != NULL)
@@ -162,13 +159,11 @@ void *hashmap_insert(hashmap *map, void *data)
 
 void *hashmap_delete(hashmap *map, const void *data)
 {
-    struct node *node, *temp = NULL;
-    struct node *tail;
-    size_t hash;
+    size_t hash = map->hash(data) % map->room;
+    struct node *tail = map->list + map->room;
+    struct node *node = map->list + hash;
+    struct node *temp = NULL;
     
-    hash = map->hash(data) % map->room;
-    tail = map->list + map->room;
-    node = map->list + hash;
     if (node->data != NULL) do
     {
         if (map->comp(node->data, data) == 0)
@@ -214,11 +209,9 @@ void *hashmap_delete(hashmap *map, const void *data)
 
 void *hashmap_search(hashmap *map, const void *data)
 {   
-    struct node *node;
-    size_t hash;
-    
-    hash = map->hash(data) % map->room;
-    node = map->list + hash;
+    size_t hash = map->hash(data) % map->room;
+    struct node *node = map->list + hash;
+
     if (node->data != NULL) do
     {
         if (map->comp(node->data, data) == 0)
@@ -270,7 +263,7 @@ void hashmap_destroy(hashmap *map, void (*func)(void *))
     free(map->list);
     free(map);
 
-    // If there are more tables then destroy them also
+    // If there are more tables then destroy them too
     if (next != NULL)
     {
         hashmap_destroy(next, func);
