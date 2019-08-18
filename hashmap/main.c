@@ -4,7 +4,7 @@
 #include <time.h>
 #include "hashmap.h"
 
-#define NELEMS 1000000
+#define NELEMS 100
 
 struct data
 {
@@ -18,6 +18,14 @@ static int comp_key(const void *pa, const void *pb)
     const struct data *b = pb;
 
     return a->key - b->key;
+}
+
+static int comp_pkey(const void *pa, const void *pb)
+{
+    const struct data * const *a = pa;
+    const struct data * const *b = pb;
+
+    return (*a)->key - (*b)->key;
 }
 
 static unsigned long hash_key(const void *item)
@@ -69,8 +77,30 @@ static void destroy(void *data)
 
 static hashmap *map;
 
+static void copy(void)
+{
+    struct data **data;
+    size_t size;
+
+    puts("\nWalking on a copy ...");
+    data = hashmap_copy(map, &size);
+    if ((data == NULL) && (size > 0))
+    {
+        perror("hashmap_copy");
+        exit(EXIT_FAILURE);
+    }
+    qsort(data, size, sizeof *data, comp_pkey);
+    for (size_t i = 0; i < size; i++)
+    {
+        printf("%d %s\n", data[i]->key, data[i]->value);
+    }
+    free(data);
+}
+
 static void clean(void)
 {
+    puts("\nDestroying ...");
+
     hashmap_destroy(map, destroy);
 }
 
@@ -136,9 +166,8 @@ int main(void)
     }
 
     // Delete records
-    for (int key = 0; key < 10; key++)
+    for (data->key = 0; data->key < 10; data->key++)
     {
-        data->key = key;
         item = hashmap_delete(map, data);
         if (item != NULL)
         {
@@ -147,6 +176,8 @@ int main(void)
             free(item);
         }
     }
+
+    copy();
 
     free(data);
     return 0;
