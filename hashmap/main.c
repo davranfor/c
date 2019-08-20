@@ -4,8 +4,6 @@
 #include <time.h>
 #include "hashmap.h"
 
-#define NELEMS 100
-
 struct data
 {
     int key;
@@ -84,10 +82,14 @@ static void copy(void)
 
     puts("\nWalking on a copy ...");
     data = hashmap_copy(map, &size);
-    if ((data == NULL) && (size > 0))
+    if (data == NULL)
     {
-        perror("hashmap_copy");
-        exit(EXIT_FAILURE);
+        if (size > 0)
+        {
+            perror("hashmap_copy");
+            exit(EXIT_FAILURE);
+        }
+        return;
     }
     qsort(data, size, sizeof *data, comp_pkey);
     for (size_t i = 0; i < size; i++)
@@ -100,16 +102,17 @@ static void copy(void)
 static void clean(void)
 {
     puts("\nDestroying ...");
-
     hashmap_destroy(map, destroy);
 }
 
 int main(void)
 {
+    #define NELEMS 1000000
+
     atexit(clean);
     srand((unsigned)time(NULL));
 
-    map = hashmap_create(comp_key, hash_key, NELEMS);
+    map = hashmap_create(comp_key, hash_key, 0/*NELEMS*/);
     if (map == NULL)
     {
         perror("hashmap_create");
@@ -177,7 +180,8 @@ int main(void)
         }
     }
 
-    copy();
+    (void)copy;
+    //copy();
 
     free(data);
     return 0;
