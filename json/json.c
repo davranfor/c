@@ -71,8 +71,8 @@ static enum json_type json_token(int token)
  */
 size_t json_encode(char *dst, const char *src)
 {
-#define JSON_CONCAT(c) *(ptr++) = c
-#define JSON_ENCODE(c) JSON_CONCAT('\\'); JSON_CONCAT(c)
+    #define JSON_CONCAT(c) *(ptr++) = c
+    #define JSON_ENCODE(c) JSON_CONCAT('\\'); JSON_CONCAT(c)
 
     char *ptr = dst;
 
