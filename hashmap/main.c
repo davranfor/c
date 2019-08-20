@@ -30,7 +30,7 @@ static unsigned long hash_key(const void *item)
 {
     const struct data *data = item;
 
-    return hashmap_hash_ulong((unsigned long)data->key);
+    return hash_ulong((unsigned long)data->key);
 }
 
 /* The compare by value version
@@ -46,7 +46,7 @@ static unsigned long hash_value(const void *item)
 {
     const struct data *data = item;
 
-    return hashmap_hash_string((unsigned char *)data->value);
+    return hash_string((unsigned char *)data->value);
 }
 */
 

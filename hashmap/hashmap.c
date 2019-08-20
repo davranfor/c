@@ -258,7 +258,7 @@ void *hashmap_copy(const hashmap *map, size_t *size)
         return NULL;
     }
 
-    unsigned char *data = malloc(*size * sizeof(void *));
+    void **data = malloc(*size * sizeof *data);
 
     if (data == NULL)
     {
@@ -275,7 +275,7 @@ void *hashmap_copy(const hashmap *map, size_t *size)
 
             if (node->data != NULL) do
             {
-                *(void **)(data + (count++ * sizeof(void *))) = node->data;
+                data[count++] = node->data;
                 node = node->next;
             } while (node != NULL);
         }
@@ -316,7 +316,7 @@ void hashmap_destroy(hashmap *map, void (*func)(void *))
     }
 }
 
-unsigned long hashmap_hash_string(unsigned char *key)
+unsigned long hash_string(unsigned char *key)
 {
     unsigned long hash = 5381;
     unsigned int chr;
@@ -328,7 +328,7 @@ unsigned long hashmap_hash_string(unsigned char *key)
     return hash;
 }
 
-unsigned long hashmap_hash_ulong(unsigned long key)
+unsigned long hash_ulong(unsigned long key)
 {
     key = ((key >> 16) ^ key) * 0x45d9f3b;
     key = ((key >> 16) ^ key) * 0x45d9f3b;
@@ -336,7 +336,7 @@ unsigned long hashmap_hash_ulong(unsigned long key)
     return key;
 }
 
-unsigned long hashmap_hash_ullong(unsigned long long int key)
+unsigned long hash_ullong(unsigned long long int key)
 {
     key = (key ^ (key >> 30)) * 0xbf58476d1ce4e5b9;
     key = (key ^ (key >> 27)) * 0x94d049bb133111eb;
