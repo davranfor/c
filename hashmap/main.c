@@ -112,7 +112,7 @@ int main(void)
     atexit(clean);
     srand((unsigned)time(NULL));
 
-    map = hashmap_create(comp_key, hash_key, 0/*NELEMS*/);
+    map = hashmap_create(comp_key, hash_key, NELEMS);
     if (map == NULL)
     {
         perror("hashmap_create");
