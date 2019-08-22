@@ -24,13 +24,13 @@ struct hashmap
 
 static const size_t primes[] =
 {
-    53ul,        97ul,         193ul,        389ul,
-    769ul,       1543ul,       3079ul,       6151ul,
-    12289ul,     24593ul,      49157ul,      98317ul, 
-    196613ul,    393241ul,     786433ul,     1572869ul,
-    3145739ul,   6291469ul,    12582917ul,   25165843ul, 
-    50331653ul,  100663319ul,  201326611ul,  402653189ul,
-    805306457ul, 1610612741ul, 3221225473ul, 4294967291ul
+    53,        97,         193,        389,
+    769,       1543,       3079,       6151,
+    12289,     24593,      49157,      98317, 
+    196613,    393241,     786433,     1572869,
+    3145739,   6291469,    12582917,   25165843, 
+    50331653,  100663319,  201326611,  402653189,
+    805306457, 1610612741, 3221225473, 4294967291
 };
 
 #define HASHMAP_NPRIMES (sizeof primes / sizeof *primes)
@@ -109,11 +109,17 @@ static hashmap *hashmap_rehash(hashmap *map, hashmap *next, struct node *node)
 
 void *hashmap_insert(hashmap *map, void *data)
 {
+    if ((map == NULL) || (data == NULL))
+    {
+        return NULL;
+    }
+
+    unsigned long hash = map->hash(data);
+
     while (map != NULL)
     {
-        size_t hash = map->hash(data) % map->room;
+        struct node *node = map->list + hash % map->room;
         struct node *tail = map->list + map->room;
-        struct node *node = map->list + hash;
 
         // We are not in the last table
         if (tail->data != NULL)
@@ -121,10 +127,6 @@ void *hashmap_insert(hashmap *map, void *data)
             if (node->data != NULL)
             {
                 map = hashmap_rehash(map, tail->data, node);
-                if (map == NULL)
-                {
-                    return NULL;
-                }
             }
             else
             {
@@ -168,11 +170,17 @@ void *hashmap_insert(hashmap *map, void *data)
 
 void *hashmap_delete(hashmap *map, const void *data)
 {
+    if ((map == NULL) || (data == NULL))
+    {
+        return NULL;
+    }
+
+    unsigned long hash = map->hash(data);
+
     while (map != NULL)
     {
-        size_t hash = map->hash(data) % map->room;
+        struct node *node = map->list + hash % map->room;
         struct node *tail = map->list + map->room;
-        struct node *node = map->list + hash;
         struct node *temp = NULL;
         
         if (node->data != NULL) do
@@ -217,11 +225,17 @@ void *hashmap_delete(hashmap *map, const void *data)
 }
 
 void *hashmap_search(const hashmap *map, const void *data)
-{   
+{
+    if ((map == NULL) || (data == NULL))
+    {
+        return NULL;
+    }
+
+    unsigned long hash = map->hash(data);
+
     while (map != NULL)
     {
-        size_t hash = map->hash(data) % map->room;
-        struct node *node = map->list + hash;
+        struct node *node = map->list + hash % map->room;
 
         if (node->data != NULL) do
         {
@@ -319,7 +333,7 @@ void hashmap_destroy(hashmap *map, void (*func)(void *))
 unsigned long hash_string(unsigned char *key)
 {
     unsigned long hash = 5381;
-    unsigned int chr;
+    unsigned char chr;
 
     while ((chr = *key++))
     {
@@ -336,7 +350,7 @@ unsigned long hash_ulong(unsigned long key)
     return key;
 }
 
-unsigned long hash_ullong(unsigned long long int key)
+unsigned long hash_ullong(unsigned long long key)
 {
     key = (key ^ (key >> 30)) * 0xbf58476d1ce4e5b9;
     key = (key ^ (key >> 27)) * 0x94d049bb133111eb;
