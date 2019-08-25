@@ -82,13 +82,16 @@ void *skiplist_insert(skiplist *list, void *data)
 
             if (comp > 0)
             {
-                break;   
+                break;
             }
-            if (comp == 0)
+            if (comp < 0)
+            {
+                node = node->next[level];
+            }
+            else
             {
                 return node->next[level]->data;
             }
-            node = node->next[level];
         }
         nodes[level] = node;
     }
@@ -119,40 +122,44 @@ void *skiplist_delete(skiplist *list, const void *data)
         return NULL;
     }
 
-    struct node *nodes[SKIPLIST_MAX_LEVEL];
     struct node *node = list->head;
+    struct node *item = NULL;
 
     for (int level = list->levels; level >= 0; level--)
     {
-        while ((node->next[level] != list->head) &&
-               (list->comp(node->next[level]->data, data) < 0))
+        while (node->next[level] != list->head)
         {
+            int comp = list->comp(node->next[level]->data, data);
+
+            if (comp > 0)
+            {
+                break;
+            }
+            if (comp == 0)
+            {
+                if (item == NULL)
+                {
+                    item = node->next[0];
+                }
+                node->next[level] = item->next[level];
+                break;
+            }
             node = node->next[level];
         }
-        nodes[level] = node;
     }
-    node = node->next[0];
-    if ((node == list->head) || (list->comp(node->data, data) != 0))
+    if (item != NULL)
     {
-        return NULL;
-    }
-    for (int level = 0; level <= list->levels; level++)
-    {
-        if (nodes[level]->next[level] != node)
+        while ((list->levels > 0) && (list->head->next[list->levels] == list->head))
         {
-            break;
+            list->levels--;
         }
-        nodes[level]->next[level] = node->next[level];
-    }
-    while ((list->levels > 0) && (list->head->next[list->levels] == list->head))
-    {
-        list->levels--;
-    }
 
-    void *temp = node->data;
+        void *res = item->data;
 
-    free(node);
-    return temp;
+        free(item);
+        return res;
+    }
+    return NULL;
 }
 
 void *skiplist_search(skiplist *list, const void *data)
@@ -172,50 +179,72 @@ void *skiplist_search(skiplist *list, const void *data)
 
             if (comp > 0)
             {
-                break;   
+                break;
             }
-            if (comp == 0)
+            if (comp < 0)
+            {
+                node = node->next[level];
+            }
+            else
             {
                 return node->next[level]->data;
             }
-            node = node->next[level];
         }
+
     }
     return NULL;
 }
 
-void *skiplist_fetch(skiplist *list, struct cursor *cursor)
+static struct node *fetch(skiplist *list, const void *data,
+    int (*comp)(const void *, const void *))
 {
-    if (list == NULL)
+    struct node *node = list->head;
+
+    for (int level = list->levels; level >= 0; level--)
+    {
+        while (node->next[level] != list->head)
+        {
+            if (comp(node->next[level]->data, data) >= 0)
+            {
+                break;
+            }
+            node = node->next[level];
+        }
+    }
+    return node;
+}
+
+void *skiplist_fetch(skiplist *list, void **cursor, const void *data,
+    int (*comp)(const void *, const void *))
+{
+    if ((list == NULL) || (cursor == NULL))
     {
         return NULL;
     }
 
     struct node *node;
 
-    if (cursor->node == NULL)
+    if (*cursor == NULL)
     {
-        node = list->head;
-        if ((cursor->comp != NULL) && (cursor->data != NULL))
+        if ((comp != NULL) && (data != NULL))
         {
-            for (int level = list->levels; level >= 0; level--)
-            {
-                while ((node->next[level] != list->head) &&
-                       (cursor->comp(node->next[level]->data, cursor->data) < 0))
-                {
-                    node = node->next[level];
-                }
-            }
+            node = fetch(list, data, comp);
+            comp = NULL;
+        }
+        else
+        {
+            node = list->head;
         }
     }
     else
     {
-        node = cursor->node;
+        node = *cursor;
     }
-    node = cursor->node = node->next[0]; // TODO: Check out this
-    if ((cursor->comp != NULL) &&
-        (cursor->data != NULL) && (node->data != NULL) &&
-        (cursor->comp(node->data, cursor->data) != 0))
+    *cursor = node = node->next[0];
+    if ((comp != NULL) &&
+        (data != NULL) &&
+        (node->data != NULL) &&
+        (comp(node->data, data) != 0))
     {
         return NULL;
     }

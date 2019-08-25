@@ -25,37 +25,35 @@ static int comp_range(const void *a, const void *b)
     const struct data *data = a;
     const int *range = b;
 
-    return (range[0] > data->key) ? -1 : !((data->key >= range[0]) && (data->key <= range[1]));
+    return (data->key < range[0]) ? -1 : data->key > range[1];
 }
 
 static void walk(skiplist *list)
 {
-    struct cursor cursor = {NULL};
+    void *cursor = NULL;
     struct data *data;
     int count = 0;
  
     printf("First 5 records:\n");
-    while ((data = skiplist_fetch(list, &cursor)))
+    while ((data = skiplist_fetch(list, &cursor, NULL, NULL)))
     {
         printf("%d %s fetched\n", data->key, data->value);
-        if (++count > 4) {
-            break;
+        if (++count == 5) {
+            return;
         }
     }
-    printf("\n");
 }
 
 static void filter(skiplist *list, int min, int max)
 {
-    struct cursor cursor = {.comp = comp_range, .data = (int []){min, max}};
+    void *cursor = NULL;
     struct data *data;
 
     printf("Filtering records from %d to %d\n", min, max);
-    while ((data = skiplist_fetch(list, &cursor)))
+    while ((data = skiplist_fetch(list, &cursor, (int []){min, max}, comp_range)))
     {
         printf("%d %s fetched\n", data->key, data->value);
     }
-    printf("\n");
 }
 
 static char *keytostr(int key)
