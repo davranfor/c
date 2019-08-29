@@ -190,7 +190,6 @@ void *skiplist_search(skiplist *list, const void *data)
                 return node->next[level]->data;
             }
         }
-
     }
     return NULL;
 }
