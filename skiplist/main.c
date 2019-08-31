@@ -65,11 +65,10 @@ static char *keytostr(int key)
 
     char *str = malloc(len + 1);
 
-    if (str == NULL)
+    if (str != NULL)
     {
-        return NULL;
+        memcpy(str, buf, len + 1);
     }
-    memcpy(str, buf, len + 1);
     return str;
 }
 
