@@ -4,8 +4,6 @@
 #include <time.h>
 #include "skiplist.h"
 
-#define NELEMS 1000000
-
 struct data
 {
     int key;
@@ -87,6 +85,8 @@ static void clean(void)
 
 int main(void)
 {
+    #define NELEMS 1000000
+
     atexit(clean);
     srand((unsigned)time(NULL));
 
