@@ -15,7 +15,7 @@ static int comp_key(const void *pa, const void *pb)
     const struct data *a = pa;
     const struct data *b = pb;
 
-    return a->key - b->key;
+    return a->key < b->key ? -1 : a->key > b->key;
 }
 
 static int comp_pkey(const void *pa, const void *pb)
@@ -23,7 +23,7 @@ static int comp_pkey(const void *pa, const void *pb)
     const struct data * const *a = pa;
     const struct data * const *b = pb;
 
-    return (*a)->key - (*b)->key;
+    return (*a)->key < (*b)->key ? -1 : (*a)->key > (*b)->key;
 }
 
 static unsigned long hash_key(const void *item)
