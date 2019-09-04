@@ -66,7 +66,7 @@ hashmap *hashmap_create(
     return map;
 }
 
-static void hashmap_move(hashmap *map)
+static void reset(hashmap *map)
 {
     free(map->list);
     map->list = map->next->list;
@@ -76,7 +76,7 @@ static void hashmap_move(hashmap *map)
     free(map->next);
 }
 
-static hashmap *hashmap_rehash(hashmap *map, struct node *node)
+static hashmap *rehash(hashmap *map, struct node *node)
 {
     size_t size = map->size;
 
@@ -102,7 +102,7 @@ static hashmap *hashmap_rehash(hashmap *map, struct node *node)
     }
     if (map->size == 0)
     {
-        hashmap_move(map);
+        reset(map);
         return map;
     }
     return map->next;
@@ -126,7 +126,7 @@ void *hashmap_insert(hashmap *map, void *data)
         {
             if (node->data != NULL)
             {
-                map = hashmap_rehash(map, node);
+                map = rehash(map, node);
             }
             else
             {
@@ -209,7 +209,7 @@ void *hashmap_delete(hashmap *map, const void *data)
                 }
                 if ((--map->size == 0) && (map->next != NULL))
                 {
-                    hashmap_move(map);
+                    reset(map);
                 }
                 return result;
             }
