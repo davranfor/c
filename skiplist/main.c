@@ -15,7 +15,7 @@ static int comp_key(const void *a, const void *b)
     const struct data *pa = a;
     const struct data *pb = b;
 
-    return (pa->key < pb->key) ? -1 : (pa->key != pb->key);
+    return pa->key < pb->key ? -1 : pa->key > pb->key;
 }
 
 static int comp_range(const void *a, const void *b)
@@ -23,7 +23,7 @@ static int comp_range(const void *a, const void *b)
     const struct data *data = a;
     const int *range = b;
 
-    return (data->key < range[0]) ? -1 : data->key > range[1];
+    return data->key < range[0] ? -1 : data->key > range[1];
 }
 
 static void walk(skiplist *list)
