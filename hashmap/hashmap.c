@@ -329,7 +329,7 @@ void hashmap_destroy(hashmap *map, void (*func)(void *))
     }
 }
 
-unsigned long hash_string(unsigned char *key)
+unsigned long hash_string(const unsigned char *key)
 {
     unsigned long hash = 5381;
     unsigned char chr;

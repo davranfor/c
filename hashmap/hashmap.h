@@ -20,7 +20,7 @@ void *hashmap_search(const hashmap *, const void *);
 size_t hashmap_size(const hashmap *);
 void *hashmap_copy(const hashmap *, size_t *);
 void hashmap_destroy(hashmap *, void (*)(void *));
-unsigned long hash_string(unsigned char *);
+unsigned long hash_string(const unsigned char *);
 unsigned long hash_ulong(unsigned long);
 unsigned long hash_ullong(unsigned long long);
 
