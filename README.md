@@ -1,5 +1,5 @@
 # c
-C generic data structures and uutilities
+C generic data structures and utilities
 - HashMap - Optimized hash table
 - JSON - A ligthweight JSON parser
 - SkipList - Fast CRUD operations on a list 
