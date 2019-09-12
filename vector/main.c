@@ -34,11 +34,9 @@ static int comp(const void *pa, const void *pb)
     return a->key < b->key ? -1 : a->key > b->key;
 }
 
-static void destroy(void *ptr)
+static void destroy(void *data)
 {
-    struct data *data = ptr;
-
-    free(data->value);
+    free(((struct data *)data)->value);
 }
 
 int main(void)
@@ -52,7 +50,10 @@ int main(void)
         perror("vector_create");
         exit(EXIT_FAILURE);
     }
-    for (size_t i = 0; i < 10; i++)
+
+    size_t size = (size_t)rand() % 10 + 5;
+
+    for (size_t i = 0; i < size; i++)
     {
         data = vector_resize(data);
         if (data == NULL)
@@ -69,15 +70,13 @@ int main(void)
         }
     }
     vector_sort(data, comp);
-
-    size_t size = vector_size(data);
-
+    size = vector_size(data);
     for (size_t i = 0; i < size; i++)
     {
         printf("%03d %s\n", data[i].key, data[i].value);
     }
 
-    struct data *item = data + vector_size(data) / 2;
+    struct data *item = data + size / 2;
 
     printf("Searching %d\n", item->key);
     item = vector_search(item, data, comp);
