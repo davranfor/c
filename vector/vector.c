@@ -37,82 +37,27 @@ void *vector_create(size_t szof)
     return vector->data;
 }
 
-void vector_destroy(void *data, void (*func)(void *))
+void *vector_resize(void *data)
 {
     struct vector *vector = VECTOR(data);
-
-    if (func != NULL)
-    {
-        for (size_t item = 0; item < vector->size; item++)
-        {
-            func(VECTOR_ITEM(vector, item));
-        }
-    }
-    free(vector);
-}
-
-size_t vector_size(const void *data)
-{
-    return CONST_VECTOR(data)->size;
-}
-
-static struct vector *resize(void *data)
-{
-    struct vector *vector = VECTOR(*(void **)data);
     struct vector *new = vector;
 
     if (vector->size >= vector->room)
     {
         vector->room *= 2;
         new = realloc(vector, sizeof(*vector) + vector->szof * vector->room);
-        if (new != NULL)
+        if (new == NULL)
         {
-            *(void **)data = new->data;
+            return NULL;
         }
     }
-    return new;
+    new->size++;
+    return new->data;
 }
 
-void *vector_add(void *data)
+size_t vector_size(const void *data)
 {
-    struct vector *vector = resize(data);
-
-    if (vector == NULL)
-    {
-        return NULL;
-    }
-    return VECTOR_ITEM(vector, vector->size++);
-}
-
-void *vector_cat(void *data, const void *value)
-{
-    struct vector *vector = resize(data);
-
-    if (vector == NULL)
-    {
-        return NULL;
-    }
-    memcpy(VECTOR_ITEM(vector, vector->size), value, vector->szof);
-    return VECTOR_ITEM(vector, vector->size++);
-}
-
-void *vector_new(void *data, size_t size)
-{
-    struct vector *vector = resize(data);
-
-    if (vector == NULL)
-    {
-        return NULL;
-    }
-
-    void *item = malloc(size);
-
-    if (item == NULL)
-    {
-        return NULL;
-    }
-    memcpy(VECTOR_ITEM(vector, vector->size), &item, vector->szof);
-    return VECTOR_ITEM(vector, vector->size++);
+    return CONST_VECTOR(data)->size;
 }
 
 void vector_sort(void *base, int (*comp)(const void *, const void *))
@@ -127,5 +72,19 @@ void *vector_search(const void *key, const void *base, int (*comp)(const void *,
     const struct vector *vector = CONST_VECTOR(base);
 
     return bsearch(key, vector->data, vector->size, vector->szof, comp);
+}
+
+void vector_destroy(void *data, void (*func)(void *))
+{
+    struct vector *vector = VECTOR(data);
+
+    if (func != NULL)
+    {
+        for (size_t item = 0; item < vector->size; item++)
+        {
+            func(VECTOR_ITEM(vector, item));
+        }
+    }
+    free(vector);
 }
 

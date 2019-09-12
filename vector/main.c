@@ -26,23 +26,25 @@ static char *keytostr(int key)
     return str;
 }
 
-static int comp_stack(const void *pa, const void *pb)
+static int comp(const void *pa, const void *pb)
 {
     const struct data *a = pa;
     const struct data *b = pb;
 
-    return a->key - b->key;
+    return a->key < b->key ? -1 : a->key > b->key;
 }
 
-static void destroy_stack(void *ptr)
+static void destroy(void *ptr)
 {
     struct data *data = ptr;
 
     free(data->value);
 }
 
-static void demo_stack(void)
+int main(void)
 {
+    srand((unsigned)time(NULL));
+
     struct data *data = vector_create(sizeof *data);
 
     if (data == NULL)
@@ -50,128 +52,38 @@ static void demo_stack(void)
         perror("vector_create");
         exit(EXIT_FAILURE);
     }
-
-    size_t size = (size_t)rand() % 10 + 1;
-
-    printf("%zu items\n", size);
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < 10; i++)
     {
-        if (vector_add(&data) == NULL)
+        data = vector_resize(data);
+        if (data == NULL)
         {
-            perror("vector_add");
+            perror("vector_resize");
             exit(EXIT_FAILURE);
         }
         data[i].key = rand() % 1000;
         data[i].value = keytostr(data[i].key);
+        if (data[i].value == NULL)
+        {
+            perror("keytostr");
+            exit(EXIT_FAILURE);
+        }
     }
-    vector_sort(data, comp_stack);
-    size = vector_size(data);
+    vector_sort(data, comp);
+
+    size_t size = vector_size(data);
+
     for (size_t i = 0; i < size; i++)
     {
         printf("%03d %s\n", data[i].key, data[i].value);
     }
-    vector_destroy(data, destroy_stack);
-}
 
-static int comp_heap(const void *pa, const void *pb)
-{
-    const struct data * const *a = pa;
-    const struct data * const *b = pb;
+    struct data *item = data + vector_size(data) / 2;
 
-    return (*a)->key - (*b)->key;
-}
+    printf("Searching %d\n", item->key);
+    item = vector_search(item, data, comp);
+    printf("%03d %s\n", item->key, item->value);
 
-static void destroy_heap(void *ptr)
-{
-    struct data **data = ptr;
-
-    free((*data)->value);
-    free((*data));
-}
-
-static void demo_heap(void)
-{
-    struct data **data = vector_create(sizeof *data);
-
-    if (data == NULL)
-    {
-        perror("vector_create");
-        exit(EXIT_FAILURE);
-    }
-
-    size_t size = (size_t)rand() % 10 + 1;
-
-    printf("%zu items\n", size);
-    for (size_t i = 0; i < size; i++)
-    {
-        if (vector_new(&data, sizeof **data) == NULL)
-        {
-            perror("vector_new");
-            exit(EXIT_FAILURE);
-        }
-        data[i]->key = rand() % 1000;
-        data[i]->value = keytostr(data[i]->key);
-    }
-    vector_sort(data, comp_heap);
-    size = vector_size(data);
-    for (size_t i = 0; i < size; i++)
-    {
-        printf("%03d %s\n", data[i]->key, data[i]->value);
-    }
-    vector_destroy(data, destroy_heap);
-}
-
-static int comp_primitive(const void *pa, const void *pb)
-{
-    const int *a = pa;
-    const int *b = pb;
-
-    return *a - *b;
-}
-
-static void demo_primitive(void)
-{
-    int *data = vector_create(sizeof *data);
-
-    if (data == NULL)
-    {
-        perror("vector_create");
-        exit(EXIT_FAILURE);
-    }
-
-    size_t size = (size_t)rand() % 10 + 1;
-    int r = 0;
-
-    printf("%zu items\n", size);
-    for (size_t i = 0; i < size; i++)
-    {
-        r = rand();
-        if (vector_cat(&data, &r) == NULL)
-        {
-            perror("vector_cat");
-            exit(EXIT_FAILURE);
-        }
-    }
-    vector_sort(data, comp_primitive);
-    size = vector_size(data);
-    for (size_t i = 0; i < size; i++)
-    {
-        printf("%d\n", data[i]);
-    }
-    printf("Searching %d\n", r);
-    printf("%d\n", *(int *)vector_search(&r, data, comp_primitive));
-    vector_destroy(data, NULL);
-}
-
-int main(void)
-{
-    srand((unsigned)time(NULL));
-    puts("Sample on stack:");
-    demo_stack();
-    puts("Sample on heap:");
-    demo_heap();
-    puts("Sample on primitive:");
-    demo_primitive();
+    vector_destroy(data, destroy);
     return 0;
 }
 
