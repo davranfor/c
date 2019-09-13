@@ -37,20 +37,25 @@ void *vector_create(size_t szof)
 
 void *vector_resize(void *data)
 {
-    struct vector *vector = VECTOR(data);
-    struct vector *new = vector;
+    struct vector *vector = VECTOR(*(void **)data);
 
-    if (vector->size >= vector->room)
+    if (vector->size == vector->room)
     {
-        vector->room *= 2;
-        new = realloc(vector, sizeof(*vector) + vector->szof * vector->room);
+        struct vector *new;
+
+        new = realloc(vector, sizeof(*vector) + vector->szof * vector->room * 2);
         if (new == NULL)
         {
             return NULL;
         }
+        new->room *= 2;
+        *(void **)data = new->data;
+        return VECTOR_ITEM(new, new->size++);
     }
-    new->size++;
-    return new->data;
+    else
+    {
+        return VECTOR_ITEM(vector, vector->size++);
+    }
 }
 
 size_t vector_size(const void *data)

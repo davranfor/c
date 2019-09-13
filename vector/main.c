@@ -52,18 +52,19 @@ int main(void)
     }
 
     size_t size = (size_t)rand() % 10 + 5;
+    struct data *item;
 
     for (size_t i = 0; i < size; i++)
     {
-        data = vector_resize(data);
-        if (data == NULL)
+        item = vector_resize(&data);
+        if (item == NULL)
         {
             perror("vector_resize");
             exit(EXIT_FAILURE);
         }
-        data[i].key = rand() % 1000;
-        data[i].value = keytostr(data[i].key);
-        if (data[i].value == NULL)
+        item->key = rand() % 1000;
+        item->value = keytostr(item->key);
+        if (item->value == NULL)
         {
             perror("keytostr");
             exit(EXIT_FAILURE);
@@ -75,13 +76,10 @@ int main(void)
     {
         printf("%03d %s\n", data[i].key, data[i].value);
     }
-
-    struct data *item = data + size / 2;
-
+    item = data + size / 2;
     printf("Searching %d\n", item->key);
     item = vector_search(item, data, comp);
     printf("%03d %s\n", item->key, item->value);
-
     vector_destroy(data, destroy);
     return 0;
 }
