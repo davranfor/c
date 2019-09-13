@@ -51,7 +51,7 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    size_t size = (size_t)rand() % 10 + 5;
+    size_t size = (size_t)rand() % 10 + 1;
     struct data *item;
 
     for (size_t i = 0; i < size; i++)
@@ -70,8 +70,8 @@ int main(void)
             exit(EXIT_FAILURE);
         }
     }
+    printf("%zu elements:\n", vector_size(data));
     vector_sort(data, comp);
-    size = vector_size(data);
     for (size_t i = 0; i < size; i++)
     {
         printf("%03d %s\n", data[i].key, data[i].value);
