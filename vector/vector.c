@@ -41,21 +41,15 @@ void *vector_resize(void *data)
 
     if (vector->size == vector->room)
     {
-        struct vector *new;
-
-        new = realloc(vector, sizeof(*vector) + vector->szof * vector->room * 2);
-        if (new == NULL)
+        vector = realloc(vector, sizeof(*vector) + vector->szof * vector->room * 2);
+        if (vector == NULL)
         {
             return NULL;
         }
-        new->room *= 2;
-        *(void **)data = new->data;
-        return VECTOR_ITEM(new, new->size++);
+        vector->room *= 2;
+        *(void **)data = vector->data;
     }
-    else
-    {
-        return VECTOR_ITEM(vector, vector->size++);
-    }
+    return VECTOR_ITEM(vector, vector->size++);
 }
 
 size_t vector_size(const void *data)
