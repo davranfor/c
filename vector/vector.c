@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
 #include "vector.h"
 
 #define CONST_VECTOR(v) ((const struct vector *)((const unsigned char *)(v) - offsetof(struct vector, data)))
@@ -49,6 +50,72 @@ void *vector_resize(void *data)
         *(void **)data = vector->data;
     }
     return VECTOR_ITEM(vector, vector->size++);
+}
+
+void *vector_shrink(void *data, void (*func)(void *))
+{
+    struct vector *vector = VECTOR(*(void **)data);
+
+    if (vector->size == 0)
+    {
+        return vector->data;
+    }
+    if (func != NULL)
+    {
+        func(VECTOR_ITEM(vector, vector->size - 1));
+    }
+    if ((vector->size > 1) && (vector->size - 1 == vector->room / 4))
+    {
+        vector = realloc(vector, sizeof(*vector) + vector->szof * vector->room / 2);
+        if (vector == NULL)
+        {
+            return NULL;
+        }
+        vector->room /= 2;
+        *(void **)data = vector->data;
+    }
+    return VECTOR_ITEM(vector, --vector->size);
+}
+
+static size_t next_size(size_t size)
+{
+    size--;
+    size |= size >> 1;
+    size |= size >> 2;
+    size |= size >> 4;
+    size |= size >> 8;
+    size |= size >> 16;
+    if (sizeof(size) >= 8)
+    {
+        size |= size >> 32;
+    }
+    size++;
+    return size;
+}
+
+void *vector_copy(void *target, const void *source, size_t size)
+{
+    struct vector *vector = VECTOR(*(void **)target);
+
+    if (size == 0)
+    {
+        return vector->data;
+    }
+    if (vector->size + size >= vector->room)
+    {
+        size_t room = next_size(vector->size + size + 1);
+
+        vector = realloc(vector, sizeof(*vector) + vector->szof * room);
+        if (vector == NULL)
+        {
+            return NULL;
+        }
+        vector->room = room;
+        *(void **)target = vector->data;
+    }
+    target = memcpy(VECTOR_ITEM(vector, vector->size), source, vector->szof * size);
+    vector->size += size;
+    return target;
 }
 
 size_t vector_size(const void *data)
