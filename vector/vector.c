@@ -60,21 +60,22 @@ void *vector_shrink(void *data, void (*func)(void *))
     {
         return vector->data;
     }
+    vector->size--;
     if (func != NULL)
     {
-        func(VECTOR_ITEM(vector, vector->size - 1));
+        func(VECTOR_ITEM(vector, vector->size));
     }
-    if ((vector->size > 1) && (vector->size - 1 == vector->room / 4))
+    if ((vector->size > 0) && (vector->size == vector->room / 4))
     {
-        vector = realloc(vector, sizeof(*vector) + vector->szof * vector->room / 2);
+        vector->room /= 2;
+        vector = realloc(vector, sizeof(*vector) + vector->szof * vector->room);
         if (vector == NULL)
         {
             return NULL;
         }
-        vector->room /= 2;
         *(void **)data = vector->data;
     }
-    return VECTOR_ITEM(vector, --vector->size);
+    return VECTOR_ITEM(vector, vector->size - 1);
 }
 
 static size_t next_size(size_t size)

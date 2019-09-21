@@ -49,12 +49,19 @@ static void print(struct data *data)
     }
 }
 
+static struct data *data;
+
+static void clean(void)
+{
+    vector_destroy(data, destroy);
+}
+
 int main(void)
 {
+    atexit(clean);
     srand((unsigned)time(NULL));
 
-    struct data *data = vector_create(sizeof *data);
-
+    data = vector_create(sizeof *data);
     if (data == NULL)
     {
         perror("vector_create");
@@ -81,7 +88,7 @@ int main(void)
         }
     }
     item = (struct data[]){{10, keytostr(10)}, {11, keytostr(11)}};
-    if (item == NULL)
+    if ((item[0].value == NULL) || (item[1].value == NULL))
     {
         perror("keytostr");
         exit(EXIT_FAILURE);
@@ -114,7 +121,6 @@ int main(void)
     }
     puts("Last element deleted");
     print(data);
-    vector_destroy(data, destroy);
     return 0;
 }
 
