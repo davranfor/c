@@ -114,12 +114,12 @@ int main(void)
     {
         puts("Not found");
     }
+    puts("Deleting last element");
     if (vector_shrink(&data, destroy) == NULL)
     {
         perror("vector_shrink");
         exit(EXIT_FAILURE);
     }
-    puts("Last element deleted");
     print(data);
     return 0;
 }

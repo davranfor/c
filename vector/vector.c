@@ -65,7 +65,7 @@ void *vector_shrink(void *data, void (*func)(void *))
     {
         func(VECTOR_ITEM(vector, vector->size));
     }
-    if ((vector->size > 0) && (vector->size == vector->room / 4))
+    if ((vector->size > 0) && (vector->size == vector->room / 2))
     {
         vector->room /= 2;
         vector = realloc(vector, sizeof(*vector) + vector->szof * vector->room);
@@ -104,7 +104,7 @@ void *vector_copy(void *target, const void *source, size_t size)
     }
     if (vector->size + size >= vector->room)
     {
-        size_t room = next_size(vector->size + size + 1);
+        size_t room = next_size(vector->size + size);
 
         vector = realloc(vector, sizeof(*vector) + vector->szof * room);
         if (vector == NULL)
