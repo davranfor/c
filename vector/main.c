@@ -93,7 +93,7 @@ int main(void)
         perror("keytostr");
         exit(EXIT_FAILURE);
     }
-    if (vector_copy(&data, item, 2) == NULL)
+    if (vector_concat(&data, item, 2) == NULL)
     {
         perror("vector_copy");
         exit(EXIT_FAILURE);

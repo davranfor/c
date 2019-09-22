@@ -94,7 +94,7 @@ static size_t next_size(size_t size)
     return size;
 }
 
-void *vector_copy(void *target, const void *source, size_t size)
+void *vector_concat(void *target, const void *source, size_t size)
 {
     struct vector *vector = VECTOR(*(void **)target);
 
