@@ -15,7 +15,6 @@
 
 struct vector
 {
-    size_t room;
     size_t size;
     size_t szof;
     max_align_t data[];
@@ -29,53 +28,9 @@ void *vector_create(size_t szof)
     {
         return NULL;
     }
-    vector->room = 1;
     vector->size = 0;
     vector->szof = szof;
     return vector->data;
-}
-
-void *vector_resize(void *data)
-{
-    struct vector *vector = VECTOR(*(void **)data);
-
-    if (vector->size == vector->room)
-    {
-        vector = realloc(vector, sizeof(*vector) + vector->szof * vector->room * 2);
-        if (vector == NULL)
-        {
-            return NULL;
-        }
-        vector->room *= 2;
-        *(void **)data = vector->data;
-    }
-    return VECTOR_ITEM(vector, vector->size++);
-}
-
-void *vector_shrink(void *data, void (*func)(void *))
-{
-    struct vector *vector = VECTOR(*(void **)data);
-
-    if (vector->size == 0)
-    {
-        return vector->data;
-    }
-    vector->size--;
-    if (func != NULL)
-    {
-        func(VECTOR_ITEM(vector, vector->size));
-    }
-    if ((vector->size > 0) && (vector->size == vector->room / 2))
-    {
-        vector->room /= 2;
-        vector = realloc(vector, sizeof(*vector) + vector->szof * vector->room);
-        if (vector == NULL)
-        {
-            return NULL;
-        }
-        *(void **)data = vector->data;
-    }
-    return VECTOR_ITEM(vector, vector->size - 1);
 }
 
 static size_t next_size(size_t size)
@@ -94,28 +49,74 @@ static size_t next_size(size_t size)
     return size;
 }
 
-void *vector_concat(void *target, const void *source, size_t size)
+void *vector_resize(void *data)
 {
-    struct vector *vector = VECTOR(*(void **)target);
+    struct vector *vector = VECTOR(*(void **)data);
+    size_t size = next_size(vector->size);
 
-    if (size == 0)
+    if ((vector->size > 0) && (vector->size == size))
     {
-        return vector->data;
-    }
-    if (vector->size + size >= vector->room)
-    {
-        size_t room = next_size(vector->size + size);
-
-        vector = realloc(vector, sizeof(*vector) + vector->szof * room);
+        vector = realloc(vector, sizeof(*vector) + vector->szof * size * 2);
         if (vector == NULL)
         {
             return NULL;
         }
-        vector->room = room;
+        *(void **)data = vector->data;
+    }
+    return VECTOR_ITEM(vector, vector->size++);
+}
+
+void *vector_shrink(void *data, void (*func)(void *))
+{
+    struct vector *vector = VECTOR(*(void **)data);
+
+    if (vector->size == 0)
+    {
+        return vector->data;
+    }
+    vector->size--;
+    if (func != NULL)
+    {
+        func(VECTOR_ITEM(vector, vector->size));
+    }
+
+    size_t size = next_size(vector->size);
+
+    if ((vector->size > 0) && (vector->size == size))
+    {
+        vector = realloc(vector, sizeof(*vector) + vector->szof * size);
+        if (vector == NULL)
+        {
+            return NULL;
+        }
+        *(void **)data = vector->data;
+    }
+    return VECTOR_ITEM(vector, vector->size - 1);
+}
+
+void *vector_concat(void *target, const void *source, size_t elms)
+{
+    struct vector *vector = VECTOR(*(void **)target);
+
+    if (elms == 0)
+    {
+        return vector->data;
+    }
+
+    size_t size = next_size(vector->size);
+
+    if (vector->size + elms >= size)
+    {
+        size = next_size(vector->size + elms);
+        vector = realloc(vector, sizeof(*vector) + vector->szof * size);
+        if (vector == NULL)
+        {
+            return NULL;
+        }
         *(void **)target = vector->data;
     }
-    target = memcpy(VECTOR_ITEM(vector, vector->size), source, vector->szof * size);
-    vector->size += size;
+    target = memcpy(VECTOR_ITEM(vector, vector->size), source, vector->szof * elms);
+    vector->size += elms;
     return target;
 }
 
