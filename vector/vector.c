@@ -33,6 +33,11 @@ void *vector_create(size_t szof)
     return vector->data;
 }
 
+static int must_resize(size_t size)
+{
+    return size && (!(size & (size - 1)));  
+}
+
 static size_t next_size(size_t size)
 {
     size--;
@@ -52,11 +57,10 @@ static size_t next_size(size_t size)
 void *vector_resize(void *data)
 {
     struct vector *vector = VECTOR(*(void **)data);
-    size_t size = next_size(vector->size);
 
-    if ((vector->size > 0) && (vector->size == size))
+    if (must_resize(vector->size))
     {
-        vector = realloc(vector, sizeof(*vector) + vector->szof * size * 2);
+        vector = realloc(vector, sizeof(*vector) + vector->szof * vector->size * 2);
         if (vector == NULL)
         {
             return NULL;
@@ -79,12 +83,9 @@ void *vector_shrink(void *data, void (*func)(void *))
     {
         func(VECTOR_ITEM(vector, vector->size));
     }
-
-    size_t size = next_size(vector->size);
-
-    if ((vector->size > 0) && (vector->size == size))
+    if (must_resize(vector->size))
     {
-        vector = realloc(vector, sizeof(*vector) + vector->szof * size);
+        vector = realloc(vector, sizeof(*vector) + vector->szof * vector->size);
         if (vector == NULL)
         {
             return NULL;
