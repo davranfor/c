@@ -35,7 +35,7 @@ void *vector_create(size_t szof)
 
 static int must_resize(size_t size)
 {
-    return size && (!(size & (size - 1)));  
+    return size && !(size & (size - 1));  
 }
 
 static size_t next_size(size_t size)
@@ -95,20 +95,20 @@ void *vector_shrink(void *data, void (*func)(void *))
     return VECTOR_ITEM(vector, vector->size - 1);
 }
 
-void *vector_concat(void *target, const void *source, size_t elms)
+void *vector_concat(void *target, const void *source, size_t items)
 {
     struct vector *vector = VECTOR(*(void **)target);
 
-    if (elms == 0)
+    if (items == 0)
     {
         return vector->data;
     }
 
     size_t size = next_size(vector->size);
 
-    if (vector->size + elms >= size)
+    if (vector->size + items >= size)
     {
-        size = next_size(vector->size + elms);
+        size = next_size(vector->size + items);
         vector = realloc(vector, sizeof(*vector) + vector->szof * size);
         if (vector == NULL)
         {
@@ -116,8 +116,8 @@ void *vector_concat(void *target, const void *source, size_t elms)
         }
         *(void **)target = vector->data;
     }
-    target = memcpy(VECTOR_ITEM(vector, vector->size), source, vector->szof * elms);
-    vector->size += elms;
+    target = memcpy(VECTOR_ITEM(vector, vector->size), source, vector->szof * items);
+    vector->size += items;
     return target;
 }
 
