@@ -109,7 +109,7 @@ static void *dec(void *data, size_t size)
         }
         *(void **)data = vector->data;
     }
-    return VECTOR_ITEM(vector, vector->size - 1);
+    return VECTOR_ITEM(vector, vector->size);
 }
 
 void *vector_resize(void *data, int size)
