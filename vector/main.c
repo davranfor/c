@@ -53,7 +53,7 @@ static struct data *data;
 
 static void clean(void)
 {
-    vector_destroy(data, destroy);
+    vector_destroy(data);
 }
 
 int main(void)
@@ -61,7 +61,7 @@ int main(void)
     atexit(clean);
     srand((unsigned)time(NULL));
 
-    data = vector_create(sizeof *data);
+    data = vector_create(sizeof *data, destroy);
     if (data == NULL)
     {
         perror("vector_create");
@@ -73,7 +73,7 @@ int main(void)
 
     for (size_t i = 0; i < size; i++)
     {
-        item = vector_resize(&data);
+        item = vector_resize(&data, +1);
         if (item == NULL)
         {
             perror("vector_resize");
@@ -95,7 +95,7 @@ int main(void)
     }
     if (vector_concat(&data, item, 2) == NULL)
     {
-        perror("vector_copy");
+        perror("vector_concat");
         exit(EXIT_FAILURE);
     }
     printf("Inserted: %zu elements\n", vector_size(data));
@@ -115,9 +115,9 @@ int main(void)
         puts("Not found");
     }
     puts("Deleting last element");
-    if (vector_shrink(&data, destroy) == NULL)
+    if (vector_resize(&data, -1) == NULL)
     {
-        perror("vector_shrink");
+        perror("vector_resize");
         exit(EXIT_FAILURE);
     }
     print(data);

@@ -13,14 +13,17 @@
 #define VECTOR(v) ((struct vector *)((unsigned char *)(v) - offsetof(struct vector, data)))
 #define VECTOR_ITEM(v, i) ((unsigned char *)(v)->data + (v)->szof * (i))
 
+typedef void (*fncdel)(void *);
+
 struct vector
 {
     size_t size;
     size_t szof;
+    fncdel fdel;
     max_align_t data[];
 };
 
-void *vector_create(size_t szof)
+void *vector_create(size_t szof, fncdel fdel)
 {
     struct vector *vector = malloc(sizeof(*vector) + szof);
 
@@ -30,12 +33,8 @@ void *vector_create(size_t szof)
     }
     vector->size = 0;
     vector->szof = szof;
+    vector->fdel = fdel;
     return vector->data;
-}
-
-static int must_resize(size_t size)
-{
-    return size && !(size & (size - 1));  
 }
 
 static size_t next_size(size_t size)
@@ -54,70 +53,102 @@ static size_t next_size(size_t size)
     return size;
 }
 
-void *vector_resize(void *data)
+static void *inc(void *data, size_t size)
 {
     struct vector *vector = VECTOR(*(void **)data);
+    size_t room = next_size(vector->size);
 
-    if (must_resize(vector->size))
+    if (vector->size + size >= room)
     {
-        vector = realloc(vector, sizeof(*vector) + vector->szof * vector->size * 2);
+        room = next_size(vector->size + size);
+        vector = realloc(vector, sizeof(*vector) + vector->szof * room);
         if (vector == NULL)
         {
             return NULL;
         }
         *(void **)data = vector->data;
     }
-    return VECTOR_ITEM(vector, vector->size++);
+    data = VECTOR_ITEM(vector, vector->size);
+    vector->size += size;
+    return data;
 }
 
-void *vector_shrink(void *data, void (*func)(void *))
+static void *dec(void *data, size_t size)
 {
     struct vector *vector = VECTOR(*(void **)data);
 
     if (vector->size == 0)
     {
-        return vector->data;
+        return data;
     }
-    vector->size--;
-    if (func != NULL)
+
+    size_t room = next_size(vector->size);
+
+    if (size > vector->size)
     {
-        func(VECTOR_ITEM(vector, vector->size));
+        size = vector->size;
     }
-    if (must_resize(vector->size))
+    if (vector->fdel != NULL)
     {
-        vector = realloc(vector, sizeof(*vector) + vector->szof * vector->size);
+        while (size--)
+        {
+            vector->fdel(VECTOR_ITEM(vector, --vector->size));
+        }
+    }
+    else
+    {
+        vector->size -= size;
+    }
+    if (vector->size <= room / 2)
+    {
+        room = next_size(vector->size);
+        vector = realloc(vector, sizeof(*vector) + vector->szof * room);
         if (vector == NULL)
         {
             return NULL;
         }
         *(void **)data = vector->data;
     }
-    return VECTOR_ITEM(vector, vector->size - 1);
+    data = VECTOR_ITEM(vector, vector->size);
+    return data;
 }
 
-void *vector_concat(void *target, const void *source, size_t items)
+void *vector_resize(void *data, int size)
+{
+    if (size > 0)
+    {
+        return inc(data, (size_t)+size);
+    }
+    if (size < 0)
+    {
+        return dec(data, (size_t)-size);
+    }
+    return NULL;
+}
+
+void *vector_concat(void *target, const void *source, size_t size)
 {
     struct vector *vector = VECTOR(*(void **)target);
 
-    if (items == 0)
+    if (size == 0)
     {
-        return vector->data;
+        return NULL;
     }
 
-    size_t size = next_size(vector->size);
+    size_t room = next_size(vector->size);
 
-    if (vector->size + items >= size)
+    if (vector->size + size >= room)
     {
-        size = next_size(vector->size + items);
-        vector = realloc(vector, sizeof(*vector) + vector->szof * size);
+        room = next_size(vector->size + size);
+        vector = realloc(vector, sizeof(*vector) + vector->szof * room);
         if (vector == NULL)
         {
             return NULL;
         }
         *(void **)target = vector->data;
     }
-    target = memcpy(VECTOR_ITEM(vector, vector->size), source, vector->szof * items);
-    vector->size += items;
+    target = memcpy(VECTOR_ITEM(vector, vector->size), source, vector->szof * size);
+    vector->size += size;
     return target;
 }
 
@@ -140,15 +171,25 @@ void *vector_search(const void *key, const void *base, int (*comp)(const void *,
     return bsearch(key, vector->data, vector->size, vector->szof, comp);
 }
 
-void vector_destroy(void *data, void (*func)(void *))
+void *vector_clear(void *data)
+{
+    struct vector *vector = VECTOR(data);
+    size_t szof = vector->szof;
+    fncdel fdel = vector->fdel;
+
+    vector_destroy(data);
+    return vector_create(szof, fdel);
+}
+
+void vector_destroy(void *data)
 {
     struct vector *vector = VECTOR(data);
 
-    if (func != NULL)
+    if (vector->fdel != NULL)
     {
         for (size_t item = 0; item < vector->size; item++)
         {
-            func(VECTOR_ITEM(vector, item));
+            vector->fdel(VECTOR_ITEM(vector, item));
         }
     }
     free(vector);
