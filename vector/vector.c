@@ -101,7 +101,7 @@ static void *dec(void *data, size_t size)
     }
     if (vector->size <= room / 2)
     {
-        room = next_size(vector->size);
+        room = (vector->size == 0) ? 1 : next_size(vector->size);
         vector = realloc(vector, sizeof(*vector) + vector->szof * room);
         if (vector == NULL)
         {
@@ -109,8 +109,7 @@ static void *dec(void *data, size_t size)
         }
         *(void **)data = vector->data;
     }
-    data = VECTOR_ITEM(vector, vector->size);
-    return data;
+    return VECTOR_ITEM(vector, vector->size - 1);
 }
 
 void *vector_resize(void *data, int size)
