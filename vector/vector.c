@@ -53,6 +53,11 @@ static size_t next_size(size_t size)
     return size;
 }
 
+static void *resize(struct vector *vector, size_t size)
+{
+    return realloc(vector, sizeof(*vector) + vector->szof * size);
+}
+
 static void *increment(void *data, size_t size)
 {
     struct vector *vector = VECTOR(*(void **)data);
@@ -61,7 +66,7 @@ static void *increment(void *data, size_t size)
     if (vector->size + size >= room)
     {
         room = next_size(vector->size + size);
-        vector = realloc(vector, sizeof(*vector) + vector->szof * room);
+        vector = resize(vector, room);
         if (vector == NULL)
         {
             return NULL;
@@ -102,7 +107,7 @@ static void *decrement(void *data, size_t size)
     if (vector->size <= room / 2)
     {
         room = (vector->size == 0) ? 1 : next_size(vector->size);
-        vector = realloc(vector, sizeof(*vector) + vector->szof * room);
+        vector = resize(vector, room);
         if (vector == NULL)
         {
             return NULL;
@@ -146,7 +151,7 @@ void *vector_copy(void *target, const void *source, size_t size)
     if ((diff > 0) && (vector->size + diff >= room))
     {
         room = next_size(vector->size + diff);
-        vector = realloc(vector, sizeof(*vector) + vector->szof * room);
+        vector = resize(vector, room);
         if (vector == NULL)
         {
             return NULL;
@@ -171,7 +176,7 @@ void *vector_concat(void *target, const void *source, size_t size)
     if (vector->size + size >= room)
     {
         room = next_size(vector->size + size);
-        vector = realloc(vector, sizeof(*vector) + vector->szof * room);
+        vector = resize(vector, room);
         if (vector == NULL)
         {
             return NULL;
@@ -195,11 +200,33 @@ void vector_sort(void *base, int (*comp)(const void *, const void *))
     qsort(vector->data, vector->size, vector->szof, comp);
 }
 
-void *vector_search(const void *key, const void *base, int (*comp)(const void *, const void *))
+/* Binary search */
+void *vector_bsearch(const void *key, const void *base, int (*comp)(const void *, const void *))
 {
     const struct vector *vector = CONST_VECTOR(base);
 
     return bsearch(key, vector->data, vector->size, vector->szof, comp);
+}
+
+/* Linear search */
+void *vector_lsearch(const void *key, const void *base, int (*comp)(const void *, const void *))
+{
+    const struct vector *vector = CONST_VECTOR(base);
+    void *cast[1];
+    void *data;
+
+    /* Skip const to non const warning */
+    data = *(void **)memcpy(cast, &base, sizeof base);
+
+    for (size_t item = 0; item < vector->size; item++)
+    {
+        if (comp(data, key) == 0)
+        {
+            return data;
+        }
+        data = (unsigned char *)data + vector->szof;
+    }
+    return NULL;
 }
 
 void *vector_clear(void *data)

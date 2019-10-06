@@ -13,7 +13,8 @@ void *vector_copy(void *, const void *, size_t);
 void *vector_concat(void *, const void *, size_t);
 size_t vector_size(const void *);
 void vector_sort(void *, int (*)(const void *, const void *));
-void *vector_search(const void *, const void *, int (*)(const void *, const void *));
+void *vector_bsearch(const void *, const void *, int (*)(const void *, const void *));
+void *vector_lsearch(const void *, const void *, int (*)(const void *, const void *));
 void *vector_clear(void *);
 void vector_destroy(void *);
 

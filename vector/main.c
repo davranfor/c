@@ -106,7 +106,7 @@ int main(void)
     print(data);
     item = &((struct data){.key = 5});
     printf("Searching %d\n", item->key);
-    if ((item = vector_search(item, data, comp)))
+    if ((item = vector_bsearch(item, data, comp)))
     {
         printf("%d %s\n", item->key, item->value);
     }
