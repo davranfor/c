@@ -34,7 +34,7 @@ static int comp(const void *pa, const void *pb)
     return a->key < b->key ? -1 : a->key > b->key;
 }
 
-static void destroy(void *data)
+static void delete(void *data)
 {
     free(((struct data *)data)->value);
 }
@@ -61,7 +61,7 @@ int main(void)
     atexit(clean);
     srand((unsigned)time(NULL));
 
-    data = vector_create(sizeof *data, destroy);
+    data = vector_create(sizeof *data, delete);
     if (data == NULL)
     {
         perror("vector_create");

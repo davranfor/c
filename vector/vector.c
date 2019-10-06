@@ -13,17 +13,17 @@
 #define VECTOR(v) ((struct vector *)((unsigned char *)(v) - offsetof(struct vector, data)))
 #define VECTOR_ITEM(v, i) ((unsigned char *)(v)->data + (v)->szof * (i))
 
-typedef void (*fncdel)(void *);
+typedef void (*cb_del)(void *); // Callback to delete function
 
 struct vector
 {
     size_t size;
     size_t szof;
-    fncdel fdel;
+    cb_del fdel;
     max_align_t data[];
 };
 
-void *vector_create(size_t szof, fncdel fdel)
+void *vector_create(size_t szof, cb_del fdel)
 {
     struct vector *vector = malloc(sizeof(*vector) + szof);
 
@@ -53,7 +53,7 @@ static size_t next_size(size_t size)
     return size;
 }
 
-static void *inc(void *data, size_t size)
+static void *increment(void *data, size_t size)
 {
     struct vector *vector = VECTOR(*(void **)data);
     size_t room = next_size(vector->size);
@@ -73,7 +73,7 @@ static void *inc(void *data, size_t size)
     return data;
 }
 
-static void *dec(void *data, size_t size)
+static void *decrement(void *data, size_t size)
 {
     struct vector *vector = VECTOR(*(void **)data);
 
@@ -116,13 +116,47 @@ void *vector_resize(void *data, int size)
 {
     if (size > 0)
     {
-        return inc(data, (size_t)+size);
+        return increment(data, (size_t)+size);
     }
     if (size < 0)
     {
-        return dec(data, (size_t)-size);
+        return decrement(data, (size_t)-size);
     }
     return NULL;
+}
+
+void *vector_copy(void *target, const void *source, size_t size)
+{
+    struct vector *vector = VECTOR(*(void **)target);
+
+    if (size == 0)
+    {
+        return NULL;
+    }
+
+    size_t diff = (size > vector->size) ? size - vector->size : 0;
+    size_t room = next_size(vector->size);
+
+    if (vector->fdel != NULL)
+    {
+        for (size_t item = 0; (item < size) && (item < vector->size); item++)
+        {
+            vector->fdel(VECTOR_ITEM(vector, item));
+        }
+    }
+    if ((diff > 0) && (vector->size + diff >= room))
+    {
+        room = next_size(vector->size + diff);
+        vector = realloc(vector, sizeof(*vector) + vector->szof * room);
+        if (vector == NULL)
+        {
+            return NULL;
+        }
+        *(void **)target = vector->data;
+    }
+    memcpy(vector->data, source, vector->szof * size);
+    vector->size += diff;
+    return vector->data;
 }
 
 void *vector_concat(void *target, const void *source, size_t size)
@@ -174,7 +208,7 @@ void *vector_clear(void *data)
 {
     struct vector *vector = VECTOR(data);
     size_t szof = vector->szof;
-    fncdel fdel = vector->fdel;
+    cb_del fdel = vector->fdel;
 
     vector_destroy(data);
     return vector_create(szof, fdel);

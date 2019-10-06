@@ -9,6 +9,7 @@
 
 void *vector_create(size_t, void (*)(void *));
 void *vector_resize(void *, int);
+void *vector_copy(void *, const void *, size_t);
 void *vector_concat(void *, const void *, size_t);
 size_t vector_size(const void *);
 void vector_sort(void *, int (*)(const void *, const void *));
