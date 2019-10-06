@@ -127,13 +127,12 @@ void *vector_resize(void *data, int size)
 
 void *vector_copy(void *target, const void *source, size_t size)
 {
-    struct vector *vector = VECTOR(*(void **)target);
-
     if (size == 0)
     {
         return NULL;
     }
 
+    struct vector *vector = VECTOR(*(void **)target);
     size_t diff = (size > vector->size) ? size - vector->size : 0;
     size_t room = next_size(vector->size);
 
@@ -161,13 +160,12 @@ void *vector_copy(void *target, const void *source, size_t size)
 
 void *vector_concat(void *target, const void *source, size_t size)
 {
-    struct vector *vector = VECTOR(*(void **)target);
-
     if (size == 0)
     {
         return NULL;
     }
 
+    struct vector *vector = VECTOR(*(void **)target);
     size_t room = next_size(vector->size);
 
     if (vector->size + size >= room)
