@@ -25,7 +25,7 @@ long file_size(FILE *file)
     return size;
 }
 
-char *file_gets(FILE *file, size_t size)
+char *file_get(FILE *file, size_t size)
 {
     char *str = malloc(size + 1);
 
@@ -62,13 +62,8 @@ char *file_read(const char *path)
         return NULL;
     }    
 
-    char *str = file_gets(file, (size_t)size);
+    char *str = file_get(file, (size_t)size);
 
-    if (str == NULL)
-    {
-        fclose(file);
-        return NULL;
-    }
     fclose(file);
     return str;
 }
