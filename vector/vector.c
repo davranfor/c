@@ -17,10 +17,10 @@ typedef void (*cb_del)(void *); // Callback to delete function
 
 struct vector
 {
-    size_t size;
-    size_t szof;
-    cb_del fdel;
-    max_align_t data[];
+    size_t size;        // Number of elements of the array
+    size_t szof;        // sizeof each element of the array
+    cb_del fdel;        // Pointer to callback to delete function
+    max_align_t data[]; // The contents of the array
 };
 
 void *vector_create(size_t szof, cb_del fdel)
@@ -37,6 +37,7 @@ void *vector_create(size_t szof, cb_del fdel)
     return vector->data;
 }
 
+/* Round up to the next power of 2 */
 static size_t next_size(size_t size)
 {
     size--;
@@ -191,6 +192,13 @@ void *vector_concat(void *target, const void *source, size_t size)
 size_t vector_size(const void *data)
 {
     return CONST_VECTOR(data)->size;
+}
+
+size_t vector_sizeof(const void *data)
+{
+    const struct vector *vector = CONST_VECTOR(data);
+
+    return vector->szof * vector->size;
 }
 
 void vector_sort(void *base, int (*comp)(const void *, const void *))
