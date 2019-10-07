@@ -14,8 +14,8 @@ void *vector_concat(void *, const void *, size_t);
 size_t vector_size(const void *);
 size_t vector_sizeof(const void *);
 void vector_sort(void *, int (*)(const void *, const void *));
-void *vector_bsearch(const void *, const void *, int (*)(const void *, const void *));
-void *vector_lsearch(const void *, const void *, int (*)(const void *, const void *));
+void *vector_bsearch(const void *, void *, int (*)(const void *, const void *));
+void *vector_lsearch(const void *, void *, int (*)(const void *, const void *));
 void *vector_clear(void *);
 void vector_destroy(void *);
 

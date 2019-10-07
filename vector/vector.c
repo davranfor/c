@@ -209,30 +209,27 @@ void vector_sort(void *base, int (*comp)(const void *, const void *))
 }
 
 /* Binary search */
-void *vector_bsearch(const void *key, const void *base, int (*comp)(const void *, const void *))
+void *vector_bsearch(const void *key, void *base, int (*comp)(const void *, const void *))
 {
-    const struct vector *vector = CONST_VECTOR(base);
+    struct vector *vector = VECTOR(base);
 
     return bsearch(key, vector->data, vector->size, vector->szof, comp);
 }
 
 /* Linear search */
-void *vector_lsearch(const void *key, const void *base, int (*comp)(const void *, const void *))
+void *vector_lsearch(const void *key, void *base, int (*comp)(const void *, const void *))
 {
-    const struct vector *vector = CONST_VECTOR(base);
-    void *cast[1];
-    void *data;
+    struct vector *vector = VECTOR(base);
+    unsigned char *item = base;
+    unsigned char *last = item + vector->szof * vector->size;
 
-    /* Skip const to non const warning */
-    data = *(void **)memcpy(cast, &base, sizeof base);
-
-    for (size_t item = 0; item < vector->size; item++)
+    while (item < last)
     {
-        if (comp(data, key) == 0)
+        if (comp(item, key) == 0)
         {
-            return data;
+            return item;
         }
-        data = (unsigned char *)data + vector->szof;
+        item += vector->szof;
     }
     return NULL;
 }
