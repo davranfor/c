@@ -68,13 +68,24 @@ size_t fsettext(FILE *file, const char *str)
     return size;
 }
 
-long file_get_size(const char *path)
+FILE *file_open(const char *path, const char *mode)
 {
-    FILE *file = fopen(path, "r");
+    FILE *file = fopen(path, mode);
 
     if (file == NULL)
     {
         perror("fopen");
+        fprintf(stderr, "%s\n", path);
+    }
+    return file;
+}
+
+long file_get_size(const char *path)
+{
+    FILE *file = file_open(path, "r");
+
+    if (file == NULL)
+    {
         return -1;
     }
     
@@ -86,11 +97,10 @@ long file_get_size(const char *path)
 
 char *file_read(const char *path)
 {
-    FILE *file = fopen(path, "r");
+    FILE *file = file_open(path, "r");
 
     if (file == NULL)
     {
-        perror("fopen");
         return NULL;
     }
 
@@ -102,11 +112,10 @@ char *file_read(const char *path)
 
 size_t file_write(const char *path, const char *str, int append)
 {
-    FILE *file = fopen(path, append ? "a" : "w");
+    FILE *file = file_open(path, append ? "a" : "w");
 
     if (file == NULL)
     {
-        perror("fopen");
         return 0;
     }
 
