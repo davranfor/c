@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "file.h"
 
-long file_size(FILE *file)
+long fgetsize(FILE *file)
 {
     if (fseek(file, 0L, SEEK_END) == -1)
     {
@@ -25,7 +26,7 @@ long file_size(FILE *file)
     return size;
 }
 
-char *file_get(FILE *file, size_t size)
+static char *gettext(FILE *file, size_t size)
 {
     char *str = malloc(size + 1);
 
@@ -44,6 +45,45 @@ char *file_get(FILE *file, size_t size)
     return str;
 }
 
+char *fgettext(FILE *file)
+{
+    long size = fgetsize(file);
+
+    if (size == -1)
+    {
+        return NULL;
+    }    
+    return gettext(file, (size_t)size);
+}
+
+size_t fsettext(FILE *file, const char *str)
+{
+    size_t size = strlen(str);
+
+    if (fwrite(str, 1, size, file) != size)
+    {
+        perror("fwrite");
+        return 0;
+    }
+    return size;
+}
+
+long file_get_size(const char *path)
+{
+    FILE *file = fopen(path, "r");
+
+    if (file == NULL)
+    {
+        perror("fopen");
+        return -1;
+    }
+    
+    long size = fgetsize(file);
+
+    fclose(file);
+    return size;
+}
+
 char *file_read(const char *path)
 {
     FILE *file = fopen(path, "r");
@@ -54,17 +94,25 @@ char *file_read(const char *path)
         return NULL;
     }
 
-    long size = file_size(file);
-
-    if (size == -1)
-    {
-        fclose(file);
-        return NULL;
-    }    
-
-    char *str = file_get(file, (size_t)size);
+    char *str = fgettext(file);
 
     fclose(file);
     return str;
+}
+
+size_t file_write(const char *path, const char *str, int append)
+{
+    FILE *file = fopen(path, append ? "a" : "w");
+
+    if (file == NULL)
+    {
+        perror("fopen");
+        return 0;
+    }
+
+    size_t size = fsettext(file, str);
+
+    fclose(file);
+    return size;
 }
 

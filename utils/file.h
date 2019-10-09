@@ -1,9 +1,12 @@
 #ifndef FILE_H
 #define FILE_H
 
-long file_size(FILE *);
-char *file_get(FILE *, size_t);
+long fgetsize(FILE *);
+char *fgettext(FILE *);
+size_t fsettext(FILE *, const char *);
+long file_get_size(const char *);
 char *file_read(const char *);
+size_t file_write(const char *, const char *, int);
 
 #endif /* FILE_H */
 
