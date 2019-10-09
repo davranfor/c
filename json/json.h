@@ -30,9 +30,9 @@ enum json_type
  *       ']' en un nodo cuyo padre no es un JSON_ARRAY  (sin emparejar con '[')
  */
 
-size_t json_encode(char *, const char *);
-json *json_create(const char *);
-json *json_create_node(void);
+json *json_create(void);
+json *json_parse(const char *);
+json *json_load_file(const char *);
 enum json_type json_type(const json *);
 char *json_name(const json *);
 char *json_string(const json *);
@@ -58,6 +58,8 @@ json *json_item(const json *, size_t);
 size_t json_items(const json *);
 void json_print(const json *);
 void json_free(json *);
+
+size_t json_encode(char *, const char *);
 
 #endif /* JSON_H */
 

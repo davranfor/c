@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "file.h"
 #include "json.h"
 
 /*
@@ -63,57 +64,6 @@ static enum json_type json_token(int token)
         default:
             return JSON_EMPTY;
     }
-}
-
-/*
- * Convierte una cadena en una cadena json entrecomillada escapando carácteres especiales
- * Devuelve el tamaño de la cadena final en bytes
- */
-size_t json_encode(char *dst, const char *src)
-{
-    #define JSON_CONCAT(c) *(ptr++) = c
-    #define JSON_ENCODE(c) JSON_CONCAT('\\'); JSON_CONCAT(c)
-
-    char *ptr = dst;
-
-    JSON_CONCAT('"');
-    while (*src != '\0')
-    {
-        switch (*src)
-        {
-            case '\\':
-                JSON_ENCODE('\\');
-                break;
-            case '/':
-                JSON_ENCODE('/');
-                break;
-            case '"':
-                JSON_ENCODE('"');
-                break;
-            case '\b':
-                JSON_ENCODE('b');
-                break;
-            case '\f':
-                JSON_ENCODE('f');
-                break;
-            case '\n':
-                JSON_ENCODE('n');
-                break;
-            case '\r':
-                JSON_ENCODE('r');
-                break;
-            case '\t':
-                JSON_ENCODE('t');
-                break;
-            default:
-                JSON_CONCAT(*src);
-                break;
-        }
-        src++;
-    }
-    JSON_CONCAT('"');
-    *ptr = '\0';
-    return (size_t)(ptr - dst);
 }
 
 /* Devuelve un puntero al próximo elemento (entidad) o NULL si es una cadena mal formada */
@@ -302,7 +252,7 @@ static char *json_set_value(json *node, const char *left, const char *right)
 }
 
 /* Recorre el texto y rellena los nodos */
-static json *json_parse(json *node, const char *text)
+static json *json_build(json *node, const char *text)
 {
     const char *token;
 
@@ -329,7 +279,7 @@ static json *json_parse(json *node, const char *text)
                     return NULL;
                 }
                 node->type = json_token(*token);
-                node->left = json_create_node();
+                node->left = json_create();
                 if (node->left == NULL)
                 {
                     return NULL;
@@ -371,7 +321,7 @@ static json *json_parse(json *node, const char *text)
                 {
                     return NULL;
                 }
-                node->right = json_create_node();
+                node->right = json_create();
                 if (node->right == NULL)
                 {
                     return NULL;
@@ -452,15 +402,22 @@ static json *json_parse(json *node, const char *text)
     return NULL;
 }
 
-/* Crea el nodo root y lo pasa al parseador junto con un puntero al texto */
-json *json_create(const char *text)
+/* Devuelve un nodo nuevo */
+json *json_create(void)
 {
-    json *node = json_create_node();
+    return calloc(1, sizeof(struct json));
+}
+
+/* Crea el nodo root y lo pasa al parseador junto con un puntero al texto */
+json *json_parse(const char *text)
+{
+    json *node = json_create();
 
     if (node != NULL)
     {
-        if (json_parse(node, text) == NULL)
+        if (json_build(node, text) == NULL)
         {
+            perror("json_parse");
             json_free(node);
             return NULL;
         }
@@ -468,10 +425,24 @@ json *json_create(const char *text)
     return node;
 }
 
-/* Devuelve un nodo nuevo */
-json *json_create_node(void)
+/* Crea el árbol a partir de un archivo */
+json *json_load_file(const char *path)
 {
-    return calloc(1, sizeof(struct json));
+    char *text = file_read(path);
+
+    if (text == NULL)
+    {
+        return NULL;
+    }
+
+    json *node = json_parse(text);
+
+    if (node == NULL)
+    {
+        fprintf(stderr, "Error parsing %s\n", path);
+    }
+    free(text);
+    return node;
 }
 
 /* Devuelve el tipo de un nodo */
@@ -826,3 +797,55 @@ void json_free(json *node)
     }
 }
 */
+
+/*
+ * Convierte una cadena en una cadena json entrecomillada escapando carácteres especiales
+ * Devuelve el tamaño de la cadena final en bytes
+ */
+size_t json_encode(char *dst, const char *src)
+{
+    #define JSON_CONCAT(c) *(ptr++) = c
+    #define JSON_ENCODE(c) JSON_CONCAT('\\'); JSON_CONCAT(c)
+
+    char *ptr = dst;
+
+    JSON_CONCAT('"');
+    while (*src != '\0')
+    {
+        switch (*src)
+        {
+            case '\\':
+                JSON_ENCODE('\\');
+                break;
+            case '/':
+                JSON_ENCODE('/');
+                break;
+            case '"':
+                JSON_ENCODE('"');
+                break;
+            case '\b':
+                JSON_ENCODE('b');
+                break;
+            case '\f':
+                JSON_ENCODE('f');
+                break;
+            case '\n':
+                JSON_ENCODE('n');
+                break;
+            case '\r':
+                JSON_ENCODE('r');
+                break;
+            case '\t':
+                JSON_ENCODE('t');
+                break;
+            default:
+                JSON_CONCAT(*src);
+                break;
+        }
+        src++;
+    }
+    JSON_CONCAT('"');
+    *ptr = '\0';
+    return (size_t)(ptr - dst);
+}
+
