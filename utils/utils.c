@@ -92,7 +92,7 @@ long fgetsize(FILE *file)
     return size;
 }
 
-static char *gettext(FILE *file, size_t size)
+static char *fgetmem(FILE *file, size_t size)
 {
     char *str = malloc(size + 1);
 
@@ -119,7 +119,7 @@ char *fgettext(FILE *file)
     {
         return NULL;
     }    
-    return gettext(file, (size_t)size);
+    return fgetmem(file, (size_t)size);
 }
 
 size_t fsettext(FILE *file, const char *str)
