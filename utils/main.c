@@ -13,10 +13,9 @@ int main(void)
     }
     free(str);
 
-    str = string_print(" \n The value of pi is %g \t ", 3.14);
+    str = string_print("The value of pi is %g", 3.14);
     if (str != NULL)
     {
-        string_trim_inplace(str);
         printf("<%s>\n", str);
     }
     free(str);

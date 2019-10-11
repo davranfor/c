@@ -20,9 +20,6 @@ char *string_print(const char *, ...);
 char *string_trim(const char *);
 char *string_ltrim(const char *);
 char *string_rtrim(const char *);
-void string_trim_inplace(char *);
-void string_ltrim_inplace(char *);
-void string_rtrim_inplace(char *);
 
 #endif /* UTILS_H */
 

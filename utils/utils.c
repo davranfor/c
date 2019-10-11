@@ -170,7 +170,7 @@ char *string_clone(const char *str)
 char *string_slice(const char *str, size_t start, size_t end)
 {
     assert(str != NULL);
-    assert(start < end);
+    assert(end >= start);
 
     size_t diff = end - start;
     char *ptr = malloc(diff + 1);
@@ -246,6 +246,7 @@ static size_t rpos(const char *str, const char *end)
 char *string_trim(const char *str)
 {
     assert(str != NULL);
+
     str += lpos(str);
 
     size_t len = strlen(str);
@@ -256,8 +257,8 @@ char *string_trim(const char *str)
 char *string_ltrim(const char *str)
 {
     assert(str != NULL);
-    str += lpos(str);
-    return string_clone(str);
+
+    return string_clone(str + lpos(str));
 }
 
 char *string_rtrim(const char *str)
@@ -267,44 +268,5 @@ char *string_rtrim(const char *str)
     size_t len = strlen(str);
 
     return string_slice(str, 0, len - rpos(str, str + len));
-}
-
-void string_trim_inplace(char *str)
-{
-    assert(str != NULL);
-
-    char *ptr = str + lpos(str);
-
-    size_t len = strlen(ptr);
-
-    if (ptr != str)
-    {
-        memmove(str, ptr, len);
-    }
-    *(str + len - rpos(str, str + len)) = '\0';
-}
-
-void string_ltrim_inplace(char *str)
-{
-    assert(str != NULL);
-
-    char *ptr = str + lpos(str);
-
-    if (ptr != str)
-    {
-        size_t len = strlen(ptr);
-
-        memmove(str, ptr, len);
-        str[len] = '\0';
-    }
-}
-
-void string_rtrim_inplace(char *str)
-{
-    assert(str != NULL);
-
-    size_t len = strlen(str);
-
-    *(str + len - rpos(str, str + len)) = '\0';
 }
 
