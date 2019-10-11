@@ -6,31 +6,53 @@ int main(void)
 {
     char *str;
 
-    str = string_clone("Hola mundo");
-    printf("<%s>\n", str);
+    str = string_clone("Hello World!");
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
+    }
     free(str);
 
-    str = string_print(" \n El valor de pi es %g \t ", 3.14);
-    string_trim_inplace(str);
-    printf("<%s>\n", str);
+    str = string_print(" \n The value of pi is %g \t ", 3.14);
+    if (str != NULL)
+    {
+        string_trim_inplace(str);
+        printf("<%s>\n", str);
+    }
     free(str);
 
     str = string_trim(" \t En un lugar de la mancha ... \n ");
-    printf("<%s>\n", str);
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
+    }
     free(str);
 
-    putchar('>');
-    str = file_get_line(stdin);
-    printf("<%s>\n", str);
-    free(str);
+    const char *path = "test.txt";
+    size_t size = file_write(path, "Enter text\n>", FILE_TRUNCATE);
 
-    const char *path = "wrong_file.txt";
+    if (size == FILE_WRITE_ERROR)
+    {
+        perror("file_write");
+        fprintf(stderr, "%s\n", path);
+    }
 
     str = file_read(path);
     if (str == NULL)
     {
         perror("file_read");
         fprintf(stderr, "%s\n", path);
+    }
+    else
+    {
+        printf("%s", str);
+    }
+    free(str);
+
+    str = file_get_line(stdin);
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
     }
     free(str);
 

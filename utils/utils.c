@@ -99,14 +99,14 @@ size_t file_write(const char *path, const char *str, int append)
 
     if (file == NULL)
     {
-        return 0;
+        return FILE_WRITE_ERROR;
     }
 
     size_t size = strlen(str);
 
     if (fwrite(str, 1, size, file) != size)
     {
-        size = 0;
+        size = FILE_WRITE_ERROR;
         perror("fwrite");
     }
     fclose(file);
