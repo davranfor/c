@@ -1,26 +1,22 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-FILE *file_open(const char *, const char *);
+/* File utilities */
 long file_get_size(const char *);
 char *file_read(const char *);
 size_t file_write(const char *, const char *, int);
+char *file_get_line(FILE *);
 
-long fgetsize(FILE *);
-char *fgettext(FILE *);
-size_t fsettext(FILE *, const char *);
-char *fgetline(FILE *);
-
-char *dupstr(const char *);
-char *dupnstr(const char *, size_t);
-char *dupstrf(const char *, ...);
-
-char *trim(const char *);
-char *ltrim(const char *);
-char *rtrim(const char *);
-void trim_inplace(char *);
-void ltrim_inplace(char *);
-void rtrim_inplace(char *);
+/* String utilities */
+char *string_clone(const char *);
+char *string_slice(const char *, size_t, size_t);
+char *string_print(const char *, ...);
+char *string_trim(const char *);
+char *string_ltrim(const char *);
+char *string_rtrim(const char *);
+void string_trim_inplace(char *);
+void string_ltrim_inplace(char *);
+void string_rtrim_inplace(char *);
 
 #endif /* UTILS_H */
 

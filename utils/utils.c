@@ -6,70 +6,11 @@
 #include <assert.h>
 #include "utils.h"
 
-/******************/
-/* FILE UTILITIES */
-/******************/
+/* File utilities */
 
-#define FGETLINE_MAX 256
+#define FILE_LINE_MAX 256
 
-FILE *file_open(const char *path, const char *mode)
-{
-    FILE *file = fopen(path, mode);
-
-    if (file == NULL)
-    {
-        perror("fopen");
-        fprintf(stderr, "%s\n", path);
-    }
-    return file;
-}
-
-long file_get_size(const char *path)
-{
-    FILE *file = file_open(path, "r");
-
-    if (file == NULL)
-    {
-        return -1;
-    }
-    
-    long size = fgetsize(file);
-
-    fclose(file);
-    return size;
-}
-
-char *file_read(const char *path)
-{
-    FILE *file = file_open(path, "r");
-
-    if (file == NULL)
-    {
-        return NULL;
-    }
-
-    char *str = fgettext(file);
-
-    fclose(file);
-    return str;
-}
-
-size_t file_write(const char *path, const char *str, int append)
-{
-    FILE *file = file_open(path, append ? "a" : "w");
-
-    if (file == NULL)
-    {
-        return 0;
-    }
-
-    size_t size = fsettext(file, str);
-
-    fclose(file);
-    return size;
-}
-
-long fgetsize(FILE *file)
+static long f_get_size(FILE *file)
 {
     if (fseek(file, 0L, SEEK_END) == -1)
     {
@@ -92,7 +33,22 @@ long fgetsize(FILE *file)
     return size;
 }
 
-static char *fgetmem(FILE *file, size_t size)
+long file_get_size(const char *path)
+{
+    FILE *file = fopen(path, "r");
+
+    if (file == NULL)
+    {
+        return -1;
+    }
+    
+    long size = f_get_size(file);
+
+    fclose(file);
+    return size;
+}
+
+static char *f_get_mem(FILE *file, size_t size)
 {
     char *str = malloc(size + 1);
 
@@ -111,32 +67,55 @@ static char *fgetmem(FILE *file, size_t size)
     return str;
 }
 
-char *fgettext(FILE *file)
+static char *f_read(FILE *file)
 {
-    long size = fgetsize(file);
+    long size = f_get_size(file);
 
     if (size == -1)
     {
         return NULL;
     }    
-    return fgetmem(file, (size_t)size);
+    return f_get_mem(file, (size_t)size);
 }
 
-size_t fsettext(FILE *file, const char *str)
+char *file_read(const char *path)
 {
+    FILE *file = fopen(path, "r");
+
+    if (file == NULL)
+    {
+        return NULL;
+    }
+
+    char *str = f_read(file);
+
+    fclose(file);
+    return str;
+}
+
+size_t file_write(const char *path, const char *str, int append)
+{
+    FILE *file = fopen(path, append ? "a" : "w");
+
+    if (file == NULL)
+    {
+        return 0;
+    }
+
     size_t size = strlen(str);
 
     if (fwrite(str, 1, size, file) != size)
     {
+        size = 0;
         perror("fwrite");
-        return 0;
     }
+    fclose(file);
     return size;
 }
 
-char *fgetline(FILE *file)
+char *file_get_line(FILE *file)
 {
-    char str[FGETLINE_MAX];
+    char str[FILE_LINE_MAX];
     char *buf = NULL;
     char *ptr = NULL;
     size_t size = 0;
@@ -155,7 +134,7 @@ char *fgetline(FILE *file)
         if (ptr == NULL)
         {
             free(buf);
-            perror("malloc");
+            perror("realloc");
             return NULL;
         }
         memcpy(ptr + size, str, len);
@@ -171,11 +150,9 @@ char *fgetline(FILE *file)
     return NULL;
 }
 
-/********************/
-/* STRING UTILITIES */
-/********************/
+/* String utilities */
 
-char *dupstr(const char *str)
+char *string_clone(const char *str)
 {
     assert(str != NULL);
 
@@ -190,23 +167,25 @@ char *dupstr(const char *str)
     return memcpy(ptr, str, size);
 }
 
-char *dupnstr(const char *str, size_t size)
+char *string_slice(const char *str, size_t start, size_t end)
 {
     assert(str != NULL);
+    assert(start < end);
 
-    char *ptr = malloc(size + 1);
+    size_t diff = end - start;
+    char *ptr = malloc(diff + 1);
 
     if (ptr == NULL)
     {
         perror("malloc");
         return NULL;
     }
-    memcpy(ptr, str, size);
-    ptr[size] = '\0';
+    memcpy(ptr, str + start, diff);
+    ptr[diff] = '\0';
     return ptr;
 }
 
-static char *vdupstrf(const char *fmt, va_list args)
+static char *string_vprint(const char *fmt, va_list args)
 {
     va_list copy;
 
@@ -224,7 +203,7 @@ static char *vdupstrf(const char *fmt, va_list args)
     return str;
 }
 
-char *dupstrf(const char *fmt, ...)
+char *string_print(const char *fmt, ...)
 {
     assert(fmt != NULL);
 
@@ -232,7 +211,7 @@ char *dupstrf(const char *fmt, ...)
 
     va_start(args, fmt);
 
-    char *str = vdupstrf(fmt, args);
+    char *str = string_vprint(fmt, args);
 
     va_end(args);
     return str;
@@ -264,33 +243,33 @@ static size_t rpos(const char *str, const char *end)
     return (size_t)(ptr - end);
 }
 
-char *trim(const char *str)
+char *string_trim(const char *str)
 {
     assert(str != NULL);
     str += lpos(str);
 
     size_t len = strlen(str);
 
-    return dupnstr(str, len - rpos(str, str + len));
+    return string_slice(str, 0, len - rpos(str, str + len));
 }
 
-char *ltrim(const char *str)
+char *string_ltrim(const char *str)
 {
     assert(str != NULL);
     str += lpos(str);
-    return dupstr(str);
+    return string_clone(str);
 }
 
-char *rtrim(const char *str)
+char *string_rtrim(const char *str)
 {
     assert(str != NULL);
 
     size_t len = strlen(str);
 
-    return dupnstr(str, len - rpos(str, str + len));
+    return string_slice(str, 0, len - rpos(str, str + len));
 }
 
-void trim_inplace(char *str)
+void string_trim_inplace(char *str)
 {
     assert(str != NULL);
 
@@ -305,7 +284,7 @@ void trim_inplace(char *str)
     *(str + len - rpos(str, str + len)) = '\0';
 }
 
-void ltrim_inplace(char *str)
+void string_ltrim_inplace(char *str)
 {
     assert(str != NULL);
 
@@ -320,7 +299,7 @@ void ltrim_inplace(char *str)
     }
 }
 
-void rtrim_inplace(char *str)
+void string_rtrim_inplace(char *str)
 {
     assert(str != NULL);
 
