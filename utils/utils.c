@@ -262,3 +262,17 @@ char *string_rtrim(const char *str)
     return string_slice(str, 0, rpos(str));
 }
 
+size_t string_length(const char *str)
+{
+    size_t len = 0;
+
+    while (*str != 0)
+    {
+        if ((*str++ & 0xc0) != 0x80)
+        {
+            len++;
+        }
+    }
+    return len;
+}
+

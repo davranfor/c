@@ -23,7 +23,7 @@ char *string_trim(const char *);
 char *string_ltrim(const char *);
 char *string_rtrim(const char *);
 /* Functions working inplace */
-
+size_t string_length(const char *);
 
 #endif /* UTILS_H */
 

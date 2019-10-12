@@ -27,6 +27,9 @@ int main(void)
     }
     free(str);
 
+    str = "María";
+    printf("\"%s\" -> length = %zu\n", str, string_length(str));
+
     const char *path = "test.txt";
     size_t size = file_write(path, "Enter text\n>", FILE_TRUNCATE);
 
