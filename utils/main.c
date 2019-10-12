@@ -48,7 +48,7 @@ int main(void)
     }
     free(str);
 
-    str = file_get_line(stdin);
+    str = file_read_line(stdin);
     if (str != NULL)
     {
         printf("<%s>\n", str);

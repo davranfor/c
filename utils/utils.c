@@ -93,27 +93,7 @@ char *file_read(const char *path)
     return str;
 }
 
-size_t file_write(const char *path, const char *str, int append)
-{
-    FILE *file = fopen(path, append ? "a" : "w");
-
-    if (file == NULL)
-    {
-        return FILE_WRITE_ERROR;
-    }
-
-    size_t size = strlen(str);
-
-    if (fwrite(str, 1, size, file) != size)
-    {
-        size = FILE_WRITE_ERROR;
-        perror("fwrite");
-    }
-    fclose(file);
-    return size;
-}
-
-char *file_get_line(FILE *file)
+char *file_read_line(FILE *file)
 {
     char str[FILE_LINE_MAX];
     char *buf = NULL;
@@ -148,6 +128,26 @@ char *file_get_line(FILE *file)
     free(buf);
     perror("fgets");
     return NULL;
+}
+
+size_t file_write(const char *path, const char *str, int append)
+{
+    FILE *file = fopen(path, append ? "a" : "w");
+
+    if (file == NULL)
+    {
+        return FILE_WRITE_ERROR;
+    }
+
+    size_t size = strlen(str);
+
+    if (fwrite(str, 1, size, file) != size)
+    {
+        size = FILE_WRITE_ERROR;
+        perror("fwrite");
+    }
+    fclose(file);
+    return size;
 }
 
 /* String utilities */
@@ -232,7 +232,7 @@ static size_t rpos(const char *str)
 {
     size_t pos = strlen(str);
 
-    while ((pos > 0) && (isspace((unsigned char)str[pos - 1])))
+    while ((pos > 0) && isspace((unsigned char)str[pos - 1]))
     {
         pos--;
     }
