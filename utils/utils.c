@@ -219,28 +219,24 @@ char *string_print(const char *fmt, ...)
 
 static size_t lpos(const char *str)
 {
-    const char *end = str;
+    size_t pos = 0;
 
-    while (isspace((unsigned char)*end))
+    while (isspace((unsigned char)str[pos]))
     {
-        end++;
+        pos++;
     }
-    return (size_t)(end - str);
+    return pos;
 }
 
-static size_t rpos(const char *str, const char *end)
+static size_t rpos(const char *str)
 {
-    const char *ptr = end;
+    size_t pos = strlen(str);
 
-    while (end > str)
+    while ((pos > 0) && (isspace((unsigned char)str[pos - 1])))
     {
-        if (!isspace((unsigned char)end[-1]))
-        {
-            break;
-        }
-        end--;
+        pos--;
     }
-    return (size_t)(ptr - end);
+    return pos;
 }
 
 char *string_trim(const char *str)
@@ -249,9 +245,7 @@ char *string_trim(const char *str)
 
     str += lpos(str);
 
-    size_t len = strlen(str);
-
-    return string_slice(str, 0, len - rpos(str, str + len));
+    return string_slice(str, 0, rpos(str));
 }
 
 char *string_ltrim(const char *str)
@@ -265,8 +259,6 @@ char *string_rtrim(const char *str)
 {
     assert(str != NULL);
 
-    size_t len = strlen(str);
-
-    return string_slice(str, 0, len - rpos(str, str + len));
+    return string_slice(str, 0, rpos(str));
 }
 

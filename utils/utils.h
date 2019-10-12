@@ -14,12 +14,16 @@ size_t file_write(const char *, const char *, int);
 char *file_get_line(FILE *);
 
 /* String utilities */
+
+/* Functions returning a new string */
 char *string_clone(const char *);
 char *string_slice(const char *, size_t, size_t);
 char *string_print(const char *, ...);
 char *string_trim(const char *);
 char *string_ltrim(const char *);
 char *string_rtrim(const char *);
+/* Functions working inplace */
+
 
 #endif /* UTILS_H */
 
