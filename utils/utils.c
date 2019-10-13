@@ -94,6 +94,8 @@ char *file_read(const char *path)
 
 char *file_read_line(FILE *file)
 {
+    assert(file != NULL);
+
     char str[FILE_LINE_MAX];
     char *buf = NULL;
     char *ptr = NULL;
@@ -125,7 +127,10 @@ char *file_read_line(FILE *file)
         buf = ptr;
     }
     free(buf);
-    perror("fgets");
+    if (!feof(file) && ferror(file))
+    {
+        perror("fgets");
+    }
     return NULL;
 }
 
