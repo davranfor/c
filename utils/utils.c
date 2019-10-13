@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <ctype.h>
 #include <assert.h>
 #include "utils.h"
 
@@ -217,49 +216,27 @@ char *string_print(const char *fmt, ...)
     return str;
 }
 
-static size_t lpos(const char *str)
-{
-    size_t pos = 0;
-
-    while (isspace((unsigned char)str[pos]))
-    {
-        pos++;
-    }
-    return pos;
-}
-
-static size_t rpos(const char *str)
-{
-    size_t pos = strlen(str);
-
-    while ((pos > 0) && isspace((unsigned char)str[pos - 1]))
-    {
-        pos--;
-    }
-    return pos;
-}
-
 char *string_trim(const char *str)
 {
     assert(str != NULL);
 
-    str += lpos(str);
+    str += string_lskip(str, isspace);
 
-    return string_slice(str, 0, rpos(str));
+    return string_slice(str, 0,  string_rskip(str, isspace));
 }
 
 char *string_ltrim(const char *str)
 {
     assert(str != NULL);
 
-    return string_clone(str + lpos(str));
+    return string_clone(str + string_lskip(str, isspace));
 }
 
 char *string_rtrim(const char *str)
 {
     assert(str != NULL);
 
-    return string_slice(str, 0, rpos(str));
+    return string_slice(str, 0, string_rskip(str, isspace));
 }
 
 size_t string_length(const char *str)
@@ -274,5 +251,31 @@ size_t string_length(const char *str)
         }
     }
     return len;
+}
+
+size_t string_lskip(const char *str, int func(int))
+{
+    assert((str != NULL) && (func != NULL));
+
+    size_t pos = 0;
+
+    while (func((unsigned char)str[pos]))
+    {
+        pos++;
+    }
+    return pos;
+}
+
+size_t string_rskip(const char *str, int func(int))
+{
+    assert((str != NULL) && (func != NULL));
+
+    size_t pos = strlen(str);
+
+    while ((pos > 0) && func((unsigned char)str[pos - 1]))
+    {
+        pos--;
+    }
+    return pos;
 }
 

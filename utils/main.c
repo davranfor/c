@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <locale.h>
 #include "utils.h"
 
 int main(void)
 {
+    setlocale(LC_CTYPE, "");
+
     char *str;
 
     str = string_clone("Hello World!");

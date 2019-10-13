@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <ctype.h>
+
 /* File utilities */
 
 #define FILE_TRUNCATE 0
@@ -22,8 +24,10 @@ char *string_print(const char *, ...);
 char *string_trim(const char *);
 char *string_ltrim(const char *);
 char *string_rtrim(const char *);
-/* Functions working inplace */
+/* Functions working in place */
 size_t string_length(const char *);
+size_t string_lskip(const char *, int(*)(int));
+size_t string_rskip(const char *, int(*)(int));
 
 #endif /* UTILS_H */
 
