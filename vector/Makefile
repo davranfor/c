@@ -5,11 +5,8 @@ OBJECTS = main.o vector.o
 
 all: vector
 
-main.o: main.c vector.h
-	$(CC) $(CFLAGS) -c main.c
-
-vector.o: vector.c vector.h
-	$(CC) $(CFLAGS) -c vector.c
+main.o: vector.h
+vector.o: vector.h
 
 vector: $(OBJECTS)
 	$(CC) $(OBJECTS) -o vector
