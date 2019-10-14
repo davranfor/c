@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <assert.h>
 #include "utils.h"
 
 /* File utilities */
@@ -94,8 +93,6 @@ char *file_read(const char *path)
 
 char *file_read_line(FILE *file)
 {
-    assert(file != NULL);
-
     char str[FILE_LINE_MAX];
     char *buf = NULL;
     char *ptr = NULL;
@@ -158,8 +155,6 @@ size_t file_write(const char *path, const char *str, int append)
 
 char *string_clone(const char *str)
 {
-    assert(str != NULL);
-
     size_t size = strlen(str) + 1;
     char *ptr = malloc(size);
 
@@ -173,9 +168,6 @@ char *string_clone(const char *str)
 
 char *string_slice(const char *str, size_t start, size_t end)
 {
-    assert(str != NULL);
-    assert(end >= start);
-
     size_t diff = end - start;
     char *ptr = malloc(diff + 1);
 
@@ -209,8 +201,6 @@ static char *string_vprint(const char *fmt, va_list args)
 
 char *string_print(const char *fmt, ...)
 {
-    assert(fmt != NULL);
-
     va_list args;
 
     va_start(args, fmt);
@@ -223,8 +213,6 @@ char *string_print(const char *fmt, ...)
 
 char *string_trim(const char *str)
 {
-    assert(str != NULL);
-
     str += string_lskip(str, isspace);
 
     return string_slice(str, 0,  string_rskip(str, isspace));
@@ -232,15 +220,11 @@ char *string_trim(const char *str)
 
 char *string_ltrim(const char *str)
 {
-    assert(str != NULL);
-
     return string_clone(str + string_lskip(str, isspace));
 }
 
 char *string_rtrim(const char *str)
 {
-    assert(str != NULL);
-
     return string_slice(str, 0, string_rskip(str, isspace));
 }
 
@@ -260,8 +244,6 @@ size_t string_length(const char *str)
 
 size_t string_lskip(const char *str, int func(int))
 {
-    assert((str != NULL) && (func != NULL));
-
     size_t pos = 0;
 
     while (func((unsigned char)str[pos]))
@@ -273,8 +255,6 @@ size_t string_lskip(const char *str, int func(int))
 
 size_t string_rskip(const char *str, int func(int))
 {
-    assert((str != NULL) && (func != NULL));
-
     size_t pos = strlen(str);
 
     while ((pos > 0) && func((unsigned char)str[pos - 1]))
