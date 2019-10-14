@@ -14,6 +14,7 @@ long file_get_size(const char *);
 char *file_read(const char *);
 char *file_read_line(FILE *);
 size_t file_write(const char *, const char *, int);
+int file_error(FILE *);
 
 /* String utilities */
 

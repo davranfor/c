@@ -13,28 +13,28 @@ int main(void)
     if (str != NULL)
     {
         printf("<%s>\n", str);
+        free(str);
     }
-    free(str);
 
     str = string_print("The value of pi is %g", 3.14);
     if (str != NULL)
     {
         printf("<%s>\n", str);
+        free(str);
     }
-    free(str);
 
     str = string_trim(" \t En un lugar de la mancha ... \n ");
     if (str != NULL)
     {
         printf("<%s>\n", str);
+        free(str);
     }
-    free(str);
 
     str = "María";
     printf("\"%s\" -> length = %zu\n", str, string_length(str));
 
     const char *path = "test.txt";
-    size_t size = file_write(path, "Enter text\n>", FILE_TRUNCATE);
+    size_t size = file_write(path, "Enter text (Press CTRL + D to stop)\n>", FILE_TRUNCATE);
 
     if (size == FILE_WRITE_ERROR)
     {
@@ -51,16 +51,21 @@ int main(void)
     else
     {
         printf("%s", str);
+        free(str);
     }
-    free(str);
 
-    str = file_read_line(stdin);
-    if (str != NULL)
+    while ((str = file_read_line(stdin)))
     {
-        printf("<%s>\n", str);
+        printf("<%s>\n>", str);
+        free(str);
     }
-    free(str);
+    if (file_error(stdin) != 0)
+    {
+        perror("file_read_line");
+        fprintf(stderr, "File error #%d\n", file_error(stdin));
+    }
 
+    puts("\nBye!");
     return 0;
 }
 
