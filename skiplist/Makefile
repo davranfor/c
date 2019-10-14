@@ -1,15 +1,12 @@
 
 CC = gcc
-CFLAGS = -std=c99 -pedantic -Wall -Wextra -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wcast-qual -Wnested-externs
+CFLAGS = -std=c11 -pedantic -Wall -Wextra -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wcast-qual -Wnested-externs
 OBJECTS = main.o skiplist.o
 
 all: skiplist
 
-main.o: main.c skiplist.h
-	$(CC) $(CFLAGS) -c main.c
-
-skiplist.o: skiplist.c skiplist.h
-	$(CC) $(CFLAGS) -c skiplist.c
+main.o: skiplist.h
+skiplist.o: skiplist.h
 
 skiplist: $(OBJECTS)
 	$(CC) $(OBJECTS) -o skiplist

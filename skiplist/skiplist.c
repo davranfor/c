@@ -65,11 +65,6 @@ skiplist *skiplist_create(int (*comp)(const void *, const void *))
 
 void *skiplist_insert(skiplist *list, void *data)
 {
-    if ((list == NULL) || (data == NULL))
-    {
-        return NULL;
-    }
-
     struct node *nodes[SKIPLIST_MAX_LEVEL];
     struct node *node = list->head;
     int level;
@@ -117,11 +112,6 @@ void *skiplist_insert(skiplist *list, void *data)
 
 void *skiplist_delete(skiplist *list, const void *data)
 {
-    if ((list == NULL) || (data == NULL))
-    {
-        return NULL;
-    }
-
     struct node *node = list->head;
     struct node *item = NULL;
 
@@ -164,11 +154,6 @@ void *skiplist_delete(skiplist *list, const void *data)
 
 void *skiplist_search(skiplist *list, const void *data)
 {
-    if ((list == NULL) || (data == NULL))
-    {
-        return NULL;
-    }
-
     struct node *node = list->head;
 
     for (int level = list->levels; level >= 0; level--)
@@ -216,11 +201,6 @@ static struct node *fetch(skiplist *list, const void *data,
 void *skiplist_fetch(skiplist *list, void **cursor, const void *data,
     int (*comp)(const void *, const void *))
 {
-    if ((list == NULL) || (cursor == NULL))
-    {
-        return NULL;
-    }
-
     struct node *node;
 
     if (*cursor == NULL)
@@ -252,11 +232,6 @@ void *skiplist_fetch(skiplist *list, void **cursor, const void *data,
 
 void skiplist_destroy(skiplist *list, void (*func)(void *))
 {
-    if (list == NULL)
-    {
-        return;
-    }
-
     struct node *node;
 
     node = list->head->next[0];
