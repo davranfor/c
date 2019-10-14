@@ -5,11 +5,8 @@ OBJECTS = main.o timer.o
 
 all: timer
 
-main.o: main.c timer.h
-	$(CC) $(CFLAGS) -c main.c
-
-timer.o: timer.c timer.h
-	$(CC) $(CFLAGS) -c timer.c
+main.o: timer.h
+timer.o: timer.h
 
 timer: $(OBJECTS)
 	$(CC) $(OBJECTS) -o timer -lpthread
