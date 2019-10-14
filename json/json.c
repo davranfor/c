@@ -417,7 +417,6 @@ json *json_parse(const char *text)
     {
         if (json_build(node, text) == NULL)
         {
-            perror("json_parse");
             json_free(node);
             return NULL;
         }
@@ -437,10 +436,6 @@ json *json_load_file(const char *path)
 
     json *node = json_parse(text);
 
-    if (node == NULL)
-    {
-        fprintf(stderr, "Error parsing %s\n", path);
-    }
     free(text);
     return node;
 }

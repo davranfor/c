@@ -1,12 +1,16 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "json.h"
 
 int main(void)
 {
-    json *node = json_load_file("test.json");
+    const char *path = "test.json";
+    json *node = json_load_file(path);
 
     if (node == NULL)
     {
+        perror("json_load_file");
+        fprintf(stderr, "%s\n", path);
         exit(EXIT_FAILURE);
     }
     json_print(node);
