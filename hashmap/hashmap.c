@@ -110,11 +110,6 @@ static hashmap *rehash(hashmap *map, struct node *node)
 
 void *hashmap_insert(hashmap *map, void *data)
 {
-    if ((map == NULL) || (data == NULL))
-    {
-        return NULL;
-    }
-
     unsigned long hash = map->hash(data);
 
     while (map != NULL)
@@ -170,11 +165,6 @@ void *hashmap_insert(hashmap *map, void *data)
 
 void *hashmap_delete(hashmap *map, const void *data)
 {
-    if ((map == NULL) || (data == NULL))
-    {
-        return NULL;
-    }
-
     unsigned long hash = map->hash(data);
 
     while (map != NULL)
@@ -225,11 +215,6 @@ void *hashmap_delete(hashmap *map, const void *data)
 
 void *hashmap_search(const hashmap *map, const void *data)
 {
-    if ((map == NULL) || (data == NULL))
-    {
-        return NULL;
-    }
-
     unsigned long hash = map->hash(data);
 
     while (map != NULL)
