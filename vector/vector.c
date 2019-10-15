@@ -201,26 +201,26 @@ size_t vector_sizeof(const void *data)
     return vector->szof * vector->size;
 }
 
-void vector_sort(void *base, int (*comp)(const void *, const void *))
+void vector_sort(void *data, int (*comp)(const void *, const void *))
 {
-    struct vector *vector = VECTOR(base);
+    struct vector *vector = VECTOR(data);
 
     qsort(vector->data, vector->size, vector->szof, comp);
 }
 
 /* Binary search */
-void *vector_bsearch(const void *key, void *base, int (*comp)(const void *, const void *))
+void *vector_bsearch(const void *key, void *data, int (*comp)(const void *, const void *))
 {
-    struct vector *vector = VECTOR(base);
+    struct vector *vector = VECTOR(data);
 
     return bsearch(key, vector->data, vector->size, vector->szof, comp);
 }
 
 /* Linear search */
-void *vector_lsearch(const void *key, void *base, int (*comp)(const void *, const void *))
+void *vector_lsearch(const void *key, void *data, int (*comp)(const void *, const void *))
 {
-    struct vector *vector = VECTOR(base);
-    unsigned char *item = base;
+    struct vector *vector = VECTOR(data);
+    unsigned char *item = data;
     unsigned char *last = item + vector->szof * vector->size;
 
     while (item < last)
@@ -232,6 +232,54 @@ void *vector_lsearch(const void *key, void *base, int (*comp)(const void *, cons
         item += vector->szof;
     }
     return NULL;
+}
+
+void *vector_min(void *data, int (*comp)(const void *, const void *))
+{
+    struct vector *vector = VECTOR(data);
+
+    if (vector->size == 0)
+    {
+        return NULL;
+    }
+
+    unsigned char *min = data;
+    unsigned char *item = min + vector->szof;
+    unsigned char *last = min + vector->szof * vector->size;
+
+    while (item < last)
+    {
+        if (comp(item, min) < 0)
+        {
+            min = item;
+        }
+        item += vector->szof;
+    }
+    return min;
+}
+
+void *vector_max(void *data, int (*comp)(const void *, const void *))
+{
+    struct vector *vector = VECTOR(data);
+
+    if (vector->size == 0)
+    {
+        return NULL;
+    }
+
+    unsigned char *max = data;
+    unsigned char *item = max + vector->szof;
+    unsigned char *last = max + vector->szof * vector->size;
+
+    while (item < last)
+    {
+        if (comp(item, max) > 0)
+        {
+            max = item;
+        }
+        item += vector->szof;
+    }
+    return max;
 }
 
 void *vector_clear(void *data)

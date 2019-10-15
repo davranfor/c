@@ -16,6 +16,8 @@ size_t vector_sizeof(const void *);
 void vector_sort(void *, int (*)(const void *, const void *));
 void *vector_bsearch(const void *, void *, int (*)(const void *, const void *));
 void *vector_lsearch(const void *, void *, int (*)(const void *, const void *));
+void *vector_min(void *, int (*)(const void *, const void *));
+void *vector_max(void *, int (*)(const void *, const void *));
 void *vector_clear(void *);
 void vector_destroy(void *);
 

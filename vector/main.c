@@ -99,6 +99,11 @@ int main(void)
         exit(EXIT_FAILURE);
     }
     printf("Inserted: %zu elements\n", vector_size(data));
+    if (vector_size(data) > 0)
+    {
+        printf("min = %d\n", *(int *)vector_min(data, comp));
+        printf("max = %d\n", *(int *)vector_max(data, comp));
+    }
     puts("Unsorted:");
     print(data);
     vector_sort(data, comp);
