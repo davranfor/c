@@ -39,17 +39,18 @@ static void delete(void *data)
     free(((struct data *)data)->value);
 }
 
-static void print(struct data *data)
+static void print(struct data **data)
 {
     size_t size = vector_size(data);
+    struct data *item = *data;
 
     for (size_t i = 0; i < size; i++)
     {
-        printf("%d %s\n", data[i].key, data[i].value);
+        printf("%d %s\n", item[i].key, item[i].value);
     }
 }
 
-static struct data *data;
+static struct data **data;
 
 static void clean(void)
 {
@@ -61,7 +62,7 @@ int main(void)
     atexit(clean);
     srand((unsigned)time(NULL));
 
-    data = vector_create(sizeof *data, delete);
+    data = vector_create(sizeof(struct data), delete);
     if (data == NULL)
     {
         perror("vector_create");
@@ -73,7 +74,7 @@ int main(void)
 
     for (size_t i = 0; i < size; i++)
     {
-        item = vector_resize(&data, +1);
+        item = vector_resize(data, +1);
         if (item == NULL)
         {
             perror("vector_resize");
@@ -93,7 +94,7 @@ int main(void)
         perror("keytostr");
         exit(EXIT_FAILURE);
     }
-    if (vector_concat(&data, item, 2) == NULL)
+    if (vector_concat(data, item, 2) == NULL)
     {
         perror("vector_concat");
         exit(EXIT_FAILURE);
@@ -120,7 +121,7 @@ int main(void)
         puts("Not found");
     }
     puts("Deleting last element");
-    if (vector_resize(&data, -1) == NULL)
+    if (vector_resize(data, -1) == NULL)
     {
         perror("vector_resize");
         exit(EXIT_FAILURE);
