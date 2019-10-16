@@ -8,7 +8,7 @@
 #include <string.h>
 #include "vector.h"
 
-#define VECTOR_ITEM(v, i) ((unsigned char *)(v)->data + (v)->szof * (i))
+#define VECTOR_ITEM(v, i) ((v)->data + (v)->szof * (i))
 
 typedef void (*cb_del)(void *); // Callback to delete function
 
