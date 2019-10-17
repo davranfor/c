@@ -61,7 +61,7 @@ static void *increment(void *data, size_t size)
     struct vector *vector = data;
     size_t room = next_size(vector->size);
 
-    if (vector->size + size >= room)
+    if (vector->size + size > room)
     {
         room = next_size(vector->size + size);
         data = resize(vector, room);
@@ -146,7 +146,7 @@ void *vector_copy(void *data, const void *source, size_t size)
             vector->fdel(VECTOR_ITEM(vector, item));
         }
     }
-    if ((diff > 0) && (vector->size + diff >= room))
+    if ((diff > 0) && (vector->size + diff > room))
     {
         room = next_size(vector->size + diff);
         data = resize(vector, room);
@@ -171,7 +171,7 @@ void *vector_concat(void *data, const void *source, size_t size)
     struct vector *vector = data;
     size_t room = next_size(vector->size);
 
-    if (vector->size + size >= room)
+    if (vector->size + size > room)
     {
         room = next_size(vector->size + size);
         data = resize(vector, room);
