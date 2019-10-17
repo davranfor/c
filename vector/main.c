@@ -39,10 +39,10 @@ static void delete(void *data)
     free(((struct data *)data)->value);
 }
 
-static void print(struct data **data)
+static void print(const vector *data)
 {
+    const struct data *item = const_vector(data);
     size_t size = vector_size(data);
-    struct data *item = *data;
 
     for (size_t i = 0; i < size; i++)
     {
@@ -50,7 +50,7 @@ static void print(struct data **data)
     }
 }
 
-static struct data **data;
+static vector *data;
 
 static void clean(void)
 {
@@ -112,7 +112,7 @@ int main(void)
     print(data);
     item = &((struct data){.key = 5});
     printf("Searching %d\n", item->key);
-    if ((item = vector_bsearch(item, data, comp)))
+    if ((item = vector_bsearch(data, item, comp)))
     {
         printf("%d %s\n", item->key, item->value);
     }
