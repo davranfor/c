@@ -25,12 +25,11 @@ vector *vector_create(size_t szof, cb_del fdel)
 {
     vector *vec = calloc(1, sizeof(*vec));
 
-    if (vec == NULL)
+    if (vec != NULL)
     {
-        return NULL;
+        vec->szof = szof;
+        vec->fdel = fdel;
     }
-    vec->szof = szof;
-    vec->fdel = fdel;
     return vec;
 }
 
@@ -80,7 +79,7 @@ static void *decrement(vector *vec, size_t size)
 {
     if (vec->size == 0)
     {
-        return vec->data;
+        return NULL;
     }
 
     size_t room = next_size(vec->size);
@@ -100,17 +99,27 @@ static void *decrement(vector *vec, size_t size)
     {
         vec->size -= size;
     }
+    if (vec->size == 0)
+    {
+        free(vec->data);
+        vec->data = NULL;
+        return NULL;
+    }
     if (vec->size <= room / 2)
     {
-        room = (vec->size == 0) ? 1 : next_size(vec->size);
+        room = next_size(vec->size);
 
         void *data = resize(vec, room);
 
-        if (data == NULL)
+        /*
+         * Since the API returns `NULL` when the vector is empty (0 items),
+         * we don't return NULL in the very unlikely case that realloc fail
+         * allocating less memory
+         */
+        if (data != NULL)
         {
-            return NULL;
+            vec->data = data;
         }
-        vec->data = data;
     }
     return VECTOR_ITEM(vec, vec->size);
 }
@@ -208,7 +217,7 @@ void *vector_bsearch(const vector *vec, const void *key, int (*comp)(const void 
     return bsearch(key, vec->data, vec->size, vec->szof, comp);
 }
 
-// Silent compiler casting non const to const with (void *)
+/* Silence compiler casting non const to const with `(void *)const_var` */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual"
 
