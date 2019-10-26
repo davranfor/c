@@ -10,18 +10,7 @@
 
 #define VECTOR_ITEM(v, i) ((unsigned char *)((v)->data) + (v)->szof * (i))
 
-typedef void (*cb_del)(void *); // Callback to delete function
-
-struct vector
-{
-    void * data;    // The contents of the array
-    size_t size;    // Number of elements of the array
-    size_t szof;    // sizeof each element of the array
-    cb_del fdel;    // Pointer to callback to delete function
-
-};
-
-vector *vector_create(size_t szof, cb_del fdel)
+vector *vector_create(size_t szof, void (*fdel)(void *))
 {
     vector *vec = calloc(1, sizeof(*vec));
 
@@ -194,16 +183,6 @@ void *vector_concat(vector *vec, const void *source, size_t size)
     data = memcpy(VECTOR_ITEM(vec, vec->size), source, vec->szof * size);
     vec->size += size;
     return data;
-}
-
-size_t vector_size(const vector *vec)
-{
-    return vec->size;
-}
-
-size_t vector_sizeof(const vector *vec)
-{
-    return vec->szof * vec->size;
 }
 
 void vector_sort(vector *vec, int (*comp)(const void *, const void *))

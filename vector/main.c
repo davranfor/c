@@ -39,12 +39,11 @@ static void delete(void *data)
     free(((struct data *)data)->value);
 }
 
-static void print(const vector *data)
+static void print(const vector *table)
 {
-    const struct data *item = const_vector(data);
-    size_t size = vector_size(data);
+    const struct data *item = table->data;
 
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < table->size; i++)
     {
         printf("%d %s\n", item[i].key, item[i].value);
     }
@@ -99,8 +98,8 @@ int main(void)
         perror("vector_concat");
         exit(EXIT_FAILURE);
     }
-    printf("Inserted: %zu elements\n", vector_size(data));
-    if (vector_size(data) > 0)
+    printf("Inserted: %zu elements\n", data->size);
+    if (data->size > 0)
     {
         printf("min = %d\n", *(int *)vector_min(data, comp));
         printf("max = %d\n", *(int *)vector_max(data, comp));
@@ -121,11 +120,7 @@ int main(void)
         puts("Not found");
     }
     puts("Deleting last element");
-    if (vector_resize(data, -1) == NULL)
-    {
-        perror("vector_resize");
-        exit(EXIT_FAILURE);
-    }
+    vector_resize(data, -1);
     print(data);
     return 0;
 }
