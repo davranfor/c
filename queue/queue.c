@@ -63,12 +63,7 @@ void *queue_pop(queue *list)
 
         data = node->data;
         list->head = node->next;
-        if (list->head == NULL)
-        {
-            list->tail = NULL;
-        }
-        else
-        if (list->head->next == NULL)
+        if ((list->head == NULL) || (list->head->next == NULL))
         {
             list->tail = list->head;
         }
