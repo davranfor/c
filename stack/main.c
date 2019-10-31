@@ -62,10 +62,10 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    size_t size = (size_t)rand() % 10;
+    int size = rand() % 10;
     struct data *item;
 
-    for (size_t i = 0; i < size; i++)
+    for (int key = 0; key < size; key++)
     {
         item = stack_push(list, malloc(sizeof *item));
         if (item == NULL)
@@ -73,8 +73,8 @@ int main(void)
             perror("stack_push");
             exit(EXIT_FAILURE);
         }
-        item->key = (int)i;
-        item->value = keytostr(item->key);
+        item->key = key;
+        item->value = keytostr(key);
         if (item->value == NULL)
         {
             perror("keytostr");
