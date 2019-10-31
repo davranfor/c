@@ -25,7 +25,7 @@ deque *deque_create(void)
     return calloc(1, sizeof(struct deque));
 }
 
-void *deque_push_front(deque *list, void *data)
+void *deque_push_head(deque *list, void *data)
 {
     if (data == NULL)
     {
@@ -53,7 +53,7 @@ void *deque_push_front(deque *list, void *data)
     return data;
 }
 
-void *deque_push_back(deque *list, void *data)
+void *deque_push_tail(deque *list, void *data)
 {
     if (data == NULL)
     {
@@ -91,12 +91,7 @@ void *deque_pop(deque *list)
 
         data = node->data;
         list->head = node->next;
-        if (list->head == NULL)
-        {
-            list->tail = NULL;
-        }
-        else
-        if (list->head->next == NULL)
+        if ((list->head == NULL) || (list->head->next == NULL))
         {
             list->tail = list->head;
         }

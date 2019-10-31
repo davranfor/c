@@ -10,8 +10,8 @@
 typedef struct deque deque;
 
 deque *deque_create(void);
-void *deque_push_front(deque *, void *);
-void *deque_push_back(deque *, void *);
+void *deque_push_head(deque *, void *);
+void *deque_push_tail(deque *, void *);
 void *deque_pop(deque *);
 void *deque_fetch(deque *, void **);
 void *deque_head(deque *);

@@ -62,26 +62,26 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    size_t size = (size_t)rand() % 10;
+    int size = rand() % 10;
     struct data *item;
 
-    for (size_t i = 0; i < size; i++)
+    for (int key = 0; key < size; key++)
     {
-        if (i & 0x01)
+        if (key & 0x01)
         {
-            item = deque_push_front(list, malloc(sizeof *item));
+            item = deque_push_head(list, malloc(sizeof *item));
         }
         else
         {
-            item = deque_push_back(list, malloc(sizeof *item));
+            item = deque_push_tail(list, malloc(sizeof *item));
         }
         if (item == NULL)
         {
             perror("deque_push");
             exit(EXIT_FAILURE);
         }
-        item->key = (int)i;
-        item->value = keytostr(item->key);
+        item->key = key;
+        item->value = keytostr(key);
         if (item->value == NULL)
         {
             perror("keytostr");
