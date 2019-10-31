@@ -17,6 +17,8 @@ typedef struct
 
 vector *vector_create(size_t, void (*)(void *));
 void *vector_resize(vector *, int);
+void *vector_insert(vector *, size_t);
+void *vector_delete(vector *, size_t);
 void *vector_copy(vector *, const void *, size_t);
 void *vector_concat(vector *, const void *, size_t);
 void vector_sort(vector *, int (*)(const void *, const void *));

@@ -126,6 +126,75 @@ void *vector_resize(vector *vec, int size)
     return NULL;
 }
 
+void *vector_insert(vector *vec, size_t index)
+{
+    if (index > vec->size)
+    {
+        return NULL;
+    }
+    if (index == vec->size)
+    {
+        return increment(vec, 1);
+    }
+
+    size_t room = next_size(vec->size);
+
+    if (vec->size + 1 > room)
+    {
+        room = next_size(vec->size + 1);
+
+        void *data = resize(vec, room);
+
+        if (data == NULL)
+        {
+            return NULL;
+        }
+        vec->data = data;
+    }
+    memmove(
+        VECTOR_ITEM(vec, index + 1),
+        VECTOR_ITEM(vec, index),
+        vec->szof * (vec->size++ - index)
+    );
+    return VECTOR_ITEM(vec, index);
+}
+
+void *vector_delete(vector *vec, size_t index)
+{
+    if (index >= vec->size)
+    {
+        return NULL;
+    }
+    if (index == vec->size - 1)
+    {
+        return decrement(vec, 1);
+    }
+
+    size_t room = next_size(vec->size--);
+
+    if (vec->fdel != NULL)
+    {
+        vec->fdel(VECTOR_ITEM(vec, index));
+    }
+    memmove(
+        VECTOR_ITEM(vec, index),
+        VECTOR_ITEM(vec, index + 1),
+        vec->szof * (vec->size - index)
+    );
+    if (vec->size <= room / 2)
+    {
+        room = next_size(vec->size);
+
+        void *data = resize(vec, room);
+
+        if (data != NULL)
+        {
+            vec->data = data;
+        }
+    }
+    return VECTOR_ITEM(vec, index);
+}
+
 void *vector_copy(vector *vec, const void *source, size_t size)
 {
     if (size == 0)

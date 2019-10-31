@@ -68,10 +68,10 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    size_t size = (size_t)rand() % 10;
+    int size = rand() % 10;
     struct data *item;
 
-    for (size_t i = 0; i < size; i++)
+    for (int iter = 0; iter < size; iter++)
     {
         item = vector_resize(data, +1);
         if (item == NULL)
