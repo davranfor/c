@@ -24,8 +24,6 @@ void *vector_concat(vector *, const void *, size_t);
 void vector_sort(vector *, int (*)(const void *, const void *));
 void *vector_bsearch(const vector *, const void *, int (*)(const void *, const void *));
 void *vector_lsearch(const vector *, const void *, int (*)(const void *, const void *));
-void *vector_min(const vector *, int (*)(const void *, const void *));
-void *vector_max(const vector *, int (*)(const void *, const void *));
 vector *vector_clear(vector *);
 void vector_destroy(vector *);
 

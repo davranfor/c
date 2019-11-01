@@ -286,50 +286,6 @@ void *vector_lsearch(const vector *vec, const void *key, int (*comp)(const void 
     return NULL;
 }
 
-void *vector_min(const vector *vec, int (*comp)(const void *, const void *))
-{
-    if (vec->size == 0)
-    {
-        return NULL;
-    }
-
-    const unsigned char *min = vec->data;
-    const unsigned char *item = min + vec->szof;
-    const unsigned char *last = min + vec->szof * vec->size;
-
-    while (item < last)
-    {
-        if (comp(item, min) < 0)
-        {
-            min = item;
-        }
-        item += vec->szof;
-    }
-    return (void *)min;
-}
-
-void *vector_max(const vector *vec, int (*comp)(const void *, const void *))
-{
-    if (vec->size == 0)
-    {
-        return NULL;
-    }
-
-    const unsigned char *max = vec->data;
-    const unsigned char *item = max + vec->szof;
-    const unsigned char *last = max + vec->szof * vec->size;
-
-    while (item < last)
-    {
-        if (comp(item, max) > 0)
-        {
-            max = item;
-        }
-        item += vec->szof;
-    }
-    return (void *)max;
-}
-
 #pragma GCC diagnostic pop
 
 vector *vector_clear(vector *vec)
