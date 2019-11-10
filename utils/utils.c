@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 #include "utils.h"
 
 /* File utilities */
@@ -256,5 +257,80 @@ size_t string_rskip(const char *str, int func(int))
         pos--;
     }
     return pos;
+}
+
+/* Date utilities */
+
+void today(int *day, int *month, int *year)
+{
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+
+    *day = tm.tm_mday;
+    *month = tm.tm_mon + 1;
+    *year = tm.tm_year + 1900;
+}
+
+/**
+ * Tomohiko Sakamoto's Algorithm
+ * Sunday = 0 ... Saturday = 6
+ */
+int day_of_week(int day, int month, int year)
+{
+    static int offset[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
+
+    year -= month < 3;
+    return (year + year / 4 - year / 100 + year / 400 + offset[month - 1] + day) % 7;
+}
+
+/**
+ * ISO 8601 date and time standard
+ * Monday = 1 ... Sunday = 7
+ */
+int ISO_day_of_week(int day, int month, int year)
+{
+	static int offset[] = {6, 2, 1, 4, 6, 2, 4, 0, 3, 5, 1, 3};
+
+	year -= month < 3;
+	return (year + year / 4 - year / 100 + year / 400 + offset[month - 1] + day) % 7 + 1;
+}
+
+int day_of_year(int day, int month, int year)
+{
+	static const int days[2][13] =
+    {
+		{0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
+		{0, 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
+	};
+	int leap = year_is_leap(year);
+
+    return days[leap][month] + day;
+}
+
+int week_of_month(int day, int month, int year)
+{
+    return (day - ISO_day_of_week(day, month, year) + 10) / 7;
+}
+
+int week_of_year(int day, int month, int year)
+{
+    return (day_of_year(day, month, year) - ISO_day_of_week(day, month, year) + 10) / 7;
+}
+
+int month_days(int month, int year)
+{
+    static const int days[2][13] =
+    {
+        {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+        {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+    };
+	int leap = year_is_leap(year);
+
+	return days[leap][month];
+}
+
+int year_is_leap(int year)
+{
+	return (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
 }
 

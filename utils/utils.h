@@ -3,7 +3,9 @@
 
 #include <ctype.h>
 
-/* File utilities */
+/* ************************************************************************* */
+/* File utilities                                                            */
+/* ************************************************************************* */
 
 #define FILE_TRUNCATE 0
 #define FILE_APPEND 1
@@ -16,7 +18,9 @@ char *file_read_line(FILE *);
 size_t file_write(const char *, const char *, int);
 int file_error(FILE *);
 
-/* String utilities */
+/* ************************************************************************* */
+/* String utilities                                                          */
+/* ************************************************************************* */
 
 /* Functions returning a new string */
 char *string_clone(const char *);
@@ -29,6 +33,19 @@ char *string_rtrim(const char *);
 size_t string_length(const char *);
 size_t string_lskip(const char *, int(*)(int));
 size_t string_rskip(const char *, int(*)(int));
+
+/* ************************************************************************* */
+/* Date utilities                                                            */
+/* ************************************************************************* */
+
+void today(int *, int *, int *);
+int day_of_week(int, int, int);
+int ISO_day_of_week(int, int, int);
+int day_of_year(int, int, int);
+int week_of_month(int, int, int);
+int week_of_year(int, int, int);
+int month_days(int, int);
+int year_is_leap(int);
 
 #endif /* UTILS_H */
 
