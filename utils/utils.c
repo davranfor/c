@@ -289,20 +289,20 @@ int day_of_week(int day, int month, int year)
  */
 int ISO_day_of_week(int day, int month, int year)
 {
-	static int offset[] = {6, 2, 1, 4, 6, 2, 4, 0, 3, 5, 1, 3};
+    static int offset[] = {6, 2, 1, 4, 6, 2, 4, 0, 3, 5, 1, 3};
 
-	year -= month < 3;
-	return (year + year / 4 - year / 100 + year / 400 + offset[month - 1] + day) % 7 + 1;
+    year -= month < 3;
+    return (year + year / 4 - year / 100 + year / 400 + offset[month - 1] + day) % 7 + 1;
 }
 
 int day_of_year(int day, int month, int year)
 {
-	static const int days[2][13] =
+    static const int days[2][13] =
     {
-		{0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
-		{0, 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
-	};
-	int leap = year_is_leap(year);
+        {0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
+        {0, 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
+    };
+    int leap = year_is_leap(year);
 
     return days[leap][month] + day;
 }
@@ -324,13 +324,13 @@ int month_days(int month, int year)
         {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
         {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
     };
-	int leap = year_is_leap(year);
+    int leap = year_is_leap(year);
 
-	return days[leap][month];
+    return days[leap][month];
 }
 
 int year_is_leap(int year)
 {
-	return (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
+    return (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
 }
 
