@@ -79,15 +79,22 @@ static void sample_dates(void)
     puts("Sample dates:");
 
     int day, month, year;
+    int hour, minutes, seconds;
 
     today(&day, &month, &year);
-    printf("Today (dd/mm/yyyy): %02d/%02d/%d\n", day, month, year);
+    now(&hour, &minutes, &seconds);
+    printf("Date (dd/mm/yyyy hh:mm:ss): %02d/%02d/%d %02d:%02d:%02d\n",
+        day, month, year, hour, minutes, seconds);
     printf("Day of week: %d\n", day_of_week(day, month, year));
     printf("Day of week (ISO 8601): %d\n", ISO_day_of_week(day, month, year));
     printf("Day of year: %d\n", day_of_year(day, month, year));
     printf("Week of month: %d\n", week_of_month(day, month, year));
     printf("Week of year: %d\n", week_of_year(day, month, year));
     printf("Days in this month: %d\n", month_days(month, year));
+    day_add(&day, &month, &year, -1);
+    printf("Yesterday: %02d/%02d/%d\n", day, month, year);
+    day_add(&day, &month, &year, +2);
+    printf("Tomorrow: %02d/%02d/%d\n", day, month, year);
 }
 
 int main(void)

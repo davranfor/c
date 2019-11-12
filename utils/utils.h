@@ -39,6 +39,8 @@ size_t string_rskip(const char *, int(*)(int));
 /* ************************************************************************* */
 
 void today(int *, int *, int *);
+void now(int *, int *, int *);
+void day_add(int *, int *, int *, int);
 int day_of_week(int, int, int);
 int ISO_day_of_week(int, int, int);
 int day_of_year(int, int, int);

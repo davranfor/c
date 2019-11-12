@@ -271,6 +271,31 @@ void today(int *day, int *month, int *year)
     *year = tm.tm_year + 1900;
 }
 
+void now(int *hour, int *minutes, int *seconds)
+{
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+
+    *hour = tm.tm_hour;
+    *minutes = tm.tm_min;
+    *seconds = tm.tm_sec;
+}
+
+void day_add(int *day, int *month, int *year, int days)
+{
+    struct tm tm = {0};
+
+    tm.tm_mday = *day + days;
+    tm.tm_mon = *month - 1;
+    tm.tm_year = *year - 1900;
+
+    mktime(&tm);
+
+    *day = tm.tm_mday;
+    *month = tm.tm_mon + 1;
+    *year = tm.tm_year + 1900;
+}
+
 /**
  * Tomohiko Sakamoto's Algorithm
  * Sunday = 0 ... Saturday = 6
@@ -297,14 +322,14 @@ int ISO_day_of_week(int day, int month, int year)
 
 int day_of_year(int day, int month, int year)
 {
-    static const int days[2][13] =
+    static const int days[2][12] =
     {
-        {0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
-        {0, 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
+        {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
+        {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
     };
     int leap = year_is_leap(year);
 
-    return days[leap][month] + day;
+    return days[leap][month - 1] + day;
 }
 
 int week_of_month(int day, int month, int year)
@@ -319,14 +344,14 @@ int week_of_year(int day, int month, int year)
 
 int month_days(int month, int year)
 {
-    static const int days[2][13] =
+    static const int days[2][12] =
     {
-        {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
-        {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+        {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+        {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
     };
     int leap = year_is_leap(year);
 
-    return days[leap][month];
+    return days[leap][month - 1];
 }
 
 int year_is_leap(int year)
