@@ -503,7 +503,7 @@ unsigned long json_real(const json *node)
 
 int json_boolean(const json *node)
 {
-    if ((node == NULL) || (node->value == NULL))
+    if (node == NULL)
     {
         return 0;
     }
@@ -622,7 +622,7 @@ int json_is_null(const json *node)
 /* Devuelve 0 o 1 dependiendo de si la cadena pasada coincide con el valor del nodo */
 int json_streq(const json *node, const char *str)
 {
-    if ((node == NULL) || (node->value == NULL))
+    if (node == NULL)
     {
         return 0;
     }
