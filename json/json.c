@@ -11,11 +11,6 @@
 #include "utils.h"
 #include "json.h"
 
-/*
- * - Nodo
- * - Un puntero al nodo padre (parent) permite construir el árbol de forma no recursiva
- *   y además permite escalar hacia arriba para saber que nodo lo contiene
- */
 struct json
 {
     enum json_type type;

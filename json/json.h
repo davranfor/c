@@ -11,24 +11,15 @@ typedef struct json json;
 
 enum json_type
 {
-    JSON_EMPTY,     /* Nodo reservado sin usar */
+    JSON_EMPTY,     /* Vacío (propiedad o matriz sin elementos) */
     JSON_OBJECT,    /* {Propiedad} */
     JSON_ARRAY,     /* [Matriz] */
     JSON_STRING,    /* "Cadena" */
     JSON_NUMBER,    /* Número entero, con decimales o con notación científica */
     JSON_BOOLEAN,   /* true o false */
     JSON_NULL,      /* null */
-    JSON_NONE,      /* Sin tipificar (puntero nulo) */
+    JSON_NONE,      /* Puntero nulo */
 };
-
-/*
- * Nota: Si una vez terminado el escaneo algún nodo queda marcado con el tipo
- *       JSON_EMPTY, nos encontramos ante un JSON mal formado.
- *       Los motivos pueden ser:
- *       ',' en un nodo a la izquierda de un nodo padre
- *       '}' en un nodo cuyo padre no es un JSON_OBJECT (sin emparejar con '{')
- *       ']' en un nodo cuyo padre no es un JSON_ARRAY  (sin emparejar con '[')
- */
 
 json *json_create(void);
 json *json_parse(const char *);
