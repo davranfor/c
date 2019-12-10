@@ -11,11 +11,11 @@ typedef struct json json;
 
 enum json_type
 {
-    JSON_EMPTY,     /* Vacío (propiedad o matriz sin elementos) */
-    JSON_OBJECT,    /* {Propiedad} */
+    JSON_EMPTY,     /* Vacío (único elemento de un objeto o matriz) */
+    JSON_OBJECT,    /* {Objeto} */
     JSON_ARRAY,     /* [Matriz] */
     JSON_STRING,    /* "Cadena" */
-    JSON_NUMBER,    /* Número entero, con decimales o con notación científica */
+    JSON_NUMBER,    /* Número entero o con decimales */
     JSON_BOOLEAN,   /* true o false */
     JSON_NULL,      /* null */
     JSON_NONE,      /* Puntero nulo */
