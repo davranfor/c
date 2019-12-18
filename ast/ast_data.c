@@ -5,6 +5,8 @@
 #include "ast_eval.h"
 #include "ast_data.h"
 
+///////////////////////////////////////////////////////////////////////////////
+
 static ast_data operators[] =
 {
     [ OPERATOR_END            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_END,            0, 0, 'L', ""        } },
@@ -59,6 +61,8 @@ ast_data *unary(ast_data *data)
     }
     return data;
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 static const ast_function list[] =
 {
@@ -142,6 +146,8 @@ void unmap_functions(void)
 {
     hashmap_destroy(map, NULL);
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 void print_help(void)
 {

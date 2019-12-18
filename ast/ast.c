@@ -16,11 +16,13 @@
 
 static void *ast_failure(char *file, int line)
 { 
-    fprintf(stderr, "Error building ast\nFile: %s\nLine: %d\n", file, line);
+    fprintf(stderr, "Error building ast:\n\tFile: %s\n\tLine: %d\n", file, line);
     return NULL;
 }
 
 #define AST_FAILURE ast_failure(__FILE__, __LINE__)
+
+///////////////////////////////////////////////////////////////////////////////
 
 static ast_data *push(ast_node **root, ast_data *data)
 {
@@ -82,13 +84,18 @@ static void clear(ast_node *root)
     {
         clear(root->left);
         clear(root->right);
-        if (root->data->type == TYPE_NUMBER)
+
+        enum ast_type type = root->data->type;
+
+        if ((type == TYPE_NUMBER) || (type == TYPE_STRING))
         {
             free(root->data);
         }
         free(root);
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 static enum ast_type node_type(const ast_node *node)
 {
@@ -107,6 +114,8 @@ static int node_operator(const ast_node *node)
     }
     return node->data->operator->value;
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 static ast_node *operators;
 static ast_node *operands;
@@ -159,12 +168,11 @@ static int move_parenths(void)
         case CLASSIFY_FUNCTION:
             if (operands->data->function->arguments != count)
             {
-                fprintf(
-                    stderr,
-                    "\"%s\" was expecting %d argument(s), got %d\n",
-                    operands->data->function->name,
-                    operands->data->function->arguments,
-                    count
+                fprintf(stderr,
+                        "\"%s\" was expecting %d argument(s), got %d\n",
+                        operands->data->function->name,
+                        operands->data->function->arguments,
+                        count
                 );
                 return 0;
             }
@@ -203,10 +211,11 @@ static int move_data(const ast_data *data)
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 static int is_token(int c)
 {
     return
-        (c == OPERATOR_END) ||
         (c == OPERATOR_EXP) ||
         (c == OPERATOR_MUL) ||
         (c == OPERATOR_DIV) ||
@@ -217,6 +226,12 @@ static int is_token(int c)
         (c == OPERATOR_RIGHT_PARENTHS) ||
         (c == OPERATOR_COMMA) ||
         (c == OPERATOR_SEMICOLON);
+}
+
+static int is_escape(int c)
+{
+    return (c == '\\') || (c == '/') || (c == '"') ||
+           (c == 'b')  || (c == 'f') || (c == 'n') || (c == 'r') || (c == 't');
 }
 
 #define MAX_LENGTH 64
@@ -244,39 +259,112 @@ static size_t trim(char *str, const char *left, const char *right)
     return len;
 }
 
+static char *strings;
+
 static ast_data *parse(const char **text)
 {
-    const char *str = *text;
+    /* Position to store strings in the file */
+    static size_t pos;
 
-    *text = NULL;
+    const char *start = NULL;
+    const char *str = *text;
+    int quoted = 0;
+    int is_str = 0;
+
     while (*str != '\0')
     {
-        if (is_token(*str))
+        if (*str == '"')
         {
-            break;
+            quoted ^= 1;
+            is_str = 1;
         }
-        /* First character which is not a space nor a token */
-        if ((*text == NULL) && !isspace((unsigned char)*str))
+        if (quoted == 0)
         {
-            *text = str;
+            // Stop scanning on token
+            if (is_token(*str))
+            {
+                break;
+            }
+            // Skip comments
+            if (*str == '#')
+            {
+                while ((*str != 0) && (*str != '\n'))
+                {
+                    str++;
+                }
+            }
+        }
+        else
+        {
+            if (*str != '"')
+            {
+                strings[pos++] = *str;
+            }
+            // Check escape sequences
+// Cuidado aquí que no lee la segunda secuéncia
+            if ((*str == '\\') && !is_escape(*(++str)))
+            {
+                fprintf(stderr, "Bad sequence\n");
+                return AST_FAILURE;
+            }
+        }
+        if (!isspace((unsigned char)*str))
+        {
+            if (start == NULL)
+            {
+                if (!is_str)
+                {
+                    start = str;
+                }
+                else
+                {
+                    start = strings + pos;
+                }
+            }
+            if ((*str != '"') && (quoted != is_str))
+            {
+                fprintf(stderr, "An operand must be followed with an operator\n");
+                return AST_FAILURE;
+            }
         }
         str++;
     }
 
-    ast_data *data;
+    if (quoted != 0)
+    {
+        fprintf(stderr, "Bad quotes\n");
+        return AST_FAILURE;
+    }
+
+    ast_data *data = NULL;
 
     // An operator?
-    if (*text == NULL)
+    if (start == NULL)
     {
         data = map_operator(*str);
         *text = str + 1;
         return data;
     }
 
+    // A string?
+    if (is_str)
+    {
+        data = malloc(sizeof *data);
+        if (data == NULL)
+        {
+            return AST_FAILURE;
+        }
+        data->type = TYPE_STRING;
+        data->string = start;
+        strings[pos++] = 0;
+        *text = str;
+        return data;
+    }
+
     char buf[MAX_LENGTH];
     size_t len;
 
-    len = trim(buf, *text, str - 1);
+    len = trim(buf, start, str - 1);
     if (len == 0)
     {
         return AST_FAILURE;
@@ -314,13 +402,16 @@ static ast_data *parse(const char **text)
     return data;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 static ast_data *classify(ast_data *data)
 {
     static bool starting = true;
-    static int parenths = 0;
 
     if (data->type == TYPE_OPERATOR)
     {
+        static int parenths = 0;
+
         switch (data->operator->value)
         {
             case '(':
@@ -355,6 +446,16 @@ static ast_data *classify(ast_data *data)
                 expected = OPERAND;
                 starting = true;
                 break;
+            case '\0':
+                if (starting == false)
+                {
+                    return AST_FAILURE;
+                }
+                if (operators != NULL)
+                {
+                    return AST_FAILURE;
+                }
+                break;
             default:
                 if (expected == OPERAND)
                 {
@@ -372,16 +473,6 @@ static ast_data *classify(ast_data *data)
                     }
                 }
                 starting = false;
-                break;
-            case '\0':
-                if (starting == false)
-                {
-                    return AST_FAILURE;
-                }
-                if (operators != NULL)
-                {
-                    return AST_FAILURE;
-                }
                 break;
         }
     }
@@ -410,7 +501,7 @@ static ast_node *build(const char *text)
 {
     for (;;)
     {
-        ast_data *root, *data;
+        ast_data *data;
 
         data = parse(&text);
         if (data == NULL)
@@ -424,6 +515,8 @@ static ast_node *build(const char *text)
         }
         if (data->type == TYPE_OPERATOR)
         {
+            ast_data *root;
+
             switch (data->operator->value)
             {
                 case '(':
@@ -474,6 +567,9 @@ static ast_node *build(const char *text)
                         }
                     }
                     break;
+                case '\0':
+                    while (move(&script, &operands));
+                    return script;
                 default:
                     while ((root = peek(operators)))
                     {
@@ -489,9 +585,6 @@ static ast_node *build(const char *text)
                     }
                     push(&operators, data);
                     break;
-                case '\0':
-                    while (move(&script, &operands));
-                    return script;
             }
         }
         else
@@ -504,11 +597,9 @@ static ast_node *build(const char *text)
 
 static void print(const ast_node *node, int level)
 {
-    int iter;
-
     if (node != NULL)
     {
-        for (iter = 0; iter < level; iter++)
+        for (int iter = 0; iter < level; iter++)
         {
             putchar('\t');
         }
@@ -522,6 +613,9 @@ static void print(const ast_node *node, int level)
                 break;
             case TYPE_NUMBER:
                 printf("%g\n", node->data->number);
+                break;
+            case TYPE_STRING:
+                printf("%s\n", node->data->string);
                 break;
             default:
                 printf("Undefined type %d\n", node->data->type);
@@ -608,12 +702,13 @@ int ast_create(void)
     return map_functions();
 }
 
-ast_node *ast_build(const char *expression)
+ast_node *ast_build(char *text)
 {
-    return build(expression);
+    strings = text;
+    return build(text);
 }
 
-void ast_print(const ast_node *node)
+void ast_explain(const ast_node *node)
 {
     print(node, 0);
 }

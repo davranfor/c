@@ -15,8 +15,8 @@ typedef struct ast_node
 } ast_node;
 
 int ast_create(void);
-ast_node *ast_build(const char *);
-void ast_print(const ast_node *);
+ast_node *ast_build(char *);
+void ast_explain(const ast_node *);
 void ast_eval(const ast_node *);
 void ast_help(void);
 void ast_clean(void);

@@ -2,18 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "utils.h"
 #include "ast.h"
+
+static char *script;
+
+static void script_destroy(void)
+{
+    free(script);
+}
 
 int main(int argc, char *argv[])
 {
-    /*
-        Example:
-            3+4*2/(1-5)^2^3; gives: 3.00012 
-        Launch from command line:
-            echo "3+4*2/(1-5)^2^3;" | ./calculator
-    */
-
-    int print_tree = 0;
+    int explain = 0;
 
     if (argc == 2)
     {
@@ -24,11 +25,34 @@ int main(int argc, char *argv[])
         }
         if (strcmp(argv[1], "--tree") == 0)
         {
-            print_tree = 1;
+            explain = 1;
         }
     }
+    if ((argc > 1 ) && (explain == 0))
+    {
+        fprintf(stderr, "%s: Unrecognized command line: %s\n",
+                argv[0],
+                argv[1]
+        );
+        exit(EXIT_FAILURE);
+    }
+
+//temporal
+explain = 1;
 
     srand((unsigned)time(NULL));
+
+    const char *path = "script.ast";
+
+    script = file_read(path);
+    if (script == NULL)
+    {
+        perror("file_read");
+        fprintf(stderr, "%s\n", path);
+        exit(EXIT_FAILURE);
+    }
+
+    atexit(script_destroy);
     atexit(ast_destroy);
 
     if (ast_create() == 0)
@@ -37,43 +61,18 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    ast_node *ast;
+    ast_node *ast = ast_build(script);
 
-    for (;;)
+    if (ast == NULL)
     {
-        printf("> ");
-        fflush(stdout);
-
-        char str[1024];
-
-        if (fgets(str, sizeof str, stdin) == NULL)
-        {
-            if (ferror(stdin))
-            {
-                perror("fgets");
-                exit(EXIT_FAILURE);
-            }
-            else
-            {
-                puts("Bye");
-                exit(EXIT_SUCCESS);
-            }
-        }
-        ast = ast_build(str);
-        if (ast == NULL)
-        {
-            exit(EXIT_FAILURE);
-        }
-        if (print_tree)
-        {
-            ast_print(ast);
-        }
-        else
-        {
-            ast_eval(ast);
-        }
-        ast_clean();
+        exit(EXIT_FAILURE);
     }
+    if (explain != 0)
+    {
+        ast_explain(ast);
+    }
+    ast_eval(ast);
+    ast_clean();
     return 0;
 }
 

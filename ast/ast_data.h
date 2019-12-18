@@ -7,6 +7,7 @@ enum ast_type
     TYPE_OPERATOR,
     TYPE_FUNCTION,
     TYPE_NUMBER,
+    TYPE_STRING,
     CLASSIFY_FUNCTION,
 };
 
@@ -49,6 +50,7 @@ typedef struct ast_data
     union
     {
         double number;
+        const char *string;
         const ast_operator *operator;
         const ast_function *function;
     };
