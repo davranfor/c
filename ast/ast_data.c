@@ -1,9 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "hashmap.h"
 #include "ast_eval.h"
 #include "ast_data.h"
+
+///////////////////////////////////////////////////////////////////////////////
+
+ast_data *new_data(ast_type type)
+{
+    ast_data *data;
+
+    data = malloc(sizeof *data);
+    if (data == NULL)
+    {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+    data->type = type;
+    return data;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -60,6 +77,68 @@ ast_data *unary(ast_data *data)
             return &operators[OPERATOR_MINUS];
     }
     return data;
+}
+
+int is_token(int c)
+{
+    return
+        (c == OPERATOR_EXP) ||
+        (c == OPERATOR_MUL) ||
+        (c == OPERATOR_DIV) ||
+        (c == OPERATOR_REM) ||
+        (c == OPERATOR_ADD) ||
+        (c == OPERATOR_SUB) ||
+        (c == OPERATOR_LEFT_PARENTHS) ||
+        (c == OPERATOR_RIGHT_PARENTHS) ||
+        (c == OPERATOR_COMMA) ||
+        (c == OPERATOR_SEMICOLON);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+int is_sequence(int c)
+{
+    return (c == '\\') || (c == '/') || (c == '"') ||
+           (c == 'b')  || (c == 'f') || (c == 'n') || (c == 'r') || (c == 't');
+}
+
+int get_sequence(int sequence)
+{
+    switch (sequence)
+    {
+        case 'b':
+            return '\b';
+        case 'f':
+            return '\f';
+        case 'n':
+            return '\n';
+        case 'r':
+            return '\r';
+        case 't':
+            return '\t';
+        // case '"':
+        // case '\\':
+        // case '/':
+        default:
+            return sequence;
+    }
+}
+
+int is_valid_name(const char *str)
+{
+    if (isdigit((unsigned char)*str))
+    {
+        return 0;
+    }
+    while (*str != '\0')
+    {
+        if ((*str != '_') && !isalnum((unsigned char)*str))
+        {
+            return 0;
+        }
+        str++;
+    }
+    return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

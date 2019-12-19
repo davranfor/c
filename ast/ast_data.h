@@ -1,15 +1,17 @@
 #ifndef AST_DATA_H
 #define AST_DATA_H
 
-enum ast_type
+typedef enum
 {
     TYPE_NONE,
     TYPE_OPERATOR,
     TYPE_FUNCTION,
+    TYPE_VARIABLE,
     TYPE_NUMBER,
     TYPE_STRING,
+
     CLASSIFY_FUNCTION,
-};
+} ast_type;
 
 enum
 {
@@ -46,7 +48,7 @@ typedef struct
 
 typedef struct ast_data
 {
-    enum ast_type type;
+    ast_type type;
     union
     {
         double number;
@@ -56,10 +58,16 @@ typedef struct ast_data
     };
 } ast_data;
 
+ast_data *new_data(ast_type);
+
 ast_data *map_operator(int);
 int arguments(const ast_data *);
 int precedence(const ast_data *, const ast_data *);
 ast_data *unary(ast_data *);
+int is_token(int);
+int is_sequence(int);
+int get_sequence(int);
+int is_valid_name(const char *);
 
 ast_data *map_function(const char *);
 int map_functions(void);

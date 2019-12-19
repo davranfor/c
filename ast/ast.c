@@ -14,13 +14,13 @@
 #include "ast_data.h"
 #include "ast.h"
 
-static void *ast_failure(char *file, int line)
+static void ast_exit_failure(char *file, int line)
 { 
     fprintf(stderr, "Error building ast:\n\tFile: %s\n\tLine: %d\n", file, line);
-    return NULL;
+    exit(EXIT_FAILURE);
 }
 
-#define AST_FAILURE ast_failure(__FILE__, __LINE__)
+#define AST_EXIT_FAILURE() ast_exit_failure(__FILE__, __LINE__)
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -31,7 +31,7 @@ static ast_data *push(ast_node **root, ast_data *data)
     node = malloc(sizeof *node);
     if (node == NULL)
     {
-        AST_FAILURE;
+        perror("malloc");
         exit(EXIT_FAILURE);
     }
     node->right = *root;
@@ -84,12 +84,15 @@ static void clear(ast_node *root)
     {
         clear(root->left);
         clear(root->right);
-
-        enum ast_type type = root->data->type;
-
-        if ((type == TYPE_NUMBER) || (type == TYPE_STRING))
+        switch (root->data->type)
         {
-            free(root->data);
+            case TYPE_VARIABLE:
+            case TYPE_NUMBER:
+            case TYPE_STRING:
+                free(root->data);
+                break;
+            default:
+                break;
         }
         free(root);
     }
@@ -97,7 +100,7 @@ static void clear(ast_node *root)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static enum ast_type node_type(const ast_node *node)
+static ast_type node_type(const ast_node *node)
 {
     if (node == NULL)
     {
@@ -117,10 +120,11 @@ static int node_operator(const ast_node *node)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+enum {OPERATOR, OPERAND};
+
 static ast_node *operators;
 static ast_node *operands;
 
-enum {OPERATOR, OPERAND};
 static int expected = OPERAND;
 
 static int move_operator(int args)
@@ -213,52 +217,6 @@ static int move_data(const ast_data *data)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static int is_token(int c)
-{
-    return
-        (c == OPERATOR_EXP) ||
-        (c == OPERATOR_MUL) ||
-        (c == OPERATOR_DIV) ||
-        (c == OPERATOR_REM) ||
-        (c == OPERATOR_ADD) ||
-        (c == OPERATOR_SUB) ||
-        (c == OPERATOR_LEFT_PARENTHS) ||
-        (c == OPERATOR_RIGHT_PARENTHS) ||
-        (c == OPERATOR_COMMA) ||
-        (c == OPERATOR_SEMICOLON);
-}
-
-static int is_escape(int c)
-{
-    return (c == '\\') || (c == '/') || (c == '"') ||
-           (c == 'b')  || (c == 'f') || (c == 'n') || (c == 'r') || (c == 't');
-}
-
-#define MAX_LENGTH 64
-
-static size_t trim(char *str, const char *left, const char *right)
-{
-    while (right > left)
-    {
-        if (!isspace((unsigned char)*right))
-        {
-            break;
-        }
-        right--;
-    }
-
-    size_t len = (size_t)(right - left) + 1;
-
-    if (len >= MAX_LENGTH)
-    {
-        fprintf(stderr, "Keyword MaxLength = %d\n", MAX_LENGTH - 1);
-        return 0;
-    }
-    memcpy(str, left, len);
-    str[len] = '\0';
-    return len;
-}
-
 static char *strings;
 
 static ast_data *parse(const char **text)
@@ -268,15 +226,15 @@ static ast_data *parse(const char **text)
 
     const char *start = NULL;
     const char *str = *text;
+    int keyword = 1;
     int quoted = 0;
-    int is_str = 0;
 
     while (*str != '\0')
     {
         if (*str == '"')
         {
             quoted ^= 1;
-            is_str = 1;
+            keyword = 0;
         }
         if (quoted == 0)
         {
@@ -296,35 +254,35 @@ static ast_data *parse(const char **text)
         }
         else
         {
-            if (*str != '"')
+            // Check escape sequences
+            if (*str == '\\')
+            {
+                if (!is_sequence(*++str))
+                {
+                    fprintf(stderr, "Bad sequence\n");
+                    AST_EXIT_FAILURE();
+                }
+                strings[pos++] = (char)get_sequence(*str);
+            }
+            else if (*str != '"')
             {
                 strings[pos++] = *str;
-            }
-            // Check escape sequences
-// Cuidado aquí que no lee la segunda secuéncia
-            if ((*str == '\\') && !is_escape(*(++str)))
-            {
-                fprintf(stderr, "Bad sequence\n");
-                return AST_FAILURE;
             }
         }
         if (!isspace((unsigned char)*str))
         {
             if (start == NULL)
             {
-                if (!is_str)
-                {
-                    start = str;
-                }
-                else
-                {
-                    start = strings + pos;
-                }
+                start = strings + pos;
             }
-            if ((*str != '"') && (quoted != is_str))
+            if ((*str != '"') && (quoted == keyword))
             {
-                fprintf(stderr, "An operand must be followed with an operator\n");
-                return AST_FAILURE;
+                fprintf(stderr, "An operand must be followed by an operator\n");
+                AST_EXIT_FAILURE();
+            }
+            if (keyword == 1)
+            {
+                strings[pos++] = *str;
             }
         }
         str++;
@@ -333,7 +291,7 @@ static ast_data *parse(const char **text)
     if (quoted != 0)
     {
         fprintf(stderr, "Bad quotes\n");
-        return AST_FAILURE;
+        AST_EXIT_FAILURE();
     }
 
     ast_data *data = NULL;
@@ -346,56 +304,48 @@ static ast_data *parse(const char **text)
         return data;
     }
 
+    strings[pos++] = 0;
+
     // A string?
-    if (is_str)
+    if (!keyword)
     {
-        data = malloc(sizeof *data);
-        if (data == NULL)
-        {
-            return AST_FAILURE;
-        }
-        data->type = TYPE_STRING;
+        data = new_data(TYPE_STRING);
         data->string = start;
-        strings[pos++] = 0;
-        *text = str;
-        return data;
     }
-
-    char buf[MAX_LENGTH];
-    size_t len;
-
-    len = trim(buf, start, str - 1);
-    if (len == 0)
-    {
-        return AST_FAILURE;
-    }
-
-    // A number?
-    double number;
-    char *ptr;
-
-    number = strtod(buf, &ptr);
-    if (*ptr == '\0')
-    {
-        data = malloc(sizeof *data);
-        if (data == NULL)
-        {
-            return AST_FAILURE;
-        }
-        data->type = TYPE_NUMBER;
-        data->number = number;
-    }
-    // A function?
     else
     {
-        if (*str != '(')
+        // A number?
+        double number;
+        char *ptr;
+
+        number = strtod(start, &ptr);
+        if (*ptr == '\0')
         {
-            return AST_FAILURE;
+            data = new_data(TYPE_NUMBER);
+            data->number = number;
         }
-        data = map_function(buf);
-        if (data == NULL)
+        else
         {
-            return AST_FAILURE;
+            if (!is_valid_name(start))
+            {
+                fprintf(stderr, "Invalid keyword name\n");
+                AST_EXIT_FAILURE();
+            }
+            // A function?
+            else if (*str == '(')
+            {
+                data = map_function(start);
+                if (data == NULL)
+                {
+                    AST_EXIT_FAILURE();
+                }
+            }
+            // A variable
+            else
+            {
+                data = new_data(TYPE_VARIABLE);
+                data->string = start;
+            }
         }
     }
     *text = str;
@@ -425,11 +375,11 @@ static ast_data *classify(ast_data *data)
             case ',':
                 if (parenths == 0)
                 {
-                    return AST_FAILURE;
+                    AST_EXIT_FAILURE();
                 }
                 if (expected == OPERAND)
                 {
-                    return AST_FAILURE;
+                    AST_EXIT_FAILURE();
                 }
                 expected = OPERAND;
                 starting = false;
@@ -437,11 +387,11 @@ static ast_data *classify(ast_data *data)
             case ';':
                 if (parenths != 0)
                 {
-                    return AST_FAILURE;
+                    AST_EXIT_FAILURE();
                 }
                 if (expected == OPERAND)
                 {
-                    return AST_FAILURE;
+                    AST_EXIT_FAILURE();
                 }
                 expected = OPERAND;
                 starting = true;
@@ -449,11 +399,11 @@ static ast_data *classify(ast_data *data)
             case '\0':
                 if (starting == false)
                 {
-                    return AST_FAILURE;
+                    AST_EXIT_FAILURE();
                 }
                 if (operators != NULL)
                 {
-                    return AST_FAILURE;
+                    AST_EXIT_FAILURE();
                 }
                 break;
             default:
@@ -462,7 +412,7 @@ static ast_data *classify(ast_data *data)
                     data = unary(data);
                     if (arguments(data) != 1)
                     {
-                        return AST_FAILURE;
+                        AST_EXIT_FAILURE();
                     }
                 }
                 else
@@ -480,7 +430,7 @@ static ast_data *classify(ast_data *data)
     {
         if (expected == OPERATOR)
         {
-            return AST_FAILURE;
+            AST_EXIT_FAILURE();
         }
         switch (data->type)
         {
@@ -529,14 +479,14 @@ static ast_node *build(const char *text)
                         root = peek(operators);
                         if (root == NULL)
                         {
-                            return AST_FAILURE;
+                            AST_EXIT_FAILURE();
                         }
 
                         int args = arguments(root);
 
                         if (!move_data(root))
                         {
-                            return AST_FAILURE;
+                            AST_EXIT_FAILURE();
                         }
                         if (args == 0)
                         {
@@ -551,7 +501,7 @@ static ast_node *build(const char *text)
                         {
                             if (!move_data(root))
                             {
-                                return AST_FAILURE;
+                                AST_EXIT_FAILURE();
                             }
                             continue;
                         }
@@ -563,7 +513,7 @@ static ast_node *build(const char *text)
                     {
                         if (!move_data(root))
                         {
-                            return AST_FAILURE;
+                            AST_EXIT_FAILURE();
                         }
                     }
                     break;
@@ -577,7 +527,7 @@ static ast_node *build(const char *text)
                         {
                             if (!move_data(root))
                             {
-                                return AST_FAILURE;
+                                AST_EXIT_FAILURE();
                             }
                             continue;
                         }
@@ -610,6 +560,9 @@ static void print(const ast_node *node, int level)
                 break;
             case TYPE_FUNCTION:
                 printf("%s\n", node->data->function->name);
+                break;
+            case TYPE_VARIABLE:
+                printf("%s\n", node->data->string);
                 break;
             case TYPE_NUMBER:
                 printf("%g\n", node->data->number);

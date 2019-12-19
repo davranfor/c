@@ -44,7 +44,7 @@ explain = 1;
 
     const char *path = "script.ast";
 
-    script = file_read(path);
+    script = file_read_with_prefix(path, " ");
     if (script == NULL)
     {
         perror("file_read");

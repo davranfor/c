@@ -1,9 +1,12 @@
+abs(-19);
 3+4*2/(1-5)^2^3;
 # Esto es un comentario
 2.15; # otro comentario
 4.18;
-"Una cadena";
+"Coco";
 "En un lugar de la mancha "
-#Bla
-"de cuyo nombre";
-3.14;
+# Se pueden intercalar comentarios entre las cadenas
+"... de cuyo nombre no quiero acrodarme";
+"tab\ted";
+kuho 455; # Controlar espacios
+2.13;
