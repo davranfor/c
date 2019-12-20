@@ -11,7 +11,7 @@ all: ast
 main.o: utils.h ast.h
 utils.o: utils.h
 hashmap.o: hashmap.h
-ast_eval.o:  ast_eval.h
+ast_eval.o: ast_data.h ast_eval.h
 ast_data.o: hashmap.h ast_eval.h ast_data.h
 ast.o: ast_eval.h ast_data.h ast.h
 

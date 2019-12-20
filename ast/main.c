@@ -37,12 +37,9 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-//temporal
-explain = 1;
-
     srand((unsigned)time(NULL));
 
-    const char *path = "script.ast";
+    const char *path = "script.py";
 
     script = file_read_with_prefix(path, " ");
     if (script == NULL)
@@ -55,11 +52,7 @@ explain = 1;
     atexit(script_destroy);
     atexit(ast_destroy);
 
-    if (ast_create() == 0)
-    {
-        perror("ast_create");
-        exit(EXIT_FAILURE);
-    }
+    ast_create();
 
     ast_node *ast = ast_build(script);
 
@@ -67,12 +60,12 @@ explain = 1;
     {
         exit(EXIT_FAILURE);
     }
+    //explain = 1;
     if (explain != 0)
     {
         ast_explain(ast);
     }
     ast_eval(ast);
-    ast_clean();
     return 0;
 }
 

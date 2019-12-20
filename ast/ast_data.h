@@ -43,18 +43,31 @@ typedef struct
 {
     const char *name;
     int arguments;
+    int returns;
     int (*exec)(void);
 } ast_function;
+
+typedef struct
+{
+    const char *name;
+    ast_type type;
+    union
+    {
+        double number;
+        const char *string;
+    };
+} ast_variable;
 
 typedef struct ast_data
 {
     ast_type type;
     union
     {
-        double number;
-        const char *string;
         const ast_operator *operator;
         const ast_function *function;
+        ast_variable *variable;
+        double number;
+        const char *string;
     };
 } ast_data;
 
@@ -70,8 +83,12 @@ int get_sequence(int);
 int is_valid_name(const char *);
 
 ast_data *map_function(const char *);
-int map_functions(void);
+void map_functions(void);
 void unmap_functions(void);
+
+ast_data *map_variable(const char *);
+void map_variables(void);
+void unmap_variables(void);
 
 void print_help(void);
 

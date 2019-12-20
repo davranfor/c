@@ -1,13 +1,10 @@
 #ifndef AST_EVAL_H
 #define AST_EVAL_H
 
-/*
-Para cuando quieras introducir strings:
 struct ast_data;
-*/
 
-int push_number(double);
-double pop_number(void);
+int push_data(struct ast_data);
+struct ast_data pop_data(void);
 
 int ast_abs(void);
 int ast_ceil(void);
@@ -26,6 +23,9 @@ int ast_sqr(void);
 int ast_tan(void);
 int ast_tanh(void);
 int ast_trunc(void);
+
+int ast_print(void);
+int ast_println(void);
 
 #endif /* AST_EVAL_H */
 

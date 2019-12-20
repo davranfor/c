@@ -1,25 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "ast_data.h"
 #include "ast_eval.h"
 
-#define MAX_FRAME 2048
+#define MAX_FRAME 8192
 
-static double frame[MAX_FRAME];
+static ast_data frame[MAX_FRAME];
 static int counter;
 
-int push_number(double number)
+int push_data(ast_data data)
 {
     if (counter == MAX_FRAME)
     {
         fprintf(stderr, "Stack overflow\n");
         exit(EXIT_FAILURE);
     }
-    frame[counter++] = number;
+    frame[counter++] = data;
     return 1;
 }
 
-double pop_number(void)
+ast_data pop_data(void)
 {
     if (counter == 0)
     {
@@ -29,121 +30,203 @@ double pop_number(void)
     return frame[--counter];    
 }
 
+static ast_data *peek_data(void)
+{
+    if (counter == 0)
+    {
+        fprintf(stderr, "Empty stack\n");
+        exit(EXIT_FAILURE);
+    }
+    return &frame[counter - 1];    
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Maths
+///////////////////////////////////////////////////////////////////////////////
+
 int ast_abs(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(fabs(number));
+    data->number = fabs(data->number);
+    return 1;
 }
 
 int ast_ceil(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(ceil(number));
+    data->number = ceil(data->number);
+    return 1;
 }
 
 int ast_cos(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(cos(number));
+    data->number = cos(data->number);
+    return 1;
 }
 
 int ast_cosh(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(cosh(number));
+    data->number = cosh(data->number);
+    return 1;
 }
 
 int ast_exp(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(exp(number));
+    data->number = exp(data->number);
+    return 1;
 }
 
 int ast_floor(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(floor(number));
+    data->number = floor(data->number);
+    return 1;
 }
 
 int ast_log(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(log(number));
+    data->number = log(data->number);
+    return 1;
 }
 
 int ast_log10(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(log10(number));
+    data->number = log10(data->number);
+    return 1;
 }
 
 int ast_pow(void)
 {
-    double b = pop_number();
-    double a = pop_number();
+    ast_data b = pop_data();
+    ast_data *a = peek_data();
 
-    return push_number(pow(a, b));
+    a->number = pow(a->number, b.number);
+    return 1;
 }
 
 int ast_rand(void)
 {
-    return push_number(rand());
+    ast_data data;
+
+    data.number = rand();
+    return push_data(data);
 }
 
 int ast_round(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(round(number));
+    data->number = round(data->number);
+    return 1;
 }
 
 int ast_sin(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(sin(number));
+    data->number = sin(data->number);
+    return 1;
 }
 
 int ast_sinh(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(sinh(number));
+    data->number = sinh(data->number);
+    return 1;
 }
 
 int ast_sqr(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(sqrt(number));
+    data->number = sqrt(data->number);
+    return 1;
 }
 
 int ast_tan(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(tan(number));
+    data->number = tan(data->number);
+    return 1;
 }
 
 int ast_tanh(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(tanh(number));
+    data->number = tanh(data->number);
+    return 1;
 }
 
 int ast_trunc(void)
 {
-    double number = pop_number();
+    ast_data *data = peek_data();
 
-    return push_number(trunc(number));
+    data->number = trunc(data->number);
+    return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Misc
+///////////////////////////////////////////////////////////////////////////////
+
+int ast_print(void)
+{
+    ast_data *data = peek_data();
+
+    switch (data->type)
+    {
+        case TYPE_VARIABLE:
+            data->number = printf("%s\n", data->variable->name);
+            data->type = TYPE_NUMBER;
+            return 1;
+        case TYPE_STRING:
+            data->number = printf("%s\n", data->string);
+            data->type = TYPE_NUMBER;
+            return 1;
+        case TYPE_NUMBER:
+            data->number = printf("%g\n", data->number);
+            data->type = TYPE_NUMBER;
+            return 1;
+        default:
+            printf("Can not print this value\n");
+            return 0;
+    }
+}
+
+int ast_println(void)
+{
+    ast_data *data = peek_data();
+
+    switch (data->type)
+    {
+        case TYPE_VARIABLE:
+        case TYPE_STRING:
+            data->number = printf("%s\n", data->string);
+            data->type = TYPE_NUMBER;
+            return 1;
+        case TYPE_NUMBER:
+            data->number = printf("%g\n", data->number);
+            data->type = TYPE_NUMBER;
+            return 1;
+        default:
+            printf("Can not print this value\n");
+            return 0;
+    }
 }
 
