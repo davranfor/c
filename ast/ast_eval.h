@@ -25,7 +25,6 @@ int ast_tanh(void);
 int ast_trunc(void);
 
 int ast_print(void);
-int ast_println(void);
 
 #endif /* AST_EVAL_H */
 

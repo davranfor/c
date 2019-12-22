@@ -138,6 +138,7 @@ static ast_node *operators;
 static ast_node *operands;
 
 static int expected = OPERAND;
+static bool starting = true;
 
 static void move_operator(int args)
 {
@@ -173,17 +174,22 @@ static void move_parenths(void)
     pop(&operands);
     switch (node_type(operands))
     {
-        case CLASSIFY_FUNCTION:
-            if (operands->data->function->arguments != count)
+        case TYPE_CALL:
+            if (operands->data->call->arguments != count)
             {
                 die("\"%s\" was expecting %d argument(s), got %d",
-                    operands->data->function->name,
-                    operands->data->function->arguments,
+                    operands->data->call->name,
+                    operands->data->call->arguments,
                     count
                 );
             }
             operands->left = operators->left;
             operands->data += 1;
+            if (operands->data->type == TYPE_STATEMENT)
+            {
+                expected = OPERAND;
+                starting = true;
+            }
             if (count == 0)
             {
                 expected = OPERATOR;
@@ -211,6 +217,13 @@ static void move_data(const ast_data *data)
     {
         case '(':
             move_parenths();
+            break;
+        case '=':
+            move_operator(arguments(data));
+            if (node_type(operands->left) != TYPE_VARIABLE)
+            {
+                die("lvalue required as left operand of assignment");
+            }
             break;
         default:
             move_operator(arguments(data));
@@ -344,7 +357,7 @@ static ast_data *parse(const char **text)
             // A function?
             else if (*str == '(')
             {
-                data = map_function(start);
+                data = map_call(start);
                 if (data == NULL)
                 {
                     die("Function \"%s\" was not found", start);
@@ -365,8 +378,6 @@ static ast_data *parse(const char **text)
 
 static ast_data *classify(ast_data *data)
 {
-    static bool starting = true;
-
     if (data->type == TYPE_OPERATOR)
     {
         static int parenths = 0;
@@ -443,7 +454,14 @@ static ast_data *classify(ast_data *data)
         }
         switch (data->type)
         {
-            case CLASSIFY_FUNCTION:
+            case TYPE_CALL:
+                if ((data + 1)->type == TYPE_STATEMENT)
+                {
+                    if (starting == false)
+                    {
+                        die("Error using statement");
+                    }
+                }
                 break;
             default:
                 expected = OPERATOR;
@@ -559,11 +577,12 @@ static void explain(const ast_node *node, int level)
             case TYPE_OPERATOR:
                 printf("%s\n", node->data->operator->text);
                 break;
+            case TYPE_STATEMENT:
             case TYPE_FUNCTION:
-                printf("%s()\n", node->data->function->name);
+                printf("%s()\n", node->data->call->name);
                 break;
             case TYPE_VARIABLE:
-                printf("%s\n", node->data->string);
+                printf("%s\n", node->data->variable->name);
                 break;
             case TYPE_NUMBER:
                 printf("%g\n", node->data->number);
@@ -582,11 +601,18 @@ static void explain(const ast_node *node, int level)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#define AST_TRANSFORM_VAR(x)     \
+    if (x.type == TYPE_VARIABLE) \
+    {                            \
+        x = x.variable->data;    \
+    }
+
 static ast_data eval(const ast_node *node)
 {
     ast_data data = {.type = TYPE_NUMBER};
     ast_data a = {0};
     ast_data b = {0};
+    int operator = 0;
 
     switch (node->data->type)
     {
@@ -595,16 +621,21 @@ static ast_data eval(const ast_node *node)
         case TYPE_STRING:
             return *node->data;
         case TYPE_OPERATOR:
-
+            operator = node->data->operator->value;
             if (node->left != NULL)
             {
                 a = eval(node->left);
+                if (operator != OPERATOR_EQ)
+                {
+                    AST_TRANSFORM_VAR(a);
+                }
                 if (node->left->right != NULL)
                 {
                     b = eval(node->left->right);
+                    AST_TRANSFORM_VAR(b);
                 }
             }
-            switch (node->data->operator->value)
+            switch (operator)
             {
                 case OPERATOR_PLUS:
                     data.number = +a.number;
@@ -630,27 +661,36 @@ static ast_data eval(const ast_node *node)
                 case OPERATOR_SUB:
                     data.number = a.number - b.number;
                     return data;
+                case OPERATOR_EQ:
+                    a.variable->data = b;
+                    return b;
                 default:
                     return data;
             }
         case TYPE_FUNCTION:
-            switch (node->data->function->arguments)
+            switch (node->data->call->arguments)
             {
                 case 0:
                     break;
                 case 1:
-                    push_data(eval(node->left));
+                    a = eval(node->left);
+                    AST_TRANSFORM_VAR(a);
+                    push_data(a);
                     break;
                 case 2:
-                    push_data(eval(node->left));
-                    push_data(eval(node->left->right));
+                    a = eval(node->left);
+                    AST_TRANSFORM_VAR(a);
+                    push_data(a);
+                    b = eval(node->left->right);
+                    AST_TRANSFORM_VAR(b);
+                    push_data(b);
                     break;
                 default:
                     die("Bad Expression");
             }
-            if (node->data->function->exec() == 0)
+            if (node->data->call->exec() == 0)
             {
-                die("Function \"%s\" returned error", node->data->function->name);
+                die("Function \"%s\" returned error", node->data->call->name);
             }
             return pop_data();
         default:
@@ -663,7 +703,7 @@ static ast_data eval(const ast_node *node)
 
 void ast_create(void)
 {
-    map_functions();
+    map_calls();
     map_variables();
 }
 
@@ -705,7 +745,7 @@ void ast_clean(void)
 void ast_destroy(void)
 {
     ast_clean();
-    unmap_functions();
+    unmap_calls();
     unmap_variables();
 }
 

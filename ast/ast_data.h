@@ -4,13 +4,13 @@
 typedef enum
 {
     TYPE_NONE,
+    TYPE_CALL,
     TYPE_OPERATOR,
+    TYPE_STATEMENT,
     TYPE_FUNCTION,
     TYPE_VARIABLE,
     TYPE_NUMBER,
     TYPE_STRING,
-
-    CLASSIFY_FUNCTION,
 } ast_type;
 
 enum
@@ -24,6 +24,7 @@ enum
     OPERATOR_REM = '%',
     OPERATOR_ADD = '+',
     OPERATOR_SUB = '-',
+    OPERATOR_EQ = '=',
     OPERATOR_LEFT_PARENTHS = '(',
     OPERATOR_RIGHT_PARENTHS = ')',
     OPERATOR_COMMA = ',',
@@ -45,18 +46,9 @@ typedef struct
     int arguments;
     int returns;
     int (*exec)(void);
-} ast_function;
+} ast_call;
 
-typedef struct
-{
-    const char *name;
-    ast_type type;
-    union
-    {
-        double number;
-        const char *string;
-    };
-} ast_variable;
+typedef struct ast_variable ast_variable;
 
 typedef struct ast_data
 {
@@ -64,12 +56,18 @@ typedef struct ast_data
     union
     {
         const ast_operator *operator;
-        const ast_function *function;
+        const ast_call *call;
         ast_variable *variable;
         double number;
         const char *string;
     };
 } ast_data;
+
+struct ast_variable
+{
+    const char *name;
+    ast_data data;
+};
 
 ast_data *new_data(ast_type);
 
@@ -82,9 +80,9 @@ int is_sequence(int);
 int get_sequence(int);
 int is_valid_name(const char *);
 
-ast_data *map_function(const char *);
-void map_functions(void);
-void unmap_functions(void);
+ast_data *map_call(const char *);
+void map_calls(void);
+void unmap_calls(void);
 
 ast_data *map_variable(const char *);
 void map_variables(void);

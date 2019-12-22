@@ -27,14 +27,15 @@ ast_data *new_data(ast_type type)
 static ast_data operators[] =
 {
     [ OPERATOR_END            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_END,            0, 0, 'L', ""        } },
-    [ OPERATOR_PLUS           ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_PLUS,           1, 4, 'R', "+ Unary" } },
-    [ OPERATOR_MINUS          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MINUS,          1, 4, 'R', "- Unary" } },
-    [ OPERATOR_EXP            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EXP,            2, 3, 'R', "^"       } },
-    [ OPERATOR_MUL            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MUL,            2, 2, 'L', "*"       } },
-    [ OPERATOR_DIV            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_DIV,            2, 2, 'L', "/"       } },
-    [ OPERATOR_REM            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_REM,            2, 2, 'L', "%"       } },
-    [ OPERATOR_ADD            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_ADD,            2, 1, 'L', "+"       } },
-    [ OPERATOR_SUB            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_SUB,            2, 1, 'L', "-"       } },
+    [ OPERATOR_PLUS           ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_PLUS,           1, 5, 'R', "+ Unary" } },
+    [ OPERATOR_MINUS          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MINUS,          1, 5, 'R', "- Unary" } },
+    [ OPERATOR_EXP            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EXP,            2, 4, 'R', "^"       } },
+    [ OPERATOR_MUL            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MUL,            2, 3, 'L', "*"       } },
+    [ OPERATOR_DIV            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_DIV,            2, 3, 'L', "/"       } },
+    [ OPERATOR_REM            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_REM,            2, 3, 'L', "%"       } },
+    [ OPERATOR_ADD            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_ADD,            2, 2, 'L', "+"       } },
+    [ OPERATOR_SUB            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_SUB,            2, 2, 'L', "-"       } },
+    [ OPERATOR_EQ             ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EQ,             2, 1, 'R', "="       } },
     [ OPERATOR_LEFT_PARENTHS  ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_LEFT_PARENTHS,  0, 0, 'L', "("       } },
     [ OPERATOR_RIGHT_PARENTHS ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_RIGHT_PARENTHS, 0, 0, 'L', ")"       } },
     [ OPERATOR_COMMA          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_COMMA,          0, 0, 'L', ","       } },
@@ -88,6 +89,7 @@ int is_token(int c)
         (c == OPERATOR_REM) ||
         (c == OPERATOR_ADD) ||
         (c == OPERATOR_SUB) ||
+        (c == OPERATOR_EQ) ||
         (c == OPERATOR_LEFT_PARENTHS) ||
         (c == OPERATOR_RIGHT_PARENTHS) ||
         (c == OPERATOR_COMMA) ||
@@ -146,7 +148,16 @@ int is_valid_name(const char *str)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static const ast_function list[] =
+static const ast_call statements[] =
+{
+    { "if",      1, 1, NULL },
+    { "elif",    1, 1, NULL },
+    { "while",   1, 1, NULL },
+    { "for",     1, 1, NULL },
+    { "foreach", 1, 1, NULL },
+};
+
+static const ast_call functions[] =
 {
     { "abs",     1, 1, ast_abs     },
     { "ceil",    1, 1, ast_ceil    },
@@ -167,53 +178,77 @@ static const ast_function list[] =
     { "trunc",   1, 1, ast_trunc   },
 
     { "print",   1, 1, ast_print   },
-    { "println", 1, 1, ast_println },
 };
 
-static ast_data functions[sizeof list / sizeof *list * 2];
+static ast_data calls
+[
+    2 * (
+        (sizeof statements / sizeof *statements)
+        +
+        (sizeof functions / sizeof *functions)
+    )
+];
+
 static hashmap *map;
 
-ast_data *map_function(const char *name)
+ast_data *map_call(const char *name)
 {
-    const ast_function function = {.name = name};
-    ast_data data = {.function = &function};
+    const ast_call call = {.name = name};
+    ast_data data = {.call = &call};
 
     return hashmap_search(map, &data);
 }
 
-static int comp_function(const void *pa, const void *pb)
+static int comp_call(const void *pa, const void *pb)
 {
     const ast_data *a = pa;
     const ast_data *b = pb;
 
-    return strcmp(a->function->name, b->function->name);
+    return strcmp(a->call->name, b->call->name);
 }
 
-static unsigned long hash_function(const void *item)
+static unsigned long hash_call(const void *item)
 {
     const ast_data *data = item;
 
-    return hash_string((const unsigned char *)data->function->name);
+    return hash_string((const unsigned char *)data->call->name);
 }
 
-void map_functions(void)
+void map_calls(void)
 {
-    size_t count = sizeof functions / sizeof *functions;
+    size_t n = sizeof calls / sizeof *calls;
 
-    map = hashmap_create(comp_function, hash_function, count * 2);
+    map = hashmap_create(comp_call, hash_call, n * 2);
     if (map == NULL)
     {
         perror("hashmap_create");
         exit(EXIT_FAILURE);
     }
 
-    for (size_t iter = 0; iter < count; iter += 2)
+    size_t count;
+    size_t iter;
+
+    count = sizeof statements / sizeof *statements;
+    for (iter = 0, n = 0; iter < count; iter++, n += 2)
     {
-        functions[iter + 0].type = CLASSIFY_FUNCTION;
-        functions[iter + 0].function = &list[iter / 2];
-        functions[iter + 1].type = TYPE_FUNCTION;
-        functions[iter + 1].function = &list[iter / 2];
-        if (hashmap_insert(map, &functions[iter]) == NULL)
+        calls[n + 0].type = TYPE_CALL;
+        calls[n + 0].call = &statements[iter];
+        calls[n + 1].type = TYPE_STATEMENT;
+        calls[n + 1].call = &statements[iter];
+        if (hashmap_insert(map, &calls[n]) == NULL)
+        {
+            perror("hashmap_insert");
+            exit(EXIT_FAILURE);
+        }
+    }
+    count = sizeof functions / sizeof *functions;
+    for (iter = 0; iter < count; iter++, n += 2)
+    {
+        calls[n + 0].type = TYPE_CALL;
+        calls[n + 0].call = &functions[iter];
+        calls[n + 1].type = TYPE_FUNCTION;
+        calls[n + 1].call = &functions[iter];
+        if (hashmap_insert(map, &calls[n]) == NULL)
         {
             perror("hashmap_insert");
             exit(EXIT_FAILURE);
@@ -221,7 +256,7 @@ void map_functions(void)
     }
 }
 
-void unmap_functions(void)
+void unmap_calls(void)
 {
     hashmap_destroy(map, NULL);
 }
@@ -245,6 +280,8 @@ static ast_data *new_variable(void)
         perror("malloc");
         exit(EXIT_FAILURE);
     }
+    variable->data.type = TYPE_NUMBER;
+    variable->data.number = 0;
     data->variable = variable;
     return data;
 }
@@ -324,13 +361,13 @@ void print_help(void)
             operators[iter].operator->precedence
         );
     }
-    count = sizeof list / sizeof *list;
+    count = sizeof functions / sizeof *functions;
     puts("Functions:");
     for (size_t iter = 0; iter < count; iter++)
     {
         printf("   %-10s\tArguments: %d\n",
-            list[iter].name,
-            list[iter].arguments
+            functions[iter].name,
+            functions[iter].arguments
         );
     }
     puts("Options:");

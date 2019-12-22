@@ -191,31 +191,6 @@ int ast_print(void)
 
     switch (data->type)
     {
-        case TYPE_VARIABLE:
-            data->number = printf("%s\n", data->variable->name);
-            data->type = TYPE_NUMBER;
-            return 1;
-        case TYPE_STRING:
-            data->number = printf("%s\n", data->string);
-            data->type = TYPE_NUMBER;
-            return 1;
-        case TYPE_NUMBER:
-            data->number = printf("%g\n", data->number);
-            data->type = TYPE_NUMBER;
-            return 1;
-        default:
-            printf("Can not print this value\n");
-            return 0;
-    }
-}
-
-int ast_println(void)
-{
-    ast_data *data = peek_data();
-
-    switch (data->type)
-    {
-        case TYPE_VARIABLE:
         case TYPE_STRING:
             data->number = printf("%s\n", data->string);
             data->type = TYPE_NUMBER;
