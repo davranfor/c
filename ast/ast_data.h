@@ -6,6 +6,7 @@ typedef enum
     TYPE_NONE,
     TYPE_CALL,
     TYPE_OPERATOR,
+    TYPE_COMPOUND,
     TYPE_STATEMENT,
     TYPE_FUNCTION,
     TYPE_VARIABLE,
@@ -15,7 +16,7 @@ typedef enum
 
 enum
 {
-    OPERATOR_END = 0,
+    OPERATOR_EOF = 0,
     OPERATOR_PLUS = 1,
     OPERATOR_MINUS = 2,
     OPERATOR_EXP = '^',
@@ -29,6 +30,7 @@ enum
     OPERATOR_RIGHT_PARENTHS = ')',
     OPERATOR_COMMA = ',',
     OPERATOR_SEMICOLON = ';',
+    OPERATOR_END = '@',
 };
 
 typedef struct 
@@ -80,9 +82,13 @@ int is_sequence(int);
 int get_sequence(int);
 int is_valid_name(const char *);
 
-ast_data *map_call(const char *);
-void map_calls(void);
-void unmap_calls(void);
+int is_statement(const char *);
+ast_data *map_statement(const char *);
+void map_statements(void);
+
+ast_data *map_function(const char *);
+void map_functions(void);
+void unmap_functions(void);
 
 ast_data *map_variable(const char *);
 void map_variables(void);

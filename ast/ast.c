@@ -167,6 +167,21 @@ static int move_operands(int operator)
     return count;
 }
 
+static int move_type(ast_type type)
+{
+    int count = 0;
+
+    while (node_type(operands) != type)
+    {
+        if (!move(&operators->left, &operands))
+        {
+            die("'@' was not expected");
+        }
+        count++;
+    }
+    return count;
+}
+
 static void move_parenths(void)
 {
     int count = move_operands('(');
@@ -185,11 +200,12 @@ static void move_parenths(void)
             }
             operands->left = operators->left;
             operands->data += 1;
-            if (operands->data->type == TYPE_STATEMENT)
+            if (operands->data->type == TYPE_COMPOUND)
             {
                 expected = OPERAND;
                 starting = true;
             }
+            else
             if (count == 0)
             {
                 expected = OPERATOR;
@@ -206,6 +222,26 @@ static void move_parenths(void)
             }
             break;
     }
+    pop(&operators);
+}
+
+static void move_compound(void)
+{
+    move_type(TYPE_COMPOUND);
+    if (node_type(operands) != TYPE_COMPOUND)
+    {
+        die("'@' was not expected");
+    }
+    if (operands->data->call->arguments == 0)
+    {
+        operands->left = operators->left;
+    }
+    else
+    {
+        operands->left->right = operators->left;
+    }
+    operands->data += 1;
+    starting = true;
     pop(&operators);
 }
 
@@ -354,18 +390,26 @@ static ast_data *parse(const char **text)
             {
                 die("\"%s\" is not a valid keyword name", start);
             }
-            // A function?
             else if (*str == '(')
             {
-                data = map_call(start);
+                // A statement?
+                if (is_statement(start))
+                {
+                    data = map_statement(start);
+                }
+                // A function?
+                else
+                {
+                    data = map_function(start);
+                }
                 if (data == NULL)
                 {
-                    die("Function \"%s\" was not found", start);
+                    die("\"%s\" was not found", start);
                 }
             }
-            // A variable
             else
             {
+                // A variable
                 data = map_variable(start);
             }
         }
@@ -411,11 +455,15 @@ static ast_data *classify(ast_data *data)
                 }
                 if (expected == OPERAND)
                 {
-                    die("Expected operand");
+                    if (starting == false)
+                    {
+                        die("Expected operand");
+                    }
                 }
                 expected = OPERAND;
                 starting = true;
                 break;
+            case '@':
             case '\0':
                 if (starting == false)
                 {
@@ -455,7 +503,7 @@ static ast_data *classify(ast_data *data)
         switch (data->type)
         {
             case TYPE_CALL:
-                if ((data + 1)->type == TYPE_STATEMENT)
+                if ((data + 1)->type != TYPE_FUNCTION)
                 {
                     if (starting == false)
                     {
@@ -536,6 +584,10 @@ static ast_node *build(const char *text)
                     {
                         move_data(root);
                     }
+                    break;
+                case '@':
+                    push(&operators, data);
+                    move_compound();
                     break;
                 case '\0':
                     while (move(&script, &operands));
@@ -703,7 +755,8 @@ static ast_data eval(const ast_node *node)
 
 void ast_create(void)
 {
-    map_calls();
+    map_statements();
+    map_functions();
     map_variables();
 }
 
@@ -745,7 +798,7 @@ void ast_clean(void)
 void ast_destroy(void)
 {
     ast_clean();
-    unmap_calls();
+    unmap_functions();
     unmap_variables();
 }
 

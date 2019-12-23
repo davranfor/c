@@ -10,6 +10,9 @@ print(a);
 b = 5;
 print(a * b);
 c = b;
-print(c);
-b = 6;
+1 + print(c);
+if (a = 1)
+    b = 2;
+    c = 3;
+@
 

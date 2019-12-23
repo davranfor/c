@@ -26,7 +26,7 @@ ast_data *new_data(ast_type type)
 
 static ast_data operators[] =
 {
-    [ OPERATOR_END            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_END,            0, 0, 'L', ""        } },
+    [ OPERATOR_EOF            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EOF,            0, 0, 'L', ""        } },
     [ OPERATOR_PLUS           ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_PLUS,           1, 5, 'R', "+ Unary" } },
     [ OPERATOR_MINUS          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MINUS,          1, 5, 'R', "- Unary" } },
     [ OPERATOR_EXP            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EXP,            2, 4, 'R', "^"       } },
@@ -40,6 +40,7 @@ static ast_data operators[] =
     [ OPERATOR_RIGHT_PARENTHS ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_RIGHT_PARENTHS, 0, 0, 'L', ")"       } },
     [ OPERATOR_COMMA          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_COMMA,          0, 0, 'L', ","       } },
     [ OPERATOR_SEMICOLON      ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_SEMICOLON,      0, 0, 'L', ";"       } },
+    [ OPERATOR_END            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_END,            0, 0, 'L', "@"       } },
 };
 
 ast_data *map_operator(int value)
@@ -93,7 +94,8 @@ int is_token(int c)
         (c == OPERATOR_LEFT_PARENTHS) ||
         (c == OPERATOR_RIGHT_PARENTHS) ||
         (c == OPERATOR_COMMA) ||
-        (c == OPERATOR_SEMICOLON);
+        (c == OPERATOR_SEMICOLON) ||
+        (c == OPERATOR_END);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -150,12 +152,62 @@ int is_valid_name(const char *str)
 
 static const ast_call statements[] =
 {
-    { "if",      1, 1, NULL },
-    { "elif",    1, 1, NULL },
-    { "while",   1, 1, NULL },
-    { "for",     1, 1, NULL },
-    { "foreach", 1, 1, NULL },
+    { "if",      1, 0, NULL },
+    { "elif",    1, 0, NULL },
+    { "else",    0, 0, NULL },
+    { "while",   1, 0, NULL },
+    { "for",     1, 0, NULL },
+    { "foreach", 1, 0, NULL },
+    { "break",   0, 0, NULL },
+    { "end",     0, 0, NULL },
 };
+
+int is_statement(const char *name)
+{
+    size_t count = sizeof statements / sizeof *statements;
+
+    for (size_t iter = 0; iter < count; iter++)
+    {
+        if (strcmp(statements[iter].name, name) == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static ast_data statement_calls[(sizeof statements / sizeof *statements) * 3];
+
+ast_data *map_statement(const char *name)
+{
+    size_t count = sizeof statements / sizeof *statements;
+
+    for (size_t iter = 0; iter < count; iter++)
+    {
+        if (strcmp(statements[iter].name, name) == 0)
+        {
+            return &statement_calls[iter * 3];
+        }
+    }
+    return NULL;
+}
+
+void map_statements(void)
+{
+    size_t count = sizeof statements / sizeof *statements;
+
+    for (size_t iter = 0, rows = 0; iter < count; iter += 1, rows += 3)
+    {
+        statement_calls[rows + 0].type = TYPE_CALL;
+        statement_calls[rows + 0].call = &statements[iter];
+        statement_calls[rows + 1].type = TYPE_COMPOUND;
+        statement_calls[rows + 1].call = &statements[iter];
+        statement_calls[rows + 2].type = TYPE_STATEMENT;
+        statement_calls[rows + 2].call = &statements[iter];
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 static const ast_call functions[] =
 {
@@ -180,18 +232,9 @@ static const ast_call functions[] =
     { "print",   1, 1, ast_print   },
 };
 
-static ast_data calls
-[
-    2 * (
-        (sizeof statements / sizeof *statements)
-        +
-        (sizeof functions / sizeof *functions)
-    )
-];
-
 static hashmap *map;
 
-ast_data *map_call(const char *name)
+ast_data *map_function(const char *name)
 {
     const ast_call call = {.name = name};
     ast_data data = {.call = &call};
@@ -199,7 +242,7 @@ ast_data *map_call(const char *name)
     return hashmap_search(map, &data);
 }
 
-static int comp_call(const void *pa, const void *pb)
+static int comp_function(const void *pa, const void *pb)
 {
     const ast_data *a = pa;
     const ast_data *b = pb;
@@ -207,48 +250,32 @@ static int comp_call(const void *pa, const void *pb)
     return strcmp(a->call->name, b->call->name);
 }
 
-static unsigned long hash_call(const void *item)
+static unsigned long hash_function(const void *item)
 {
     const ast_data *data = item;
 
     return hash_string((const unsigned char *)data->call->name);
 }
 
-void map_calls(void)
-{
-    size_t n = sizeof calls / sizeof *calls;
+static ast_data function_calls[(sizeof functions / sizeof *functions) * 2];
 
-    map = hashmap_create(comp_call, hash_call, n * 2);
+void map_functions(void)
+{
+    size_t count = sizeof functions / sizeof *functions;
+
+    map = hashmap_create(comp_function, hash_function, count * 4);
     if (map == NULL)
     {
         perror("hashmap_create");
         exit(EXIT_FAILURE);
     }
-
-    size_t count;
-    size_t iter;
-
-    count = sizeof statements / sizeof *statements;
-    for (iter = 0, n = 0; iter < count; iter++, n += 2)
+    for (size_t iter = 0, rows = 0; iter < count; iter += 1, rows += 2)
     {
-        calls[n + 0].type = TYPE_CALL;
-        calls[n + 0].call = &statements[iter];
-        calls[n + 1].type = TYPE_STATEMENT;
-        calls[n + 1].call = &statements[iter];
-        if (hashmap_insert(map, &calls[n]) == NULL)
-        {
-            perror("hashmap_insert");
-            exit(EXIT_FAILURE);
-        }
-    }
-    count = sizeof functions / sizeof *functions;
-    for (iter = 0; iter < count; iter++, n += 2)
-    {
-        calls[n + 0].type = TYPE_CALL;
-        calls[n + 0].call = &functions[iter];
-        calls[n + 1].type = TYPE_FUNCTION;
-        calls[n + 1].call = &functions[iter];
-        if (hashmap_insert(map, &calls[n]) == NULL)
+        function_calls[rows + 0].type = TYPE_CALL;
+        function_calls[rows + 0].call = &functions[iter];
+        function_calls[rows + 1].type = TYPE_FUNCTION;
+        function_calls[rows + 1].call = &functions[iter];
+        if (hashmap_insert(map, &function_calls[rows]) == NULL)
         {
             perror("hashmap_insert");
             exit(EXIT_FAILURE);
@@ -256,7 +283,7 @@ void map_calls(void)
     }
 }
 
-void unmap_calls(void)
+void unmap_functions(void)
 {
     hashmap_destroy(map, NULL);
 }
