@@ -96,7 +96,6 @@ int precedence(const ast_data *, const ast_data *);
 ast_data *unary(ast_data *);
 
 int nested_statement(const ast_data *);
-int end_statement(const char *);
 ast_data *map_statement(const char *);
 void map_statements(void);
 
