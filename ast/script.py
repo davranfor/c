@@ -11,8 +11,8 @@ b = 5;
 print(a * b);
 c = b;
 1 + print(c);
-if (a = 1)
+#if (a = 1)
     b = 2;
     c = 3;
-@
+#@
 

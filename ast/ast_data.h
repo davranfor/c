@@ -36,7 +36,7 @@ enum
 typedef struct 
 {
     int value;
-    int arguments;
+    int args;
     int precedence;
     int associativity;
     const char *text;
@@ -45,7 +45,7 @@ typedef struct
 typedef struct
 {
     const char *name;
-    int arguments;
+    int args;
     int returns;
     int (*exec)(void);
 } ast_call;
@@ -72,15 +72,16 @@ struct ast_variable
 };
 
 ast_data *new_data(ast_type);
+int is_sequence(int);
+int get_sequence(int);
+int valid_name(const char *);
+ast_type call_type(const ast_data *);
 
+int is_operator(int);
 ast_data *map_operator(int);
 int arguments(const ast_data *);
 int precedence(const ast_data *, const ast_data *);
 ast_data *unary(ast_data *);
-int is_token(int);
-int is_sequence(int);
-int get_sequence(int);
-int is_valid_name(const char *);
 
 int is_statement(const char *);
 ast_data *map_statement(const char *);

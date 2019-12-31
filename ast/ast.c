@@ -140,8 +140,10 @@ static ast_node *operands;
 static int expected = OPERAND;
 static bool starting = true;
 
-static void move_operator(int args)
+static void move_operator(void)
 {
+    int args = arguments(operators->data);
+
     while (args--)
     {
         if (!move(&operators->left, &operands))
@@ -152,22 +154,22 @@ static void move_operator(int args)
     move(&operands, &operators);
 }
 
-static int move_operands(int operator)
+static int move_until_operator(int operator)
 {
-    int count = 0;
+    int args = 0;
 
     while (node_operator(operands) != operator)
     {
         if (!move(&operators->left, &operands))
         {
-            die("Unpaired parenthesis");
+            die("Expected operand");
         }
-        count++;
+        args++;
     }
-    return count;
+    return args;
 }
 
-static int move_type(ast_type type)
+static int move_until_type(ast_type type)
 {
     int count = 0;
 
@@ -175,27 +177,27 @@ static int move_type(ast_type type)
     {
         if (!move(&operators->left, &operands))
         {
-            die("'@' was not expected");
+            die("Expected operand");
         }
         count++;
     }
     return count;
 }
 
-static void move_parenths(void)
+static void move_operands(void)
 {
-    int count = move_operands('(');
+    int args = move_until_operator('(');
 
     pop(&operands);
     switch (node_type(operands))
     {
         case TYPE_CALL:
-            if (operands->data->call->arguments != count)
+            if (operands->data->call->args != args)
             {
                 die("\"%s\" was expecting %d argument(s), got %d",
                     operands->data->call->name,
-                    operands->data->call->arguments,
-                    count
+                    operands->data->call->args,
+                    args
                 );
             }
             operands->left = operators->left;
@@ -205,34 +207,33 @@ static void move_parenths(void)
                 expected = OPERAND;
                 starting = true;
             }
-            else
-            if (count == 0)
+            else if (args == 0)
             {
                 expected = OPERATOR;
             }
             break;
         default:
-            if (count == 1)
+            if (args == 1)
             {
                 move(&operands, &operators->left);
             }
             else
             {
-                die("Comma can not be used outside function");
+                die("One argument was expected");
             }
             break;
     }
     pop(&operators);
 }
 
-static void move_compound(void)
+static void move_expressions(void)
 {
-    move_type(TYPE_COMPOUND);
+    move_until_type(TYPE_COMPOUND);
     if (node_type(operands) != TYPE_COMPOUND)
     {
-        die("'@' was not expected");
+        die("'end' was not expected");
     }
-    if (operands->data->call->arguments == 0)
+    if (operands->data->call->args == 0)
     {
         operands->left = operators->left;
     }
@@ -245,28 +246,6 @@ static void move_compound(void)
     pop(&operators);
 }
 
-static void move_data(const ast_data *data)
-{
-    int operator = data->operator->value;
-
-    switch (operator)
-    {
-        case '(':
-            move_parenths();
-            break;
-        case '=':
-            move_operator(arguments(data));
-            if (node_type(operands->left) != TYPE_VARIABLE)
-            {
-                die("lvalue required as left operand of assignment");
-            }
-            break;
-        default:
-            move_operator(arguments(data));
-            break;
-    }
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 
 static char *strings;
@@ -276,16 +255,16 @@ static ast_data *parse(const char **text)
     static size_t pos;
 
     const char *start = NULL;
-    const char *str = *text;
+    const char *str;
+    int tokens = 0;
     int quotes = 0;
-    int words = 0;
 
     for (str = *text; *str != '\0'; str++)
     {
         if (!(quotes & 1)) // Outside quotes
         {
-            // Stop scanning on token
-            if (is_token(*str))
+            // Stop scanning on operator
+            if (is_operator(*str))
             {
                 break;
             }
@@ -322,12 +301,12 @@ static ast_data *parse(const char **text)
                 {
                     strings[pos++] = *str;
                 }
-                if ((words == 0) && !(quotes & 1))
+                if ((tokens == 0) && !(quotes & 1))
                 {
-                    words = 1;
+                    tokens = 1;
                 }
             }
-            if ((words > 1) || (quotes && words))
+            if ((tokens > 1) || (quotes && tokens))
             {
                 die("Too many operands");
             }
@@ -338,9 +317,9 @@ static ast_data *parse(const char **text)
             {
                 strings[pos++] = *str;
             }
-            else if (words == 1)
+            else if (tokens == 1)
             {
-                words++;
+                tokens++;
             }
             if (*str == '\n')
             {
@@ -386,9 +365,9 @@ static ast_data *parse(const char **text)
         }
         else
         {
-            if (!is_valid_name(start))
+            if (!valid_name(start))
             {
-                die("\"%s\" is not a valid keyword name", start);
+                die("\"%s\" is not a valid name", start);
             }
             else if (*str == '(')
             {
@@ -503,7 +482,7 @@ static ast_data *classify(ast_data *data)
         switch (data->type)
         {
             case TYPE_CALL:
-                if ((data + 1)->type != TYPE_FUNCTION)
+                if (call_type(data) != TYPE_FUNCTION)
                 {
                     if (starting == false)
                     {
@@ -558,13 +537,14 @@ static ast_node *build(const char *text)
                         {
                             die("')' without '('");
                         }
-
-                        int args = arguments(root);
-
-                        move_data(root);
-                        if (args == 0)
+                        if (arguments(root) == 0)
                         {
+                            move_operands();
                             break;
+                        }
+                        else
+                        {
+                            move_operator();
                         }
                     }
                     break;
@@ -573,21 +553,23 @@ static ast_node *build(const char *text)
                     {
                         if (arguments(root) != 0)
                         {
-                            move_data(root);
-                            continue;
+                            move_operator();
                         }
-                        break;
+                        else
+                        {
+                            break;
+                        }
                     }
                     break;
                 case ';':
                     while ((root = peek(operators)))
                     {
-                        move_data(root);
+                        move_operator();
                     }
                     break;
                 case '@':
                     push(&operators, data);
-                    move_compound();
+                    move_expressions();
                     break;
                 case '\0':
                     while (move(&script, &operands));
@@ -597,10 +579,12 @@ static ast_node *build(const char *text)
                     {
                         if (precedence(root, data))
                         {
-                            move_data(root);
-                            continue;
+                            move_operator();
                         }
-                        break;
+                        else
+                        {
+                            break;
+                        }
                     }
                     push(&operators, data);
                     break;
@@ -720,7 +704,7 @@ static ast_data eval(const ast_node *node)
                     return data;
             }
         case TYPE_FUNCTION:
-            switch (node->data->call->arguments)
+            switch (node->data->call->args)
             {
                 case 0:
                     break;

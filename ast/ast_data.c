@@ -22,84 +22,6 @@ ast_data *new_data(ast_type type)
     return data;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-static ast_data operators[] =
-{
-    [ OPERATOR_EOF            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EOF,            0, 0, 'L', ""        } },
-    [ OPERATOR_PLUS           ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_PLUS,           1, 5, 'R', "+ Unary" } },
-    [ OPERATOR_MINUS          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MINUS,          1, 5, 'R', "- Unary" } },
-    [ OPERATOR_EXP            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EXP,            2, 4, 'R', "^"       } },
-    [ OPERATOR_MUL            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MUL,            2, 3, 'L', "*"       } },
-    [ OPERATOR_DIV            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_DIV,            2, 3, 'L', "/"       } },
-    [ OPERATOR_REM            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_REM,            2, 3, 'L', "%"       } },
-    [ OPERATOR_ADD            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_ADD,            2, 2, 'L', "+"       } },
-    [ OPERATOR_SUB            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_SUB,            2, 2, 'L', "-"       } },
-    [ OPERATOR_EQ             ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EQ,             2, 1, 'R', "="       } },
-    [ OPERATOR_LEFT_PARENTHS  ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_LEFT_PARENTHS,  0, 0, 'L', "("       } },
-    [ OPERATOR_RIGHT_PARENTHS ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_RIGHT_PARENTHS, 0, 0, 'L', ")"       } },
-    [ OPERATOR_COMMA          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_COMMA,          0, 0, 'L', ","       } },
-    [ OPERATOR_SEMICOLON      ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_SEMICOLON,      0, 0, 'L', ";"       } },
-    [ OPERATOR_END            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_END,            0, 0, 'L', "@"       } },
-};
-
-ast_data *map_operator(int value)
-{
-    return &operators[value];
-}
-
-int arguments(const ast_data *data)
-{
-    return data->operator->arguments;
-}
-
-int precedence(const ast_data *pa, const ast_data *pb)
-{
-    int a = pa->operator->precedence;
-    int b = pb->operator->precedence;
-
-    if (a == 0)
-    {
-        return 0;
-    }
-    if (a == b)
-    {
-        return pa->operator->associativity == 'L';
-    }
-    return a > b;
-}
-
-ast_data *unary(ast_data *data)
-{
-    switch (data->operator->value)
-    {
-        case OPERATOR_ADD:
-            return &operators[OPERATOR_PLUS];
-        case OPERATOR_SUB:
-            return &operators[OPERATOR_MINUS];
-    }
-    return data;
-}
-
-int is_token(int c)
-{
-    return
-        (c == OPERATOR_EXP) ||
-        (c == OPERATOR_MUL) ||
-        (c == OPERATOR_DIV) ||
-        (c == OPERATOR_REM) ||
-        (c == OPERATOR_ADD) ||
-        (c == OPERATOR_SUB) ||
-        (c == OPERATOR_EQ) ||
-        (c == OPERATOR_LEFT_PARENTHS) ||
-        (c == OPERATOR_RIGHT_PARENTHS) ||
-        (c == OPERATOR_COMMA) ||
-        (c == OPERATOR_SEMICOLON) ||
-        (c == OPERATOR_END);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 int is_sequence(int c)
 {
     return (c == '\\') || (c == '/') || (c == '"') ||
@@ -128,7 +50,7 @@ int get_sequence(int sequence)
     }
 }
 
-int is_valid_name(const char *str)
+int valid_name(const char *str)
 {
     // First character must be '_'  or [a ... Z]
     if ((*str != '_') && !isalpha((unsigned char)*str))
@@ -146,6 +68,93 @@ int is_valid_name(const char *str)
         str++;
     }
     return 1;
+}
+
+ast_type call_type(const ast_data *data)
+{
+    return (data + 1)->type;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+static ast_data operators[] =
+{
+    [ OPERATOR_EOF            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EOF,            0, 0, 'L', ""        } },
+    [ OPERATOR_PLUS           ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_PLUS,           1, 5, 'R', "+ Unary" } },
+    [ OPERATOR_MINUS          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MINUS,          1, 5, 'R', "- Unary" } },
+    [ OPERATOR_EXP            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EXP,            2, 4, 'R', "^"       } },
+    [ OPERATOR_MUL            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MUL,            2, 3, 'L', "*"       } },
+    [ OPERATOR_DIV            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_DIV,            2, 3, 'L', "/"       } },
+    [ OPERATOR_REM            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_REM,            2, 3, 'L', "%"       } },
+    [ OPERATOR_ADD            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_ADD,            2, 2, 'L', "+"       } },
+    [ OPERATOR_SUB            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_SUB,            2, 2, 'L', "-"       } },
+    [ OPERATOR_EQ             ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EQ,             2, 1, 'R', "="       } },
+    [ OPERATOR_LEFT_PARENTHS  ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_LEFT_PARENTHS,  0, 0, 'L', "("       } },
+    [ OPERATOR_RIGHT_PARENTHS ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_RIGHT_PARENTHS, 0, 0, 'L', ")"       } },
+    [ OPERATOR_COMMA          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_COMMA,          0, 0, 'L', ","       } },
+    [ OPERATOR_SEMICOLON      ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_SEMICOLON,      0, 0, 'L', ";"       } },
+    [ OPERATOR_END            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_END,            0, 0, 'L', "@"       } },
+};
+
+int is_operator(int c)
+{
+    switch (c)
+    {
+        case OPERATOR_EXP:
+        case OPERATOR_MUL:
+        case OPERATOR_DIV:
+        case OPERATOR_REM:
+        case OPERATOR_ADD:
+        case OPERATOR_SUB:
+        case OPERATOR_EQ:
+        case OPERATOR_LEFT_PARENTHS:
+        case OPERATOR_RIGHT_PARENTHS:
+        case OPERATOR_COMMA:
+        case OPERATOR_SEMICOLON:
+        case OPERATOR_END:
+            return 1;
+        default:
+            return 0;
+
+    }
+}
+
+ast_data *map_operator(int value)
+{
+    return &operators[value];
+}
+
+int arguments(const ast_data *data)
+{
+    return data->operator->args;
+}
+
+int precedence(const ast_data *pa, const ast_data *pb)
+{
+    int a = pa->operator->precedence;
+    int b = pb->operator->precedence;
+
+    if (a == 0)
+    {
+        return 0;
+    }
+    if (a == b)
+    {
+        return pa->operator->associativity == 'L';
+    }
+    return a > b;
+}
+
+ast_data *unary(ast_data *data)
+{
+    switch (data->operator->value)
+    {
+        case OPERATOR_ADD:
+            return &operators[OPERATOR_PLUS];
+        case OPERATOR_SUB:
+            return &operators[OPERATOR_MINUS];
+    }
+    return data;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -394,7 +403,7 @@ void print_help(void)
     {
         printf("   %-10s\tArguments: %d\n",
             functions[iter].name,
-            functions[iter].arguments
+            functions[iter].args
         );
     }
     puts("Options:");
