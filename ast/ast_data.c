@@ -93,7 +93,6 @@ static ast_data operators[] =
     [ OPERATOR_RIGHT_PARENTHS ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_RIGHT_PARENTHS, 0, 0, 'L', ")"       } },
     [ OPERATOR_COMMA          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_COMMA,          0, 0, 'L', ","       } },
     [ OPERATOR_SEMICOLON      ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_SEMICOLON,      0, 0, 'L', ";"       } },
-    [ OPERATOR_END            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_END,            0, 0, 'L', "@"       } },
 };
 
 int is_operator(int c)
@@ -111,7 +110,6 @@ int is_operator(int c)
         case OPERATOR_RIGHT_PARENTHS:
         case OPERATOR_COMMA:
         case OPERATOR_SEMICOLON:
-        case OPERATOR_END:
             return 1;
         default:
             return 0;
@@ -161,31 +159,31 @@ ast_data *unary(ast_data *data)
 
 static const ast_call statements[] =
 {
-    { "if",      1, 0, NULL },
-    { "elif",    1, 0, NULL },
-    { "else",    0, 0, NULL },
-    { "while",   1, 0, NULL },
-    { "for",     1, 0, NULL },
-    { "foreach", 1, 0, NULL },
-    { "break",   0, 0, NULL },
-    { "end",     0, 0, NULL },
+    { "",        0, 0, NULL },
+    { "if",      1, 1, NULL },
+    { "elif",    2, 1, NULL },
+    { "else",    3, 0, NULL },
+    { "while",   4, 1, NULL },
+    { "for",     5, 1, NULL },
+    { "foreach", 6, 1, NULL },
+    { "break",   7, 0, NULL },
+    { "end",     8, 0, NULL },
 };
 
-int is_statement(const char *name)
-{
-    size_t count = sizeof statements / sizeof *statements;
-
-    for (size_t iter = 0; iter < count; iter++)
-    {
-        if (strcmp(statements[iter].name, name) == 0)
-        {
-            return 1;
-        }
-    }
-    return 0;
-}
-
 static ast_data statement_calls[(sizeof statements / sizeof *statements) * 3];
+
+int nested_statement(const ast_data *data)
+{
+    switch (data->call->value)
+    {
+        case STATEMENT_ELIF:
+        case STATEMENT_ELSE:
+        case STATEMENT_END:
+            return data->call->value;
+        default:
+            return 0;
+    }
+}
 
 ast_data *map_statement(const char *name)
 {
@@ -220,25 +218,25 @@ void map_statements(void)
 
 static const ast_call functions[] =
 {
-    { "abs",     1, 1, ast_abs     },
-    { "ceil",    1, 1, ast_ceil    },
-    { "cos",     1, 1, ast_cos     },
-    { "cosh",    1, 1, ast_cosh    },
-    { "exp",     1, 1, ast_exp     },
-    { "floor",   1, 1, ast_floor   },
-    { "log",     1, 1, ast_log     },
-    { "log10",   1, 1, ast_log10   },
-    { "pow",     2, 1, ast_pow     },
-    { "rand",    0, 1, ast_rand    },
-    { "round",   1, 1, ast_round   },
-    { "sin",     1, 1, ast_sin     },
-    { "sinh",    1, 1, ast_sinh    },
-    { "sqr",     1, 1, ast_sqr     },
-    { "tan",     1, 1, ast_tan     },
-    { "tanh",    1, 1, ast_tanh    },
-    { "trunc",   1, 1, ast_trunc   },
+    { "abs",     0, 1, ast_abs   },
+    { "ceil",    0, 1, ast_ceil  },
+    { "cos",     0, 1, ast_cos   },
+    { "cosh",    0, 1, ast_cosh  },
+    { "exp",     0, 1, ast_exp   },
+    { "floor",   0, 1, ast_floor },
+    { "log",     0, 1, ast_log   },
+    { "log10",   0, 1, ast_log10 },
+    { "pow",     0, 2, ast_pow   },
+    { "rand",    0, 0, ast_rand  },
+    { "round",   0, 1, ast_round },
+    { "sin",     0, 1, ast_sin   },
+    { "sinh",    0, 1, ast_sinh  },
+    { "sqr",     0, 1, ast_sqr   },
+    { "tan",     0, 1, ast_tan   },
+    { "tanh",    0, 1, ast_tanh  },
+    { "trunc",   0, 1, ast_trunc },
 
-    { "print",   1, 1, ast_print   },
+    { "print",   0, 1, ast_print },
 };
 
 static hashmap *map;

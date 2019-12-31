@@ -285,6 +285,10 @@ static ast_data *parse(const char **text)
             }
             if (*str == '"')
             {
+                if (tokens != 0)
+                {
+                    break;
+                }
                 quotes++;
             }
             else
@@ -299,14 +303,18 @@ static ast_data *parse(const char **text)
                 }
                 else
                 {
+                    if ((tokens == 0) && !(quotes & 1))
+                    {
+                        tokens = 1;
+                    }
+                    else if (tokens > 1)
+                    {
+                        break;
+                    }
                     strings[pos++] = *str;
                 }
-                if ((tokens == 0) && !(quotes & 1))
-                {
-                    tokens = 1;
-                }
             }
-            if ((tokens > 1) || (quotes && tokens))
+            if (tokens && quotes)
             {
                 die("Too many operands");
             }
@@ -369,27 +377,42 @@ static ast_data *parse(const char **text)
             {
                 die("\"%s\" is not a valid name", start);
             }
-            else if (*str == '(')
+
+            ast_data *statement = map_statement(start);
+
+            if (*str == '(')
             {
                 // A statement?
-                if (is_statement(start))
+                if (statement != NULL)
                 {
-                    data = map_statement(start);
+                    data = statement;
                 }
                 // A function?
                 else
                 {
                     data = map_function(start);
-                }
-                if (data == NULL)
-                {
-                    die("\"%s\" was not found", start);
+                    if (data == NULL)
+                    {
+                        die("\"%s\" was not found", start);
+                    }
                 }
             }
             else
             {
+                // A statement?
+                if (statement != NULL)
+                {
+                    if (statement->call->args > 0)
+                    {
+                        die("'(' was expected");
+                    }
+                    data = statement;
+                }
                 // A variable
-                data = map_variable(start);
+                else
+                {
+                    data = map_variable(start);
+                }
             }
         }
     }
@@ -442,7 +465,6 @@ static ast_data *classify(ast_data *data)
                 expected = OPERAND;
                 starting = true;
                 break;
-            case '@':
             case '\0':
                 if (starting == false)
                 {
@@ -482,19 +504,33 @@ static ast_data *classify(ast_data *data)
         switch (data->type)
         {
             case TYPE_CALL:
-                if (call_type(data) != TYPE_FUNCTION)
+                switch (call_type(data))
                 {
-                    if (starting == false)
-                    {
-                        die("Error using statement");
-                    }
+                    case TYPE_FUNCTION:
+                        starting = false;
+                        break;
+                    default: // A statement
+                        if (starting == false)
+                        {
+                            die("Unexpected statement");
+                        }
+                        if (data->call->args == 0)
+                        {
+                            starting = true;
+                            data += 1;
+                        }
+                        else
+                        {
+                            starting = false;
+                        }
+                        break;
                 }
                 break;
             default:
                 expected = OPERATOR;
+                starting = false;
                 break;
         }
-        starting = false;
     }
     return data;
 }
@@ -567,10 +603,6 @@ static ast_node *build(const char *text)
                         move_operator();
                     }
                     break;
-                case '@':
-                    push(&operators, data);
-                    move_expressions();
-                    break;
                 case '\0':
                     while (move(&script, &operands));
                     return script;
@@ -592,7 +624,31 @@ static ast_node *build(const char *text)
         }
         else
         {
-            push(&operands, data);
+            if (data->type == TYPE_COMPOUND)
+            {
+                int statement = nested_statement(data);
+
+                switch (statement)
+                {
+                    case STATEMENT_ELIF:
+                    case STATEMENT_ELSE:
+                        push(&operators, map_operator(0));
+                        move_expressions();
+                        push(&operands, data);
+                        break;
+                    case STATEMENT_END:
+                        push(&operators, map_operator(0));
+                        move_expressions();
+                        break;
+                    default:
+                        push(&operands, data);
+                        break;
+                }                
+            }
+            else
+            {
+                push(&operands, data);
+            }
         }
     }
     return NULL;

@@ -30,7 +30,19 @@ enum
     OPERATOR_RIGHT_PARENTHS = ')',
     OPERATOR_COMMA = ',',
     OPERATOR_SEMICOLON = ';',
-    OPERATOR_END = '@',
+};
+
+enum
+{
+    STATEMENT_NONE,
+    STATEMENT_IF,
+    STATEMENT_ELIF,
+    STATEMENT_ELSE,
+    STATEMENT_WHILE,
+    STATEMENT_FOR,
+    STATEMENT_FOREACH,
+    STATEMENT_BREAK,
+    STATEMENT_END,
 };
 
 typedef struct 
@@ -45,8 +57,8 @@ typedef struct
 typedef struct
 {
     const char *name;
+    int value;
     int args;
-    int returns;
     int (*exec)(void);
 } ast_call;
 
@@ -83,7 +95,8 @@ int arguments(const ast_data *);
 int precedence(const ast_data *, const ast_data *);
 ast_data *unary(ast_data *);
 
-int is_statement(const char *);
+int nested_statement(const ast_data *);
+int end_statement(const char *);
 ast_data *map_statement(const char *);
 void map_statements(void);
 
