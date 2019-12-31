@@ -622,33 +622,30 @@ static ast_node *build(const char *text)
                     break;
             }
         }
+        else if (data->type == TYPE_COMPOUND)
+        {
+            int statement = nested_statement(data);
+
+            switch (statement)
+            {
+                case STATEMENT_ELIF:
+                case STATEMENT_ELSE:
+                    push(&operators, map_operator(0));
+                    move_expressions();
+                    push(&operands, data);
+                    break;
+                case STATEMENT_END:
+                    push(&operators, map_operator(0));
+                    move_expressions();
+                    break;
+                default:
+                    push(&operands, data);
+                    break;
+            }                
+        }
         else
         {
-            if (data->type == TYPE_COMPOUND)
-            {
-                int statement = nested_statement(data);
-
-                switch (statement)
-                {
-                    case STATEMENT_ELIF:
-                    case STATEMENT_ELSE:
-                        push(&operators, map_operator(0));
-                        move_expressions();
-                        push(&operands, data);
-                        break;
-                    case STATEMENT_END:
-                        push(&operators, map_operator(0));
-                        move_expressions();
-                        break;
-                    default:
-                        push(&operands, data);
-                        break;
-                }                
-            }
-            else
-            {
-                push(&operands, data);
-            }
+            push(&operands, data);
         }
     }
     return NULL;
