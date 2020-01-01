@@ -41,6 +41,7 @@ enum
     STATEMENT_WHILE,
     STATEMENT_FOR,
     STATEMENT_FOREACH,
+    STATEMENT_CONTINUE,
     STATEMENT_BREAK,
     STATEMENT_END,
 };
@@ -57,10 +58,22 @@ typedef struct
 typedef struct
 {
     const char *name;
+    int args;
+} ast_call;
+
+typedef struct
+{
+    const char *name;
+    int args;
     int value;
+} ast_statement;
+
+typedef struct
+{
+    const char *name;
     int args;
     int (*exec)(void);
-} ast_call;
+} ast_function;
 
 typedef struct ast_variable ast_variable;
 
@@ -70,7 +83,8 @@ typedef struct ast_data
     union
     {
         const ast_operator *operator;
-        const ast_call *call;
+        const ast_statement *statement;
+        const ast_function *function;
         ast_variable *variable;
         double number;
         const char *string;
@@ -95,7 +109,6 @@ int arguments(const ast_data *);
 int precedence(const ast_data *, const ast_data *);
 ast_data *unary(ast_data *);
 
-int nested_statement(const ast_data *);
 ast_data *map_statement(const char *);
 void map_statements(void);
 

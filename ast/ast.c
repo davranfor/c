@@ -187,30 +187,38 @@ static int move_until_type(ast_type type)
 static void move_operands(void)
 {
     int args = move_until_operator('(');
+    ast_call call;
 
     pop(&operands);
     switch (node_type(operands))
     {
         case TYPE_CALL:
-            if (operands->data->call->args != args)
+            if (call_type(operands->data) == TYPE_FUNCTION)
+            {
+                call.name = operands->data->function->name;
+                call.args = operands->data->function->args;
+                if (args == 0)
+                {
+                    expected = OPERATOR;
+                }
+            }
+            else
+            {
+                call.name = operands->data->statement->name;
+                call.args = operands->data->statement->args;
+                expected = OPERAND;
+                starting = true;
+            }
+            if (call.args != args)
             {
                 die("\"%s\" was expecting %d argument(s), got %d",
-                    operands->data->call->name,
-                    operands->data->call->args,
+                    call.name,
+                    call.args,
                     args
                 );
             }
             operands->left = operators->left;
             operands->data += 1;
-            if (operands->data->type == TYPE_COMPOUND)
-            {
-                expected = OPERAND;
-                starting = true;
-            }
-            else if (args == 0)
-            {
-                expected = OPERATOR;
-            }
             break;
         default:
             if (args == 1)
@@ -233,7 +241,7 @@ static void move_expressions(void)
     {
         die("'end' was not expected");
     }
-    if (operands->data->call->args == 0)
+    if (operands->data->statement->args == 0)
     {
         operands->left = operators->left;
     }
@@ -335,7 +343,6 @@ static ast_data *parse(const char **text)
             }
         }
     }
-
     if (quotes & 1)
     {
         die("Unpaired quotes");
@@ -343,17 +350,13 @@ static ast_data *parse(const char **text)
 
     ast_data *data = NULL;
 
-    // An operator?
     if (start == NULL)
     {
         data = map_operator(*str);
         *text = str + 1;
         return data;
     }
-
     strings[pos++] = 0;
-
-    // A string?
     if (quotes != 0)
     {
         data = new_data(TYPE_STRING);
@@ -361,7 +364,6 @@ static ast_data *parse(const char **text)
     }
     else
     {
-        // A number?
         double number;
         char *ptr;
 
@@ -382,12 +384,10 @@ static ast_data *parse(const char **text)
 
             if (*str == '(')
             {
-                // A statement?
                 if (statement != NULL)
                 {
                     data = statement;
                 }
-                // A function?
                 else
                 {
                     data = map_function(start);
@@ -399,16 +399,14 @@ static ast_data *parse(const char **text)
             }
             else
             {
-                // A statement?
                 if (statement != NULL)
                 {
-                    if (statement->call->args > 0)
+                    if (statement->statement->args > 0)
                     {
                         die("'(' was expected");
                     }
                     data = statement;
                 }
-                // A variable
                 else
                 {
                     data = map_variable(start);
@@ -509,20 +507,13 @@ static ast_data *classify(ast_data *data)
                     case TYPE_FUNCTION:
                         starting = false;
                         break;
-                    default: // A statement
+                    // case TYPE_STATEMENT:
+                    default:
                         if (starting == false)
                         {
                             die("Unexpected statement");
                         }
-                        if (data->call->args == 0)
-                        {
-                            starting = true;
-                            data += 1;
-                        }
-                        else
-                        {
-                            starting = false;
-                        }
+                        starting = data->statement->args == 0;
                         break;
                 }
                 break;
@@ -622,28 +613,45 @@ static ast_node *build(const char *text)
                     break;
             }
         }
-        else if (data->type == TYPE_COMPOUND)
+        else if (data->type == TYPE_CALL)
         {
-            int statement = nested_statement(data);
-
-            switch (statement)
+            if (call_type(data) == TYPE_STATEMENT)
             {
-                case STATEMENT_ELIF:
-                case STATEMENT_ELSE:
-                    push(&operators, map_operator(0));
-                    move_expressions();
-                    push(&operands, data);
-                    break;
-                case STATEMENT_END:
-                    push(&operators, map_operator(0));
-                    move_expressions();
-                    break;
-                default:
-                    push(&operands, data);
-                    break;
-            }                
+                switch (data->statement->value)
+                {
+                    case STATEMENT_ELIF:
+                        push(&operators, map_operator(0));
+                        move_expressions();
+                        push(&operands, data);
+                        break;
+                    case STATEMENT_ELSE:
+                        push(&operators, map_operator(0));
+                        move_expressions();
+                        push(&operands, data + 1);
+                        break;
+                    case STATEMENT_CONTINUE:
+                    case STATEMENT_BREAK:
+                        if (*text != ';')
+                        {
+                            die("';' was expected");
+                        }
+                        push(&operands, data + 2);
+                        break;
+                    case STATEMENT_END:
+                        push(&operators, map_operator(0));
+                        move_expressions();
+                        break;
+                    default:
+                        push(&operands, data);
+                        break;
+                }
+            }
+            else // TYPE_FUNCTION
+            {
+                push(&operands, data);
+            }            
         }
-        else
+        else // TYPE_VARIABLE or TYPE_NUMBER or TYPE_STRING
         {
             push(&operands, data);
         }
@@ -667,8 +675,10 @@ static void explain(const ast_node *node, int level)
                 printf("%s\n", node->data->operator->text);
                 break;
             case TYPE_STATEMENT:
+                printf("%s\n", node->data->statement->name);
+                break;
             case TYPE_FUNCTION:
-                printf("%s()\n", node->data->call->name);
+                printf("%s()\n", node->data->function->name);
                 break;
             case TYPE_VARIABLE:
                 printf("%s\n", node->data->variable->name);
@@ -757,7 +767,7 @@ static ast_data eval(const ast_node *node)
                     return data;
             }
         case TYPE_FUNCTION:
-            switch (node->data->call->args)
+            switch (node->data->function->args)
             {
                 case 0:
                     break;
@@ -777,9 +787,9 @@ static ast_data eval(const ast_node *node)
                 default:
                     die("Bad Expression");
             }
-            if (node->data->call->exec() == 0)
+            if (node->data->function->exec() == 0)
             {
-                die("Function \"%s\" returned error", node->data->call->name);
+                die("Function \"%s\" returned error", node->data->function->name);
             }
             return pop_data();
         default:

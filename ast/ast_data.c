@@ -72,7 +72,14 @@ int valid_name(const char *str)
 
 ast_type call_type(const ast_data *data)
 {
-    return (data + 1)->type;
+    if ((data + 1)->type == TYPE_FUNCTION)
+    {
+        return TYPE_FUNCTION;
+    }
+    else
+    {
+        return TYPE_STATEMENT;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -157,33 +164,21 @@ ast_data *unary(ast_data *data)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static const ast_call statements[] =
+static const ast_statement statements[] =
 {
-    { "",        0, 0, NULL },
-    { "if",      1, 1, NULL },
-    { "elif",    2, 1, NULL },
-    { "else",    3, 0, NULL },
-    { "while",   4, 1, NULL },
-    { "for",     5, 1, NULL },
-    { "foreach", 6, 1, NULL },
-    { "break",   7, 0, NULL },
-    { "end",     8, 0, NULL },
+    { "",         0, 0 },
+    { "if",       1, 1 },
+    { "elif",     1, 2 },
+    { "else",     0, 3 },
+    { "while",    1, 4 },
+    { "for",      1, 5 },
+    { "foreach",  1, 6 },
+    { "continue", 0, 7 },
+    { "break",    0, 8 },
+    { "end",      0, 9 },
 };
 
-static ast_data statement_calls[(sizeof statements / sizeof *statements) * 3];
-
-int nested_statement(const ast_data *data)
-{
-    switch (data->call->value)
-    {
-        case STATEMENT_ELIF:
-        case STATEMENT_ELSE:
-        case STATEMENT_END:
-            return data->call->value;
-        default:
-            return 0;
-    }
-}
+static ast_data statement_list[(sizeof statements / sizeof *statements) * 3];
 
 ast_data *map_statement(const char *name)
 {
@@ -193,7 +188,7 @@ ast_data *map_statement(const char *name)
     {
         if (strcmp(statements[iter].name, name) == 0)
         {
-            return &statement_calls[iter * 3];
+            return &statement_list[iter * 3];
         }
     }
     return NULL;
@@ -203,48 +198,48 @@ void map_statements(void)
 {
     size_t count = sizeof statements / sizeof *statements;
 
-    for (size_t iter = 0, rows = 0; iter < count; iter += 1, rows += 3)
+    for (size_t iter = 0, items = 0; iter < count; iter += 1, items += 3)
     {
-        statement_calls[rows + 0].type = TYPE_CALL;
-        statement_calls[rows + 0].call = &statements[iter];
-        statement_calls[rows + 1].type = TYPE_COMPOUND;
-        statement_calls[rows + 1].call = &statements[iter];
-        statement_calls[rows + 2].type = TYPE_STATEMENT;
-        statement_calls[rows + 2].call = &statements[iter];
+        statement_list[items + 0].type = TYPE_CALL;
+        statement_list[items + 0].statement = &statements[iter];
+        statement_list[items + 1].type = TYPE_COMPOUND;
+        statement_list[items + 1].statement = &statements[iter];
+        statement_list[items + 2].type = TYPE_STATEMENT;
+        statement_list[items + 2].statement = &statements[iter];
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static const ast_call functions[] =
+static const ast_function functions[] =
 {
-    { "abs",     0, 1, ast_abs   },
-    { "ceil",    0, 1, ast_ceil  },
-    { "cos",     0, 1, ast_cos   },
-    { "cosh",    0, 1, ast_cosh  },
-    { "exp",     0, 1, ast_exp   },
-    { "floor",   0, 1, ast_floor },
-    { "log",     0, 1, ast_log   },
-    { "log10",   0, 1, ast_log10 },
-    { "pow",     0, 2, ast_pow   },
-    { "rand",    0, 0, ast_rand  },
-    { "round",   0, 1, ast_round },
-    { "sin",     0, 1, ast_sin   },
-    { "sinh",    0, 1, ast_sinh  },
-    { "sqr",     0, 1, ast_sqr   },
-    { "tan",     0, 1, ast_tan   },
-    { "tanh",    0, 1, ast_tanh  },
-    { "trunc",   0, 1, ast_trunc },
+    { "abs",     1, ast_abs   },
+    { "ceil",    1, ast_ceil  },
+    { "cos",     1, ast_cos   },
+    { "cosh",    1, ast_cosh  },
+    { "exp",     1, ast_exp   },
+    { "floor",   1, ast_floor },
+    { "log",     1, ast_log   },
+    { "log10",   1, ast_log10 },
+    { "pow",     2, ast_pow   },
+    { "rand",    0, ast_rand  },
+    { "round",   1, ast_round },
+    { "sin",     1, ast_sin   },
+    { "sinh",    1, ast_sinh  },
+    { "sqr",     1, ast_sqr   },
+    { "tan",     1, ast_tan   },
+    { "tanh",    1, ast_tanh  },
+    { "trunc",   1, ast_trunc },
 
-    { "print",   0, 1, ast_print },
+    { "print",   1, ast_print },
 };
 
 static hashmap *map;
 
 ast_data *map_function(const char *name)
 {
-    const ast_call call = {.name = name};
-    ast_data data = {.call = &call};
+    const ast_function function = {.name = name};
+    ast_data data = {.function = &function};
 
     return hashmap_search(map, &data);
 }
@@ -254,17 +249,17 @@ static int comp_function(const void *pa, const void *pb)
     const ast_data *a = pa;
     const ast_data *b = pb;
 
-    return strcmp(a->call->name, b->call->name);
+    return strcmp(a->function->name, b->function->name);
 }
 
 static unsigned long hash_function(const void *item)
 {
     const ast_data *data = item;
 
-    return hash_string((const unsigned char *)data->call->name);
+    return hash_string((const unsigned char *)data->function->name);
 }
 
-static ast_data function_calls[(sizeof functions / sizeof *functions) * 2];
+static ast_data function_list[(sizeof functions / sizeof *functions) * 2];
 
 void map_functions(void)
 {
@@ -276,13 +271,13 @@ void map_functions(void)
         perror("hashmap_create");
         exit(EXIT_FAILURE);
     }
-    for (size_t iter = 0, rows = 0; iter < count; iter += 1, rows += 2)
+    for (size_t iter = 0, items = 0; iter < count; iter += 1, items += 2)
     {
-        function_calls[rows + 0].type = TYPE_CALL;
-        function_calls[rows + 0].call = &functions[iter];
-        function_calls[rows + 1].type = TYPE_FUNCTION;
-        function_calls[rows + 1].call = &functions[iter];
-        if (hashmap_insert(map, &function_calls[rows]) == NULL)
+        function_list[items + 0].type = TYPE_CALL;
+        function_list[items + 0].function = &functions[iter];
+        function_list[items + 1].type = TYPE_FUNCTION;
+        function_list[items + 1].function = &functions[iter];
+        if (hashmap_insert(map, &function_list[items]) == NULL)
         {
             perror("hashmap_insert");
             exit(EXIT_FAILURE);
