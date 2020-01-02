@@ -446,14 +446,13 @@ struct nested_statements
 
 static struct nested_statements statements;
 
-static int push_statement(int statement)
+static void push_statement(int statement)
 {
     if (statements.counter == MAX_NESTED_STATEMENTS)
     {
         die("Max number of nested statements = %d", MAX_NESTED_STATEMENTS);
     }
     statements.value[statements.counter++] = statement;
-    return 1;
 }
 
 static int pop_statement(void)
