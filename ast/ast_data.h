@@ -19,12 +19,18 @@ enum
     OPERATOR_EOF = 0,
     OPERATOR_PLUS = 1,
     OPERATOR_MINUS = 2,
-    OPERATOR_EXP = '^',
+    OPERATOR_NOT = '!',
     OPERATOR_MUL = '*',
     OPERATOR_DIV = '/',
     OPERATOR_REM = '%',
     OPERATOR_ADD = '+',
     OPERATOR_SUB = '-',
+    OPERATOR_LT = '<',
+    OPERATOR_GT = '>',
+    OPERATOR_LT_OR_EQ = '<' + 0xF,
+    OPERATOR_GT_OR_EQ = '>' + 0xF,
+    OPERATOR_IS_EQ = '=' + 0xF,
+    OPERATOR_NOT_EQ = '!' + 0xF,
     OPERATOR_EQ = '=',
     OPERATOR_LEFT_PARENTHS = '(',
     OPERATOR_RIGHT_PARENTHS = ')',
@@ -39,27 +45,13 @@ enum
     STATEMENT_ELIF,
     STATEMENT_ELSE,
     STATEMENT_WHILE,
+    STATEMENT_UNTIL,
     STATEMENT_FOR,
     STATEMENT_FOREACH,
     STATEMENT_CONTINUE,
     STATEMENT_BREAK,
     STATEMENT_END,
 };
-
-typedef struct 
-{
-    int value;
-    int args;
-    int precedence;
-    int associativity;
-    const char *text;
-} ast_operator;
-
-typedef struct
-{
-    const char *name;
-    int args;
-} ast_call;
 
 typedef struct
 {
@@ -72,9 +64,10 @@ typedef struct
 {
     const char *name;
     int args;
-    int (*exec)(void);
+    int (*eval)(void);
 } ast_function;
 
+typedef struct ast_operator ast_operator;
 typedef struct ast_variable ast_variable;
 
 typedef struct ast_data
@@ -91,6 +84,16 @@ typedef struct ast_data
     };
 } ast_data;
 
+struct ast_operator
+{
+    int value;
+    int args;
+    int precedence;
+    int associativity;
+    const char *text;
+    ast_data (*eval)(ast_data, ast_data);
+};
+
 struct ast_variable
 {
     const char *name;
@@ -104,7 +107,7 @@ int valid_name(const char *);
 ast_type call_type(const ast_data *);
 
 int is_operator(int);
-ast_data *map_operator(int);
+ast_data *map_operator(const char **);
 int arguments(const ast_data *);
 int precedence(const ast_data *, const ast_data *);
 ast_data *unary(ast_data *);
@@ -119,8 +122,6 @@ void unmap_functions(void);
 ast_data *map_variable(const char *);
 void map_variables(void);
 void unmap_variables(void);
-
-void print_help(void);
 
 #endif /* AST_DATA_H */
 

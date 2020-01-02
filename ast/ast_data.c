@@ -3,8 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 #include "hashmap.h"
-#include "ast_eval.h"
 #include "ast_data.h"
+#include "ast_eval.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -84,34 +84,48 @@ ast_type call_type(const ast_data *data)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#define DEF_OPERATOR(o, ...)                                 \
+    [o] = {                                                  \
+        .type = TYPE_OPERATOR,                               \
+        .operator = &(const ast_operator){o, __VA_ARGS__}    \
+    }
+
 static ast_data operators[] =
 {
-    [ OPERATOR_EOF            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EOF,            0, 0, 'L', ""        } },
-    [ OPERATOR_PLUS           ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_PLUS,           1, 5, 'R', "+ Unary" } },
-    [ OPERATOR_MINUS          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MINUS,          1, 5, 'R', "- Unary" } },
-    [ OPERATOR_EXP            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EXP,            2, 4, 'R', "^"       } },
-    [ OPERATOR_MUL            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_MUL,            2, 3, 'L', "*"       } },
-    [ OPERATOR_DIV            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_DIV,            2, 3, 'L', "/"       } },
-    [ OPERATOR_REM            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_REM,            2, 3, 'L', "%"       } },
-    [ OPERATOR_ADD            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_ADD,            2, 2, 'L', "+"       } },
-    [ OPERATOR_SUB            ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_SUB,            2, 2, 'L', "-"       } },
-    [ OPERATOR_EQ             ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_EQ,             2, 1, 'R', "="       } },
-    [ OPERATOR_LEFT_PARENTHS  ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_LEFT_PARENTHS,  0, 0, 'L', "("       } },
-    [ OPERATOR_RIGHT_PARENTHS ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_RIGHT_PARENTHS, 0, 0, 'L', ")"       } },
-    [ OPERATOR_COMMA          ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_COMMA,          0, 0, 'L', ","       } },
-    [ OPERATOR_SEMICOLON      ] = { .type = TYPE_OPERATOR, .operator = &(const ast_operator){ OPERATOR_SEMICOLON,      0, 0, 'L', ";"       } },
+    DEF_OPERATOR(OPERATOR_PLUS,           1, 6, 'R', "+",  ast_plus),
+    DEF_OPERATOR(OPERATOR_MINUS,          1, 6, 'R', "-",  ast_minus),
+    DEF_OPERATOR(OPERATOR_NOT,            1, 6, 'R', "!",  ast_not),
+    DEF_OPERATOR(OPERATOR_MUL,            2, 5, 'L', "*",  ast_mul),
+    DEF_OPERATOR(OPERATOR_DIV,            2, 5, 'L', "/",  ast_div),
+    DEF_OPERATOR(OPERATOR_REM,            2, 5, 'L', "%",  ast_rem),
+    DEF_OPERATOR(OPERATOR_ADD,            2, 4, 'L', "+",  ast_add),
+    DEF_OPERATOR(OPERATOR_SUB,            2, 4, 'L', "-",  ast_sub),
+    DEF_OPERATOR(OPERATOR_LT,             2, 3, 'L', "<",  ast_lt),
+    DEF_OPERATOR(OPERATOR_GT,             2, 3, 'L', ">",  ast_gt),
+    DEF_OPERATOR(OPERATOR_LT_OR_EQ,       2, 3, 'L', "<=", ast_lt_or_eq),
+    DEF_OPERATOR(OPERATOR_GT_OR_EQ,       2, 3, 'L', ">=", ast_gt_or_eq),
+    DEF_OPERATOR(OPERATOR_IS_EQ,          2, 2, 'L', "==", ast_is_eq),
+    DEF_OPERATOR(OPERATOR_NOT_EQ,         2, 2, 'L', "!=", ast_not_eq),
+    DEF_OPERATOR(OPERATOR_EQ,             2, 1, 'R', "=",  ast_eq),
+    DEF_OPERATOR(OPERATOR_LEFT_PARENTHS,  0, 0, 'L', "(",  NULL),
+    DEF_OPERATOR(OPERATOR_RIGHT_PARENTHS, 0, 0, 'L', ")" , NULL),
+    DEF_OPERATOR(OPERATOR_COMMA,          0, 0, 'L', ",",  NULL),
+    DEF_OPERATOR(OPERATOR_SEMICOLON,      0, 0, 'L', ";",  NULL),
+    DEF_OPERATOR(OPERATOR_EOF,            0, 0, 'L', "",   NULL),
 };
 
-int is_operator(int c)
+int is_operator(int operator)
 {
-    switch (c)
+    switch (operator)
     {
-        case OPERATOR_EXP:
+        case OPERATOR_NOT:
         case OPERATOR_MUL:
         case OPERATOR_DIV:
         case OPERATOR_REM:
         case OPERATOR_ADD:
         case OPERATOR_SUB:
+        case OPERATOR_LT:
+        case OPERATOR_GT:
         case OPERATOR_EQ:
         case OPERATOR_LEFT_PARENTHS:
         case OPERATOR_RIGHT_PARENTHS:
@@ -120,13 +134,48 @@ int is_operator(int c)
             return 1;
         default:
             return 0;
-
     }
 }
 
-ast_data *map_operator(int value)
+static int get_operator(const char **operator)
 {
-    return &operators[value];
+    int result = 0;
+
+    switch (**operator)
+    {
+        case OPERATOR_MUL:
+        case OPERATOR_DIV:
+        case OPERATOR_REM:
+        case OPERATOR_ADD:
+        case OPERATOR_SUB:
+        case OPERATOR_LEFT_PARENTHS:
+        case OPERATOR_RIGHT_PARENTHS:
+        case OPERATOR_COMMA:
+        case OPERATOR_SEMICOLON:
+            result = **operator;
+            (*operator)++;
+            break;
+        case OPERATOR_NOT:
+        case OPERATOR_LT:
+        case OPERATOR_GT:
+        case OPERATOR_EQ:
+            result = **operator;
+            (*operator)++;
+            if (**operator == '=')
+            {
+                result += 0xF;
+                (*operator)++;
+            }
+            break;
+        default:
+            break;
+    }
+    return result;
+}
+
+ast_data *map_operator(const char **operator)
+{
+    return &operators[get_operator(operator)];
 }
 
 int arguments(const ast_data *data)
@@ -166,16 +215,17 @@ ast_data *unary(ast_data *data)
 
 static const ast_statement statements[] =
 {
-    { "",         0, 0 },
-    { "if",       1, 1 },
-    { "elif",     1, 2 },
-    { "else",     0, 3 },
-    { "while",    1, 4 },
-    { "for",      1, 5 },
-    { "foreach",  1, 6 },
-    { "continue", 0, 7 },
-    { "break",    0, 8 },
-    { "end",      0, 9 },
+    { "",         0, 0  },
+    { "if",       1, 1  },
+    { "elif",     1, 2  },
+    { "else",     0, 3  },
+    { "while",    1, 4  },
+    { "until",    1, 5  },
+    { "for",      1, 6  },
+    { "foreach",  1, 7  },
+    { "continue", 0, 8  },
+    { "break",    0, 9  },
+    { "end",      0, 10 },
 };
 
 static ast_data statement_list[(sizeof statements / sizeof *statements) * 3];
@@ -211,37 +261,14 @@ void map_statements(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static const ast_function functions[] =
-{
-    { "abs",     1, ast_abs   },
-    { "ceil",    1, ast_ceil  },
-    { "cos",     1, ast_cos   },
-    { "cosh",    1, ast_cosh  },
-    { "exp",     1, ast_exp   },
-    { "floor",   1, ast_floor },
-    { "log",     1, ast_log   },
-    { "log10",   1, ast_log10 },
-    { "pow",     2, ast_pow   },
-    { "rand",    0, ast_rand  },
-    { "round",   1, ast_round },
-    { "sin",     1, ast_sin   },
-    { "sinh",    1, ast_sinh  },
-    { "sqr",     1, ast_sqr   },
-    { "tan",     1, ast_tan   },
-    { "tanh",    1, ast_tanh  },
-    { "trunc",   1, ast_trunc },
-
-    { "print",   1, ast_print },
-};
-
-static hashmap *map;
+static hashmap *functions;
 
 ast_data *map_function(const char *name)
 {
     const ast_function function = {.name = name};
     ast_data data = {.function = &function};
 
-    return hashmap_search(map, &data);
+    return hashmap_search(functions, &data);
 }
 
 static int comp_function(const void *pa, const void *pb)
@@ -259,14 +286,35 @@ static unsigned long hash_function(const void *item)
     return hash_string((const unsigned char *)data->function->name);
 }
 
-static ast_data function_list[(sizeof functions / sizeof *functions) * 2];
-
 void map_functions(void)
 {
-    size_t count = sizeof functions / sizeof *functions;
+    static const ast_function list[] =
+    {
+        { "abs",     1, ast_abs   },
+        { "ceil",    1, ast_ceil  },
+        { "cos",     1, ast_cos   },
+        { "cosh",    1, ast_cosh  },
+        { "exp",     1, ast_exp   },
+        { "floor",   1, ast_floor },
+        { "log",     1, ast_log   },
+        { "log10",   1, ast_log10 },
+        { "pow",     2, ast_pow   },
+        { "rand",    0, ast_rand  },
+        { "round",   1, ast_round },
+        { "sin",     1, ast_sin   },
+        { "sinh",    1, ast_sinh  },
+        { "sqr",     1, ast_sqr   },
+        { "tan",     1, ast_tan   },
+        { "tanh",    1, ast_tanh  },
+        { "trunc",   1, ast_trunc },
 
-    map = hashmap_create(comp_function, hash_function, count * 4);
-    if (map == NULL)
+        { "print",   1, ast_print },
+    };
+    static ast_data function_list[(sizeof list / sizeof *list) * 2];
+    size_t count = sizeof list / sizeof *list;
+
+    functions = hashmap_create(comp_function, hash_function, count * 4);
+    if (functions == NULL)
     {
         perror("hashmap_create");
         exit(EXIT_FAILURE);
@@ -274,10 +322,10 @@ void map_functions(void)
     for (size_t iter = 0, items = 0; iter < count; iter += 1, items += 2)
     {
         function_list[items + 0].type = TYPE_CALL;
-        function_list[items + 0].function = &functions[iter];
+        function_list[items + 0].function = &list[iter];
         function_list[items + 1].type = TYPE_FUNCTION;
-        function_list[items + 1].function = &functions[iter];
-        if (hashmap_insert(map, &function_list[items]) == NULL)
+        function_list[items + 1].function = &list[iter];
+        if (hashmap_insert(functions, &function_list[items]) == NULL)
         {
             perror("hashmap_insert");
             exit(EXIT_FAILURE);
@@ -287,7 +335,7 @@ void map_functions(void)
 
 void unmap_functions(void)
 {
-    hashmap_destroy(map, NULL);
+    hashmap_destroy(functions, NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -369,38 +417,5 @@ void unmap_variables(void)
 {
     hashmap_destroy(variables, free_variable);
     free_variable(data_var);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-void print_help(void)
-{
-    size_t count;
-
-    count = sizeof operators / sizeof *operators;
-    puts("Operators:");
-    for (size_t iter = 1; iter < count; iter++)
-    {
-        if (operators[iter].type == 0)
-        {
-            continue;
-        }
-        printf("   %-10s\tPrecedence: %d\n",
-            operators[iter].operator->text,
-            operators[iter].operator->precedence
-        );
-    }
-    count = sizeof functions / sizeof *functions;
-    puts("Functions:");
-    for (size_t iter = 0; iter < count; iter++)
-    {
-        printf("   %-10s\tArguments: %d\n",
-            functions[iter].name,
-            functions[iter].args
-        );
-    }
-    puts("Options:");
-    puts("   --help\tDisplay this information");
-    puts("   --tree\tDisplay an abstract syntax tree");
 }
 

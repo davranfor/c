@@ -4,6 +4,138 @@
 #include "ast_data.h"
 #include "ast_eval.h"
 
+ast_data ast_plus(ast_data a, ast_data b)
+{
+    (void)b;
+    return a;
+}
+
+ast_data ast_minus(ast_data a, ast_data b)
+{
+    (void)b;
+    if (a.type == TYPE_NUMBER)
+    {
+        a.number = -a.number;
+    }
+    return a;
+}
+
+ast_data ast_not(ast_data a, ast_data b)
+{
+    (void)b;
+    if (a.type == TYPE_NUMBER)
+    {
+        a.number = a.number == 0;
+    }
+    return a;
+}
+
+ast_data ast_mul(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = a.number * b.number;
+    }
+    return a;
+}
+
+ast_data ast_div(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = a.number / b.number;
+    }
+    return a;
+}
+
+ast_data ast_rem(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = (int)a.number % (int)b.number;
+    }
+    return a;
+}
+
+ast_data ast_add(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = a.number + b.number;
+    }
+    return a;
+}
+
+ast_data ast_sub(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = a.number - b.number;
+    }
+    return a;
+}
+
+ast_data ast_lt(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = a.number < b.number;
+    }
+    return a;
+}
+
+ast_data ast_gt(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = a.number > b.number;
+    }
+    return a;
+}
+
+ast_data ast_lt_or_eq(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = a.number <= b.number;
+    }
+    return a;
+}
+
+ast_data ast_gt_or_eq(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = a.number >= b.number;
+    }
+    return a;
+}
+ast_data ast_is_eq(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = a.number == b.number;
+    }
+    return a;
+}
+
+ast_data ast_not_eq(ast_data a, ast_data b)
+{
+    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
+    {
+        a.number = a.number != b.number;
+    }
+    return a;
+}
+
+ast_data ast_eq(ast_data a, ast_data b)
+{
+    a.variable->data = b;
+    return b;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 #define MAX_FRAME 8192
 
 static ast_data frame[MAX_FRAME];

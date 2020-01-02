@@ -11,8 +11,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-#include "ast_eval.h"
 #include "ast_data.h"
+#include "ast_eval.h"
 #include "ast.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -28,7 +28,6 @@ static void ast_die(char *file, int line, const char *format, ...)
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
-
     fprintf(stderr, "\nDebug info:\n\tFile: %s\n\tLine: %d\n", file, line);
     exit(EXIT_FAILURE);
 }
@@ -169,13 +168,13 @@ static int move_until_operator(int operator)
     return args;
 }
 
-static int move_until_type(ast_type type)
+static int move_until_statement(ast_node *node)
 {
     int count = 0;
 
-    while (node_type(operands) != type)
+    while (node_type(operands) != TYPE_COMPOUND)
     {
-        if (!move(&operators->left, &operands))
+        if (!move(&node->left, &operands))
         {
             die("Expected operand");
         }
@@ -187,7 +186,6 @@ static int move_until_type(ast_type type)
 static void move_operands(void)
 {
     int args = move_until_operator('(');
-    ast_call call;
 
     pop(&operands);
     switch (node_type(operands))
@@ -195,27 +193,31 @@ static void move_operands(void)
         case TYPE_CALL:
             if (call_type(operands->data) == TYPE_FUNCTION)
             {
-                call.name = operands->data->function->name;
-                call.args = operands->data->function->args;
+                if (operands->data->function->args != args)
+                {
+                    die("\"%s\" was expecting %d argument(s), got %d",
+                        operands->data->function->name,
+                        operands->data->function->args,
+                        args
+                    );
+                }
                 if (args == 0)
                 {
                     expected = OPERATOR;
                 }
             }
-            else
+            else // TYPE_STATEMENT
             {
-                call.name = operands->data->statement->name;
-                call.args = operands->data->statement->args;
+                if (operands->data->statement->args != args)
+                {
+                    die("\"%s\" was expecting %d argument(s), got %d",
+                        operands->data->statement->name,
+                        operands->data->statement->args,
+                        args
+                    );
+                }
                 expected = OPERAND;
                 starting = true;
-            }
-            if (call.args != args)
-            {
-                die("\"%s\" was expecting %d argument(s), got %d",
-                    call.name,
-                    call.args,
-                    args
-                );
             }
             operands->left = operators->left;
             operands->data += 1;
@@ -234,24 +236,37 @@ static void move_operands(void)
     pop(&operators);
 }
 
-static void move_expressions(void)
+static void move_block(void)
 {
-    move_until_type(TYPE_COMPOUND);
+    ast_node node = {0};
+
+    move_until_statement(&node);
     if (node_type(operands) != TYPE_COMPOUND)
     {
         die("'end' was not expected");
     }
     if (operands->data->statement->args == 0)
     {
-        operands->left = operators->left;
+        operands->left = node.left;
     }
     else
     {
-        operands->left->right = operators->left;
+        operands->left->right = node.left;
     }
     operands->data += 1;
-    starting = true;
-    pop(&operators);
+}
+
+static void test_block(void)
+{
+    ast_data *root = peek(operands);
+
+    if (root->type == TYPE_STATEMENT)
+    {
+        if (root->statement->value == STATEMENT_ELSE)
+        {
+            die("'elif' and 'else' can not follow an 'else' block");
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -352,70 +367,129 @@ static ast_data *parse(const char **text)
 
     if (start == NULL)
     {
-        data = map_operator(*str);
-        *text = str + 1;
-        return data;
-    }
-    strings[pos++] = 0;
-    if (quotes != 0)
-    {
-        data = new_data(TYPE_STRING);
-        data->string = start;
+        data = map_operator(&str);
     }
     else
     {
-        double number;
-        char *ptr;
-
-        number = strtod(start, &ptr);
-        if (*ptr == '\0')
+        strings[pos++] = 0;
+        if (quotes != 0)
         {
-            data = new_data(TYPE_NUMBER);
-            data->number = number;
+            data = new_data(TYPE_STRING);
+            data->string = start;
         }
         else
         {
-            if (!valid_name(start))
-            {
-                die("\"%s\" is not a valid name", start);
-            }
+            double number;
+            char *ptr;
 
-            ast_data *statement = map_statement(start);
-
-            if (*str == '(')
+            number = strtod(start, &ptr);
+            if (*ptr == '\0')
             {
-                if (statement != NULL)
-                {
-                    data = statement;
-                }
-                else
-                {
-                    data = map_function(start);
-                    if (data == NULL)
-                    {
-                        die("\"%s\" was not found", start);
-                    }
-                }
+                data = new_data(TYPE_NUMBER);
+                data->number = number;
             }
             else
             {
-                if (statement != NULL)
+                if (!valid_name(start))
                 {
-                    if (statement->statement->args > 0)
+                    die("\"%s\" is not a valid name", start);
+                }
+
+                ast_data *statement = map_statement(start);
+
+                if (*str == '(')
+                {
+                    if (statement != NULL)
                     {
-                        die("'(' was expected");
+                        data = statement;
                     }
-                    data = statement;
+                    else
+                    {
+                        data = map_function(start);
+                        if (data == NULL)
+                        {
+                            die("\"%s\" was not found", start);
+                        }
+                    }
                 }
                 else
                 {
-                    data = map_variable(start);
+                    if (statement != NULL)
+                    {
+                        if (statement->statement->args > 0)
+                        {
+                            die("'(' was expected");
+                        }
+                        data = statement;
+                    }
+                    else
+                    {
+                        data = map_variable(start);
+                    }
                 }
             }
         }
     }
     *text = str;
     return data;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+#define MAX_NESTED_STATEMENTS 128
+
+struct nested_statements
+{
+    int value[MAX_NESTED_STATEMENTS];
+    int counter;
+};
+
+static struct nested_statements statements;
+
+static int push_statement(int statement)
+{
+    if (statements.counter == MAX_NESTED_STATEMENTS)
+    {
+        die("Max number of nested statements = %d", MAX_NESTED_STATEMENTS);
+    }
+    statements.value[statements.counter++] = statement;
+    return 1;
+}
+
+static int pop_statement(void)
+{
+    if (statements.counter == 0)
+    {
+        die("'end' was not expected");
+    }
+    return statements.value[--statements.counter];    
+}
+
+static int peek_statement(void)
+{
+    if (statements.counter == 0)
+    {
+        return 0;
+    }
+    return statements.value[statements.counter - 1];    
+}
+
+static int iterating(void)
+{
+    for (int iter = 0; iter < statements.counter; iter++)
+    {
+        switch (statements.value[iter])
+        {
+            case STATEMENT_WHILE:
+            case STATEMENT_UNTIL:
+            case STATEMENT_FOR:
+            case STATEMENT_FOREACH:
+                return 1;
+            default:
+                break;
+        }
+    }
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -471,6 +545,10 @@ static ast_data *classify(ast_data *data)
                 if (operators != NULL)
                 {
                     die("Expected operand");
+                }
+                if (statements.counter != 0)
+                {
+                    die("'end' was expected");
                 }
                 break;
             default:
@@ -617,16 +695,34 @@ static ast_node *build(const char *text)
         {
             if (call_type(data) == TYPE_STATEMENT)
             {
-                switch (data->statement->value)
+                int statement = data->statement->value;
+
+                switch (statement)
                 {
+                    case STATEMENT_IF:
+                    case STATEMENT_WHILE:
+                    case STATEMENT_UNTIL:
+                    case STATEMENT_FOR:
+                    case STATEMENT_FOREACH:
+                        push(&operands, data);
+                        push_statement(statement);
+                        break;
                     case STATEMENT_ELIF:
-                        push(&operators, map_operator(0));
-                        move_expressions();
+                        if (peek_statement() != STATEMENT_IF)
+                        {
+                            die("'elif' without 'if'");
+                        }
+                        move_block();
+                        test_block();
                         push(&operands, data);
                         break;
                     case STATEMENT_ELSE:
-                        push(&operators, map_operator(0));
-                        move_expressions();
+                        if (peek_statement() != STATEMENT_IF)
+                        {
+                            die("'else' without 'if'");
+                        }
+                        move_block();
+                        test_block();
                         push(&operands, data + 1);
                         break;
                     case STATEMENT_CONTINUE:
@@ -635,11 +731,16 @@ static ast_node *build(const char *text)
                         {
                             die("';' was expected");
                         }
+                        if (!iterating())
+                        {
+                            die("'continue' and 'break'"
+                                " can not be used outside a loop");
+                        }
                         push(&operands, data + 2);
                         break;
                     case STATEMENT_END:
-                        push(&operators, map_operator(0));
-                        move_expressions();
+                        move_block();
+                        pop_statement();
                         break;
                     default:
                         push(&operands, data);
@@ -708,7 +809,6 @@ static void explain(const ast_node *node, int level)
 
 static ast_data eval(const ast_node *node)
 {
-    ast_data data = {.type = TYPE_NUMBER};
     ast_data a = {0};
     ast_data b = {0};
     int operator = 0;
@@ -734,38 +834,7 @@ static ast_data eval(const ast_node *node)
                     AST_TRANSFORM_VAR(b);
                 }
             }
-            switch (operator)
-            {
-                case OPERATOR_PLUS:
-                    data.number = +a.number;
-                    return data;
-                case OPERATOR_MINUS:
-                    data.number = -a.number;
-                    return data;
-                case OPERATOR_EXP:
-                    data.number = pow(a.number, b.number);
-                    return data;
-                case OPERATOR_MUL:
-                    data.number = a.number * b.number;
-                    return data;
-                case OPERATOR_DIV:
-                    data.number = a.number / b.number;
-                    return data;
-                case OPERATOR_REM:
-                    data.number = (int)a.number % (int)b.number;
-                    return data;
-                case OPERATOR_ADD:
-                    data.number = a.number + b.number;
-                    return data;
-                case OPERATOR_SUB:
-                    data.number = a.number - b.number;
-                    return data;
-                case OPERATOR_EQ:
-                    a.variable->data = b;
-                    return b;
-                default:
-                    return data;
-            }
+           return node->data->operator->eval(a, b);
         case TYPE_FUNCTION:
             switch (node->data->function->args)
             {
@@ -787,9 +856,9 @@ static ast_data eval(const ast_node *node)
                 default:
                     die("Bad Expression");
             }
-            if (node->data->function->exec() == 0)
+            if (node->data->function->eval() == 0)
             {
-                die("Function \"%s\" returned error", node->data->function->name);
+                die("\"%s\" returned error", node->data->function->name);
             }
             return pop_data();
         default:
@@ -829,7 +898,9 @@ void ast_eval(const ast_node *node)
 
 void ast_help(void)
 {
-    print_help();
+    puts("Options:");
+    puts("   --help\tDisplay this information");
+    puts("   --tree\tDisplay an abstract syntax tree");
 }
 
 void ast_clean(void)

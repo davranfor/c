@@ -1,5 +1,7 @@
 print(pow(9, 2));
 "a" "b" * 3;
+a = 5;
+print(a == 5);
 if (a = 1)
     b = 2;
 elif (c = 3)
@@ -8,8 +10,14 @@ elif (e = 5)
     f = 6;
 else
     g = 8;
+    h = 9;
 end
-print(3+4*2/(1-5)^2^3);
+while (1)
+    if (2)
+        break;
+    end
+end
+print(3+4*2/(1-5));
 print("Hola mundo");
 print("2 * 2 = ");
 #value = 2 * 2;
@@ -25,3 +33,4 @@ if (a = 1)
     b = 2;
     c = 3;
 end
+
