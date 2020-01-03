@@ -4,6 +4,7 @@
 typedef enum
 {
     TYPE_NONE,
+    TYPE_JUMP,
     TYPE_CALL,
     TYPE_OPERATOR,
     TYPE_COMPOUND,
@@ -78,9 +79,11 @@ typedef struct ast_data
         const ast_operator *operator;
         const ast_statement *statement;
         const ast_function *function;
+        const struct ast_node *jump;
         ast_variable *variable;
         double number;
         const char *string;
+        const void *address;
     };
 } ast_data;
 

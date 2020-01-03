@@ -98,6 +98,7 @@ static void clear(ast_node *root)
         clear(root->right);
         switch (root->data->type)
         {
+            case TYPE_JUMP:
             case TYPE_NUMBER:
             case TYPE_STRING:
                 free(root->data);
@@ -371,7 +372,7 @@ static ast_data *parse(const char **text)
     }
     else
     {
-        strings[pos++] = 0;
+        strings[pos++] = '\0';
         if (quotes != 0)
         {
             data = new_data(TYPE_STRING);
@@ -436,48 +437,66 @@ static ast_data *parse(const char **text)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define MAX_NESTED_STATEMENTS 128
+#define MAX_JUMPS 128
 
-struct nested_statements
+struct jumps
 {
-    int value[MAX_NESTED_STATEMENTS];
+    const ast_node *node[MAX_JUMPS];
     int counter;
 };
 
-static struct nested_statements statements;
+static struct jumps jumps;
 
-static void push_statement(int statement)
+static void push_jump(const ast_node *node)
 {
-    if (statements.counter == MAX_NESTED_STATEMENTS)
+    if (jumps.counter == MAX_JUMPS)
     {
-        die("Max number of nested statements = %d", MAX_NESTED_STATEMENTS);
+        die("Max number of nested statements = %d", MAX_JUMPS);
     }
-    statements.value[statements.counter++] = statement;
+    jumps.node[jumps.counter++] = node;
 }
 
-static int pop_statement(void)
+static const ast_node *pop_jump(void)
 {
-    if (statements.counter == 0)
+    if (jumps.counter == 0)
+    {
+        return NULL;
+    }
+    return jumps.node[--jumps.counter];
+}
+
+static void push_statement(ast_data *statement)
+{
+    push(&operands, new_data(TYPE_JUMP))->jump = NULL;
+    push(&operands, statement);
+    push_jump(operands);
+}
+
+static void pop_statement(void)
+{
+    const ast_node *statement = pop_jump();
+
+    if (statement == NULL)
     {
         die("'end' was not expected");
     }
-    return statements.value[--statements.counter];    
+    statement->right->data->jump = operands;
 }
 
 static int peek_statement(void)
 {
-    if (statements.counter == 0)
+    if (jumps.counter == 0)
     {
         return 0;
     }
-    return statements.value[statements.counter - 1];    
+    return jumps.node[jumps.counter - 1]->data->statement->value;
 }
 
 static int iterating(void)
 {
-    for (int iter = 0; iter < statements.counter; iter++)
+    for (int iter = 0; iter < jumps.counter; iter++)
     {
-        switch (statements.value[iter])
+        switch (jumps.node[iter]->data->statement->value)
         {
             case STATEMENT_WHILE:
             case STATEMENT_UNTIL:
@@ -545,7 +564,7 @@ static ast_data *classify(ast_data *data)
                 {
                     die("Expected operand");
                 }
-                if (statements.counter != 0)
+                if (jumps.counter != 0)
                 {
                     die("'end' was expected");
                 }
@@ -703,8 +722,7 @@ static ast_node *build(const char *text)
                     case STATEMENT_UNTIL:
                     case STATEMENT_FOR:
                     case STATEMENT_FOREACH:
-                        push(&operands, data);
-                        push_statement(statement);
+                        push_statement(data);
                         break;
                     case STATEMENT_ELIF:
                         if (peek_statement() != STATEMENT_IF)
@@ -771,6 +789,9 @@ static void explain(const ast_node *node, int level)
         }
         switch (node->data->type)
         {
+            case TYPE_JUMP:
+                printf("jump\n");
+                break;
             case TYPE_OPERATOR:
                 printf("%s\n", node->data->operator->text);
                 break;
@@ -833,7 +854,7 @@ static ast_data eval(const ast_node *node)
                     AST_TRANSFORM_VAR(b);
                 }
             }
-           return node->data->operator->eval(a, b);
+            return node->data->operator->eval(a, b);
         case TYPE_FUNCTION:
             switch (node->data->function->args)
             {
@@ -888,10 +909,55 @@ void ast_explain(const ast_node *node)
 
 void ast_eval(const ast_node *node)
 {
+    const ast_node *next;
+    int statement;
+
     while (node != NULL)
     {
-        eval(node);
-        node = node->right;
+        switch (node->data->type)
+        {
+            case TYPE_JUMP:
+                push_jump(node->data->jump->right);
+                node = node->right;
+                break;
+            case TYPE_STATEMENT:
+                statement = node->data->statement->value;
+                next = node->right;
+                node = node->left;
+                if (statement == STATEMENT_ELSE)
+                {
+                    break;
+                }
+                if (eval(node).number == 0)
+                {
+                    if ((next != NULL) &&
+                        (next->data->type == TYPE_STATEMENT) &&
+                        (
+                            (next->data->statement->value == STATEMENT_ELIF) ||
+                            (next->data->statement->value == STATEMENT_ELSE)
+                        ))
+                    {
+                        node = next;
+                    }
+                    else
+                    {
+                        node = pop_jump();
+                    }
+                }
+                else
+                {
+                    node = node->right;
+                }
+                break;
+            default:
+                eval(node);
+                node = node->right;
+                break;
+        }
+        if (node == NULL)
+        {
+            node = pop_jump();
+        }
     }
 }
 
