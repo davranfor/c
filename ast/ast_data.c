@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include "hashmap.h"
@@ -417,5 +418,26 @@ void unmap_variables(void)
 {
     hashmap_destroy(variables, free_variable);
     free_variable(data_var);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+static ast_data booleans[] =
+{
+    { TYPE_BOOLEAN, .boolean = true  },
+    { TYPE_BOOLEAN, .boolean = false },
+};
+
+ast_data *map_boolean(const char *str)
+{
+    if (strcmp(str, "true") == 0)
+    {
+        return &booleans[0];
+    }
+    else if (strcmp(str, "false") == 0)
+    {
+        return &booleans[1];
+    }
+    return NULL;
 }
 

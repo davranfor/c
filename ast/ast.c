@@ -259,14 +259,9 @@ static void move_block(void)
 
 static void test_block(void)
 {
-    ast_data *root = peek(operands);
-
-    if (root->type == TYPE_STATEMENT)
+    if (peek(operands)->statement->value == STATEMENT_ELSE)
     {
-        if (root->statement->value == STATEMENT_ELSE)
-        {
-            die("'elif' and 'else' can not follow an 'else' block");
-        }
+        die("'elif' and 'else' can not follow an 'else' block");
     }
 }
 
@@ -390,6 +385,10 @@ static ast_data *parse(const char **text)
                 data->number = number;
             }
             else
+            if ((data = map_boolean(start)))
+            {
+            }
+            else
             {
                 if (!valid_name(start))
                 {
@@ -441,13 +440,13 @@ static ast_data *parse(const char **text)
 
 struct jumps
 {
-    const ast_node *node[MAX_JUMPS];
+    ast_node *node[MAX_JUMPS];
     int counter;
 };
 
 static struct jumps jumps;
 
-static void push_jump(const ast_node *node)
+static void push_jump(ast_node *node)
 {
     if (jumps.counter == MAX_JUMPS)
     {
@@ -456,7 +455,7 @@ static void push_jump(const ast_node *node)
     jumps.node[jumps.counter++] = node;
 }
 
-static const ast_node *pop_jump(void)
+static ast_node *pop_jump(void)
 {
     if (jumps.counter == 0)
     {
@@ -465,22 +464,37 @@ static const ast_node *pop_jump(void)
     return jumps.node[--jumps.counter];
 }
 
-static void push_statement(ast_data *statement)
+static ast_node *peek_jump(void)
 {
-    push(&operands, new_data(TYPE_JUMP))->jump = NULL;
-    push(&operands, statement);
+    if (jumps.counter == 0)
+    {
+        return 0;
+    }
+    return jumps.node[jumps.counter - 1];
+}
+
+static void push_statement(ast_data *data)
+{
+    push(&operands, data);
     push_jump(operands);
 }
 
 static void pop_statement(void)
 {
-    const ast_node *statement = pop_jump();
+    ast_node *node = pop_jump();
 
-    if (statement == NULL)
+    if (node == NULL)
     {
         die("'end' was not expected");
     }
-    statement->right->data->jump = operands;
+    // if operands is ELIF or ELSE
+    if (node != operands)
+    {
+        ast_data *data = new_data(TYPE_JUMP);
+
+        data->jump = operands;
+        push(&node->right, data);
+    }
 }
 
 static int peek_statement(void)
@@ -804,6 +818,9 @@ static void explain(const ast_node *node, int level)
             case TYPE_VARIABLE:
                 printf("%s\n", node->data->variable->name);
                 break;
+            case TYPE_BOOLEAN:
+                printf("%s\n", node->data->boolean ? "true" : "false");
+                break;
             case TYPE_NUMBER:
                 printf("%g\n", node->data->number);
                 break;
@@ -836,6 +853,7 @@ static ast_data eval(const ast_node *node)
     switch (node->data->type)
     {
         case TYPE_VARIABLE:
+        case TYPE_BOOLEAN:
         case TYPE_NUMBER:
         case TYPE_STRING:
             return *node->data;
@@ -916,26 +934,44 @@ void ast_eval(const ast_node *node)
     {
         switch (node->data->type)
         {
-            case TYPE_JUMP:
+            case TYPE_JUMP: // if followed by elif or else
                 push_jump(node->data->jump->right);
-                node = node->right;
+                next = node->right->right;
+                node = node->right->left;
+                if (eval(node).number == 0)
+                {
+                    node = next;
+                }
+                else
+                {
+                    node = node->right;
+                }
                 break;
             case TYPE_STATEMENT:
                 statement = node->data->statement->value;
-                next = node->right;
+                switch (statement)
+                {
+                    case STATEMENT_IF:
+                    case STATEMENT_WHILE:
+                    case STATEMENT_UNTIL:
+                    case STATEMENT_FOR:
+                    case STATEMENT_FOREACH:
+                        push_jump(node->right);
+                        break;
+                    case STATEMENT_ELIF:
+                        next = node->right;
+                        break;
+                    default:
+                        break;
+                }
                 node = node->left;
-                if (statement == STATEMENT_ELSE)
+                if (statement == STATEMENT_ELSE) 
                 {
                     break;
                 }
                 if (eval(node).number == 0)
                 {
-                    if ((next != NULL) &&
-                        (next->data->type == TYPE_STATEMENT) &&
-                        (
-                            (next->data->statement->value == STATEMENT_ELIF) ||
-                            (next->data->statement->value == STATEMENT_ELSE)
-                        ))
+                    if (statement == STATEMENT_ELIF)
                     {
                         node = next;
                     }
@@ -953,6 +989,10 @@ void ast_eval(const ast_node *node)
                 eval(node);
                 node = node->right;
                 break;
+        }
+        if (node == peek_jump())
+        {
+            node = pop_jump();
         }
         if (node == NULL)
         {

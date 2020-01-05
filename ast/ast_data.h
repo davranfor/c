@@ -11,6 +11,7 @@ typedef enum
     TYPE_STATEMENT,
     TYPE_FUNCTION,
     TYPE_VARIABLE,
+    TYPE_BOOLEAN,
     TYPE_NUMBER,
     TYPE_STRING,
 } ast_type;
@@ -81,9 +82,9 @@ typedef struct ast_data
         const ast_function *function;
         const struct ast_node *jump;
         ast_variable *variable;
+        bool boolean;
         double number;
         const char *string;
-        const void *address;
     };
 } ast_data;
 
@@ -125,6 +126,8 @@ void unmap_functions(void);
 ast_data *map_variable(const char *);
 void map_variables(void);
 void unmap_variables(void);
+
+ast_data *map_boolean(const char *);
 
 #endif /* AST_DATA_H */
 
