@@ -214,6 +214,15 @@ ast_data *unary(ast_data *data)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+ast_data *map_branch(void)
+{
+    static ast_data branch = {TYPE_BRANCH, .string = "then"};
+
+    return &branch;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 static const ast_statement statements[] =
 {
     { "",         0, 0  },
@@ -422,21 +431,21 @@ void unmap_variables(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static ast_data booleans[] =
-{
-    { TYPE_BOOLEAN, .boolean = true  },
-    { TYPE_BOOLEAN, .boolean = false },
-};
-
 ast_data *map_boolean(const char *str)
 {
+    static ast_data list[] =
+    {
+        { TYPE_BOOLEAN, .boolean = true  },
+        { TYPE_BOOLEAN, .boolean = false },
+    };
+
     if (strcmp(str, "true") == 0)
     {
-        return &booleans[0];
+        return &list[0];
     }
     else if (strcmp(str, "false") == 0)
     {
-        return &booleans[1];
+        return &list[1];
     }
     return NULL;
 }

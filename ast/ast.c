@@ -98,7 +98,6 @@ static void clear(ast_node *root)
         clear(root->right);
         switch (root->data->type)
         {
-            case TYPE_JUMP:
             case TYPE_NUMBER:
             case TYPE_STRING:
                 free(root->data);
@@ -440,13 +439,13 @@ static ast_data *parse(const char **text)
 
 struct jumps
 {
-    ast_node *node[MAX_JUMPS];
+    const ast_node *node[MAX_JUMPS];
     int counter;
 };
 
 static struct jumps jumps;
 
-static void push_jump(ast_node *node)
+static void push_jump(const ast_node *node)
 {
     if (jumps.counter == MAX_JUMPS)
     {
@@ -455,22 +454,13 @@ static void push_jump(ast_node *node)
     jumps.node[jumps.counter++] = node;
 }
 
-static ast_node *pop_jump(void)
+static const ast_node *pop_jump(void)
 {
     if (jumps.counter == 0)
     {
         return NULL;
     }
     return jumps.node[--jumps.counter];
-}
-
-static ast_node *peek_jump(void)
-{
-    if (jumps.counter == 0)
-    {
-        return 0;
-    }
-    return jumps.node[jumps.counter - 1];
 }
 
 static void push_statement(ast_data *data)
@@ -481,19 +471,22 @@ static void push_statement(ast_data *data)
 
 static void pop_statement(void)
 {
-    ast_node *node = pop_jump();
+    const ast_node *node = pop_jump();
 
     if (node == NULL)
     {
         die("'end' was not expected");
     }
     // if operands is ELIF or ELSE
-    if (node != operands)
+    if (operands != node)
     {
-        ast_data *data = new_data(TYPE_JUMP);
-
-        data->jump = operands;
-        push(&node->right, data);
+        push(&operators, map_branch());
+        move(&operators->left, &node->left->right);
+        while (operands != node)
+        {
+            move(&node->left->right, &operands);
+        }
+        move(&operands->left->right, &operators);
     }
 }
 
@@ -803,11 +796,11 @@ static void explain(const ast_node *node, int level)
         }
         switch (node->data->type)
         {
-            case TYPE_JUMP:
-                printf("jump\n");
-                break;
             case TYPE_OPERATOR:
                 printf("%s\n", node->data->operator->text);
+                break;
+            case TYPE_BRANCH:
+                printf("%s\n", node->data->string);
                 break;
             case TYPE_STATEMENT:
                 printf("%s\n", node->data->statement->name);
@@ -934,19 +927,6 @@ void ast_eval(const ast_node *node)
     {
         switch (node->data->type)
         {
-            case TYPE_JUMP: // if followed by elif or else
-                push_jump(node->data->jump->right);
-                next = node->right->right;
-                node = node->right->left;
-                if (eval(node).number == 0)
-                {
-                    node = next;
-                }
-                else
-                {
-                    node = node->right;
-                }
-                break;
             case TYPE_STATEMENT:
                 statement = node->data->statement->value;
                 switch (statement)
@@ -956,7 +936,7 @@ void ast_eval(const ast_node *node)
                     case STATEMENT_UNTIL:
                     case STATEMENT_FOR:
                     case STATEMENT_FOREACH:
-                        push_jump(node->right);
+                        push_jump(node);
                         break;
                     case STATEMENT_ELIF:
                         next = node->right;
@@ -969,20 +949,28 @@ void ast_eval(const ast_node *node)
                 {
                     break;
                 }
-                if (eval(node).number == 0)
+                if (eval(node).boolean == false)
                 {
                     if (statement == STATEMENT_ELIF)
                     {
                         node = next;
                     }
+                    else if (node_type(node->right) == TYPE_BRANCH)
+                    {
+                        node = node->right->right;
+                    }
                     else
                     {
-                        node = pop_jump();
+                        node = NULL;
                     }
                 }
                 else
                 {
                     node = node->right;
+                    if (node_type(node) == TYPE_BRANCH)
+                    {
+                        node = node->left;
+                    }
                 }
                 break;
             default:
@@ -990,13 +978,16 @@ void ast_eval(const ast_node *node)
                 node = node->right;
                 break;
         }
-        if (node == peek_jump())
-        {
-            node = pop_jump();
-        }
         if (node == NULL)
         {
-            node = pop_jump();
+            while ((node = pop_jump()))
+            {
+                if (node->right != NULL)
+                {
+                    node = node->right;
+                    break;
+                }
+            }
         }
     }
 }

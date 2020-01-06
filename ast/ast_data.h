@@ -4,7 +4,7 @@
 typedef enum
 {
     TYPE_NONE,
-    TYPE_JUMP,
+    TYPE_BRANCH,
     TYPE_CALL,
     TYPE_OPERATOR,
     TYPE_COMPOUND,
@@ -115,6 +115,8 @@ ast_data *map_operator(const char **);
 int arguments(const ast_data *);
 int precedence(const ast_data *, const ast_data *);
 ast_data *unary(ast_data *);
+
+ast_data *map_branch(void);
 
 ast_data *map_statement(const char *);
 void map_statements(void);

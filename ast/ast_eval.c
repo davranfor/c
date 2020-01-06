@@ -103,9 +103,9 @@ ast_data ast_gt_or_eq(ast_data a, ast_data b)
     a.boolean = a.number >= b.number;
     return a;
 }
+
 ast_data ast_is_eq(ast_data a, ast_data b)
 {
-    a.type = TYPE_BOOLEAN;
     if ((a.type == TYPE_BOOLEAN) || (b.type == TYPE_BOOLEAN))
     {
         a.boolean = (bool)a.number == (bool)b.number;
@@ -114,12 +114,12 @@ ast_data ast_is_eq(ast_data a, ast_data b)
     {
         a.boolean = a.number == b.number;
     }
+    a.type = TYPE_BOOLEAN;
     return a;
 }
 
 ast_data ast_not_eq(ast_data a, ast_data b)
 {
-    a.type = TYPE_BOOLEAN;
     if ((a.type == TYPE_BOOLEAN) || (b.type == TYPE_BOOLEAN))
     {
         a.boolean = (bool)a.number != (bool)b.number;
@@ -128,6 +128,7 @@ ast_data ast_not_eq(ast_data a, ast_data b)
     {
         a.boolean = a.number != b.number;
     }
+    a.type = TYPE_BOOLEAN;
     return a;
 }
 
