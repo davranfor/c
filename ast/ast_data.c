@@ -214,15 +214,6 @@ ast_data *unary(ast_data *data)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ast_data *map_branch(void)
-{
-    static ast_data branch = {TYPE_BRANCH, .string = "then"};
-
-    return &branch;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 static const ast_statement statements[] =
 {
     { "",         0, 0  },
@@ -237,6 +228,23 @@ static const ast_statement statements[] =
     { "break",    0, 9  },
     { "end",      0, 10 },
 };
+
+static const ast_statement branches[] =
+{
+    { "then",     0, 11 },
+    { "if",       1, 12 }, // IFEL
+};
+
+ast_data *map_branch(int branch)
+{
+    static ast_data list[] =
+    {
+        {.type = TYPE_STATEMENT, .statement = &branches[0]},
+        {.type = TYPE_STATEMENT, .statement = &branches[1]},
+    };
+
+    return &list[branch];
+}
 
 static ast_data statement_list[(sizeof statements / sizeof *statements) * 3];
 

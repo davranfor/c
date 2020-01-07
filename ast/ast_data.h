@@ -4,7 +4,6 @@
 typedef enum
 {
     TYPE_NONE,
-    TYPE_BRANCH,
     TYPE_CALL,
     TYPE_OPERATOR,
     TYPE_COMPOUND,
@@ -53,6 +52,8 @@ enum
     STATEMENT_CONTINUE,
     STATEMENT_BREAK,
     STATEMENT_END,
+    STATEMENT_THEN,
+    STATEMENT_IFEL,
 };
 
 typedef struct
@@ -80,7 +81,6 @@ typedef struct ast_data
         const ast_operator *operator;
         const ast_statement *statement;
         const ast_function *function;
-        const struct ast_node *jump;
         ast_variable *variable;
         bool boolean;
         double number;
@@ -116,8 +116,7 @@ int arguments(const ast_data *);
 int precedence(const ast_data *, const ast_data *);
 ast_data *unary(ast_data *);
 
-ast_data *map_branch(void);
-
+ast_data *map_branch(int);
 ast_data *map_statement(const char *);
 void map_statements(void);
 
