@@ -24,16 +24,11 @@ ast_data ast_minus(ast_data a, ast_data b)
 ast_data ast_not(ast_data a, ast_data b)
 {
     (void)b;
-    if (a.type == TYPE_BOOLEAN)
-    {
-        a.boolean = !a.boolean;
-    }
-    else
-    if (a.type == TYPE_NUMBER)
+    if (a.type != TYPE_BOOLEAN)
     {
         a.type = TYPE_BOOLEAN;
-        a.boolean = a.number != 0;
     }
+    a.boolean = a.number == 0;
     return a;
 }
 
@@ -143,6 +138,22 @@ ast_data ast_not_eq(ast_data a, ast_data b)
         b.number = b.boolean;
     }
     a.boolean = a.number != b.number;
+    return a;
+}
+
+ast_data ast_bit_and(ast_data a, ast_data b)
+{
+    (void)b;
+    return a;
+}
+
+ast_data ast_and(ast_data a, ast_data b)
+{
+    if (a.type != TYPE_BOOLEAN)
+    {
+        a.type = TYPE_BOOLEAN;
+    }
+    a.boolean = a.number && b.number;
     return a;
 }
 

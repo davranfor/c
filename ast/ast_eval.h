@@ -16,6 +16,8 @@ ast_data ast_lt_or_eq(ast_data, ast_data);
 ast_data ast_gt_or_eq(ast_data, ast_data);
 ast_data ast_is_eq(ast_data, ast_data);
 ast_data ast_not_eq(ast_data, ast_data);
+ast_data ast_bit_and(ast_data, ast_data);
+ast_data ast_and(ast_data, ast_data);
 ast_data ast_eq(ast_data, ast_data);
 
 int push_data(ast_data);

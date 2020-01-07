@@ -93,20 +93,22 @@ ast_type call_type(const ast_data *data)
 
 static ast_data operators[] =
 {
-    DEF_OPERATOR(OPERATOR_PLUS,           1, 6, 'R', "+",  ast_plus),
-    DEF_OPERATOR(OPERATOR_MINUS,          1, 6, 'R', "-",  ast_minus),
-    DEF_OPERATOR(OPERATOR_NOT,            1, 6, 'R', "!",  ast_not),
-    DEF_OPERATOR(OPERATOR_MUL,            2, 5, 'L', "*",  ast_mul),
-    DEF_OPERATOR(OPERATOR_DIV,            2, 5, 'L', "/",  ast_div),
-    DEF_OPERATOR(OPERATOR_REM,            2, 5, 'L', "%",  ast_rem),
-    DEF_OPERATOR(OPERATOR_ADD,            2, 4, 'L', "+",  ast_add),
-    DEF_OPERATOR(OPERATOR_SUB,            2, 4, 'L', "-",  ast_sub),
-    DEF_OPERATOR(OPERATOR_LT,             2, 3, 'L', "<",  ast_lt),
-    DEF_OPERATOR(OPERATOR_GT,             2, 3, 'L', ">",  ast_gt),
-    DEF_OPERATOR(OPERATOR_LT_OR_EQ,       2, 3, 'L', "<=", ast_lt_or_eq),
-    DEF_OPERATOR(OPERATOR_GT_OR_EQ,       2, 3, 'L', ">=", ast_gt_or_eq),
-    DEF_OPERATOR(OPERATOR_IS_EQ,          2, 2, 'L', "==", ast_is_eq),
-    DEF_OPERATOR(OPERATOR_NOT_EQ,         2, 2, 'L', "!=", ast_not_eq),
+    DEF_OPERATOR(OPERATOR_PLUS,           1, 8, 'R', "+",  ast_plus),
+    DEF_OPERATOR(OPERATOR_MINUS,          1, 8, 'R', "-",  ast_minus),
+    DEF_OPERATOR(OPERATOR_NOT,            1, 8, 'R', "!",  ast_not),
+    DEF_OPERATOR(OPERATOR_MUL,            2, 7, 'L', "*",  ast_mul),
+    DEF_OPERATOR(OPERATOR_DIV,            2, 7, 'L', "/",  ast_div),
+    DEF_OPERATOR(OPERATOR_REM,            2, 7, 'L', "%",  ast_rem),
+    DEF_OPERATOR(OPERATOR_ADD,            2, 6, 'L', "+",  ast_add),
+    DEF_OPERATOR(OPERATOR_SUB,            2, 6, 'L', "-",  ast_sub),
+    DEF_OPERATOR(OPERATOR_LT,             2, 5, 'L', "<",  ast_lt),
+    DEF_OPERATOR(OPERATOR_GT,             2, 5, 'L', ">",  ast_gt),
+    DEF_OPERATOR(OPERATOR_LT_OR_EQ,       2, 5, 'L', "<=", ast_lt_or_eq),
+    DEF_OPERATOR(OPERATOR_GT_OR_EQ,       2, 5, 'L', ">=", ast_gt_or_eq),
+    DEF_OPERATOR(OPERATOR_IS_EQ,          2, 4, 'L', "==", ast_is_eq),
+    DEF_OPERATOR(OPERATOR_NOT_EQ,         2, 4, 'L', "!=", ast_not_eq),
+    DEF_OPERATOR(OPERATOR_BIT_AND,        2, 3, 'L', "&",  ast_bit_and),
+    DEF_OPERATOR(OPERATOR_AND,            2, 2, 'L', "&&", ast_and),
     DEF_OPERATOR(OPERATOR_EQ,             2, 1, 'R', "=",  ast_eq),
     DEF_OPERATOR(OPERATOR_LEFT_PARENTHS,  0, 0, 'L', "(",  NULL),
     DEF_OPERATOR(OPERATOR_RIGHT_PARENTHS, 0, 0, 'L', ")" , NULL),
@@ -127,6 +129,7 @@ int is_operator(int operator)
         case OPERATOR_SUB:
         case OPERATOR_LT:
         case OPERATOR_GT:
+        case OPERATOR_BIT_AND:
         case OPERATOR_EQ:
         case OPERATOR_LEFT_PARENTHS:
         case OPERATOR_RIGHT_PARENTHS:
@@ -165,6 +168,15 @@ static int get_operator(const char **operator)
             if (**operator == '=')
             {
                 result += 0xF;
+                (*operator)++;
+            }
+            break;
+        case OPERATOR_BIT_AND:
+            result = **operator;
+            (*operator)++;
+            if (**operator == '&')
+            {
+                result += 0xE;
                 (*operator)++;
             }
             break;

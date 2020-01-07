@@ -32,6 +32,8 @@ enum
     OPERATOR_GT_OR_EQ = '>' + 0xF,
     OPERATOR_IS_EQ = '=' + 0xF,
     OPERATOR_NOT_EQ = '!' + 0xF,
+    OPERATOR_BIT_AND = '&',
+    OPERATOR_AND = '&' + 0xE,
     OPERATOR_EQ = '=',
     OPERATOR_LEFT_PARENTHS = '(',
     OPERATOR_RIGHT_PARENTHS = ')',

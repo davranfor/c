@@ -37,10 +37,14 @@ print(a);
 print(b = rand() % 1000);
 print(b);
 
-a = true;
-b = false;
-if (a == b)
-    print("a == b");
+a = 0;
+b = 0;
+if (a && b)
+    print("a && b");
+end
+
+if (!a)
+    print("!a");
 end
 
 print("=============================");
