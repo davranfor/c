@@ -245,16 +245,6 @@ static void move_block(void)
     {
         die("'end' was not expected");
     }
-/*
-    if (operands->data->statement->args == 0)
-    {
-        operands->left = node.left;
-    }
-    else
-    {
-        operands->left->right = node.left;
-    }
-*/
     switch (operands->data->statement->args)
     {
         case 0:
@@ -354,7 +344,7 @@ static void pop_statement(void)
         move(&operands->left->right, &operators);
         operands->data = map_branch(1);
     }
-    if (is_iterator(operands->data))
+    else if (is_iterator(operands->data))
     {
         jumps.iterations--;
     }

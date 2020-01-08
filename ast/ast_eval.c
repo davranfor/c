@@ -4,150 +4,161 @@
 #include "ast_data.h"
 #include "ast_eval.h"
 
+///////////////////////////////////////////////////////////////////////////////
+
+static void convert_number(ast_data *data)
+{
+    if (data->type == TYPE_STRING)
+    {
+        data->number = strtod(data->string, NULL); 
+    }
+    data->type = TYPE_NUMBER;
+}
+
+static void convert_boolean(ast_data *data)
+{
+    if (data->type == TYPE_STRING)
+    {
+        data->number = strtod(data->string, NULL); 
+    }
+    data->type = TYPE_BOOLEAN;
+}
+
+static void cast_number(ast_data *data)
+{
+    if (data->type == TYPE_STRING)
+    {
+        data->number = strtod(data->string, NULL); 
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Operators
+///////////////////////////////////////////////////////////////////////////////
+
 ast_data ast_plus(ast_data a, ast_data b)
 {
     (void)b;
+    convert_number(&a);
     return a;
 }
 
 ast_data ast_minus(ast_data a, ast_data b)
 {
     (void)b;
-    if (a.type == TYPE_NUMBER)
-    {
-        a.number = -a.number;
-    }
+    convert_number(&a);
+    a.number = -a.number;
     return a;
 }
 
 ast_data ast_not(ast_data a, ast_data b)
 {
     (void)b;
-    if (a.type != TYPE_BOOLEAN)
-    {
-        a.type = TYPE_BOOLEAN;
-    }
+    convert_boolean(&a);
     a.number = a.number == 0;
     return a;
 }
 
 ast_data ast_mul(ast_data a, ast_data b)
 {
-    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
-    {
-        a.number = a.number * b.number;
-    }
+    convert_number(&a);
+    cast_number(&b);
+    a.number = a.number * b.number;
     return a;
 }
 
 ast_data ast_div(ast_data a, ast_data b)
 {
-    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
-    {
-        a.number = a.number / b.number;
-    }
+    convert_number(&a);
+    cast_number(&b);
+    a.number = a.number / b.number;
     return a;
 }
 
 ast_data ast_rem(ast_data a, ast_data b)
 {
-    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
-    {
-        a.number = (int)a.number % (int)b.number;
-    }
+    convert_number(&a);
+    cast_number(&b);
+    a.number = (double)((long)a.number % (long)b.number);
     return a;
 }
 
 ast_data ast_add(ast_data a, ast_data b)
 {
-    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
-    {
-        a.number = a.number + b.number;
-    }
+    convert_number(&a);
+    cast_number(&b);
+    a.number = a.number + b.number;
     return a;
 }
 
 ast_data ast_sub(ast_data a, ast_data b)
 {
-    if ((a.type == TYPE_NUMBER) && (b.type == TYPE_NUMBER))
-    {
-        a.number = a.number - b.number;
-    }
+    convert_number(&a);
+    cast_number(&b);
+    a.number = a.number - b.number;
     return a;
 }
 
 ast_data ast_lt(ast_data a, ast_data b)
 {
-    if (a.type != TYPE_BOOLEAN)
-    {
-        a.type = TYPE_BOOLEAN;
-    }
+    convert_boolean(&a);
+    cast_number(&b);
     a.number = a.number < b.number;
     return a;
 }
 
 ast_data ast_gt(ast_data a, ast_data b)
 {
-    if (a.type != TYPE_BOOLEAN)
-    {
-        a.type = TYPE_BOOLEAN;
-    }
+    convert_boolean(&a);
+    cast_number(&b);
     a.number = a.number > b.number;
     return a;
 }
 
 ast_data ast_lt_or_eq(ast_data a, ast_data b)
 {
-    if (a.type != TYPE_BOOLEAN)
-    {
-        a.type = TYPE_BOOLEAN;
-    }
+    convert_boolean(&a);
+    cast_number(&b);
     a.number = a.number <= b.number;
     return a;
 }
 
 ast_data ast_gt_or_eq(ast_data a, ast_data b)
 {
-    if (a.type != TYPE_BOOLEAN)
-    {
-        a.type = TYPE_BOOLEAN;
-    }
+    convert_boolean(&a);
+    cast_number(&b);
     a.number = a.number >= b.number;
     return a;
 }
 
 ast_data ast_is_eq(ast_data a, ast_data b)
 {
-    if (a.type != TYPE_BOOLEAN)
-    {
-        a.type = TYPE_BOOLEAN;
-    }
+    convert_boolean(&a);
+    cast_number(&b);
     a.number = a.number == b.number;
     return a;
 }
 
 ast_data ast_not_eq(ast_data a, ast_data b)
 {
-    if (a.type != TYPE_BOOLEAN)
-    {
-        a.type = TYPE_BOOLEAN;
-    }
+    convert_boolean(&a);
+    cast_number(&b);
     a.number = a.number != b.number;
     return a;
 }
 
 ast_data ast_bit_and(ast_data a, ast_data b)
 {
-    (void)b;
+    convert_number(&a);
+    cast_number(&b);
+    a.number = (double)((unsigned long)a.number & (unsigned long)b.number);
     return a;
 }
 
 ast_data ast_and(ast_data a, ast_data b)
 {
-    if (a.type != TYPE_BOOLEAN)
-    {
-        a.type = TYPE_BOOLEAN;
-    }
+    convert_boolean(&a);
+    cast_number(&b);
     a.number = a.number && b.number;
     return a;
 }
