@@ -245,6 +245,7 @@ static void move_block(void)
     {
         die("'end' was not expected");
     }
+/*
     if (operands->data->statement->args == 0)
     {
         operands->left = node.left;
@@ -252,6 +253,24 @@ static void move_block(void)
     else
     {
         operands->left->right = node.left;
+    }
+*/
+    switch (operands->data->statement->args)
+    {
+        case 0:
+            operands->left = node.left;
+            break;
+        case 1:
+            operands->left->right = node.left;
+            break;
+        case 2:
+            operands->left->right->right = node.left;
+            break;
+        case 3:
+            operands->left->right->right->right = node.left;
+            break;
+        default:
+            break;
     }
     operands->data += 1;
 }
@@ -271,6 +290,7 @@ static void test_block(void)
 struct jumps
 {
     const ast_node *node[MAX_JUMPS];
+    int iterations;
     int counter;
 };
 
@@ -294,10 +314,23 @@ static const ast_node *pop_jump(void)
     return jumps.node[--jumps.counter];
 }
 
+static const ast_node *peek_jump(void)
+{
+    if (jumps.counter == 0)
+    {
+        return NULL;
+    }
+    return jumps.node[jumps.counter - 1];
+}
+
 static void push_statement(ast_data *data)
 {
     push(&operands, data);
     push_jump(operands);
+    if (is_iterator(data))
+    {
+        jumps.iterations++;
+    }
 }
 
 static void pop_statement(void)
@@ -321,6 +354,10 @@ static void pop_statement(void)
         move(&operands->left->right, &operators);
         operands->data = map_branch(1);
     }
+    if (is_iterator(operands->data))
+    {
+        jumps.iterations--;
+    }
 }
 
 static int peek_statement(void)
@@ -330,24 +367,6 @@ static int peek_statement(void)
         return 0;
     }
     return jumps.node[jumps.counter - 1]->data->statement->value;
-}
-
-static int iterating(void)
-{
-    for (int iter = 0; iter < jumps.counter; iter++)
-    {
-        switch (jumps.node[iter]->data->statement->value)
-        {
-            case STATEMENT_WHILE:
-            case STATEMENT_UNTIL:
-            case STATEMENT_FOR:
-            case STATEMENT_FOREACH:
-                return 1;
-            default:
-                break;
-        }
-    }
-    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -757,7 +776,7 @@ static ast_node *build(const char *text)
                         {
                             die("';' was expected");
                         }
-                        if (!iterating())
+                        if (jumps.iterations == 0)
                         {
                             die("'continue' and 'break'"
                                 " can not be used outside a loop");
@@ -811,7 +830,7 @@ static void explain(const ast_node *node, int level)
                 printf("%s\n", node->data->variable->name);
                 break;
             case TYPE_BOOLEAN:
-                printf("%s\n", node->data->boolean ? "true" : "false");
+                printf("%s\n", node->data->number ? "true" : "false");
                 break;
             case TYPE_NUMBER:
                 printf("%g\n", node->data->number);
@@ -897,7 +916,7 @@ static ast_data eval(const ast_node *node)
     }
 }
 
-static bool test(const ast_node *node)
+static int test(const ast_node *node)
 {
     ast_data data = eval(node);
 
@@ -905,20 +924,14 @@ static bool test(const ast_node *node)
     {
         data = data.variable->data;
     }
-    if (data.type == TYPE_BOOLEAN)
+    if (data.type == TYPE_STRING)
     {
-        return data.boolean;
+        return data.string[0] == '\0';
     }
-    if (data.type == TYPE_NUMBER)
+    else
     {
         return data.number != 0;
     }
-    if (data.type == TYPE_STRING)
-    {
-        return true;
-    }
-    die("Undefined type");
-    return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -950,15 +963,48 @@ void ast_eval(const ast_node *node)
             case TYPE_STATEMENT:
                 switch (node->data->statement->value)
                 {
-                    case STATEMENT_IF:
+                    case STATEMENT_FOR:
+                        if (node != peek_jump())
+                        {
+                            push_jump(node);
+                            eval(node->left);
+                            node = node->left->right;
+                        }
+                        else
+                        {
+                            node = node->left->right;
+                            eval(node->right);
+                        }
+                        if (test(node) == false)
+                        {
+                            node = pop_jump()->right;
+                        }
+                        else
+                        {
+                            node = node->right->right;
+                        }
+                        break;
                     case STATEMENT_WHILE:
                     case STATEMENT_UNTIL:
-                    case STATEMENT_FOR:
                     case STATEMENT_FOREACH:
+                        if (node != peek_jump())
+                        {
+                            push_jump(node);
+                        }
+                        if (test(node->left) == false)
+                        {
+                            node = pop_jump()->right;
+                        }
+                        else
+                        {
+                            node = node->left->right;
+                        }
+                        break;
+                    case STATEMENT_IF:
                         push_jump(node);
                         if (test(node->left) == false)
                         {
-                            node = NULL;
+                            node = pop_jump()->right;
                         }
                         else
                         {
@@ -990,6 +1036,27 @@ void ast_eval(const ast_node *node)
                     case STATEMENT_ELSE:
                         node = node->left;
                         break;
+                    case STATEMENT_CONTINUE:
+                        while ((node = peek_jump()))
+                        {
+                            if (is_iterator(node->data))
+                            {
+                                node = NULL;
+                                break;
+                            }
+                            pop_jump();
+                        }
+                        break;
+                    case STATEMENT_BREAK:
+                        while ((node = pop_jump()))
+                        {
+                            if (is_iterator(node->data))
+                            {
+                                node = node->right;
+                                break;
+                            }
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -1001,11 +1068,15 @@ void ast_eval(const ast_node *node)
         }
         if (node == NULL)
         {
-            while ((node = pop_jump()))
+            while ((node = peek_jump()))
             {
-                if (node->right != NULL)
+                if (is_iterator(node->data))
                 {
-                    node = node->right;
+                    break;
+                }
+                node = pop_jump()->right;
+                if (node != NULL)
+                {
                     break;
                 }
             }

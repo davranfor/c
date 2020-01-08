@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include "hashmap.h"
@@ -226,6 +225,20 @@ ast_data *unary(ast_data *data)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+int is_iterator(const ast_data *data)
+{
+    switch (data->statement->value)
+    {
+        case STATEMENT_WHILE:
+        case STATEMENT_UNTIL:
+        case STATEMENT_FOR:
+        case STATEMENT_FOREACH:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 static const ast_statement statements[] =
 {
     { "",         0, 0  },
@@ -234,7 +247,7 @@ static const ast_statement statements[] =
     { "else",     0, 3  },
     { "while",    1, 4  },
     { "until",    1, 5  },
-    { "for",      1, 6  },
+    { "for",      3, 6  },
     { "foreach",  1, 7  },
     { "continue", 0, 8  },
     { "break",    0, 9  },
@@ -455,8 +468,8 @@ ast_data *map_boolean(const char *str)
 {
     static ast_data list[] =
     {
-        { TYPE_BOOLEAN, .boolean = true  },
-        { TYPE_BOOLEAN, .boolean = false },
+        { TYPE_BOOLEAN, .number = 1 },
+        { TYPE_BOOLEAN, .number = 0 },
     };
 
     if (strcmp(str, "true") == 0)

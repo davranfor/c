@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <math.h>
 #include "ast_data.h"
 #include "ast_eval.h"
@@ -28,7 +27,7 @@ ast_data ast_not(ast_data a, ast_data b)
     {
         a.type = TYPE_BOOLEAN;
     }
-    a.boolean = a.number == 0;
+    a.number = a.number == 0;
     return a;
 }
 
@@ -79,65 +78,61 @@ ast_data ast_sub(ast_data a, ast_data b)
 
 ast_data ast_lt(ast_data a, ast_data b)
 {
-    a.type = TYPE_BOOLEAN;
-    a.boolean = a.number < b.number;
+    if (a.type != TYPE_BOOLEAN)
+    {
+        a.type = TYPE_BOOLEAN;
+    }
+    a.number = a.number < b.number;
     return a;
 }
 
 ast_data ast_gt(ast_data a, ast_data b)
 {
-    a.type = TYPE_BOOLEAN;
-    a.boolean = a.number > b.number;
+    if (a.type != TYPE_BOOLEAN)
+    {
+        a.type = TYPE_BOOLEAN;
+    }
+    a.number = a.number > b.number;
     return a;
 }
 
 ast_data ast_lt_or_eq(ast_data a, ast_data b)
 {
-    a.type = TYPE_BOOLEAN;
-    a.boolean = a.number <= b.number;
+    if (a.type != TYPE_BOOLEAN)
+    {
+        a.type = TYPE_BOOLEAN;
+    }
+    a.number = a.number <= b.number;
     return a;
 }
 
 ast_data ast_gt_or_eq(ast_data a, ast_data b)
 {
-    a.type = TYPE_BOOLEAN;
-    a.boolean = a.number >= b.number;
+    if (a.type != TYPE_BOOLEAN)
+    {
+        a.type = TYPE_BOOLEAN;
+    }
+    a.number = a.number >= b.number;
     return a;
 }
 
 ast_data ast_is_eq(ast_data a, ast_data b)
 {
-    if (a.type == TYPE_BOOLEAN)
-    {
-        a.number = a.boolean;
-    }
-    else
+    if (a.type != TYPE_BOOLEAN)
     {
         a.type = TYPE_BOOLEAN;
     }
-    if (b.type == TYPE_BOOLEAN)
-    {
-        b.number = b.boolean;
-    }
-    a.boolean = a.number == b.number;
+    a.number = a.number == b.number;
     return a;
 }
 
 ast_data ast_not_eq(ast_data a, ast_data b)
 {
-    if (a.type == TYPE_BOOLEAN)
-    {
-        a.number = a.boolean;
-    }
-    else
+    if (a.type != TYPE_BOOLEAN)
     {
         a.type = TYPE_BOOLEAN;
     }
-    if (b.type == TYPE_BOOLEAN)
-    {
-        b.number = b.boolean;
-    }
-    a.boolean = a.number != b.number;
+    a.number = a.number != b.number;
     return a;
 }
 
@@ -153,7 +148,7 @@ ast_data ast_and(ast_data a, ast_data b)
     {
         a.type = TYPE_BOOLEAN;
     }
-    a.boolean = a.number && b.number;
+    a.number = a.number && b.number;
     return a;
 }
 
@@ -354,7 +349,7 @@ int ast_print(void)
     switch (data->type)
     {
         case TYPE_BOOLEAN:
-            printf("%s\n", data->boolean ? "true" : "false");
+            printf("%s\n", data->number ? "true" : "false");
             data->type = TYPE_NUMBER;
             return 1;
         case TYPE_NUMBER:
