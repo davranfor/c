@@ -863,7 +863,14 @@ static ast_data eval(const ast_node *node)
             if (node->left != NULL)
             {
                 a = eval(node->left);
-                if (operator != OPERATOR_EQ)
+                if (is_assignment(operator))
+                {
+                    if (a.type != TYPE_VARIABLE)
+                    {
+                        die("lvalue required as left operand of assignment");
+                    }                    
+                }
+                else
                 {
                     AST_TRANSFORM_VAR(a);
                 }
@@ -965,7 +972,7 @@ void ast_eval(const ast_node *node)
                             node = node->left->right;
                             eval(node->right);
                         }
-                        if (test(node) == false)
+                        if (test(node) == 0)
                         {
                             node = pop_jump()->right;
                         }
@@ -981,7 +988,7 @@ void ast_eval(const ast_node *node)
                         {
                             push_jump(node);
                         }
-                        if (test(node->left) == false)
+                        if (test(node->left) == 0)
                         {
                             node = pop_jump()->right;
                         }
@@ -992,7 +999,7 @@ void ast_eval(const ast_node *node)
                         break;
                     case STATEMENT_IF:
                         push_jump(node);
-                        if (test(node->left) == false)
+                        if (test(node->left) == 0)
                         {
                             node = pop_jump()->right;
                         }

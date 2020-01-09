@@ -99,6 +99,22 @@ ast_data ast_sub(ast_data a, ast_data b)
     return a;
 }
 
+ast_data ast_bit_lshift(ast_data a, ast_data b)
+{
+    convert_number(&a);
+    cast_number(&b);
+    a.number = (double)((unsigned long)a.number << (unsigned long)b.number);
+    return a;
+}
+
+ast_data ast_bit_rshift(ast_data a, ast_data b)
+{
+    convert_number(&a);
+    cast_number(&b);
+    a.number = (double)((unsigned long)a.number >> (unsigned long)b.number);
+    return a;
+}
+
 ast_data ast_lt(ast_data a, ast_data b)
 {
     convert_boolean(&a);
@@ -155,6 +171,22 @@ ast_data ast_bit_and(ast_data a, ast_data b)
     return a;
 }
 
+ast_data ast_bit_xor(ast_data a, ast_data b)
+{
+    convert_number(&a);
+    cast_number(&b);
+    a.number = (double)((unsigned long)a.number ^ (unsigned long)b.number);
+    return a;
+}
+
+ast_data ast_bit_or(ast_data a, ast_data b)
+{
+    convert_number(&a);
+    cast_number(&b);
+    a.number = (double)((unsigned long)a.number | (unsigned long)b.number);
+    return a;
+}
+
 ast_data ast_and(ast_data a, ast_data b)
 {
     convert_boolean(&a);
@@ -163,10 +195,106 @@ ast_data ast_and(ast_data a, ast_data b)
     return a;
 }
 
+ast_data ast_xor(ast_data a, ast_data b)
+{
+    convert_boolean(&a);
+    cast_number(&b);
+    a.number = (a.number || b.number) && !(a.number && b.number);
+    return a;
+}
+
+ast_data ast_or(ast_data a, ast_data b)
+{
+    convert_boolean(&a);
+    cast_number(&b);
+    a.number = a.number || b.number;
+    return a;
+}
+
 ast_data ast_eq(ast_data a, ast_data b)
 {
     a.variable->data = b;
     return b;
+}
+
+ast_data ast_eq_add(ast_data a, ast_data b)
+{
+    convert_number(&a.variable->data);
+    cast_number(&b);
+    a.variable->data.number += b.number;
+    return a.variable->data;
+}
+
+ast_data ast_eq_sub(ast_data a, ast_data b)
+{
+    convert_number(&a.variable->data);
+    cast_number(&b);
+    a.variable->data.number -= b.number;
+    return a.variable->data;
+}
+
+ast_data ast_eq_mul(ast_data a, ast_data b)
+{
+    convert_number(&a.variable->data);
+    cast_number(&b);
+    a.variable->data.number *= b.number;
+    return a.variable->data;
+}
+
+ast_data ast_eq_div(ast_data a, ast_data b)
+{
+    convert_number(&a.variable->data);
+    cast_number(&b);
+    a.variable->data.number /= b.number;
+    return a.variable->data;
+}
+
+ast_data ast_eq_rem(ast_data a, ast_data b)
+{
+    convert_number(&a.variable->data);
+    cast_number(&b);
+    a.variable->data.number = (double)((long)a.variable->data.number % (long)b.number);
+    return a.variable->data;
+}
+
+ast_data ast_eq_bit_and(ast_data a, ast_data b)
+{
+    convert_number(&a.variable->data);
+    cast_number(&b);
+    a.variable->data.number = (double)((unsigned long)a.variable->data.number & (unsigned long)b.number);
+    return a.variable->data;
+}
+
+ast_data ast_eq_bit_xor(ast_data a, ast_data b)
+{
+    convert_number(&a.variable->data);
+    cast_number(&b);
+    a.variable->data.number = (double)((unsigned long)a.variable->data.number ^ (unsigned long)b.number);
+    return a.variable->data;
+}
+
+ast_data ast_eq_bit_or(ast_data a, ast_data b)
+{
+    convert_number(&a.variable->data);
+    cast_number(&b);
+    a.variable->data.number = (double)((unsigned long)a.variable->data.number | (unsigned long)b.number);
+    return a.variable->data;
+}
+
+ast_data ast_eq_bit_lshift(ast_data a, ast_data b)
+{
+    convert_number(&a.variable->data);
+    cast_number(&b);
+    a.variable->data.number = (double)((unsigned long)a.variable->data.number << (unsigned long)b.number);
+    return a.variable->data;
+}
+
+ast_data ast_eq_bit_rshift(ast_data a, ast_data b)
+{
+    convert_number(&a.variable->data);
+    cast_number(&b);
+    a.variable->data.number = (double)((unsigned long)a.variable->data.number >> (unsigned long)b.number);
+    return a.variable->data;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

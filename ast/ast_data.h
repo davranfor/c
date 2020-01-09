@@ -17,28 +17,44 @@ typedef enum
 
 enum
 {
-    OPERATOR_EOF = 0,
-    OPERATOR_PLUS = 1,
-    OPERATOR_MINUS = 2,
-    OPERATOR_NOT = '!',
-    OPERATOR_MUL = '*',
-    OPERATOR_DIV = '/',
-    OPERATOR_REM = '%',
-    OPERATOR_ADD = '+',
-    OPERATOR_SUB = '-',
-    OPERATOR_LT = '<',
-    OPERATOR_GT = '>',
-    OPERATOR_LT_OR_EQ = '<' + 0xF,
-    OPERATOR_GT_OR_EQ = '>' + 0xF,
-    OPERATOR_IS_EQ = '=' + 0xF,
-    OPERATOR_NOT_EQ = '!' + 0xF,
-    OPERATOR_BIT_AND = '&',
-    OPERATOR_AND = '&' + 0xE,
-    OPERATOR_EQ = '=',
-    OPERATOR_LEFT_PARENTHS = '(',
-    OPERATOR_RIGHT_PARENTHS = ')',
-    OPERATOR_COMMA = ',',
-    OPERATOR_SEMICOLON = ';',
+    OPERATOR_EOF           = 0x0,
+    OPERATOR_PLUS          = 0x1,
+    OPERATOR_MINUS         = 0x2,
+    OPERATOR_NOT           = '!',
+    OPERATOR_MUL           = '*',
+    OPERATOR_DIV           = '/',
+    OPERATOR_REM           = '%',
+    OPERATOR_ADD           = '+',
+    OPERATOR_SUB           = '-',
+    OPERATOR_BIT_LSHIFT    = '<' ^ '!',
+    OPERATOR_BIT_RSHIFT    = '>' ^ '!',
+    OPERATOR_LT            = '<',
+    OPERATOR_GT            = '>',
+    OPERATOR_LT_OR_EQ      = '<' ^ 'z',
+    OPERATOR_GT_OR_EQ      = '>' ^ 'z',
+    OPERATOR_IS_EQ         = '=' ^ 'z',
+    OPERATOR_NOT_EQ        = '!' ^ 'z',
+    OPERATOR_BIT_AND       = '&',
+    OPERATOR_BIT_XOR       = '^',
+    OPERATOR_BIT_OR        = '|',
+    OPERATOR_AND           = '&' ^ '!',
+    OPERATOR_XOR           = '^' ^ '!',
+    OPERATOR_OR            = '|' ^ '!',
+    OPERATOR_EQ            = '=',
+    OPERATOR_EQ_ADD        = '+' ^ 'z',
+    OPERATOR_EQ_SUB        = '-' ^ 'z',
+    OPERATOR_EQ_MUL        = '*' ^ 'z',
+    OPERATOR_EQ_DIV        = '/' ^ 'z',
+    OPERATOR_EQ_REM        = '%' ^ 'z',
+    OPERATOR_EQ_BIT_AND    = '&' ^ 'z',
+    OPERATOR_EQ_BIT_XOR    = '^' ^ 'z',
+    OPERATOR_EQ_BIT_OR     = '|' ^ 'z',
+    OPERATOR_EQ_BIT_LSHIFT = '=' ^ ('<' ^ '!'),
+    OPERATOR_EQ_BIT_RSHIFT = '=' ^ ('>' ^ '!'),
+    OPERATOR_LPARENTHS     = '(',
+    OPERATOR_RPARENTHS     = ')',
+    OPERATOR_COMMA         = ',',
+    OPERATOR_SEMICOLON     = ';',
 };
 
 enum
@@ -111,6 +127,7 @@ int get_sequence(int);
 int valid_name(const char *);
 ast_type call_type(const ast_data *);
 
+int is_assignment(int);
 int is_operator(int);
 ast_data *map_operator(const char **);
 int arguments(const ast_data *);

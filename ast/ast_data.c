@@ -92,29 +92,67 @@ ast_type call_type(const ast_data *data)
 
 static ast_data operators[] =
 {
-    DEF_OPERATOR(OPERATOR_PLUS,           1, 8, 'R', "+",  ast_plus),
-    DEF_OPERATOR(OPERATOR_MINUS,          1, 8, 'R', "-",  ast_minus),
-    DEF_OPERATOR(OPERATOR_NOT,            1, 8, 'R', "!",  ast_not),
-    DEF_OPERATOR(OPERATOR_MUL,            2, 7, 'L', "*",  ast_mul),
-    DEF_OPERATOR(OPERATOR_DIV,            2, 7, 'L', "/",  ast_div),
-    DEF_OPERATOR(OPERATOR_REM,            2, 7, 'L', "%",  ast_rem),
-    DEF_OPERATOR(OPERATOR_ADD,            2, 6, 'L', "+",  ast_add),
-    DEF_OPERATOR(OPERATOR_SUB,            2, 6, 'L', "-",  ast_sub),
-    DEF_OPERATOR(OPERATOR_LT,             2, 5, 'L', "<",  ast_lt),
-    DEF_OPERATOR(OPERATOR_GT,             2, 5, 'L', ">",  ast_gt),
-    DEF_OPERATOR(OPERATOR_LT_OR_EQ,       2, 5, 'L', "<=", ast_lt_or_eq),
-    DEF_OPERATOR(OPERATOR_GT_OR_EQ,       2, 5, 'L', ">=", ast_gt_or_eq),
-    DEF_OPERATOR(OPERATOR_IS_EQ,          2, 4, 'L', "==", ast_is_eq),
-    DEF_OPERATOR(OPERATOR_NOT_EQ,         2, 4, 'L', "!=", ast_not_eq),
-    DEF_OPERATOR(OPERATOR_BIT_AND,        2, 3, 'L', "&",  ast_bit_and),
-    DEF_OPERATOR(OPERATOR_AND,            2, 2, 'L', "&&", ast_and),
-    DEF_OPERATOR(OPERATOR_EQ,             2, 1, 'R', "=",  ast_eq),
-    DEF_OPERATOR(OPERATOR_LEFT_PARENTHS,  0, 0, 'L', "(",  NULL),
-    DEF_OPERATOR(OPERATOR_RIGHT_PARENTHS, 0, 0, 'L', ")" , NULL),
-    DEF_OPERATOR(OPERATOR_COMMA,          0, 0, 'L', ",",  NULL),
-    DEF_OPERATOR(OPERATOR_SEMICOLON,      0, 0, 'L', ";",  NULL),
-    DEF_OPERATOR(OPERATOR_EOF,            0, 0, 'L', "",   NULL),
+    DEF_OPERATOR(OPERATOR_PLUS,          1, 13, 'R', "+",   ast_plus),
+    DEF_OPERATOR(OPERATOR_MINUS,         1, 13, 'R', "-",   ast_minus),
+    DEF_OPERATOR(OPERATOR_NOT,           1, 13, 'R', "!",   ast_not),
+    DEF_OPERATOR(OPERATOR_MUL,           2, 12, 'L', "*",   ast_mul),
+    DEF_OPERATOR(OPERATOR_DIV,           2, 12, 'L', "/",   ast_div),
+    DEF_OPERATOR(OPERATOR_REM,           2, 12, 'L', "%",   ast_rem),
+    DEF_OPERATOR(OPERATOR_ADD,           2, 11, 'L', "+",   ast_add),
+    DEF_OPERATOR(OPERATOR_SUB,           2, 11, 'L', "-",   ast_sub),
+    DEF_OPERATOR(OPERATOR_BIT_LSHIFT,    2, 10, 'L', "<<",  ast_bit_lshift),
+    DEF_OPERATOR(OPERATOR_BIT_RSHIFT,    2, 10, 'L', ">>",  ast_bit_rshift),
+    DEF_OPERATOR(OPERATOR_LT,            2,  9, 'L', "<",   ast_lt),
+    DEF_OPERATOR(OPERATOR_GT,            2,  9, 'L', ">",   ast_gt),
+    DEF_OPERATOR(OPERATOR_LT_OR_EQ,      2,  9, 'L', "<=",  ast_lt_or_eq),
+    DEF_OPERATOR(OPERATOR_GT_OR_EQ,      2,  9, 'L', ">=",  ast_gt_or_eq),
+    DEF_OPERATOR(OPERATOR_IS_EQ,         2,  8, 'L', "==",  ast_is_eq),
+    DEF_OPERATOR(OPERATOR_NOT_EQ,        2,  8, 'L', "!=",  ast_not_eq),
+    DEF_OPERATOR(OPERATOR_BIT_AND,       2,  7, 'L', "&",   ast_bit_and),
+    DEF_OPERATOR(OPERATOR_BIT_XOR,       2,  6, 'L', "^",   ast_bit_xor),
+    DEF_OPERATOR(OPERATOR_BIT_OR,        2,  5, 'L', "|",   ast_bit_or),
+    DEF_OPERATOR(OPERATOR_AND,           2,  4, 'L', "&&",  ast_and),
+    DEF_OPERATOR(OPERATOR_XOR,           2,  3, 'L', "^^",  ast_xor),
+    DEF_OPERATOR(OPERATOR_OR,            2,  2, 'L', "||",  ast_or),
+    DEF_OPERATOR(OPERATOR_EQ,            2,  1, 'R', "=",   ast_eq),
+    DEF_OPERATOR(OPERATOR_EQ_ADD,        2,  1, 'R', "+=",  ast_eq_add),
+    DEF_OPERATOR(OPERATOR_EQ_SUB,        2,  1, 'R', "-=",  ast_eq_sub),
+    DEF_OPERATOR(OPERATOR_EQ_MUL,        2,  1, 'R', "*=",  ast_eq_mul),
+    DEF_OPERATOR(OPERATOR_EQ_DIV,        2,  1, 'R', "/=",  ast_eq_div),
+    DEF_OPERATOR(OPERATOR_EQ_REM,        2,  1, 'R', "%=",  ast_eq_rem),
+    DEF_OPERATOR(OPERATOR_EQ_BIT_AND,    2,  1, 'R', "&=",  ast_eq_bit_and),
+    DEF_OPERATOR(OPERATOR_EQ_BIT_XOR,    2,  1, 'R', "^=",  ast_eq_bit_xor),
+    DEF_OPERATOR(OPERATOR_EQ_BIT_OR,     2,  1, 'R', "|=",  ast_eq_bit_or),
+    DEF_OPERATOR(OPERATOR_EQ_BIT_LSHIFT, 2,  1, 'R', "<<=", ast_eq_bit_lshift),
+    DEF_OPERATOR(OPERATOR_EQ_BIT_RSHIFT, 2,  1, 'R', ">>=", ast_eq_bit_rshift),
+
+    DEF_OPERATOR(OPERATOR_LPARENTHS,     0,  0, 'L', "(",   NULL),
+    DEF_OPERATOR(OPERATOR_RPARENTHS,     0,  0, 'L', ")" ,  NULL),
+    DEF_OPERATOR(OPERATOR_COMMA,         0,  0, 'L', ",",   NULL),
+    DEF_OPERATOR(OPERATOR_SEMICOLON,     0,  0, 'L', ";",   NULL),
+    DEF_OPERATOR(OPERATOR_EOF,           0,  0, 'L', "",    NULL),
 };
+
+int is_assignment(int operator)
+{
+    switch (operator)
+    {
+        case OPERATOR_EQ:
+        case OPERATOR_EQ_ADD:
+        case OPERATOR_EQ_SUB:
+        case OPERATOR_EQ_MUL:
+        case OPERATOR_EQ_DIV:
+        case OPERATOR_EQ_REM:
+        case OPERATOR_EQ_BIT_AND:
+        case OPERATOR_EQ_BIT_XOR:
+        case OPERATOR_EQ_BIT_OR:
+        case OPERATOR_EQ_BIT_LSHIFT:
+        case OPERATOR_EQ_BIT_RSHIFT:
+            return 1;
+        default:
+            return 0;
+    }
+}
 
 int is_operator(int operator)
 {
@@ -129,9 +167,11 @@ int is_operator(int operator)
         case OPERATOR_LT:
         case OPERATOR_GT:
         case OPERATOR_BIT_AND:
+        case OPERATOR_BIT_XOR:
+        case OPERATOR_BIT_OR:
         case OPERATOR_EQ:
-        case OPERATOR_LEFT_PARENTHS:
-        case OPERATOR_RIGHT_PARENTHS:
+        case OPERATOR_LPARENTHS:
+        case OPERATOR_RPARENTHS:
         case OPERATOR_COMMA:
         case OPERATOR_SEMICOLON:
             return 1;
@@ -146,37 +186,62 @@ static int get_operator(const char **operator)
 
     switch (**operator)
     {
-        case OPERATOR_MUL:
-        case OPERATOR_DIV:
-        case OPERATOR_REM:
-        case OPERATOR_ADD:
-        case OPERATOR_SUB:
-        case OPERATOR_LEFT_PARENTHS:
-        case OPERATOR_RIGHT_PARENTHS:
+        case OPERATOR_LPARENTHS:
+        case OPERATOR_RPARENTHS:
         case OPERATOR_COMMA:
         case OPERATOR_SEMICOLON:
             result = **operator;
             (*operator)++;
             break;
         case OPERATOR_NOT:
-        case OPERATOR_LT:
-        case OPERATOR_GT:
+        case OPERATOR_MUL:
+        case OPERATOR_DIV:
+        case OPERATOR_REM:
+        case OPERATOR_ADD:
+        case OPERATOR_SUB:
+            result = **operator;
+            (*operator)++;
+            if (**operator == '=')
+            {
+                result ^= 'z';
+                (*operator)++;
+            }
+            break;
+        case OPERATOR_BIT_AND:
+        case OPERATOR_BIT_XOR:
+        case OPERATOR_BIT_OR:
         case OPERATOR_EQ:
             result = **operator;
             (*operator)++;
             if (**operator == '=')
             {
-                result += 0xF;
+                result ^= 'z';
+                (*operator)++;
+            }
+            else if (**operator == result)
+            {
+                result ^= '!';
                 (*operator)++;
             }
             break;
-        case OPERATOR_BIT_AND:
+        case OPERATOR_LT:
+        case OPERATOR_GT:
             result = **operator;
             (*operator)++;
-            if (**operator == '&')
+            if (**operator == '=')
             {
-                result += 0xE;
+                result ^= 'z';
                 (*operator)++;
+            }
+            else if (**operator == result)
+            {
+                result ^= '!';
+                (*operator)++;
+                if (**operator == '=')
+                {
+                    result ^= '=';
+                    (*operator)++;
+                }
             }
             break;
         default:
