@@ -84,8 +84,11 @@ typedef struct
 typedef struct
 {
     const char *name;
-    int args;
-    int (*eval)(void);
+    struct
+    {
+        int min, max;
+    } args;
+    int (*eval)(int);
 } ast_function;
 
 typedef struct ast_operator ast_operator;
@@ -121,7 +124,6 @@ struct ast_variable
     ast_data data;
 };
 
-ast_data *new_data(ast_type);
 int is_sequence(int);
 int get_sequence(int);
 int valid_name(const char *);
@@ -147,6 +149,8 @@ ast_data *map_variable(const char *);
 void map_variables(void);
 void unmap_variables(void);
 
+ast_data *map_number(const char *);
+ast_data *map_string(const char *);
 ast_data *map_boolean(const char *);
 
 #endif /* AST_DATA_H */

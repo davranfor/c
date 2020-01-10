@@ -1,15 +1,11 @@
-print("Starting ...");
+print("Starting ...", "\n");
 
-for (i = 1, i < 1000, i += 1)
+# for 1 to 999 print multiples of 100
+for (i = 1, i < 1e3, i += 1)
     if ((i % 100) == 0)
-        print(i);
+        println("i = ", i);
     end
 end
 
-print("---");
+println("Bye");
 
-for (i = 1, i < 1000000, i <<= 1)
-    print(i);
-end
-
-print("Bye");

@@ -39,25 +39,26 @@ ast_data ast_eq_bit_rshift(ast_data, ast_data);
 int push_data(ast_data);
 ast_data pop_data(void);
 
-int ast_abs(void);
-int ast_ceil(void);
-int ast_cos(void);
-int ast_cosh(void);
-int ast_exp(void);
-int ast_floor(void);
-int ast_log(void);
-int ast_log10(void);
-int ast_pow(void);
-int ast_rand(void);
-int ast_round(void);
-int ast_sin(void);
-int ast_sinh(void);
-int ast_sqr(void);
-int ast_tan(void);
-int ast_tanh(void);
-int ast_trunc(void);
+int ast_abs(int);
+int ast_ceil(int);
+int ast_cos(int);
+int ast_cosh(int);
+int ast_exp(int);
+int ast_floor(int);
+int ast_log(int);
+int ast_log10(int);
+int ast_pow(int);
+int ast_rand(int);
+int ast_round(int);
+int ast_sin(int);
+int ast_sinh(int);
+int ast_sqr(int);
+int ast_tan(int);
+int ast_tanh(int);
+int ast_trunc(int);
 
-int ast_print(void);
+int ast_print(int);
+int ast_println(int);
 
 #endif /* AST_EVAL_H */
 

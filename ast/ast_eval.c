@@ -339,72 +339,90 @@ static ast_data *peek_data(void)
 // Maths
 ///////////////////////////////////////////////////////////////////////////////
 
-int ast_abs(void)
+int ast_abs(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = fabs(data->number);
     return 1;
 }
 
-int ast_ceil(void)
+int ast_ceil(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = ceil(data->number);
     return 1;
 }
 
-int ast_cos(void)
+int ast_cos(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = cos(data->number);
     return 1;
 }
 
-int ast_cosh(void)
+int ast_cosh(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = cosh(data->number);
     return 1;
 }
 
-int ast_exp(void)
+int ast_exp(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = exp(data->number);
     return 1;
 }
 
-int ast_floor(void)
+int ast_floor(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = floor(data->number);
     return 1;
 }
 
-int ast_log(void)
+int ast_log(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = log(data->number);
     return 1;
 }
 
-int ast_log10(void)
+int ast_log10(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = log10(data->number);
     return 1;
 }
 
-int ast_pow(void)
+int ast_pow(int args)
 {
+    (void)args;
+
     ast_data b = pop_data();
     ast_data *a = peek_data();
 
@@ -412,8 +430,10 @@ int ast_pow(void)
     return 1;
 }
 
-int ast_rand(void)
+int ast_rand(int args)
 {
+    (void)args;
+
     ast_data data;
 
     data.type = TYPE_NUMBER;
@@ -421,56 +441,70 @@ int ast_rand(void)
     return push_data(data);
 }
 
-int ast_round(void)
+int ast_round(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = round(data->number);
     return 1;
 }
 
-int ast_sin(void)
+int ast_sin(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = sin(data->number);
     return 1;
 }
 
-int ast_sinh(void)
+int ast_sinh(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = sinh(data->number);
     return 1;
 }
 
-int ast_sqr(void)
+int ast_sqr(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = sqrt(data->number);
     return 1;
 }
 
-int ast_tan(void)
+int ast_tan(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = tan(data->number);
     return 1;
 }
 
-int ast_tanh(void)
+int ast_tanh(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = tanh(data->number);
     return 1;
 }
 
-int ast_trunc(void)
+int ast_trunc(int args)
 {
+    (void)args;
+
     ast_data *data = peek_data();
 
     data->number = trunc(data->number);
@@ -481,27 +515,44 @@ int ast_trunc(void)
 // Misc
 ///////////////////////////////////////////////////////////////////////////////
 
-int ast_print(void)
+static int print(int args, const char *end)
 {
-    ast_data *data = peek_data();
+    ast_data *data = &frame[counter - args];
+    ast_data *last = &frame[counter - 1];
+    int result = 0;
 
-    switch (data->type)
+    do
     {
-        case TYPE_BOOLEAN:
-            printf("%s\n", data->number ? "true" : "false");
-            data->type = TYPE_NUMBER;
-            return 1;
-        case TYPE_NUMBER:
-            data->number = printf("%g\n", data->number);
-            data->type = TYPE_NUMBER;
-            return 1;
-        case TYPE_STRING:
-            data->number = printf("%s\n", data->string);
-            data->type = TYPE_NUMBER;
-            return 1;
-        default:
-            printf("Can not print this value\n");
-            return 0;
-    }
+        switch (data->type)
+        {
+            case TYPE_BOOLEAN:
+                result += printf("%s%s", data->number ? "true" : "false", data == last ? end : "");
+                break;
+            case TYPE_NUMBER:
+                result += printf("%g%s", data->number, data == last ? end : "");
+                break;
+            case TYPE_STRING:
+                result += printf("%s%s", data->string, data == last ? end : "");
+                break;
+            default:
+                printf("Can not print this value\n");
+                return 0;
+        }
+    } while (data++ != last);
+    data -= args;
+    data->type = TYPE_NUMBER;
+    data->number = result;
+    counter -= args - 1;
+    return 1;
+}
+
+int ast_print(int args)
+{
+    return print(args, "");
+}
+
+int ast_println(int args)
+{
+    return print(args, "\n");
 }
 

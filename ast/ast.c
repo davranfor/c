@@ -17,11 +17,20 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
+static ast_node *script;
+
 static size_t lines;
 
 static void ast_die(char *file, int line, const char *format, ...)
 {
-    fprintf(stderr, "Error on line %zu: ", lines + 1);
+    if (script == NULL)
+    {
+        fprintf(stderr, "Error on line %zu:\n\t", lines + 1);
+    }
+    else
+    {
+        fprintf(stderr, "Error evaluating script:\n\t");
+    }
 
     va_list args;
 
@@ -193,11 +202,13 @@ static void move_operands(void)
         case TYPE_CALL:
             if (call_type(operands->data) == TYPE_FUNCTION)
             {
-                if (operands->data->function->args != args)
+                if ((args < operands->data->function->args.min) ||
+                    (args > operands->data->function->args.max))
                 {
-                    die("\"%s\" was expecting %d argument(s), got %d",
+                    die("\"%s\" was expecting %d to %d argument(s), got %d",
                         operands->data->function->name,
-                        operands->data->function->args,
+                        operands->data->function->args.min,
+                        operands->data->function->args.max,
                         args
                     );
                 }
@@ -384,7 +395,7 @@ static ast_data *parse(const char **text)
             // Skip comments
             if (*str == '#')
             {
-                while ((*str != 0) && (*str != '\n'))
+                while ((*str != '\0') && (*str != '\n'))
                 {
                     str++;
                 }
@@ -464,62 +475,53 @@ static ast_data *parse(const char **text)
         strings[pos++] = '\0';
         if (quotes != 0)
         {
-            data = new_data(TYPE_STRING);
-            data->string = start;
+            data = map_string(start);
+        }
+        else if ((data = map_number(start)))
+        {
+            // Decimal, hexadecimal, float
+        }
+        else if ((data = map_boolean(start)))
+        {
+            // true or false
         }
         else
         {
-            double number;
-            char *ptr;
-
-            number = strtod(start, &ptr);
-            if (*ptr == '\0')
+            if (!valid_name(start))
             {
-                data = new_data(TYPE_NUMBER);
-                data->number = number;
+                die("\"%s\" is not a valid name", start);
             }
-            else
-            if ((data = map_boolean(start)))
-            {
-            }
-            else
-            {
-                if (!valid_name(start))
-                {
-                    die("\"%s\" is not a valid name", start);
-                }
 
-                ast_data *statement = map_statement(start);
+            ast_data *statement = map_statement(start);
 
-                if (*str == '(')
+            if (*str == '(')
+            {
+                if (statement != NULL)
                 {
-                    if (statement != NULL)
-                    {
-                        data = statement;
-                    }
-                    else
-                    {
-                        data = map_function(start);
-                        if (data == NULL)
-                        {
-                            die("\"%s\" was not found", start);
-                        }
-                    }
+                    data = statement;
                 }
                 else
                 {
-                    if (statement != NULL)
+                    data = map_function(start);
+                    if (data == NULL)
                     {
-                        if (statement->statement->args > 0)
-                        {
-                            die("'(' was expected");
-                        }
-                        data = statement;
+                        die("\"%s\" was not found", start);
                     }
-                    else
+                }
+            }
+            else
+            {
+                if (statement != NULL)
+                {
+                    if (statement->statement->args > 0)
                     {
-                        data = map_variable(start);
+                        die("'(' was expected");
                     }
+                    data = statement;
+                }
+                else
+                {
+                    data = map_variable(start);
                 }
             }
         }
@@ -641,8 +643,6 @@ static ast_data *classify(ast_data *data)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-static ast_node *script;
 
 static ast_node *build(const char *text)
 {
@@ -847,9 +847,10 @@ static void explain(const ast_node *node, int level)
 
 static ast_data eval(const ast_node *node)
 {
+    ast_node *next = NULL;
     ast_data a = {0};
     ast_data b = {0};
-    int operator = 0;
+    int args = 0;
 
     switch (node->data->type)
     {
@@ -859,11 +860,10 @@ static ast_data eval(const ast_node *node)
         case TYPE_STRING:
             return *node->data;
         case TYPE_OPERATOR:
-            operator = node->data->operator->value;
             if (node->left != NULL)
             {
                 a = eval(node->left);
-                if (is_assignment(operator))
+                if (is_assignment(node->data->operator->value))
                 {
                     if (a.type != TYPE_VARIABLE)
                     {
@@ -882,27 +882,16 @@ static ast_data eval(const ast_node *node)
             }
             return node->data->operator->eval(a, b);
         case TYPE_FUNCTION:
-            switch (node->data->function->args)
+            next = node->left;
+            while (next != NULL)
             {
-                case 0:
-                    break;
-                case 1:
-                    a = eval(node->left);
-                    AST_TRANSFORM_VAR(a);
-                    push_data(a);
-                    break;
-                case 2:
-                    a = eval(node->left);
-                    AST_TRANSFORM_VAR(a);
-                    push_data(a);
-                    b = eval(node->left->right);
-                    AST_TRANSFORM_VAR(b);
-                    push_data(b);
-                    break;
-                default:
-                    die("Bad Expression");
+                a = eval(next);
+                AST_TRANSFORM_VAR(a);
+                push_data(a);
+                next = next->right;
+                args++;
             }
-            if (node->data->function->eval() == 0)
+            if (node->data->function->eval(args) == 0)
             {
                 die("\"%s\" returned error", node->data->function->name);
             }

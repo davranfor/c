@@ -8,7 +8,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ast_data *new_data(ast_type type)
+static ast_data *new_data(ast_type type)
 {
     ast_data *data;
 
@@ -398,25 +398,26 @@ void map_functions(void)
 {
     static const ast_function list[] =
     {
-        { "abs",     1, ast_abs   },
-        { "ceil",    1, ast_ceil  },
-        { "cos",     1, ast_cos   },
-        { "cosh",    1, ast_cosh  },
-        { "exp",     1, ast_exp   },
-        { "floor",   1, ast_floor },
-        { "log",     1, ast_log   },
-        { "log10",   1, ast_log10 },
-        { "pow",     2, ast_pow   },
-        { "rand",    0, ast_rand  },
-        { "round",   1, ast_round },
-        { "sin",     1, ast_sin   },
-        { "sinh",    1, ast_sinh  },
-        { "sqr",     1, ast_sqr   },
-        { "tan",     1, ast_tan   },
-        { "tanh",    1, ast_tanh  },
-        { "trunc",   1, ast_trunc },
+        { "abs",     {1,  1}, ast_abs     },
+        { "ceil",    {1,  1}, ast_ceil    },
+        { "cos",     {1,  1}, ast_cos     },
+        { "cosh",    {1,  1}, ast_cosh    },
+        { "exp",     {1,  1}, ast_exp     },
+        { "floor",   {1,  1}, ast_floor   },
+        { "log",     {1,  1}, ast_log     },
+        { "log10",   {1,  1}, ast_log10   },
+        { "pow",     {2,  2}, ast_pow     },
+        { "rand",    {0,  0}, ast_rand    },
+        { "round",   {1,  1}, ast_round   },
+        { "sin",     {1,  1}, ast_sin     },
+        { "sinh",    {1,  1}, ast_sinh    },
+        { "sqr",     {1,  1}, ast_sqr     },
+        { "tan",     {1,  1}, ast_tan     },
+        { "tanh",    {1,  1}, ast_tanh    },
+        { "trunc",   {1,  1}, ast_trunc   },
 
-        { "print",   1, ast_print },
+        { "print",   {1, 64}, ast_print   },
+        { "println", {1, 64}, ast_println },
     };
     static ast_data function_list[(sizeof list / sizeof *list) * 2];
     size_t count = sizeof list / sizeof *list;
@@ -528,6 +529,29 @@ void unmap_variables(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+ast_data *map_number(const char *str)
+{
+    ast_data *data = NULL;
+    double number;
+    char *ptr;
+
+    number = strtod(str, &ptr);
+    if (*ptr == '\0')
+    {
+        data = new_data(TYPE_NUMBER);
+        data->number = number;
+    }
+    return data;
+}
+
+ast_data *map_string(const char *str)
+{
+    ast_data *data = new_data(TYPE_STRING);
+
+    data->string = str;
+    return data;
+}
 
 ast_data *map_boolean(const char *str)
 {
