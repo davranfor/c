@@ -70,18 +70,6 @@ int valid_name(const char *str)
     return 1;
 }
 
-ast_type call_type(const ast_data *data)
-{
-    if ((data + 1)->type == TYPE_FUNCTION)
-    {
-        return TYPE_FUNCTION;
-    }
-    else
-    {
-        return TYPE_STATEMENT;
-    }
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 
 #define DEF_OPERATOR(o, ...)                                 \
@@ -304,39 +292,32 @@ int is_iterator(const ast_data *data)
     }
 }
 
-static const ast_statement statements[] =
+#define DEF_STATEMENT(...)                                  \
+    {                                                       \
+        .type = TYPE_STATEMENT,                             \
+        .statement = &(const ast_statement){__VA_ARGS__}    \
+    }
+
+static ast_data statements[] =
 {
-    { "",         0, 0  },
-    { "if",       1, 1  },
-    { "elif",     1, 2  },
-    { "else",     0, 3  },
-    { "while",    1, 4  },
-    { "until",    1, 5  },
-    { "for",      3, 6  },
-    { "foreach",  1, 7  },
-    { "continue", 0, 8  },
-    { "break",    0, 9  },
-    { "end",      0, 10 },
+    DEF_STATEMENT("",         0, 0),
+    DEF_STATEMENT("if",       1, 1),
+    DEF_STATEMENT("elif",     1, 2),
+    DEF_STATEMENT("else",     0, 3),
+    DEF_STATEMENT("while",    1, 4),
+    DEF_STATEMENT("until",    1, 5),
+    DEF_STATEMENT("for",      3, 6),
+    DEF_STATEMENT("foreach",  1, 7),
+    DEF_STATEMENT("continue", 0, 8),
+    DEF_STATEMENT("break",    0, 9),
+    DEF_STATEMENT("end",      0, 10),
 };
 
-static const ast_statement branches[] =
+static ast_data branches[] =
 {
-    { "then",     0, 11 },
-    { "if",       1, 12 }, // IFEL
+    DEF_STATEMENT("then",     0, 11),
+    DEF_STATEMENT("if",       1, 12), // IFEL
 };
-
-ast_data *map_branch(int branch)
-{
-    static ast_data list[] =
-    {
-        {.type = TYPE_STATEMENT, .statement = &branches[0]},
-        {.type = TYPE_STATEMENT, .statement = &branches[1]},
-    };
-
-    return &list[branch];
-}
-
-static ast_data statement_list[(sizeof statements / sizeof *statements) * 3];
 
 ast_data *map_statement(const char *name)
 {
@@ -344,27 +325,17 @@ ast_data *map_statement(const char *name)
 
     for (size_t iter = 0; iter < count; iter++)
     {
-        if (strcmp(statements[iter].name, name) == 0)
+        if (strcmp(statements[iter].statement->name, name) == 0)
         {
-            return &statement_list[iter * 3];
+            return &statements[iter];
         }
     }
     return NULL;
 }
 
-void map_statements(void)
+ast_data *map_branch(int branch)
 {
-    size_t count = sizeof statements / sizeof *statements;
-
-    for (size_t iter = 0, items = 0; iter < count; iter += 1, items += 3)
-    {
-        statement_list[items + 0].type = TYPE_CALL;
-        statement_list[items + 0].statement = &statements[iter];
-        statement_list[items + 1].type = TYPE_COMPOUND;
-        statement_list[items + 1].statement = &statements[iter];
-        statement_list[items + 2].type = TYPE_STATEMENT;
-        statement_list[items + 2].statement = &statements[iter];
-    }
+    return &branches[branch];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -394,33 +365,39 @@ static unsigned long hash_function(const void *item)
     return hash_string((const unsigned char *)data->function->name);
 }
 
+#define DEF_FUNCTION(...)                               \
+    {                                                   \
+        .type = TYPE_FUNCTION,                          \
+        .function = &(const ast_function){__VA_ARGS__}  \
+    }
+
+static ast_data function_list[] =
+{
+    DEF_FUNCTION("abs",     {1,  1}, ast_abs    ),
+    DEF_FUNCTION("ceil",    {1,  1}, ast_ceil   ),
+    DEF_FUNCTION("cos",     {1,  1}, ast_cos    ),
+    DEF_FUNCTION("cosh",    {1,  1}, ast_cosh   ),
+    DEF_FUNCTION("exp",     {1,  1}, ast_exp    ),
+    DEF_FUNCTION("floor",   {1,  1}, ast_floor  ),
+    DEF_FUNCTION("log",     {1,  1}, ast_log    ),
+    DEF_FUNCTION("log10",   {1,  1}, ast_log10  ),
+    DEF_FUNCTION("pow",     {2,  2}, ast_pow    ),
+    DEF_FUNCTION("rand",    {0,  0}, ast_rand   ),
+    DEF_FUNCTION("round",   {1,  1}, ast_round  ),
+    DEF_FUNCTION("sin",     {1,  1}, ast_sin    ),
+    DEF_FUNCTION("sinh",    {1,  1}, ast_sinh   ),
+    DEF_FUNCTION("sqr",     {1,  1}, ast_sqr    ),
+    DEF_FUNCTION("tan",     {1,  1}, ast_tan    ),
+    DEF_FUNCTION("tanh",    {1,  1}, ast_tanh   ),
+    DEF_FUNCTION("trunc",   {1,  1}, ast_trunc  ),
+
+    DEF_FUNCTION("print",   {1, 64}, ast_print  ),
+    DEF_FUNCTION("println", {1, 64}, ast_println),
+};
+
 void map_functions(void)
 {
-    static const ast_function list[] =
-    {
-        { "abs",     {1,  1}, ast_abs     },
-        { "ceil",    {1,  1}, ast_ceil    },
-        { "cos",     {1,  1}, ast_cos     },
-        { "cosh",    {1,  1}, ast_cosh    },
-        { "exp",     {1,  1}, ast_exp     },
-        { "floor",   {1,  1}, ast_floor   },
-        { "log",     {1,  1}, ast_log     },
-        { "log10",   {1,  1}, ast_log10   },
-        { "pow",     {2,  2}, ast_pow     },
-        { "rand",    {0,  0}, ast_rand    },
-        { "round",   {1,  1}, ast_round   },
-        { "sin",     {1,  1}, ast_sin     },
-        { "sinh",    {1,  1}, ast_sinh    },
-        { "sqr",     {1,  1}, ast_sqr     },
-        { "tan",     {1,  1}, ast_tan     },
-        { "tanh",    {1,  1}, ast_tanh    },
-        { "trunc",   {1,  1}, ast_trunc   },
-
-        { "print",   {1, 64}, ast_print   },
-        { "println", {1, 64}, ast_println },
-    };
-    static ast_data function_list[(sizeof list / sizeof *list) * 2];
-    size_t count = sizeof list / sizeof *list;
+    size_t count = sizeof function_list / sizeof *function_list;
 
     functions = hashmap_create(comp_function, hash_function, count * 4);
     if (functions == NULL)
@@ -428,13 +405,9 @@ void map_functions(void)
         perror("hashmap_create");
         exit(EXIT_FAILURE);
     }
-    for (size_t iter = 0, items = 0; iter < count; iter += 1, items += 2)
+    for (size_t iter = 0; iter < count; iter++)
     {
-        function_list[items + 0].type = TYPE_CALL;
-        function_list[items + 0].function = &list[iter];
-        function_list[items + 1].type = TYPE_FUNCTION;
-        function_list[items + 1].function = &list[iter];
-        if (hashmap_insert(functions, &function_list[items]) == NULL)
+        if (hashmap_insert(functions, &function_list[iter]) == NULL)
         {
             perror("hashmap_insert");
             exit(EXIT_FAILURE);
@@ -555,19 +528,19 @@ ast_data *map_string(const char *str)
 
 ast_data *map_boolean(const char *str)
 {
-    static ast_data list[] =
+    static ast_data booleans[] =
     {
-        { TYPE_BOOLEAN, .number = 1 },
-        { TYPE_BOOLEAN, .number = 0 },
+        {TYPE_BOOLEAN, .number = 1},
+        {TYPE_BOOLEAN, .number = 0},
     };
 
     if (strcmp(str, "true") == 0)
     {
-        return &list[0];
+        return &booleans[0];
     }
     else if (strcmp(str, "false") == 0)
     {
-        return &list[1];
+        return &booleans[1];
     }
     return NULL;
 }

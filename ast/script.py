@@ -7,5 +7,16 @@ for (i = 1, i < 1e3, i += 1)
     end
 end
 
-println("Bye");
+test = 2;
+if (test == 0)
+    println("test == 0");
+elif (test > 1)
+    println("test > 1");
+else
+    println("test == 1");
+end
 
+println((3*2)+(3*2));
+println(pow(trunc((3 + 0.14)), 2));
+println("Bye");
+3+2;
