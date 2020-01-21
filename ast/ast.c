@@ -117,18 +117,7 @@ static void clear(ast_node *root)
         free(root);
     }
 }
-/*
-///////////////////////////////////////////////////////////////////////////////
 
-static ast_type node_type(const ast_node *node)
-{
-    if (node == NULL)
-    {
-        return TYPE_NONE;
-    }
-    return node->data->type;
-}
-*/
 ///////////////////////////////////////////////////////////////////////////////
 
 enum {OPERATOR, OPERAND};
@@ -219,20 +208,6 @@ static const ast_node *peek_branch(void)
     return branches.node[branches.count - 1];
 }
 
-static void move_branch(const ast_node *node)
-{
-    push(&operators, map_branch(0));
-    operators->left = node->left->right;
-    node->left->right = NULL;
-    while (operands != node)
-    {
-        move(&node->left->right, &operands);
-    }
-    move(&operands->left->right, &operators);
-    operands->data = map_branch(1);
-    pop_branch();
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 
 #define MAX_JUMPS 256
@@ -240,7 +215,7 @@ static void move_branch(const ast_node *node)
 struct jumps
 {
     const ast_node *node[MAX_JUMPS];
-    int iterations;
+    int iterators;
     int count;
 };
 
@@ -280,11 +255,11 @@ static void push_statement(ast_data *data)
     push_jump(operands);
     if (is_iterator(data))
     {
-        jumps.iterations++;
+        jumps.iterators++;
     }
 }
 
-static void pop_statement(void)
+static const ast_node *pop_statement(void)
 {
     const ast_node *node = pop_jump();
 
@@ -292,15 +267,11 @@ static void pop_statement(void)
     {
         die("'end' was not expected");
     }
-    // if operands is ELIF or ELSE
-    if (operands != node)
+    if (is_iterator(node->data))
     {
-        move_branch(node);
+        jumps.iterators--;
     }
-    else if (is_iterator(operands->data))
-    {
-        jumps.iterations--;
-    }
+    return node;
 }
 
 static int peek_statement(void)
@@ -341,48 +312,6 @@ static void move_operands(int args)
         {
             die("Expected operand");
         }
-    }
-}
-
-static void move_expressions(ast_node *node)
-{
-    const ast_node *statement = peek_jump();
-    const ast_node *branch = peek_branch();
-
-    while ((operands != statement) && (operands != branch))
-    {
-        if (!move(&node->left, &operands))
-        {
-            die("Expected operand");
-        }
-    }
-}
-
-static void move_block(void)
-{
-    ast_node node = {0};
-
-    move_expressions(&node);
-    if (operands == NULL)
-    {
-        die("'end' was not expected");
-    }
-    switch (operands->data->statement->args)
-    {
-        case 0:
-            operands->left = node.left;
-            break;
-        case 1:
-            operands->left->right = node.left;
-            break;
-        case 2:
-            operands->left->right->right = node.left;
-            break;
-        case 3:
-            operands->left->right->right->right = node.left;
-            break;
-        default:
-            break;
     }
 }
 
@@ -448,13 +377,75 @@ static void move_args(void)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-static void test_block(void)
+static void move_expressions(ast_node *node)
 {
-    if (peek(operands)->statement->value == STATEMENT_ELSE)
+    const ast_node *statement = peek_jump();
+    const ast_node *branch = peek_branch();
+
+    while ((operands != statement) && (operands != branch))
     {
-        die("'elif' and 'else' can not follow an 'else' block");
+        if (!move(&node->left, &operands))
+        {
+            die("Expected operand");
+        }
+    }
+}
+
+static void move_branch(const ast_node *node)
+{
+    push(&operators, map_branch(0));
+    operators->left = node->left->right;
+    node->left->right = NULL;
+    while (operands != node)
+    {
+        move(&node->left->right, &operands);
+    }
+    move(&operands->left->right, &operators);
+    operands->data = map_branch(1);
+    pop_branch();
+}
+
+static void move_block(bool end)
+{
+    ast_node node = {0};
+
+    move_expressions(&node);
+    if (operands == NULL)
+    {
+        die("'end' was not expected");
+    }
+    switch (operands->data->statement->args)
+    {
+        case 0:
+            operands->left = node.left;
+            break;
+        case 1:
+            operands->left->right = node.left;
+            break;
+        case 2:
+            operands->left->right->right = node.left;
+            break;
+        case 3:
+            operands->left->right->right->right = node.left;
+            break;
+        default:
+            break;
+    }
+    if (end == true)
+    {
+        const ast_node *statement = pop_statement();
+
+        if (operands != statement)
+        {
+            move_branch(statement);
+        }
+    }
+    else
+    {
+        if (operands->data->statement->value == STATEMENT_ELSE)
+        {
+            die("'elif' and 'else' can not follow an 'else' block");
+        }
     }
 }
 
@@ -724,7 +715,7 @@ static ast_data *classify(const char **text)
                         {
                             die("';' was expected");
                         }
-                        if (jumps.iterations == 0)
+                        if (jumps.iterators == 0)
                         {
                             die("'continue' and 'break'"
                                 " can not be used outside a loop");
@@ -838,26 +829,19 @@ static ast_node *build(const char *text)
                     push_call(TYPE_STATEMENT);
                     break;
                 case STATEMENT_ELIF:
-                    move_block();
-                    test_block();
+                    move_block(false);
                     push(&operands, data);
                     push_branch(operands);
                     push(&operators, map_operator(&text));
                     push_call(TYPE_STATEMENT);
                     break;
                 case STATEMENT_ELSE:
-                    move_block();
-                    test_block();
+                    move_block(false);
                     push(&operands, data);
                     push_branch(operands);
                     break;
-                case STATEMENT_CONTINUE:
-                case STATEMENT_BREAK:
-                    push(&operands, data);
-                    break;
                 case STATEMENT_END:
-                    move_block();
-                    pop_statement();
+                    move_block(true);
                     break;
                 default:
                     push(&operands, data);
