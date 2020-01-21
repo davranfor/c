@@ -263,11 +263,7 @@ static const ast_node *pop_statement(void)
 {
     const ast_node *node = pop_jump();
 
-    if (node == NULL)
-    {
-        die("'end' was not expected");
-    }
-    if (is_iterator(node->data))
+    if ((node != NULL) && is_iterator(node->data))
     {
         jumps.iterators--;
     }
@@ -435,6 +431,10 @@ static void move_block(bool end)
     {
         const ast_node *statement = pop_statement();
 
+        if (statement == NULL)
+        {
+            die("'end' was not expected");
+        }
         if (operands != statement)
         {
             move_branch(statement);
