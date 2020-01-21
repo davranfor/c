@@ -431,10 +431,6 @@ static void move_block(bool end)
     {
         const ast_node *statement = pop_statement();
 
-        if (statement == NULL)
-        {
-            die("'end' was not expected");
-        }
         if (operands != statement)
         {
             move_branch(statement);
