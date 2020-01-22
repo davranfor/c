@@ -315,8 +315,8 @@ static ast_data statements[] =
 
 static ast_data branches[] =
 {
-    DEF_STATEMENT("then",     0, 11),
-    DEF_STATEMENT("if",       1, 12), // IFEL
+    DEF_STATEMENT("if",       0, 11), // IFEL
+    DEF_STATEMENT("then",     0, 12),
 };
 
 ast_data *map_statement(const char *name)

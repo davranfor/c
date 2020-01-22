@@ -16,9 +16,6 @@ else
     println("test == 1");
     if (0)
         0;
-    else
-        println("test == 1");
-        println("test == 1");
     end
 end
 
