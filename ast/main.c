@@ -60,7 +60,6 @@ int main(int argc, char *argv[])
     {
         exit(EXIT_FAILURE);
     }
-    //explain = 1;
     if (explain != 0)
     {
         ast_explain(ast);

@@ -58,7 +58,6 @@ int ast_tanh(int);
 int ast_trunc(int);
 
 int ast_print(int);
-int ast_println(int);
 
 #endif /* AST_EVAL_H */
 

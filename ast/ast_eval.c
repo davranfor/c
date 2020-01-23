@@ -345,6 +345,7 @@ int ast_abs(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = fabs(data->number);
     return 1;
 }
@@ -355,6 +356,7 @@ int ast_ceil(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = ceil(data->number);
     return 1;
 }
@@ -365,6 +367,7 @@ int ast_cos(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = cos(data->number);
     return 1;
 }
@@ -375,6 +378,7 @@ int ast_cosh(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = cosh(data->number);
     return 1;
 }
@@ -385,6 +389,7 @@ int ast_exp(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = exp(data->number);
     return 1;
 }
@@ -395,6 +400,7 @@ int ast_floor(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = floor(data->number);
     return 1;
 }
@@ -405,6 +411,7 @@ int ast_log(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = log(data->number);
     return 1;
 }
@@ -415,6 +422,7 @@ int ast_log10(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = log10(data->number);
     return 1;
 }
@@ -426,6 +434,8 @@ int ast_pow(int args)
     ast_data b = pop_data();
     ast_data *a = peek_data();
 
+    convert_number(a);
+    convert_number(&b);
     a->number = pow(a->number, b.number);
     return 1;
 }
@@ -447,6 +457,7 @@ int ast_round(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = round(data->number);
     return 1;
 }
@@ -457,6 +468,7 @@ int ast_sin(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = sin(data->number);
     return 1;
 }
@@ -467,6 +479,7 @@ int ast_sinh(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = sinh(data->number);
     return 1;
 }
@@ -477,6 +490,7 @@ int ast_sqr(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = sqrt(data->number);
     return 1;
 }
@@ -487,6 +501,7 @@ int ast_tan(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = tan(data->number);
     return 1;
 }
@@ -497,6 +512,7 @@ int ast_tanh(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = tanh(data->number);
     return 1;
 }
@@ -507,6 +523,7 @@ int ast_trunc(int args)
 
     ast_data *data = peek_data();
 
+    convert_number(data);
     data->number = trunc(data->number);
     return 1;
 }
@@ -515,7 +532,7 @@ int ast_trunc(int args)
 // Misc
 ///////////////////////////////////////////////////////////////////////////////
 
-static int print(int args, const char *end)
+int ast_print(int args)
 {
     ast_data *data = &frame[counter - args];
     ast_data *last = &frame[counter - 1];
@@ -526,13 +543,13 @@ static int print(int args, const char *end)
         switch (data->type)
         {
             case TYPE_BOOLEAN:
-                result += printf("%s%s", data->number ? "true" : "false", data == last ? end : "");
+                result += printf("%s", data->number ? "true" : "false");
                 break;
             case TYPE_NUMBER:
-                result += printf("%g%s", data->number, data == last ? end : "");
+                result += printf("%g", data->number);
                 break;
             case TYPE_STRING:
-                result += printf("%s%s", data->string, data == last ? end : "");
+                result += printf("%s", data->string);
                 break;
             default:
                 printf("Can not print this value\n");
@@ -544,15 +561,5 @@ static int print(int args, const char *end)
     data->number = result;
     counter -= args - 1;
     return 1;
-}
-
-int ast_print(int args)
-{
-    return print(args, "");
-}
-
-int ast_println(int args)
-{
-    return print(args, "\n");
 }
 
