@@ -174,7 +174,7 @@ static ast_data *parse(const char **text)
             {
                 if (data == NULL)
                 {
-                    data = map_function(start);
+                    data = map_callable(start);
                     if (data == NULL)
                     {
                         die("\"%s\" was not found", start);
@@ -274,14 +274,14 @@ static void move_arguments(void)
             expected = OPERAND;
             starting = true;
             break;
-        case TYPE_FUNCTION:
-            if ((call->args < operands->data->function->args.min) ||
-                (call->args > operands->data->function->args.max))
+        case TYPE_CALLABLE:
+            if ((call->args < operands->data->callable->args.min) ||
+                (call->args > operands->data->callable->args.max))
             {
                 die("\"%s\" was expecting %d to %d argument(s), got %d",
-                    operands->data->function->name,
-                    operands->data->function->args.min,
-                    operands->data->function->args.max,
+                    operands->data->callable->name,
+                    operands->data->callable->args.min,
+                    operands->data->callable->args.max,
                     call->args
                 );
             }
@@ -493,7 +493,7 @@ static ast_data *classify(const char **text)
                 }
                 starting = data->statement->args == 0;
                 break;
-            case TYPE_FUNCTION:
+            case TYPE_CALLABLE:
                 starting = false;
                 break;
             default:
@@ -611,11 +611,11 @@ static ast_node *build(const char *text)
                     break;
             }   
         }
-        else if (data->type == TYPE_FUNCTION)
+        else if (data->type == TYPE_CALLABLE)
         {
             push(&operands, data);
             push(&operators, map_operator(&text));
-            push_call(TYPE_FUNCTION);
+            push_call(TYPE_CALLABLE);
         }
         else
         {
@@ -647,8 +647,8 @@ static void explain(const ast_node *node, int level)
             case TYPE_STATEMENT:
                 printf("%s\n", node->data->statement->name);
                 break;
-            case TYPE_FUNCTION:
-                printf("%s()\n", node->data->function->name);
+            case TYPE_CALLABLE:
+                printf("%s()\n", node->data->callable->name);
                 break;
             case TYPE_VARIABLE:
                 printf("%s\n", node->data->variable->name);
@@ -719,7 +719,7 @@ static ast_data eval(const ast_node *node)
                 }
             }
             return node->data->operator->eval(a, b);
-        case TYPE_FUNCTION:
+        case TYPE_CALLABLE:
             next = node->left;
             while (next != NULL)
             {
@@ -729,9 +729,9 @@ static ast_data eval(const ast_node *node)
                 next = next->right;
                 args++;
             }
-            if (node->data->function->eval(args) == 0)
+            if (node->data->callable->eval(args) == 0)
             {
-                die("\"%s\" returned error", node->data->function->name);
+                die("\"%s\" returned error", node->data->callable->name);
             }
             return pop_data();
         default:
@@ -764,7 +764,7 @@ static int test(const ast_node *node)
 
 void ast_create(void)
 {
-    map_functions();
+    map_callables();
     map_variables();
 }
 
@@ -923,7 +923,7 @@ void ast_destroy(void)
     operators = NULL;
     clear(operands);
     operands = NULL;
-    unmap_functions();
+    unmap_callables();
     unmap_variables();
 }
 

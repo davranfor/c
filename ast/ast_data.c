@@ -340,73 +340,73 @@ ast_data *map_branch(int branch)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static hashmap *functions;
+static hashmap *callables;
 
-ast_data *map_function(const char *name)
+ast_data *map_callable(const char *name)
 {
-    const ast_function function = {.name = name};
-    ast_data data = {.function = &function};
+    const ast_callable callable = {.name = name};
+    ast_data data = {.callable = &callable};
 
-    return hashmap_search(functions, &data);
+    return hashmap_search(callables, &data);
 }
 
-static int comp_function(const void *pa, const void *pb)
+static int comp_callable(const void *pa, const void *pb)
 {
     const ast_data *a = pa;
     const ast_data *b = pb;
 
-    return strcmp(a->function->name, b->function->name);
+    return strcmp(a->callable->name, b->callable->name);
 }
 
-static unsigned long hash_function(const void *item)
+static unsigned long hash_callable(const void *item)
 {
     const ast_data *data = item;
 
-    return hash_string((const unsigned char *)data->function->name);
+    return hash_string((const unsigned char *)data->callable->name);
 }
 
-#define DEF_FUNCTION(...)                               \
+#define DEF_CALLABLE(...)                               \
     {                                                   \
-        .type = TYPE_FUNCTION,                          \
-        .function = &(const ast_function){__VA_ARGS__}  \
+        .type = TYPE_CALLABLE,                          \
+        .callable = &(const ast_callable){__VA_ARGS__}  \
     }
 
-static ast_data function_list[] =
+static ast_data callable_list[] =
 {
-    DEF_FUNCTION("abs",   {1,  1}, ast_abs),
-    DEF_FUNCTION("ceil",  {1,  1}, ast_ceil),
-    DEF_FUNCTION("cos",   {1,  1}, ast_cos),
-    DEF_FUNCTION("cosh",  {1,  1}, ast_cosh),
-    DEF_FUNCTION("exp",   {1,  1}, ast_exp),
-    DEF_FUNCTION("floor", {1,  1}, ast_floor),
-    DEF_FUNCTION("log",   {1,  1}, ast_log),
-    DEF_FUNCTION("log10", {1,  1}, ast_log10),
-    DEF_FUNCTION("pow",   {2,  2}, ast_pow),
-    DEF_FUNCTION("rand",  {0,  0}, ast_rand),
-    DEF_FUNCTION("round", {1,  1}, ast_round),
-    DEF_FUNCTION("sin",   {1,  1}, ast_sin),
-    DEF_FUNCTION("sinh",  {1,  1}, ast_sinh),
-    DEF_FUNCTION("sqrt",  {1,  1}, ast_sqrt),
-    DEF_FUNCTION("tan",   {1,  1}, ast_tan),
-    DEF_FUNCTION("tanh",  {1,  1}, ast_tanh),
-    DEF_FUNCTION("trunc", {1,  1}, ast_trunc),
+    DEF_CALLABLE("abs",   {1,  1}, ast_abs),
+    DEF_CALLABLE("ceil",  {1,  1}, ast_ceil),
+    DEF_CALLABLE("cos",   {1,  1}, ast_cos),
+    DEF_CALLABLE("cosh",  {1,  1}, ast_cosh),
+    DEF_CALLABLE("exp",   {1,  1}, ast_exp),
+    DEF_CALLABLE("floor", {1,  1}, ast_floor),
+    DEF_CALLABLE("log",   {1,  1}, ast_log),
+    DEF_CALLABLE("log10", {1,  1}, ast_log10),
+    DEF_CALLABLE("pow",   {2,  2}, ast_pow),
+    DEF_CALLABLE("rand",  {0,  0}, ast_rand),
+    DEF_CALLABLE("round", {1,  1}, ast_round),
+    DEF_CALLABLE("sin",   {1,  1}, ast_sin),
+    DEF_CALLABLE("sinh",  {1,  1}, ast_sinh),
+    DEF_CALLABLE("sqrt",  {1,  1}, ast_sqrt),
+    DEF_CALLABLE("tan",   {1,  1}, ast_tan),
+    DEF_CALLABLE("tanh",  {1,  1}, ast_tanh),
+    DEF_CALLABLE("trunc", {1,  1}, ast_trunc),
 
-    DEF_FUNCTION("print", {1, 64}, ast_print),
+    DEF_CALLABLE("print", {1, 64}, ast_print),
 };
 
-void map_functions(void)
+void map_callables(void)
 {
-    size_t count = sizeof function_list / sizeof *function_list;
+    size_t count = sizeof callable_list / sizeof *callable_list;
 
-    functions = hashmap_create(comp_function, hash_function, count * 4);
-    if (functions == NULL)
+    callables = hashmap_create(comp_callable, hash_callable, count * 4);
+    if (callables == NULL)
     {
         perror("hashmap_create");
         exit(EXIT_FAILURE);
     }
     for (size_t iter = 0; iter < count; iter++)
     {
-        if (hashmap_insert(functions, &function_list[iter]) == NULL)
+        if (hashmap_insert(callables, &callable_list[iter]) == NULL)
         {
             perror("hashmap_insert");
             exit(EXIT_FAILURE);
@@ -414,9 +414,9 @@ void map_functions(void)
     }
 }
 
-void unmap_functions(void)
+void unmap_callables(void)
 {
-    hashmap_destroy(functions, NULL);
+    hashmap_destroy(callables, NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

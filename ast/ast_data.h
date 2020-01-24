@@ -6,7 +6,7 @@ typedef enum
     TYPE_NONE,
     TYPE_OPERATOR,
     TYPE_STATEMENT,
-    TYPE_FUNCTION,
+    TYPE_CALLABLE,
     TYPE_VARIABLE,
     TYPE_BOOLEAN,
     TYPE_NUMBER,
@@ -88,7 +88,7 @@ typedef struct
         int min, max;
     } args;
     int (*eval)(int);
-} ast_function;
+} ast_callable;
 
 typedef struct ast_operator ast_operator;
 typedef struct ast_variable ast_variable;
@@ -100,7 +100,7 @@ typedef struct ast_data
     {
         const ast_operator *operator;
         const ast_statement *statement;
-        const ast_function *function;
+        const ast_callable *callable;
         ast_variable *variable;
         double number;
         const char *string;
@@ -138,9 +138,9 @@ int is_iterator(const ast_data *);
 ast_data *map_statement(const char *);
 ast_data *map_branch(int);
 
-ast_data *map_function(const char *);
-void map_functions(void);
-void unmap_functions(void);
+ast_data *map_callable(const char *);
+void map_callables(void);
+void unmap_callables(void);
 
 ast_data *map_variable(const char *);
 void map_variables(void);
