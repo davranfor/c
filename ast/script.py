@@ -7,7 +7,6 @@ for (i = 1, i < 1e3, i += 1)
     end
 end
 
-
 test = 1;
 if (test == 0)
     print("test == 0\n");
@@ -20,8 +19,15 @@ else
     end
 end
 
-print((3 * 2) + ( 3 * 2) , "\n");
+print((3 * 2) + (3 * 2) , "\n");
 print(pow(trunc(("3" + 0.14)), 2), "\n");
 print(ceil("4.15"), "\n");
+print(null, "\n");
 print("Bye\n");
-3+2;
+
+x = 0;
+for (i = 0, i < 100000, i += 1)
+    x += 1;
+end
+print("x = ", x, "\n");
+

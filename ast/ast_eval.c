@@ -484,7 +484,7 @@ int ast_sinh(int args)
     return 1;
 }
 
-int ast_sqr(int args)
+int ast_sqrt(int args)
 {
     (void)args;
 
@@ -550,6 +550,9 @@ int ast_print(int args)
                 break;
             case TYPE_STRING:
                 result += printf("%s", data->string);
+                break;
+            case TYPE_NULL:
+                result += printf("null");
                 break;
             default:
                 printf("Can not print this value\n");

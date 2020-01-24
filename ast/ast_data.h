@@ -11,6 +11,7 @@ typedef enum
     TYPE_BOOLEAN,
     TYPE_NUMBER,
     TYPE_STRING,
+    TYPE_NULL,
 } ast_type;
 
 enum
@@ -145,9 +146,10 @@ ast_data *map_variable(const char *);
 void map_variables(void);
 void unmap_variables(void);
 
+ast_data *map_boolean(const char *);
 ast_data *map_number(const char *);
 ast_data *map_string(const char *);
-ast_data *map_boolean(const char *);
+ast_data *map_null(const char *);
 
 #endif /* AST_DATA_H */
 

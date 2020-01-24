@@ -52,7 +52,7 @@ int ast_rand(int);
 int ast_round(int);
 int ast_sin(int);
 int ast_sinh(int);
-int ast_sqr(int);
+int ast_sqrt(int);
 int ast_tan(int);
 int ast_tanh(int);
 int ast_trunc(int);

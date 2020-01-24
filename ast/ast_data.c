@@ -386,7 +386,7 @@ static ast_data function_list[] =
     DEF_FUNCTION("round",   {1,  1}, ast_round),
     DEF_FUNCTION("sin",     {1,  1}, ast_sin),
     DEF_FUNCTION("sinh",    {1,  1}, ast_sinh),
-    DEF_FUNCTION("sqr",     {1,  1}, ast_sqr),
+    DEF_FUNCTION("sqrt",    {1,  1}, ast_sqrt),
     DEF_FUNCTION("tan",     {1,  1}, ast_tan),
     DEF_FUNCTION("tanh",    {1,  1}, ast_tanh),
     DEF_FUNCTION("trunc",   {1,  1}, ast_trunc),
@@ -502,6 +502,27 @@ void unmap_variables(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+ast_data *map_boolean(const char *str)
+{
+    static ast_data booleans[] =
+    {
+        {TYPE_BOOLEAN, .number = 0},
+        {TYPE_BOOLEAN, .number = 1},
+    };
+
+    if (strcmp(str, "true") == 0)
+    {
+        return &booleans[1];
+    }
+    else if (strcmp(str, "false") == 0)
+    {
+        return &booleans[0];
+    }
+    return NULL;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 ast_data *map_number(const char *str)
 {
     ast_data *data = NULL;
@@ -517,6 +538,8 @@ ast_data *map_number(const char *str)
     return data;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 ast_data *map_string(const char *str)
 {
     ast_data *data = new_data(TYPE_STRING);
@@ -525,22 +548,17 @@ ast_data *map_string(const char *str)
     return data;
 }
 
-ast_data *map_boolean(const char *str)
-{
-    static ast_data booleans[] =
-    {
-        {TYPE_BOOLEAN, .number = 1},
-        {TYPE_BOOLEAN, .number = 0},
-    };
+///////////////////////////////////////////////////////////////////////////////
 
-    if (strcmp(str, "true") == 0)
+ast_data *map_null(const char *str)
+{
+    static ast_data null = {TYPE_NULL, .number = 0};
+
+    if (strcmp(str, "null") == 0)
     {
-        return &booleans[0];
-    }
-    else if (strcmp(str, "false") == 0)
-    {
-        return &booleans[1];
+        return &null;
     }
     return NULL;
 }
+
 

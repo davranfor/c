@@ -159,6 +159,10 @@ static ast_data *parse(const char **text)
         {
             // true or false
         }
+        else if ((data = map_null(start)))
+        {
+            // null
+        }
         else
         {
             if (!valid_name(start))
@@ -183,12 +187,9 @@ static ast_data *parse(const char **text)
                 {
                     data = map_variable(start);
                 }
-                else
+                else if (data->statement->args > 0)
                 {
-                    if (data->statement->args > 0)
-                    {
-                        die("'(' was expected");
-                    }
+                    die("'(' was expected");
                 }
             }
         }
@@ -239,7 +240,7 @@ static void move_operands(int args)
     }
 }
 
-static void move_args(void)
+static void move_arguments(void)
 {
     struct call *call = pop_call();
 
@@ -315,7 +316,7 @@ static void move_expressions(ast_node *node)
     }
 }
 
-static void move_branch(const ast_node *node)
+static void move_branches(const ast_node *node)
 {
     push(&operators, map_branch(1));
     operators->left = node->left->right;
@@ -355,20 +356,20 @@ static void move_block(bool end)
         default:
             break;
     }
-    if (end == true)
+    if (end)
     {
         const ast_node *statement = pop_statement();
 
         if (operands != statement)
         {
-            move_branch(statement);
+            move_branches(statement);
         }
     }
     else
     {
         if (operands->data->statement->value == STATEMENT_ELSE)
         {
-            die("'elif' and 'else' can not follow an 'else' block");
+            die("An 'else' block can not be followed by another statement");
         }
     }
 }
@@ -395,7 +396,7 @@ static ast_data *classify(const char **text)
             case ',':
                 if (peek_call() == NULL)
                 {
-                    die("Comma used outside function");
+                    die("',' was not expected");
                 }
                 if (expected == OPERAND)
                 {
@@ -480,7 +481,7 @@ static ast_data *classify(const char **text)
                         if (peek_statement_iterators() == 0)
                         {
                             die("'continue' and 'break'"
-                                " can not be used outside a loop");
+                                " can't be used outside a loop");
                         }
                         break;
                     default:
@@ -532,7 +533,7 @@ static ast_node *build(const char *text)
                     {
                         if (arguments(root) == 0)
                         {
-                            move_args();
+                            move_arguments();
                             break;
                         }
                         move_operator();
@@ -616,7 +617,7 @@ static ast_node *build(const char *text)
             push(&operators, map_operator(&text));
             push_call(TYPE_FUNCTION);
         }
-        else // TYPE_VARIABLE or TYPE_NUMBER or TYPE_STRING
+        else
         {
             push(&operands, data);
             if (peek_call() != NULL)
@@ -661,6 +662,9 @@ static void explain(const ast_node *node, int level)
             case TYPE_STRING:
                 printf("\"%s\"\n", node->data->string);
                 break;
+            case TYPE_NULL:
+                printf("null\n");
+                break;
             default:
                 printf("Undefined type %d\n", node->data->type);
                 break;
@@ -691,6 +695,7 @@ static ast_data eval(const ast_node *node)
         case TYPE_BOOLEAN:
         case TYPE_NUMBER:
         case TYPE_STRING:
+        case TYPE_NULL:
             return *node->data;
         case TYPE_OPERATOR:
             if (node->left != NULL)
