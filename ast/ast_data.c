@@ -373,25 +373,25 @@ static unsigned long hash_function(const void *item)
 
 static ast_data function_list[] =
 {
-    DEF_FUNCTION("abs",     {1,  1}, ast_abs),
-    DEF_FUNCTION("ceil",    {1,  1}, ast_ceil),
-    DEF_FUNCTION("cos",     {1,  1}, ast_cos),
-    DEF_FUNCTION("cosh",    {1,  1}, ast_cosh),
-    DEF_FUNCTION("exp",     {1,  1}, ast_exp),
-    DEF_FUNCTION("floor",   {1,  1}, ast_floor),
-    DEF_FUNCTION("log",     {1,  1}, ast_log),
-    DEF_FUNCTION("log10",   {1,  1}, ast_log10),
-    DEF_FUNCTION("pow",     {2,  2}, ast_pow),
-    DEF_FUNCTION("rand",    {0,  0}, ast_rand),
-    DEF_FUNCTION("round",   {1,  1}, ast_round),
-    DEF_FUNCTION("sin",     {1,  1}, ast_sin),
-    DEF_FUNCTION("sinh",    {1,  1}, ast_sinh),
-    DEF_FUNCTION("sqrt",    {1,  1}, ast_sqrt),
-    DEF_FUNCTION("tan",     {1,  1}, ast_tan),
-    DEF_FUNCTION("tanh",    {1,  1}, ast_tanh),
-    DEF_FUNCTION("trunc",   {1,  1}, ast_trunc),
+    DEF_FUNCTION("abs",   {1,  1}, ast_abs),
+    DEF_FUNCTION("ceil",  {1,  1}, ast_ceil),
+    DEF_FUNCTION("cos",   {1,  1}, ast_cos),
+    DEF_FUNCTION("cosh",  {1,  1}, ast_cosh),
+    DEF_FUNCTION("exp",   {1,  1}, ast_exp),
+    DEF_FUNCTION("floor", {1,  1}, ast_floor),
+    DEF_FUNCTION("log",   {1,  1}, ast_log),
+    DEF_FUNCTION("log10", {1,  1}, ast_log10),
+    DEF_FUNCTION("pow",   {2,  2}, ast_pow),
+    DEF_FUNCTION("rand",  {0,  0}, ast_rand),
+    DEF_FUNCTION("round", {1,  1}, ast_round),
+    DEF_FUNCTION("sin",   {1,  1}, ast_sin),
+    DEF_FUNCTION("sinh",  {1,  1}, ast_sinh),
+    DEF_FUNCTION("sqrt",  {1,  1}, ast_sqrt),
+    DEF_FUNCTION("tan",   {1,  1}, ast_tan),
+    DEF_FUNCTION("tanh",  {1,  1}, ast_tanh),
+    DEF_FUNCTION("trunc", {1,  1}, ast_trunc),
 
-    DEF_FUNCTION("print",   {1, 64}, ast_print),
+    DEF_FUNCTION("print", {1, 64}, ast_print),
 };
 
 void map_functions(void)

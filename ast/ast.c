@@ -899,8 +899,7 @@ void ast_eval(const ast_node *node)
                 {
                     break;
                 }
-                node = pop_jump()->right;
-                if (node != NULL)
+                if ((node = pop_jump()->right))
                 {
                     break;
                 }

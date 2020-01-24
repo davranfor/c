@@ -23,11 +23,12 @@ print((3 * 2) + (3 * 2) , "\n");
 print(pow(trunc(("3" + 0.14)), 2), "\n");
 print(ceil("4.15"), "\n");
 print(null, "\n");
-print("Bye\n");
 
 x = 0;
 for (i = 0, i < 100000, i += 1)
     x += 1;
 end
 print("x = ", x, "\n");
+
+print("Bye\n");
 
