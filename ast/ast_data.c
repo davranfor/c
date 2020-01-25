@@ -340,15 +340,85 @@ ast_data *map_branch(int branch)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static hashmap *callables;
-
-ast_data *map_callable(const char *name)
+static ast_data *new_function(void)
 {
-    const ast_callable callable = {.name = name};
-    ast_data data = {.callable = &callable};
+    ast_data *data;
 
-    return hashmap_search(callables, &data);
+    data = new_data(TYPE_FUNCTION);
+
+    ast_function *function;
+
+    function = malloc(sizeof *function);
+    if (function == NULL)
+    {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+    function->name = NULL;
+    data->function = function;
+    return data;
 }
+
+static int comp_function(const void *pa, const void *pb)
+{
+    const ast_data *a = pa;
+    const ast_data *b = pb;
+
+    return strcmp(a->function->name, b->function->name);
+}
+
+static unsigned long hash_function(const void *item)
+{
+    const ast_data *data = item;
+
+    return hash_string((const unsigned char *)data->function->name);
+}
+
+static void free_function(void *data)
+{
+    free(((ast_data *)data)->function);
+    free(data);
+}
+
+static hashmap *functions;
+static ast_data *data_fnc;
+
+static ast_data *map_function(const char *name)
+{
+    ast_data *data;
+
+    data_fnc->function->name = name;
+    data = hashmap_insert(functions, data_fnc);
+    if (data == NULL)
+    {
+        perror("hashmap_insert");
+        exit(EXIT_FAILURE);
+    }
+    if (data == data_fnc)
+    {
+        data_fnc = new_function();
+    }
+    return data;
+}
+
+static void map_functions(void)
+{
+    functions = hashmap_create(comp_function, hash_function, 1000);
+    if (functions == NULL)
+    {
+        perror("hashmap_create");
+        exit(EXIT_FAILURE);
+    }
+    data_fnc = new_function();
+}
+
+static void unmap_functions(void)
+{
+    hashmap_destroy(functions, free_function);
+    free_function(data_fnc);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 static int comp_callable(const void *pa, const void *pb)
 {
@@ -363,6 +433,22 @@ static unsigned long hash_callable(const void *item)
     const ast_data *data = item;
 
     return hash_string((const unsigned char *)data->callable->name);
+}
+
+static hashmap *callables;
+
+ast_data *map_callable(const char *name)
+{
+    const ast_callable callable = {.name = name};
+    ast_data temp = {.callable = &callable};
+    ast_data *data;
+
+    data = hashmap_search(callables, &temp);
+    if (data == NULL)
+    {
+        return map_function(name);
+    }
+    return data;
 }
 
 #define DEF_CALLABLE(...)                               \
@@ -394,7 +480,7 @@ static ast_data callable_list[] =
     DEF_CALLABLE("print", {1, 64}, ast_print),
 };
 
-void map_callables(void)
+static void map_callables(void)
 {
     size_t count = sizeof callable_list / sizeof *callable_list;
 
@@ -414,15 +500,12 @@ void map_callables(void)
     }
 }
 
-void unmap_callables(void)
+static void unmap_callables(void)
 {
     hashmap_destroy(callables, NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-static hashmap *variables;
-static ast_data *data_var;
 
 static ast_data *new_variable(void)
 {
@@ -441,24 +524,6 @@ static ast_data *new_variable(void)
     variable->data.type = TYPE_NUMBER;
     variable->data.number = 0;
     data->variable = variable;
-    return data;
-}
-
-ast_data *map_variable(const char *name)
-{
-    ast_data *data;
-
-    data_var->variable->name = name;
-    data = hashmap_insert(variables, data_var);
-    if (data == NULL)
-    {
-        perror("hashmap_insert");
-        exit(EXIT_FAILURE);
-    }
-    if (data == data_var)
-    {
-        data_var = new_variable();
-    }
     return data;
 }
 
@@ -483,7 +548,28 @@ static void free_variable(void *data)
     free(data);
 }
 
-void map_variables(void)
+static hashmap *variables;
+static ast_data *data_var;
+
+ast_data *map_variable(const char *name)
+{
+    ast_data *data;
+
+    data_var->variable->name = name;
+    data = hashmap_insert(variables, data_var);
+    if (data == NULL)
+    {
+        perror("hashmap_insert");
+        exit(EXIT_FAILURE);
+    }
+    if (data == data_var)
+    {
+        data_var = new_variable();
+    }
+    return data;
+}
+
+static void map_variables(void)
 {
     variables = hashmap_create(comp_variable, hash_variable, 1000);
     if (variables == NULL)
@@ -494,7 +580,7 @@ void map_variables(void)
     data_var = new_variable();
 }
 
-void unmap_variables(void)
+static void unmap_variables(void)
 {
     hashmap_destroy(variables, free_variable);
     free_variable(data_var);
@@ -561,4 +647,19 @@ ast_data *map_null(const char *str)
     return NULL;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+void map_data(void)
+{
+    map_functions();
+    map_callables();
+    map_variables();
+}
+
+void unmap_data(void)
+{
+    unmap_functions();
+    unmap_callables();
+    unmap_variables();
+}
 

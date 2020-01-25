@@ -175,10 +175,6 @@ static ast_data *parse(const char **text)
                 if (data == NULL)
                 {
                     data = map_callable(start);
-                    if (data == NULL)
-                    {
-                        die("\"%s\" was not found", start);
-                    }
                 }
             }
             else
@@ -285,6 +281,8 @@ static void move_arguments(void)
                     call->args
                 );
             }
+            // FALLTHROUGH
+        case TYPE_FUNCTION:
             operands->left = operators->left;
             if (call->args == 0)
             {
@@ -493,6 +491,7 @@ static ast_data *classify(const char **text)
                 }
                 starting = data->statement->args == 0;
                 break;
+            case TYPE_FUNCTION:
             case TYPE_CALLABLE:
                 starting = false;
                 break;
@@ -611,6 +610,12 @@ static ast_node *build(const char *text)
                     break;
             }   
         }
+        else if (data->type == TYPE_FUNCTION)
+        {
+            push(&operands, data);
+            push(&operators, map_operator(&text));
+            push_call(TYPE_FUNCTION);
+        }
         else if (data->type == TYPE_CALLABLE)
         {
             push(&operands, data);
@@ -646,6 +651,9 @@ static void explain(const ast_node *node, int level)
                 break;
             case TYPE_STATEMENT:
                 printf("%s\n", node->data->statement->name);
+                break;
+            case TYPE_FUNCTION:
+                printf("%s()\n", node->data->function->name);
                 break;
             case TYPE_CALLABLE:
                 printf("%s()\n", node->data->callable->name);
@@ -764,8 +772,7 @@ static int test(const ast_node *node)
 
 void ast_create(void)
 {
-    map_callables();
-    map_variables();
+    map_data();
 }
 
 ast_node *ast_build(char *text)
@@ -923,7 +930,6 @@ void ast_destroy(void)
     operators = NULL;
     clear(operands);
     operands = NULL;
-    unmap_callables();
-    unmap_variables();
+    unmap_data();
 }
 

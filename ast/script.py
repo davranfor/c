@@ -25,7 +25,7 @@ print(ceil("4.15"), "\n");
 print(null, "\n");
 
 x = 0;
-for (i = 0, i < 100000, i += 1)
+for (i = 0, i < 10, i += 1)
     x += 1;
 end
 print("x = ", x, "\n");
