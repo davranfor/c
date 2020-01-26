@@ -266,7 +266,7 @@ int precedence(const ast_data *pa, const ast_data *pb)
 
 ast_data *unary(ast_data *data)
 {
-    switch (data->operator->value)
+    switch (data->operator->key)
     {
         case OPERATOR_ADD:
             return &operators[OPERATOR_PLUS];
@@ -280,7 +280,7 @@ ast_data *unary(ast_data *data)
 
 int is_iterator(const ast_data *data)
 {
-    switch (data->statement->value)
+    switch (data->statement->key)
     {
         case STATEMENT_WHILE:
         case STATEMENT_UNTIL:
@@ -300,30 +300,31 @@ int is_iterator(const ast_data *data)
 
 static ast_data statements[] =
 {
-    DEF_STATEMENT("",         0, 0),
-    DEF_STATEMENT("if",       1, 1),
-    DEF_STATEMENT("elif",     1, 2),
-    DEF_STATEMENT("else",     0, 3),
-    DEF_STATEMENT("while",    1, 4),
-    DEF_STATEMENT("until",    1, 5),
-    DEF_STATEMENT("for",      3, 6),
-    DEF_STATEMENT("foreach",  1, 7),
-    DEF_STATEMENT("continue", 0, 8),
-    DEF_STATEMENT("break",    0, 9),
-    DEF_STATEMENT("end",      0, 10),
+    DEF_STATEMENT(STATEMENT_NONE,     0, ""),
+    DEF_STATEMENT(STATEMENT_DEF,      0, "def"),
+    DEF_STATEMENT(STATEMENT_END,      0, "end"),
+    DEF_STATEMENT(STATEMENT_IF,       1, "if"),
+    DEF_STATEMENT(STATEMENT_ELIF,     1, "elif"),
+    DEF_STATEMENT(STATEMENT_ELSE,     0, "else"),
+    DEF_STATEMENT(STATEMENT_WHILE,    1, "while"),
+    DEF_STATEMENT(STATEMENT_UNTIL,    1, "until"),
+    DEF_STATEMENT(STATEMENT_FOR,      3, "for"),
+    DEF_STATEMENT(STATEMENT_FOREACH,  2, "foreach"),
+    DEF_STATEMENT(STATEMENT_CONTINUE, 0, "continue"),
+    DEF_STATEMENT(STATEMENT_BREAK,    0, "break"),
 };
 
 static ast_data branches[] =
 {
-    DEF_STATEMENT("if",       0, 11), // IFEL
-    DEF_STATEMENT("then",     0, 12),
+    DEF_STATEMENT(STATEMENT_IFEL,     0, "if"),
+    DEF_STATEMENT(STATEMENT_THEN,     0, "then"),
 };
 
 ast_data *map_statement(const char *name)
 {
     size_t count = sizeof statements / sizeof *statements;
 
-    for (size_t iter = 0; iter < count; iter++)
+    for (size_t iter = 1; iter < count; iter++)
     {
         if (strcmp(statements[iter].statement->name, name) == 0)
         {

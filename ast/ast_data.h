@@ -60,6 +60,8 @@ enum
 enum
 {
     STATEMENT_NONE,
+    STATEMENT_DEF,
+    STATEMENT_END,
     STATEMENT_IF,
     STATEMENT_ELIF,
     STATEMENT_ELSE,
@@ -69,16 +71,15 @@ enum
     STATEMENT_FOREACH,
     STATEMENT_CONTINUE,
     STATEMENT_BREAK,
-    STATEMENT_END,
     STATEMENT_IFEL,
     STATEMENT_THEN,
 };
 
 typedef struct
 {
-    const char *name;
+    int key;
     int args;
-    int value;
+    const char *name;
 } ast_statement;
 
 typedef struct
@@ -113,7 +114,7 @@ typedef struct ast_data
 
 struct ast_operator
 {
-    int value;
+    int key;
     int args;
     int precedence;
     int associativity;

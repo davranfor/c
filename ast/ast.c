@@ -365,7 +365,7 @@ static void move_block(bool end)
     }
     else
     {
-        if (operands->data->statement->value == STATEMENT_ELSE)
+        if (operands->data->statement->key == STATEMENT_ELSE)
         {
             die("An 'else' block can not be followed by another statement");
         }
@@ -385,7 +385,7 @@ static ast_data *classify(const char **text)
     }
     if (data->type == TYPE_OPERATOR)
     {
-        switch (data->operator->value)
+        switch (data->operator->key)
         {
             case '(':
             case ')':
@@ -461,7 +461,7 @@ static ast_data *classify(const char **text)
         switch (data->type)
         {
             case TYPE_STATEMENT:
-                switch (data->statement->value)
+                switch (data->statement->key)
                 {
                     case STATEMENT_ELIF:
                     case STATEMENT_ELSE:
@@ -521,7 +521,7 @@ static ast_node *build(const char *text)
         {
             ast_data *root;
 
-            switch (data->operator->value)
+            switch (data->operator->key)
             {
                 case '(':
                     push(&operators, data);
@@ -578,8 +578,12 @@ static ast_node *build(const char *text)
         }
         else if (data->type == TYPE_STATEMENT)
         {
-            switch (data->statement->value)
+            switch (data->statement->key)
             {
+                case STATEMENT_DEF:
+                    push(&operands, data);
+                    push_statement(operands);
+                    break;
                 case STATEMENT_IF:
                 case STATEMENT_WHILE:
                 case STATEMENT_UNTIL:
@@ -709,7 +713,7 @@ static ast_data eval(const ast_node *node)
             if (node->left != NULL)
             {
                 a = eval(node->left);
-                if (is_assignment(node->data->operator->value))
+                if (is_assignment(node->data->operator->key))
                 {
                     if (a.type != TYPE_VARIABLE)
                     {
@@ -793,8 +797,11 @@ void ast_eval(const ast_node *node)
         switch (node->data->type)
         {
             case TYPE_STATEMENT:
-                switch (node->data->statement->value)
+                switch (node->data->statement->key)
                 {
+                    case STATEMENT_DEF:
+                        node = node->right;
+                        break;
                     case STATEMENT_FOR:
                         if (node != peek_jump())
                         {

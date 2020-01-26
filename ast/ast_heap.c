@@ -142,7 +142,7 @@ int peek_statement_type(void)
     {
         return 0;
     }
-    return statements.node[statements.count - 1]->data->statement->value;
+    return statements.node[statements.count - 1]->data->statement->key;
 }
 
 int peek_statement_iterators(void)
