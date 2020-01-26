@@ -12,8 +12,11 @@ void clear(ast_node *);
 void push_statement(const ast_node *);
 const ast_node *pop_statement(void);
 const ast_node *peek_statement(void);
-int peek_statement_type(void);
-int peek_statement_iterators(void);
+int statement_type(void);
+int defs(void);
+int defined(void);
+int defining(const ast_node *);
+int iterators(void);
 
 void push_branch(const ast_node *);
 const ast_node *pop_branch(void);

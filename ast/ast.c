@@ -281,10 +281,30 @@ static void move_arguments(void)
                     call->args
                 );
             }
-            // FALLTHROUGH
-        case TYPE_FUNCTION:
             operands->left = operators->left;
             if (call->args == 0)
+            {
+                expected = OPERATOR;
+            }
+            break;
+        case TYPE_FUNCTION:
+            operands->left = operators->left;
+            if (defining(operands->right))
+            {
+                if (operands->data->function->node != NULL)
+                {
+                    die("\"%s\" was already defined",
+                        operands->data->function->name
+                    );
+                }
+                else
+                {
+                    operands->data->function->node = operands->right;
+                }
+                expected = OPERAND;
+                starting = true;
+            }
+            else if (call->args == 0)
             {
                 expected = OPERATOR;
             }
@@ -356,6 +376,11 @@ static void move_block(bool end)
     }
     if (end)
     {
+        if (defs() && !defined())
+        {
+            die("Malformed 'def'");
+        }
+
         const ast_node *statement = pop_statement();
 
         if (operands != statement)
@@ -463,9 +488,15 @@ static ast_data *classify(const char **text)
             case TYPE_STATEMENT:
                 switch (data->statement->key)
                 {
+                    case STATEMENT_DEF:
+                        if (defs() > 0)
+                        {
+                            die("Nested defs are not allowed");
+                        }
+                        break;
                     case STATEMENT_ELIF:
                     case STATEMENT_ELSE:
-                        if (peek_statement_type() != STATEMENT_IF)
+                        if (statement_type() != STATEMENT_IF)
                         {
                             die("'else' without 'if'");
                         }
@@ -476,7 +507,7 @@ static ast_data *classify(const char **text)
                         {
                             die("';' was expected");
                         }
-                        if (peek_statement_iterators() == 0)
+                        if (iterators() == 0)
                         {
                             die("'continue' and 'break'"
                                 " can't be used outside a loop");

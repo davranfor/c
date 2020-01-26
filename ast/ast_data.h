@@ -85,6 +85,7 @@ typedef struct
 typedef struct
 {
     const char *name;
+    const void *node;
 } ast_function;
 
 typedef struct

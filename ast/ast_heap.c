@@ -92,6 +92,7 @@ void clear(ast_node *root)
 struct statements
 {
     const ast_node *node[MAX_HEAP];
+    int defstatus;
     int iterators;
     int count;
 };
@@ -105,7 +106,11 @@ void push_statement(const ast_node *node)
         die();
     }
     statements.node[statements.count++] = node;
-    if (is_iterator(node->data))
+    if (node->data->statement->key == STATEMENT_DEF)
+    {
+        statements.defstatus = 1;
+    }
+    else if (is_iterator(node->data))
     {
         statements.iterators++;
     }
@@ -120,7 +125,11 @@ const ast_node *pop_statement(void)
 
     const ast_node *node = statements.node[--statements.count];
 
-    if (is_iterator(node->data))
+    if (node->data->statement->key == STATEMENT_DEF)
+    {
+        statements.defstatus = 0;
+    }
+    else if (is_iterator(node->data))
     {
         statements.iterators--;
     }
@@ -136,7 +145,7 @@ const ast_node *peek_statement(void)
     return statements.node[statements.count - 1];
 }
 
-int peek_statement_type(void)
+int statement_type(void)
 {
     if (statements.count == 0)
     {
@@ -145,7 +154,32 @@ int peek_statement_type(void)
     return statements.node[statements.count - 1]->data->statement->key;
 }
 
-int peek_statement_iterators(void)
+int defs(void)
+{
+    return statements.defstatus;
+}
+
+int defined(void)
+{
+    return statements.defstatus == 2;
+}
+
+int defining(const ast_node *node)
+{
+    if (statements.defstatus == 1)
+    {
+        if ((node != NULL) &&
+            (node->data->type == TYPE_STATEMENT) &&
+            (node->data->statement->key == STATEMENT_DEF))
+        {
+            statements.defstatus = 2;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int iterators(void)
 {
     return statements.iterators;
 }

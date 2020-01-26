@@ -1,6 +1,10 @@
 print("Starting ...\n");
 
-def
+def foo()
+    print("");
+end
+
+def bar()
     print("");
 end
 

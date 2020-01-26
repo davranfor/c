@@ -356,6 +356,7 @@ static ast_data *new_function(void)
         exit(EXIT_FAILURE);
     }
     function->name = NULL;
+    function->node = NULL;
     data->function = function;
     return data;
 }
