@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "ast_data.h"
 #include "ast_eval.h"
@@ -531,6 +532,27 @@ int ast_trunc(int args)
 ///////////////////////////////////////////////////////////////////////////////
 // Misc
 ///////////////////////////////////////////////////////////////////////////////
+
+int ast_cond(int args)
+{
+    (void)args;
+
+    ast_data *data = &frame[counter - 3];
+    int offset = 1;
+
+    switch (data->type)
+    {
+        case TYPE_STRING:
+            offset += data->string[0] == '\0';
+            break;
+        default:
+            offset += data->number == 0;
+            break;
+    }
+    memcpy(data, (data + offset), sizeof *data);
+    counter -= 2;
+    return 1;
+}
 
 int ast_print(int args)
 {

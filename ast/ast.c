@@ -185,7 +185,7 @@ static ast_data *parse(const char **text)
                 }
                 else if (data->statement->args > 0)
                 {
-                    die("'(' was expected");
+                    die("Missing '(' before condition");
                 }
             }
         }
@@ -271,10 +271,16 @@ static void move_arguments(void)
             starting = true;
             break;
         case TYPE_CALLABLE:
+            if (defining(operands->right))
+            {
+                die("def %s() shadows a standard function",
+                    operands->data->callable->name
+                );
+            }
             if ((call->args < operands->data->callable->args.min) ||
                 (call->args > operands->data->callable->args.max))
             {
-                die("\"%s\" was expecting %d to %d argument(s), got %d",
+                die("\"%s\" was expecting (min: %d, max: %d) argument(s), got %d",
                     operands->data->callable->name,
                     operands->data->callable->args.min,
                     operands->data->callable->args.max,
@@ -378,7 +384,7 @@ static void move_block(bool end)
     {
         if (defs() && !defined())
         {
-            die("Malformed 'def'");
+            die("'def' statement requires a name");
         }
 
         const ast_node *statement = pop_statement();
@@ -491,7 +497,7 @@ static ast_data *classify(const char **text)
                     case STATEMENT_DEF:
                         if (defs() > 0)
                         {
-                            die("Nested defs are not allowed");
+                            die("Nested 'def's are not allowed");
                         }
                         break;
                     case STATEMENT_ELIF:
@@ -725,7 +731,7 @@ static void explain(const ast_node *node, int level)
         x = x.variable->data;    \
     }
 
-static ast_data eval(const ast_node *node)
+static ast_data eval_expr(const ast_node *node)
 {
     ast_node *next = NULL;
     ast_data a = {0};
@@ -743,7 +749,7 @@ static ast_data eval(const ast_node *node)
         case TYPE_OPERATOR:
             if (node->left != NULL)
             {
-                a = eval(node->left);
+                a = eval_expr(node->left);
                 if (is_assignment(node->data->operator->key))
                 {
                     if (a.type != TYPE_VARIABLE)
@@ -757,7 +763,7 @@ static ast_data eval(const ast_node *node)
                 }
                 if (node->left->right != NULL)
                 {
-                    b = eval(node->left->right);
+                    b = eval_expr(node->left->right);
                     AST_TRANSFORM_VAR(b);
                 }
             }
@@ -766,7 +772,7 @@ static ast_data eval(const ast_node *node)
             next = node->left;
             while (next != NULL)
             {
-                a = eval(next);
+                a = eval_expr(next);
                 AST_TRANSFORM_VAR(a);
                 push_data(a);
                 next = next->right;
@@ -785,9 +791,9 @@ static ast_data eval(const ast_node *node)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static int test(const ast_node *node)
+static int eval_cond(const ast_node *node)
 {
-    ast_data data = eval(node);
+    ast_data data = eval_expr(node);
 
     if (data.type == TYPE_VARIABLE)
     {
@@ -795,7 +801,7 @@ static int test(const ast_node *node)
     }
     if (data.type == TYPE_STRING)
     {
-        return data.string[0] == '\0';
+        return data.string[0] != '\0';
     }
     else
     {
@@ -805,23 +811,7 @@ static int test(const ast_node *node)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void ast_create(void)
-{
-    map_data();
-}
-
-ast_node *ast_build(char *text)
-{
-    strings = text;
-    return build(text);
-}
-
-void ast_explain(const ast_node *node)
-{
-    explain(node, 0);
-}
-
-void ast_eval(const ast_node *node)
+static void eval_tree(const ast_node *node)
 {
     while (node != NULL)
     {
@@ -837,15 +827,15 @@ void ast_eval(const ast_node *node)
                         if (node != peek_jump())
                         {
                             push_jump(node);
-                            eval(node->left);
+                            eval_expr(node->left);
                             node = node->left->right;
                         }
                         else
                         {
                             node = node->left->right;
-                            eval(node->right);
+                            eval_expr(node->right);
                         }
-                        if (test(node) == 0)
+                        if (eval_cond(node) == 0)
                         {
                             node = pop_jump()->right;
                         }
@@ -861,7 +851,7 @@ void ast_eval(const ast_node *node)
                         {
                             push_jump(node);
                         }
-                        if (test(node->left) == 0)
+                        if (eval_cond(node->left) == 0)
                         {
                             node = pop_jump()->right;
                         }
@@ -872,7 +862,7 @@ void ast_eval(const ast_node *node)
                         break;
                     case STATEMENT_IF:
                         push_jump(node);
-                        if (test(node->left) == 0)
+                        if (eval_cond(node->left) == 0)
                         {
                             node = pop_jump()->right;
                         }
@@ -884,7 +874,7 @@ void ast_eval(const ast_node *node)
                     case STATEMENT_IFEL:
                         push_jump(node);
                         node = node->left;
-                        if (test(node) == false)
+                        if (eval_cond(node) == 0)
                         {
                             node = node->right->right;
                         }
@@ -894,7 +884,7 @@ void ast_eval(const ast_node *node)
                         }
                         break;
                     case STATEMENT_ELIF:
-                        if (test(node->left) == false)
+                        if (eval_cond(node->left) == 0)
                         {
                             node = node->right;
                         }
@@ -932,7 +922,7 @@ void ast_eval(const ast_node *node)
                 }
                 break;
             default:
-                eval(node);
+                eval_expr(node);
                 node = node->right;
                 break;
         }
@@ -951,6 +941,29 @@ void ast_eval(const ast_node *node)
             }
         }
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void ast_create(void)
+{
+    map_data();
+}
+
+ast_node *ast_build(char *text)
+{
+    strings = text;
+    return build(text);
+}
+
+void ast_explain(const ast_node *node)
+{
+    explain(node, 0);
+}
+
+void ast_eval(const ast_node *node)
+{
+    eval_tree(node);
 }
 
 void ast_help(void)

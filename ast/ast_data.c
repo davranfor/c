@@ -479,6 +479,7 @@ static ast_data callable_list[] =
     DEF_CALLABLE("tanh",  {1,  1}, ast_tanh),
     DEF_CALLABLE("trunc", {1,  1}, ast_trunc),
 
+    DEF_CALLABLE("cond",  {3,  3}, ast_cond),
     DEF_CALLABLE("print", {1, 64}, ast_print),
 };
 
