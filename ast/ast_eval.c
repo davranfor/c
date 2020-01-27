@@ -549,7 +549,7 @@ int ast_cond(int args)
             offset += data->number == 0;
             break;
     }
-    memcpy(data, (data + offset), sizeof *data);
+    memcpy(data, data + offset, sizeof *data);
     counter -= 2;
     return 1;
 }
