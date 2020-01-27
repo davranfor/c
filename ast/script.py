@@ -1,11 +1,11 @@
 print("Starting ...\n");
 
 def foo()
-    print("");
+    print("foo\n");
 end
 
 def bar()
-    print("");
+    print("bar\n");
 end
 
 # for 1 to 999 print multiples of 100
@@ -47,6 +47,9 @@ print("x = ", x, "\n");
 name = "Juan";
 age = 20;
 print(name, " es ", cond(age > 65, "viejo", cond(age < 15, "joven", "adulto")), "\n");
+
+print(foo() + 1, "\n");
+bar();
 
 print("Bye\n");
 

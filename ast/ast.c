@@ -260,7 +260,7 @@ static void move_arguments(void)
         case TYPE_STATEMENT:
             if (call->args != operands->data->statement->args)
             {
-                die("\"%s\" was expecting %d argument(s), got %d",
+                die("'%s' was expecting %d argument(s), got %d",
                     operands->data->statement->name,
                     operands->data->statement->args,
                     call->args
@@ -280,7 +280,7 @@ static void move_arguments(void)
             if ((call->args < operands->data->callable->args.min) ||
                 (call->args > operands->data->callable->args.max))
             {
-                die("\"%s\" was expecting (min: %d, max: %d) argument(s), got %d",
+                die("%s() was expecting (min: %d, max: %d) argument(s), got %d",
                     operands->data->callable->name,
                     operands->data->callable->args.min,
                     operands->data->callable->args.max,
@@ -299,13 +299,13 @@ static void move_arguments(void)
             {
                 if (operands->data->function->node != NULL)
                 {
-                    die("\"%s\" was already defined",
+                    die("%s() was already defined",
                         operands->data->function->name
                     );
                 }
                 else
                 {
-                    operands->data->function->node = operands->right;
+                    operands->data->function->node = operands;
                 }
                 expected = OPERAND;
                 starting = true;
@@ -725,6 +725,20 @@ static void explain(const ast_node *node, int level)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+static void eval_tree(const ast_node *);
+
+static ast_data eval_function(int args, const ast_node *node)
+{
+    ast_data data = {TYPE_NUMBER, .number = 0};
+
+    while (args--)
+    {
+        pop_data();
+    }
+    eval_tree(node->right);
+    return data;
+}
+
 #define AST_TRANSFORM_VAR(x)     \
     if (x.type == TYPE_VARIABLE) \
     {                            \
@@ -768,6 +782,21 @@ static ast_data eval_expr(const ast_node *node)
                 }
             }
             return node->data->operator->eval(a, b);
+        case TYPE_FUNCTION:
+            next = node->left;
+            while (next != NULL)
+            {
+                a = eval_expr(next);
+                AST_TRANSFORM_VAR(a);
+                push_data(a);
+                next = next->right;
+                args++;
+            }
+            if (node->data->function->node == NULL)
+            {
+                die("%s() is not defined", node->data->function->name);
+            }
+            return eval_function(args, node->data->function->node);
         case TYPE_CALLABLE:
             next = node->left;
             while (next != NULL)
@@ -780,7 +809,7 @@ static ast_data eval_expr(const ast_node *node)
             }
             if (node->data->callable->eval(args) == 0)
             {
-                die("\"%s\" returned error", node->data->callable->name);
+                die("%s() returned error", node->data->callable->name);
             }
             return pop_data();
         default:
