@@ -53,18 +53,15 @@ int main(int argc, char *argv[])
     atexit(ast_destroy);
 
     ast_create();
-
-    ast_node *ast = ast_build(script);
-
-    if (ast == NULL)
+    if (ast_build(script) == 0)
     {
         exit(EXIT_FAILURE);
     }
     if (explain != 0)
     {
-        ast_explain(ast);
+        ast_explain();
     }
-    ast_eval(ast);
+    ast_eval();
     return 0;
 }
 

@@ -18,13 +18,12 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static ast_node *script;
-
 static size_t lines;
+static int built;
 
-static void ast_die(char *file, int line, const char *format, ...)
+static void ast_die(const char *file, int line, const char *format, ...)
 {
-    if (script == NULL)
+    if (built == 0)
     {
         fprintf(stderr, "Error on line %zu:\n\t", lines + 1);
     }
@@ -543,16 +542,32 @@ static ast_data *classify(const char **text)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static ast_node *build(const char *text)
+static void check_scope(const ast_data *data)
+{
+    if (defs() != 0)
+    {
+        return;
+    }
+    if (data->type == TYPE_STATEMENT)
+    {
+        if ((data->statement->key == STATEMENT_DEF) ||
+            (data->statement->key == STATEMENT_END))
+        {
+            return;
+        }
+    }
+    die("Only 'def's can be defined at global scope");
+}
+
+static int build(const char *text)
 {
     for (;;)
     {
-        ast_data *data;
+        ast_data *data = classify(&text);
 
-        data = classify(&text);
         if (data == NULL)
         {
-            return NULL;
+            return 0;
         }
         if (data->type == TYPE_OPERATOR)
         {
@@ -595,8 +610,7 @@ static ast_node *build(const char *text)
                     }
                     break;
                 case '\0':
-                    while (move(&script, &operands));
-                    return script;
+                    return 1;
                 default:
                     while ((root = peek(operators)))
                     {
@@ -671,8 +685,9 @@ static ast_node *build(const char *text)
                 peek_call()->args++;
             }
         }
+        check_scope(data);
     }
-    return NULL;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -727,7 +742,7 @@ static void explain(const ast_node *node, int level)
 
 static void eval_tree(const ast_node *);
 
-static ast_data eval_function(int args, const ast_node *node)
+static ast_data eval_function(const ast_node *node, int args)
 {
     ast_data data = {TYPE_NUMBER, .number = 0};
 
@@ -796,7 +811,7 @@ static ast_data eval_expr(const ast_node *node)
             {
                 die("%s() is not defined", node->data->function->name);
             }
-            return eval_function(args, node->data->function->node);
+            return eval_function(node->data->function->node, args);
         case TYPE_CALLABLE:
             next = node->left;
             while (next != NULL)
@@ -849,9 +864,6 @@ static void eval_tree(const ast_node *node)
             case TYPE_STATEMENT:
                 switch (node->data->statement->key)
                 {
-                    case STATEMENT_DEF:
-                        node = node->right;
-                        break;
                     case STATEMENT_FOR:
                         if (node != peek_jump())
                         {
@@ -979,20 +991,31 @@ void ast_create(void)
     map_data();
 }
 
-ast_node *ast_build(char *text)
+int ast_build(char *script)
 {
-    strings = text;
-    return build(text);
+    strings = script;
+    built = build(script);
+    return built;
 }
 
-void ast_explain(const ast_node *node)
+void ast_explain(void)
 {
+    ast_node *node = NULL;
+
+    while (move(&node, &operands));
     explain(node, 0);
+    operands = node;
 }
 
-void ast_eval(const ast_node *node)
+void ast_eval(void)
 {
-    eval_tree(node);
+    const ast_data *data = map_callable("main");
+
+    if ((data == NULL) || (data->function->node == NULL))
+    {
+        die("main() is not defined");
+    }
+    eval_function(data->function->node, 0);
 }
 
 void ast_help(void)
@@ -1004,8 +1027,6 @@ void ast_help(void)
 
 void ast_destroy(void)
 {
-    clear(script);
-    script = NULL;
     clear(operators);
     operators = NULL;
     clear(operands);

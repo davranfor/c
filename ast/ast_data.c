@@ -28,9 +28,9 @@ int is_sequence(int c)
            (c == 'b')  || (c == 'f') || (c == 'n') || (c == 'r') || (c == 't');
 }
 
-int get_sequence(int sequence)
+int get_sequence(int c)
 {
-    switch (sequence)
+    switch (c)
     {
         case 'b':
             return '\b';
@@ -46,7 +46,7 @@ int get_sequence(int sequence)
         // case '\\':
         // case '/':
         default:
-            return sequence;
+            return c;
     }
 }
 
@@ -322,7 +322,7 @@ static ast_data branches[] =
 
 ast_data *map_statement(const char *name)
 {
-    size_t count = sizeof statements / sizeof *statements;
+    const size_t count = sizeof statements / sizeof *statements;
 
     for (size_t iter = 1; iter < count; iter++)
     {
@@ -485,7 +485,7 @@ static ast_data callable_list[] =
 
 static void map_callables(void)
 {
-    size_t count = sizeof callable_list / sizeof *callable_list;
+    const size_t count = sizeof callable_list / sizeof *callable_list;
 
     callables = hashmap_create(comp_callable, hash_callable, count * 4);
     if (callables == NULL)

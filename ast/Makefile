@@ -8,7 +8,7 @@ OBJECTS = main.o utils.o hashmap.o ast_data.o ast_eval.o ast_heap.o ast.o
 
 all: ast
 
-main.o: utils.h ast_node.h ast.h
+main.o: utils.h ast.h
 utils.o: utils.h
 hashmap.o: hashmap.h
 ast_data.o: hashmap.h ast_eval.h ast_data.h
