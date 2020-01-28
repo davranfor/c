@@ -336,7 +336,7 @@ void day_add(int *day, int *month, int *year, int days)
  */
 int day_of_week(int day, int month, int year)
 {
-    static int offset[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
+    static const int offset[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
 
     year -= month < 3;
     return (year + year / 4 - year / 100 + year / 400 + offset[month - 1] + day) % 7;
@@ -348,7 +348,7 @@ int day_of_week(int day, int month, int year)
  */
 int ISO_day_of_week(int day, int month, int year)
 {
-    static int offset[] = {6, 2, 1, 4, 6, 2, 4, 0, 3, 5, 1, 3};
+    static const int offset[] = {6, 2, 1, 4, 6, 2, 4, 0, 3, 5, 1, 3};
 
     year -= month < 3;
     return (year + year / 4 - year / 100 + year / 400 + offset[month - 1] + day) % 7 + 1;
