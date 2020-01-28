@@ -6,4 +6,4 @@ C generic data structures and utilities
 - List - Stacks, queues, deques, linked lists
 - SkipList - Fast CRUD operations on a list
 - Timer - Concurrent timers and chronos
-- Vector - Dynamic growable array
+- Utilities - Files, strings and date utils
