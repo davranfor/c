@@ -1,10 +1,11 @@
 # Script example
 
-def foo(a, b)
+def foo()
     print("foo\n");
 end
 
 def bar()
+    foo();
     print("bar\n");
 end
 
@@ -55,5 +56,8 @@ def main()
     bar();
 
     print("Bye\n");
+
+    x = false;
+    print("typeof x = ", typeof(x), "\n");
 end
 

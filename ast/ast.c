@@ -406,9 +406,8 @@ static void move_block(bool end)
 
 static ast_data *classify(const char **text)
 {
-    ast_data *data;
+    ast_data *data = parse(text);
 
-    data = parse(text);
     if (data == NULL)
     {
         return NULL;
@@ -542,7 +541,7 @@ static ast_data *classify(const char **text)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static void check_scope(const ast_data *data)
+static void check(const ast_data *data)
 {
     if (defs() != 0)
     {
@@ -558,6 +557,8 @@ static void check_scope(const ast_data *data)
     }
     die("Only 'def's can be defined at global scope");
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 static int build(const char *text)
 {
@@ -685,7 +686,7 @@ static int build(const char *text)
                 peek_call()->args++;
             }
         }
-        check_scope(data);
+        check(data);
     }
     return 0;
 }

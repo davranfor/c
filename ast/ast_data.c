@@ -8,6 +8,60 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#define MAX_DATA 16384
+
+struct stack
+{
+    ast_data data[MAX_DATA];
+    int count;
+};
+
+static struct stack stack;
+
+int push_data(ast_data data)
+{
+    if (stack.count == MAX_DATA)
+    {
+        fprintf(stderr, "Stack overflow\n");
+        exit(EXIT_FAILURE);
+    }
+    stack.data[stack.count++] = data;
+    return 1;
+}
+
+ast_data pop_data(void)
+{
+    if (stack.count == 0)
+    {
+        fprintf(stderr, "Stack underflow\n");
+        exit(EXIT_FAILURE);
+    }
+    return stack.data[--stack.count];    
+}
+
+ast_data *peek_data(void)
+{
+    if (stack.count == 0)
+    {
+        fprintf(stderr, "Empty stack\n");
+        exit(EXIT_FAILURE);
+    }
+    return &stack.data[stack.count - 1];    
+}
+
+ast_data *sync_data(int count)
+{
+    if ((count == 0) || (count > stack.count))
+    {
+        fprintf(stderr, "Stack underflow\n");
+        exit(EXIT_FAILURE);
+    }
+    stack.count -= count - 1;
+    return &stack.data[stack.count - 1];    
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 static ast_data *new_data(ast_type type)
 {
     ast_data *data;
@@ -21,6 +75,8 @@ static ast_data *new_data(ast_type type)
     data->type = type;
     return data;
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 int is_sequence(int c)
 {
@@ -461,26 +517,27 @@ ast_data *map_callable(const char *name)
 
 static ast_data callable_list[] =
 {
-    DEF_CALLABLE("abs",   {1,  1}, ast_abs),
-    DEF_CALLABLE("ceil",  {1,  1}, ast_ceil),
-    DEF_CALLABLE("cos",   {1,  1}, ast_cos),
-    DEF_CALLABLE("cosh",  {1,  1}, ast_cosh),
-    DEF_CALLABLE("exp",   {1,  1}, ast_exp),
-    DEF_CALLABLE("floor", {1,  1}, ast_floor),
-    DEF_CALLABLE("log",   {1,  1}, ast_log),
-    DEF_CALLABLE("log10", {1,  1}, ast_log10),
-    DEF_CALLABLE("pow",   {2,  2}, ast_pow),
-    DEF_CALLABLE("rand",  {0,  0}, ast_rand),
-    DEF_CALLABLE("round", {1,  1}, ast_round),
-    DEF_CALLABLE("sin",   {1,  1}, ast_sin),
-    DEF_CALLABLE("sinh",  {1,  1}, ast_sinh),
-    DEF_CALLABLE("sqrt",  {1,  1}, ast_sqrt),
-    DEF_CALLABLE("tan",   {1,  1}, ast_tan),
-    DEF_CALLABLE("tanh",  {1,  1}, ast_tanh),
-    DEF_CALLABLE("trunc", {1,  1}, ast_trunc),
+    DEF_CALLABLE("abs",    {1,  1}, ast_abs),
+    DEF_CALLABLE("ceil",   {1,  1}, ast_ceil),
+    DEF_CALLABLE("cos",    {1,  1}, ast_cos),
+    DEF_CALLABLE("cosh",   {1,  1}, ast_cosh),
+    DEF_CALLABLE("exp",    {1,  1}, ast_exp),
+    DEF_CALLABLE("floor",  {1,  1}, ast_floor),
+    DEF_CALLABLE("log",    {1,  1}, ast_log),
+    DEF_CALLABLE("log10",  {1,  1}, ast_log10),
+    DEF_CALLABLE("pow",    {2,  2}, ast_pow),
+    DEF_CALLABLE("rand",   {0,  0}, ast_rand),
+    DEF_CALLABLE("round",  {1,  1}, ast_round),
+    DEF_CALLABLE("sin",    {1,  1}, ast_sin),
+    DEF_CALLABLE("sinh",   {1,  1}, ast_sinh),
+    DEF_CALLABLE("sqrt",   {1,  1}, ast_sqrt),
+    DEF_CALLABLE("tan",    {1,  1}, ast_tan),
+    DEF_CALLABLE("tanh",   {1,  1}, ast_tanh),
+    DEF_CALLABLE("trunc",  {1,  1}, ast_trunc),
 
-    DEF_CALLABLE("cond",  {3,  3}, ast_cond),
-    DEF_CALLABLE("print", {1, 64}, ast_print),
+    DEF_CALLABLE("typeof", {1,  1}, ast_typeof),    
+    DEF_CALLABLE("cond",   {3,  3}, ast_cond),
+    DEF_CALLABLE("print",  {1, 64}, ast_print),
 };
 
 static void map_callables(void)

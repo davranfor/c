@@ -7,7 +7,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static void convert_number(ast_data *data)
+static void conv_number(ast_data *data)
 {
     if (data->type == TYPE_STRING)
     {
@@ -16,7 +16,7 @@ static void convert_number(ast_data *data)
     data->type = TYPE_NUMBER;
 }
 
-static void convert_boolean(ast_data *data)
+static void conv_boolean(ast_data *data)
 {
     if (data->type == TYPE_STRING)
     {
@@ -40,14 +40,14 @@ static void cast_number(ast_data *data)
 ast_data ast_plus(ast_data a, ast_data b)
 {
     (void)b;
-    convert_number(&a);
+    conv_number(&a);
     return a;
 }
 
 ast_data ast_minus(ast_data a, ast_data b)
 {
     (void)b;
-    convert_number(&a);
+    conv_number(&a);
     a.number = -a.number;
     return a;
 }
@@ -55,14 +55,14 @@ ast_data ast_minus(ast_data a, ast_data b)
 ast_data ast_not(ast_data a, ast_data b)
 {
     (void)b;
-    convert_boolean(&a);
+    conv_boolean(&a);
     a.number = a.number == 0;
     return a;
 }
 
 ast_data ast_mul(ast_data a, ast_data b)
 {
-    convert_number(&a);
+    conv_number(&a);
     cast_number(&b);
     a.number = a.number * b.number;
     return a;
@@ -70,7 +70,7 @@ ast_data ast_mul(ast_data a, ast_data b)
 
 ast_data ast_div(ast_data a, ast_data b)
 {
-    convert_number(&a);
+    conv_number(&a);
     cast_number(&b);
     a.number = a.number / b.number;
     return a;
@@ -78,7 +78,7 @@ ast_data ast_div(ast_data a, ast_data b)
 
 ast_data ast_rem(ast_data a, ast_data b)
 {
-    convert_number(&a);
+    conv_number(&a);
     cast_number(&b);
     a.number = (double)((long)a.number % (long)b.number);
     return a;
@@ -86,7 +86,7 @@ ast_data ast_rem(ast_data a, ast_data b)
 
 ast_data ast_add(ast_data a, ast_data b)
 {
-    convert_number(&a);
+    conv_number(&a);
     cast_number(&b);
     a.number = a.number + b.number;
     return a;
@@ -94,7 +94,7 @@ ast_data ast_add(ast_data a, ast_data b)
 
 ast_data ast_sub(ast_data a, ast_data b)
 {
-    convert_number(&a);
+    conv_number(&a);
     cast_number(&b);
     a.number = a.number - b.number;
     return a;
@@ -102,7 +102,7 @@ ast_data ast_sub(ast_data a, ast_data b)
 
 ast_data ast_bit_lshift(ast_data a, ast_data b)
 {
-    convert_number(&a);
+    conv_number(&a);
     cast_number(&b);
     a.number = (double)((unsigned long)a.number << (unsigned long)b.number);
     return a;
@@ -110,7 +110,7 @@ ast_data ast_bit_lshift(ast_data a, ast_data b)
 
 ast_data ast_bit_rshift(ast_data a, ast_data b)
 {
-    convert_number(&a);
+    conv_number(&a);
     cast_number(&b);
     a.number = (double)((unsigned long)a.number >> (unsigned long)b.number);
     return a;
@@ -118,7 +118,7 @@ ast_data ast_bit_rshift(ast_data a, ast_data b)
 
 ast_data ast_lt(ast_data a, ast_data b)
 {
-    convert_boolean(&a);
+    conv_boolean(&a);
     cast_number(&b);
     a.number = a.number < b.number;
     return a;
@@ -126,7 +126,7 @@ ast_data ast_lt(ast_data a, ast_data b)
 
 ast_data ast_gt(ast_data a, ast_data b)
 {
-    convert_boolean(&a);
+    conv_boolean(&a);
     cast_number(&b);
     a.number = a.number > b.number;
     return a;
@@ -134,7 +134,7 @@ ast_data ast_gt(ast_data a, ast_data b)
 
 ast_data ast_lt_or_eq(ast_data a, ast_data b)
 {
-    convert_boolean(&a);
+    conv_boolean(&a);
     cast_number(&b);
     a.number = a.number <= b.number;
     return a;
@@ -142,7 +142,7 @@ ast_data ast_lt_or_eq(ast_data a, ast_data b)
 
 ast_data ast_gt_or_eq(ast_data a, ast_data b)
 {
-    convert_boolean(&a);
+    conv_boolean(&a);
     cast_number(&b);
     a.number = a.number >= b.number;
     return a;
@@ -150,7 +150,7 @@ ast_data ast_gt_or_eq(ast_data a, ast_data b)
 
 ast_data ast_is_eq(ast_data a, ast_data b)
 {
-    convert_boolean(&a);
+    conv_boolean(&a);
     cast_number(&b);
     a.number = a.number == b.number;
     return a;
@@ -158,7 +158,7 @@ ast_data ast_is_eq(ast_data a, ast_data b)
 
 ast_data ast_not_eq(ast_data a, ast_data b)
 {
-    convert_boolean(&a);
+    conv_boolean(&a);
     cast_number(&b);
     a.number = a.number != b.number;
     return a;
@@ -166,7 +166,7 @@ ast_data ast_not_eq(ast_data a, ast_data b)
 
 ast_data ast_bit_and(ast_data a, ast_data b)
 {
-    convert_number(&a);
+    conv_number(&a);
     cast_number(&b);
     a.number = (double)((unsigned long)a.number & (unsigned long)b.number);
     return a;
@@ -174,7 +174,7 @@ ast_data ast_bit_and(ast_data a, ast_data b)
 
 ast_data ast_bit_xor(ast_data a, ast_data b)
 {
-    convert_number(&a);
+    conv_number(&a);
     cast_number(&b);
     a.number = (double)((unsigned long)a.number ^ (unsigned long)b.number);
     return a;
@@ -182,7 +182,7 @@ ast_data ast_bit_xor(ast_data a, ast_data b)
 
 ast_data ast_bit_or(ast_data a, ast_data b)
 {
-    convert_number(&a);
+    conv_number(&a);
     cast_number(&b);
     a.number = (double)((unsigned long)a.number | (unsigned long)b.number);
     return a;
@@ -190,7 +190,7 @@ ast_data ast_bit_or(ast_data a, ast_data b)
 
 ast_data ast_and(ast_data a, ast_data b)
 {
-    convert_boolean(&a);
+    conv_boolean(&a);
     cast_number(&b);
     a.number = a.number && b.number;
     return a;
@@ -198,7 +198,7 @@ ast_data ast_and(ast_data a, ast_data b)
 
 ast_data ast_xor(ast_data a, ast_data b)
 {
-    convert_boolean(&a);
+    conv_boolean(&a);
     cast_number(&b);
     a.number = (a.number || b.number) && !(a.number && b.number);
     return a;
@@ -206,7 +206,7 @@ ast_data ast_xor(ast_data a, ast_data b)
 
 ast_data ast_or(ast_data a, ast_data b)
 {
-    convert_boolean(&a);
+    conv_boolean(&a);
     cast_number(&b);
     a.number = a.number || b.number;
     return a;
@@ -220,7 +220,7 @@ ast_data ast_eq(ast_data a, ast_data b)
 
 ast_data ast_eq_add(ast_data a, ast_data b)
 {
-    convert_number(&a.variable->data);
+    conv_number(&a.variable->data);
     cast_number(&b);
     a.variable->data.number += b.number;
     return a.variable->data;
@@ -228,7 +228,7 @@ ast_data ast_eq_add(ast_data a, ast_data b)
 
 ast_data ast_eq_sub(ast_data a, ast_data b)
 {
-    convert_number(&a.variable->data);
+    conv_number(&a.variable->data);
     cast_number(&b);
     a.variable->data.number -= b.number;
     return a.variable->data;
@@ -236,7 +236,7 @@ ast_data ast_eq_sub(ast_data a, ast_data b)
 
 ast_data ast_eq_mul(ast_data a, ast_data b)
 {
-    convert_number(&a.variable->data);
+    conv_number(&a.variable->data);
     cast_number(&b);
     a.variable->data.number *= b.number;
     return a.variable->data;
@@ -244,7 +244,7 @@ ast_data ast_eq_mul(ast_data a, ast_data b)
 
 ast_data ast_eq_div(ast_data a, ast_data b)
 {
-    convert_number(&a.variable->data);
+    conv_number(&a.variable->data);
     cast_number(&b);
     a.variable->data.number /= b.number;
     return a.variable->data;
@@ -252,7 +252,7 @@ ast_data ast_eq_div(ast_data a, ast_data b)
 
 ast_data ast_eq_rem(ast_data a, ast_data b)
 {
-    convert_number(&a.variable->data);
+    conv_number(&a.variable->data);
     cast_number(&b);
     a.variable->data.number = (double)((long)a.variable->data.number % (long)b.number);
     return a.variable->data;
@@ -260,7 +260,7 @@ ast_data ast_eq_rem(ast_data a, ast_data b)
 
 ast_data ast_eq_bit_and(ast_data a, ast_data b)
 {
-    convert_number(&a.variable->data);
+    conv_number(&a.variable->data);
     cast_number(&b);
     a.variable->data.number = (double)((unsigned long)a.variable->data.number & (unsigned long)b.number);
     return a.variable->data;
@@ -268,7 +268,7 @@ ast_data ast_eq_bit_and(ast_data a, ast_data b)
 
 ast_data ast_eq_bit_xor(ast_data a, ast_data b)
 {
-    convert_number(&a.variable->data);
+    conv_number(&a.variable->data);
     cast_number(&b);
     a.variable->data.number = (double)((unsigned long)a.variable->data.number ^ (unsigned long)b.number);
     return a.variable->data;
@@ -276,7 +276,7 @@ ast_data ast_eq_bit_xor(ast_data a, ast_data b)
 
 ast_data ast_eq_bit_or(ast_data a, ast_data b)
 {
-    convert_number(&a.variable->data);
+    conv_number(&a.variable->data);
     cast_number(&b);
     a.variable->data.number = (double)((unsigned long)a.variable->data.number | (unsigned long)b.number);
     return a.variable->data;
@@ -284,7 +284,7 @@ ast_data ast_eq_bit_or(ast_data a, ast_data b)
 
 ast_data ast_eq_bit_lshift(ast_data a, ast_data b)
 {
-    convert_number(&a.variable->data);
+    conv_number(&a.variable->data);
     cast_number(&b);
     a.variable->data.number = (double)((unsigned long)a.variable->data.number << (unsigned long)b.number);
     return a.variable->data;
@@ -292,48 +292,10 @@ ast_data ast_eq_bit_lshift(ast_data a, ast_data b)
 
 ast_data ast_eq_bit_rshift(ast_data a, ast_data b)
 {
-    convert_number(&a.variable->data);
+    conv_number(&a.variable->data);
     cast_number(&b);
     a.variable->data.number = (double)((unsigned long)a.variable->data.number >> (unsigned long)b.number);
     return a.variable->data;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-#define MAX_FRAME 8192
-
-static ast_data frame[MAX_FRAME];
-static int counter;
-
-int push_data(ast_data data)
-{
-    if (counter == MAX_FRAME)
-    {
-        fprintf(stderr, "Stack overflow\n");
-        exit(EXIT_FAILURE);
-    }
-    frame[counter++] = data;
-    return 1;
-}
-
-ast_data pop_data(void)
-{
-    if (counter == 0)
-    {
-        fprintf(stderr, "Stack underflow\n");
-        exit(EXIT_FAILURE);
-    }
-    return frame[--counter];    
-}
-
-static ast_data *peek_data(void)
-{
-    if (counter == 0)
-    {
-        fprintf(stderr, "Empty stack\n");
-        exit(EXIT_FAILURE);
-    }
-    return &frame[counter - 1];    
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -346,7 +308,7 @@ int ast_abs(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = fabs(data->number);
     return 1;
 }
@@ -357,7 +319,7 @@ int ast_ceil(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = ceil(data->number);
     return 1;
 }
@@ -368,7 +330,7 @@ int ast_cos(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = cos(data->number);
     return 1;
 }
@@ -379,7 +341,7 @@ int ast_cosh(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = cosh(data->number);
     return 1;
 }
@@ -390,7 +352,7 @@ int ast_exp(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = exp(data->number);
     return 1;
 }
@@ -401,7 +363,7 @@ int ast_floor(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = floor(data->number);
     return 1;
 }
@@ -412,7 +374,7 @@ int ast_log(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = log(data->number);
     return 1;
 }
@@ -423,7 +385,7 @@ int ast_log10(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = log10(data->number);
     return 1;
 }
@@ -435,8 +397,8 @@ int ast_pow(int args)
     ast_data b = pop_data();
     ast_data *a = peek_data();
 
-    convert_number(a);
-    convert_number(&b);
+    conv_number(a);
+    cast_number(&b);
     a->number = pow(a->number, b.number);
     return 1;
 }
@@ -458,7 +420,7 @@ int ast_round(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = round(data->number);
     return 1;
 }
@@ -469,7 +431,7 @@ int ast_sin(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = sin(data->number);
     return 1;
 }
@@ -480,7 +442,7 @@ int ast_sinh(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = sinh(data->number);
     return 1;
 }
@@ -491,7 +453,7 @@ int ast_sqrt(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = sqrt(data->number);
     return 1;
 }
@@ -502,7 +464,7 @@ int ast_tan(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = tan(data->number);
     return 1;
 }
@@ -513,7 +475,7 @@ int ast_tanh(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = tanh(data->number);
     return 1;
 }
@@ -524,7 +486,7 @@ int ast_trunc(int args)
 
     ast_data *data = peek_data();
 
-    convert_number(data);
+    conv_number(data);
     data->number = trunc(data->number);
     return 1;
 }
@@ -533,11 +495,20 @@ int ast_trunc(int args)
 // Misc
 ///////////////////////////////////////////////////////////////////////////////
 
-int ast_cond(int args)
+int ast_typeof(int args)
 {
     (void)args;
 
-    ast_data *data = &frame[counter - 3];
+    ast_data *data = peek_data();
+
+    data->number = data->type;
+    data->type = TYPE_NUMBER;
+    return 1;
+}
+
+int ast_cond(int args)
+{
+    ast_data *data = sync_data(args);
     int offset = 1;
 
     switch (data->type)
@@ -550,28 +521,26 @@ int ast_cond(int args)
             break;
     }
     memcpy(data, data + offset, sizeof *data);
-    counter -= 2;
     return 1;
 }
 
 int ast_print(int args)
 {
-    ast_data *data = &frame[counter - args];
-    ast_data *last = &frame[counter - 1];
+    ast_data *data = sync_data(args);
     int result = 0;
 
-    do
+    for (int iter = 0; iter < args; iter++)
     {
-        switch (data->type)
+        switch (data[iter].type)
         {
             case TYPE_BOOLEAN:
-                result += printf("%s", data->number ? "true" : "false");
+                result += printf("%s", data[iter].number ? "true" : "false");
                 break;
             case TYPE_NUMBER:
-                result += printf("%g", data->number);
+                result += printf("%g", data[iter].number);
                 break;
             case TYPE_STRING:
-                result += printf("%s", data->string);
+                result += printf("%s", data[iter].string);
                 break;
             case TYPE_NULL:
                 result += printf("null");
@@ -580,11 +549,9 @@ int ast_print(int args)
                 printf("Can not print this value\n");
                 return 0;
         }
-    } while (data++ != last);
-    data -= args;
+    }
     data->type = TYPE_NUMBER;
     data->number = result;
-    counter -= args - 1;
     return 1;
 }
 

@@ -129,6 +129,11 @@ struct ast_variable
     ast_data data;
 };
 
+int push_data(ast_data);
+ast_data pop_data(void);
+ast_data *peek_data(void);
+ast_data *sync_data(int);
+
 int is_sequence(int);
 int get_sequence(int);
 int valid_name(const char *);
