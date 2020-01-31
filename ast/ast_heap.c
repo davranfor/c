@@ -74,15 +74,7 @@ void clear(ast_node *root)
     {
         clear(root->left);
         clear(root->right);
-        switch (root->data->type)
-        {
-            case TYPE_NUMBER:
-            case TYPE_STRING:
-                free(root->data);
-                break;
-            default:
-                break;
-        }
+        free_data(root->data);
         free(root);
     }
 }

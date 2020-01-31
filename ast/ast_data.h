@@ -160,6 +160,7 @@ ast_data *map_null(const char *);
 
 void map_data(void);
 void unmap_data(void);
+void free_data(ast_data *);
 
 #endif /* AST_DATA_H */
 

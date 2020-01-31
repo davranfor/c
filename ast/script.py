@@ -1,7 +1,8 @@
 # Script example
 
 def foo()
-    print("foo\n");
+    pow = pow(3, 2);
+    print("pow = ", pow, "\n");
 end
 
 def bar()
@@ -36,11 +37,11 @@ def main()
     print((3 * 2) + (3 * 2) , "\n");
 
     # Strings promoted to number
-    print(pow(trunc(("3" + 0.14)), 2), "\n");
+    print(pow(trunc("3" + 0.14), 2), "\n");
     print(ceil("4.15"), "\n");
 
     # Testing print
-    print(null, " ", true, " ", false, "\n");
+    print(null, "\t", true, "\t", false, "\n");
 
     x = 0;
     for (i = 0, i < 10, i += 1)
@@ -48,16 +49,14 @@ def main()
     end
     print("x = ", x, "\n");
 
-    name = "Juan";
-    age = 20;
+    name = "Juan"; age = 20;
     print(name, " es ", cond(age > 65, "viejo", cond(age < 15, "joven", "adulto")), "\n");
 
-    print(foo() + 1, "\n");
+    print("x = ", x = false, " typeof x = ", typeof(x), "\n");
+
     bar();
 
     print("Bye\n");
 
-    x = false;
-    print("typeof x = ", typeof(x), "\n");
 end
 
