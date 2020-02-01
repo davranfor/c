@@ -46,7 +46,7 @@ static unsigned long hash_value(const void *item)
 {
     const struct data *data = item;
 
-    return hash_string((const unsigned char *)data->value);
+    return hash_str((const unsigned char *)data->value);
 }
 */
 
