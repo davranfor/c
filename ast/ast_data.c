@@ -399,10 +399,7 @@ ast_data *map_branch(int branch)
 
 static ast_data *new_function(void)
 {
-    ast_data *data;
-
-    data = new_data(TYPE_FUNCTION);
-
+    ast_data *data = new_data(TYPE_FUNCTION);
     ast_function *function;
 
     function = malloc(sizeof *function);
@@ -411,7 +408,6 @@ static ast_data *new_function(void)
         perror("malloc");
         exit(EXIT_FAILURE);
     }
-    function->name = NULL;
     function->node = NULL;
     data->function = function;
     return data;
@@ -569,10 +565,7 @@ static void unmap_callables(void)
 
 static ast_data *new_variable(void)
 {
-    ast_data *data;
-
-    data = new_data(TYPE_VARIABLE);
-
+    ast_data *data = new_data(TYPE_VARIABLE);
     ast_variable *variable;
 
     variable = malloc(sizeof *variable);
@@ -825,15 +818,6 @@ ast_data *map_number(const char *str)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static ast_data *new_string(void)
-{
-    ast_data *data;
-
-    data = new_data(TYPE_STRING);
-    data->string = NULL;
-    return data;
-}
-
 static int comp_string(const void *pa, const void *pb)
 {
     const ast_data *a = pa;
@@ -865,7 +849,7 @@ ast_data *map_string(const char *str)
     }
     if (data == data_str)
     {
-        data_str = new_string();
+        data_str = new_data(TYPE_STRING);
     }
     return data;
 }
@@ -878,7 +862,7 @@ static void map_strings(void)
         perror("hashmap_create");
         exit(EXIT_FAILURE);
     }
-    data_str = new_string();
+    data_str = new_data(TYPE_STRING);
 }
 
 static void unmap_strings(void)
