@@ -5,9 +5,11 @@ def foo()
     print("pow = ", pow, "\n");
 end
 
-def bar()
+def bar(var1, var2)
+    x = 69;
+    print(x, "\n");
     foo();
-    print("bar\n");
+    print("bar = ", var1, " ", var2, "\n");
 end
 
 def main()
@@ -54,9 +56,9 @@ def main()
 
     print("x = ", x = false, " typeof x = ", typeof(x), "\n");
 
-    bar();
+    x = "prueba2";
+    bar("prueba1", x);
 
     print("Bye\n");
-
 end
 

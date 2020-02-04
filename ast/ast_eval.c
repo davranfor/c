@@ -7,6 +7,10 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#define EVAL_VAR(v) (v.variable->function->vars[v.variable->offset])
+
+///////////////////////////////////////////////////////////////////////////////
+
 static void conv_number(ast_data *data)
 {
     if (data->type == TYPE_STRING)
@@ -214,88 +218,88 @@ ast_data ast_or(ast_data a, ast_data b)
 
 ast_data ast_eq(ast_data a, ast_data b)
 {
-    a.variable->data = b;
+    EVAL_VAR(a) = b;
     return b;
 }
 
 ast_data ast_eq_add(ast_data a, ast_data b)
 {
-    conv_number(&a.variable->data);
+    conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    a.variable->data.number += b.number;
-    return a.variable->data;
+    EVAL_VAR(a).number += b.number;
+    return EVAL_VAR(a);
 }
 
 ast_data ast_eq_sub(ast_data a, ast_data b)
 {
-    conv_number(&a.variable->data);
+    conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    a.variable->data.number -= b.number;
-    return a.variable->data;
+    EVAL_VAR(a).number -= b.number;
+    return EVAL_VAR(a);
 }
 
 ast_data ast_eq_mul(ast_data a, ast_data b)
 {
-    conv_number(&a.variable->data);
+    conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    a.variable->data.number *= b.number;
-    return a.variable->data;
+    EVAL_VAR(a).number *= b.number;
+    return EVAL_VAR(a);
 }
 
 ast_data ast_eq_div(ast_data a, ast_data b)
 {
-    conv_number(&a.variable->data);
+    conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    a.variable->data.number /= b.number;
-    return a.variable->data;
+    EVAL_VAR(a).number /= b.number;
+    return EVAL_VAR(a);
 }
 
 ast_data ast_eq_rem(ast_data a, ast_data b)
 {
-    conv_number(&a.variable->data);
+    conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    a.variable->data.number = (double)((long)a.variable->data.number % (long)b.number);
-    return a.variable->data;
+    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number % (long)b.number);
+    return EVAL_VAR(a);
 }
 
 ast_data ast_eq_bit_and(ast_data a, ast_data b)
 {
-    conv_number(&a.variable->data);
+    conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    a.variable->data.number = (double)((unsigned long)a.variable->data.number & (unsigned long)b.number);
-    return a.variable->data;
+    EVAL_VAR(a).number = (double)((unsigned long)EVAL_VAR(a).number & (unsigned long)b.number);
+    return EVAL_VAR(a);
 }
 
 ast_data ast_eq_bit_xor(ast_data a, ast_data b)
 {
-    conv_number(&a.variable->data);
+    conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    a.variable->data.number = (double)((unsigned long)a.variable->data.number ^ (unsigned long)b.number);
-    return a.variable->data;
+    EVAL_VAR(a).number = (double)((unsigned long)EVAL_VAR(a).number ^ (unsigned long)b.number);
+    return EVAL_VAR(a);
 }
 
 ast_data ast_eq_bit_or(ast_data a, ast_data b)
 {
-    conv_number(&a.variable->data);
+    conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    a.variable->data.number = (double)((unsigned long)a.variable->data.number | (unsigned long)b.number);
-    return a.variable->data;
+    EVAL_VAR(a).number = (double)((unsigned long)EVAL_VAR(a).number | (unsigned long)b.number);
+    return EVAL_VAR(a);
 }
 
 ast_data ast_eq_bit_lshift(ast_data a, ast_data b)
 {
-    conv_number(&a.variable->data);
+    conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    a.variable->data.number = (double)((unsigned long)a.variable->data.number << (unsigned long)b.number);
-    return a.variable->data;
+    EVAL_VAR(a).number = (double)((unsigned long)EVAL_VAR(a).number << (unsigned long)b.number);
+    return EVAL_VAR(a);
 }
 
 ast_data ast_eq_bit_rshift(ast_data a, ast_data b)
 {
-    conv_number(&a.variable->data);
+    conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    a.variable->data.number = (double)((unsigned long)a.variable->data.number >> (unsigned long)b.number);
-    return a.variable->data;
+    EVAL_VAR(a).number = (double)((unsigned long)EVAL_VAR(a).number >> (unsigned long)b.number);
+    return EVAL_VAR(a);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

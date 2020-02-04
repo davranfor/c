@@ -3,7 +3,7 @@
 
 typedef enum
 {
-    TYPE_NONE,
+    TYPE_NULL,
     TYPE_OPERATOR,
     TYPE_STATEMENT,
     TYPE_FUNCTION,
@@ -12,7 +12,6 @@ typedef enum
     TYPE_BOOLEAN,
     TYPE_NUMBER,
     TYPE_STRING,
-    TYPE_NULL,
 } ast_type;
 
 enum
@@ -85,22 +84,18 @@ typedef struct
 typedef struct
 {
     const char *name;
-    const void *node;
-} ast_function;
-
-typedef struct
-{
-    const char *name;
     struct {int min, max;} args;
     int (*eval)(int);
 } ast_callable;
 
 typedef struct ast_operator ast_operator;
+typedef struct ast_function ast_function;
 typedef struct ast_variable ast_variable;
 
 typedef struct ast_data
 {
     ast_type type;
+    int flags;
     union
     {
         const ast_operator *operator;
@@ -123,15 +118,25 @@ struct ast_operator
     ast_data (*eval)(ast_data, ast_data);
 };
 
+struct ast_function
+{
+    const char *name;
+    const void *node;
+    ast_data *vars;
+    int args;
+};
+
 struct ast_variable
 {
     const char *name;
-    ast_data data;
+    const ast_function *function;
+    int offset;
 };
 
 int push_data(ast_data);
 ast_data pop_data(void);
 ast_data *peek_data(void);
+ast_data *peep_data(int);
 ast_data *sync_data(int);
 
 int is_sequence(int);
@@ -158,8 +163,11 @@ ast_data *map_number(const char *);
 ast_data *map_string(const char *);
 ast_data *map_null(const char *);
 
+void map_vars(void);
+
 void map_data(void);
 void unmap_data(void);
+
 void free_data(ast_data *);
 
 #endif /* AST_DATA_H */

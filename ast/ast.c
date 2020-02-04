@@ -181,6 +181,10 @@ static ast_data *parse(const char **text)
                 if (data == NULL)
                 {
                     data = map_variable(start);
+                    if (data == NULL)
+                    {
+                        die("Missing or invalid 'def'");
+                    }
                 }
                 else if (data->statement->args > 0)
                 {
@@ -305,6 +309,7 @@ static void move_arguments(void)
                 else
                 {
                     operands->data->function->node = operands;
+                    operands->data->function->args = call->args;
                 }
                 expected = OPERAND;
                 starting = true;
@@ -339,7 +344,7 @@ static void move_expressions(ast_node *node)
     }
 }
 
-static void move_branches(const ast_node *node)
+static void move_branch(const ast_node *node)
 {
     push(&operators, map_branch(1));
     operators->left = node->left->right;
@@ -390,7 +395,11 @@ static void move_block(bool end)
 
         if (operands != statement)
         {
-            move_branches(statement);
+            move_branch(statement);
+        }
+        else if (operands->data->statement->key == STATEMENT_DEF)
+        {
+            map_vars();
         }
     }
     else
@@ -745,20 +754,30 @@ static void eval_tree(const ast_node *);
 
 static ast_data eval_function(const ast_node *node, int args)
 {
-    ast_data data = {TYPE_NUMBER, .number = 0};
+    ast_data data = {TYPE_NUMBER, 0, .number = 0};
 
-    while (args--)
+    if (args != node->data->function->args)
     {
-        pop_data();
+        die("'%s' was expecting %d argument(s), got %d",
+            node->data->function->name,
+            node->data->function->args,
+            args
+        );
+    }
+    if (args > 0)
+    {
+        memcpy(node->data->function->vars,
+               peep_data(args),
+               sizeof(data) * (size_t)args);
     }
     eval_tree(node->right);
     return data;
 }
 
-#define AST_TRANSFORM_VAR(x)     \
-    if (x.type == TYPE_VARIABLE) \
-    {                            \
-        x = x.variable->data;    \
+#define AST_GET_VAR(x)                                      \
+    if (x.type == TYPE_VARIABLE)                            \
+    {                                                       \
+        x = x.variable->function->vars[x.variable->offset]; \
     }
 
 static ast_data eval_expr(const ast_node *node)
@@ -789,12 +808,12 @@ static ast_data eval_expr(const ast_node *node)
                 }
                 else
                 {
-                    AST_TRANSFORM_VAR(a);
+                    AST_GET_VAR(a);
                 }
                 if (node->left->right != NULL)
                 {
                     b = eval_expr(node->left->right);
-                    AST_TRANSFORM_VAR(b);
+                    AST_GET_VAR(b);
                 }
             }
             return node->data->operator->eval(a, b);
@@ -803,7 +822,7 @@ static ast_data eval_expr(const ast_node *node)
             while (next != NULL)
             {
                 a = eval_expr(next);
-                AST_TRANSFORM_VAR(a);
+                AST_GET_VAR(a);
                 push_data(a);
                 next = next->right;
                 args++;
@@ -818,7 +837,7 @@ static ast_data eval_expr(const ast_node *node)
             while (next != NULL)
             {
                 a = eval_expr(next);
-                AST_TRANSFORM_VAR(a);
+                AST_GET_VAR(a);
                 push_data(a);
                 next = next->right;
                 args++;
@@ -834,16 +853,11 @@ static ast_data eval_expr(const ast_node *node)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
 static int eval_cond(const ast_node *node)
 {
     ast_data data = eval_expr(node);
 
-    if (data.type == TYPE_VARIABLE)
-    {
-        data = data.variable->data;
-    }
+    AST_GET_VAR(data);
     if (data.type == TYPE_STRING)
     {
         return data.string[0] != '\0';
@@ -853,8 +867,6 @@ static int eval_cond(const ast_node *node)
         return data.number != 0;
     }
 }
-
-///////////////////////////////////////////////////////////////////////////////
 
 static void eval_tree(const ast_node *node)
 {
