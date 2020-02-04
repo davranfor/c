@@ -596,7 +596,6 @@ static ast_data *new_variable(void)
         perror("malloc");
         exit(EXIT_FAILURE);
     }
-    variable->offset = 0;
     data->variable = variable;
     return data;
 }
@@ -606,8 +605,8 @@ static int comp_variable(const void *pa, const void *pb)
     const ast_data *a = pa;
     const ast_data *b = pb;
 
-    return strcmp(a->variable->name, b->variable->name) ||
-           (a->variable->function != b->variable->function);
+    return (a->variable->function != b->variable->function) ||
+           strcmp(a->variable->name, b->variable->name);
 }
 
 static unsigned long hash_variable(const void *item)
