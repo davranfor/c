@@ -652,11 +652,11 @@ ast_data *map_variable(const char *name)
     {
         return NULL;
     }
+    data_var->variable->name = name;
+    data_var->variable->function = data_def;
 
     ast_data *data;
 
-    data_var->variable->name = name;
-    data_var->variable->function = data_def;
     data = hashmap_insert(variables, data_var);
     if (data == NULL)
     {
