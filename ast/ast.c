@@ -306,11 +306,8 @@ static void move_arguments(void)
                         operands->data->function->name
                     );
                 }
-                else
-                {
-                    operands->data->function->node = operands;
-                    operands->data->function->args = call->args;
-                }
+                operands->data->function->node = operands;
+                operands->data->function->args = call->args;
                 expected = OPERAND;
                 starting = true;
             }
@@ -555,7 +552,7 @@ static ast_data *classify(const char **text)
                 }
                 if (data->statement->key == STATEMENT_RETURN)
                 {
-                    starting = (**text == ';');
+                    starting = **text == ';';
                 }
                 else
                 {
