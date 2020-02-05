@@ -121,7 +121,8 @@ struct ast_function
 {
     const char *name;
     const void *node;
-    ast_data *vars;
+    ast_data *data;
+    int vars;
     int args;
 };
 
@@ -132,10 +133,11 @@ struct ast_variable
     int offset;
 };
 
+void wind_data(ast_data *, int);
+void unwind_data(ast_data *, int);
 int push_data(ast_data);
 ast_data pop_data(void);
 ast_data *peek_data(void);
-ast_data *peep_data(int);
 ast_data *sync_data(int);
 
 int is_sequence(int);

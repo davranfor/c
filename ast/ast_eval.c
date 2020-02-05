@@ -7,7 +7,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define EVAL_VAR(v) (v.variable->function->vars[v.variable->offset])
+#define EVAL_VAR(v) (v.variable->function->data[v.variable->offset])
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -554,6 +554,7 @@ int ast_print(int args)
                 return 0;
         }
     }
+    result += printf("\n");
     data->type = TYPE_NUMBER;
     data->number = result;
     return 1;

@@ -2,38 +2,45 @@
 
 def foo()
     pow = pow(3, 2);
-    print("pow = ", pow, "\n");
+    print("pow = ", pow);
 end
 
 def bar(var1, var2)
     x = 69;
-    print(x, "\n");
-return;
+    print(x);
     foo();
-    print("bar = ", var1, " ", var2, "\n");
+    print("bar = ", var1, " ", var2);
 end
 
 def square(x)
     return x * x;
 end
+
+def reverse(x, n)
+    if (x == n)
+        return;
+    end
+    reverse(x + 1, n);
+    print(x);
+end
     
 def main()
-    print("Starting ...\n");
+    print("Starting ...");
 
     # for 1 to 999 print multiples of 100
     for (i = 1, i < 1e3, i += 1)
         if ((i % 100) == 0)
-            print("i = ", i, "\n");
+            print("i = ", i);
         end
     end
 
     test = 1;
     if (test < 1)
-        print("test < 1\n");
+        print("test < 1");
     elif (test > 1)
-        print("test > 1\n");
+        print("test > 1");
     else
-        print("test = 1\n");
+        print("test = 1");
         # Testing inner statement
         if (1)
             if (0) 0; end
@@ -41,31 +48,33 @@ def main()
     end
 
     # Testing parenthesis
-    print((3 * 2) + (3 * 2) , "\n");
+    print((3 * 2) + (3 * 2));
 
     # Strings promoted to number
-    print(pow(trunc("3" + 0.14), 2), "\n");
-    print(ceil("4.15"), "\n");
+    print(pow(trunc("3" + 0.14), 2));
+    print(ceil("4.15"));
 
     # Testing print
-    print(null, "\t", true, "\t", false, "\n");
+    print(null, "\t", true, "\t", false);
 
     x = 0;
     for (i = 0, i < 10, i += 1)
         x += 1;
     end
-    print("x = ", x, "\n");
+    print("x = ", x);
 
     name = "Juan"; age = 20;
-    print(name, " es ", cond(age > 65, "viejo", cond(age < 15, "joven", "adulto")), "\n");
+    print(name, " es ", cond(age > 65, "viejo", cond(age < 15, "joven", "adulto")));
 
-    print("x = ", x = false, " typeof x = ", typeof(x), "\n");
+    print("x = ", x = false, " typeof x = ", typeof(x));
 
     x = "prueba2";
     bar("prueba1", x);
 
-    print(square(9), "\n");
+    print(square(9));
 
-    print("Bye\n");
+    reverse(0, 10);
+
+    print("Bye");
 end
 

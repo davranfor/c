@@ -784,27 +784,28 @@ static ast_data eval_tree(const ast_node *);
 
 static ast_data eval_function(const ast_node *node, int args)
 {
-    if (args != node->data->function->args)
+    ast_function *function = node->data->function;
+
+    if (args != function->args)
     {
         die("'%s' was expecting %d argument(s), got %d",
-            node->data->function->name,
-            node->data->function->args,
+            function->name,
+            function->args,
             args
         );
     }
-    if (args > 0)
-    {
-        memcpy(node->data->function->vars,
-               peep_data(args),
-               sizeof(ast_data) * (size_t)args);
-    }
-    return eval_tree(node->right);
+    unwind_data(function->data, function->args);
+
+    ast_data data = eval_tree(node->right);
+
+    unwind_data(function->data, function->vars);
+    return data;
 }
 
 #define AST_GET_VAR(x)                                      \
     if (x.type == TYPE_VARIABLE)                            \
     {                                                       \
-        x = x.variable->function->vars[x.variable->offset]; \
+        x = x.variable->function->data[x.variable->offset]; \
     }
 
 static ast_data eval_expr(const ast_node *node)
@@ -845,6 +846,7 @@ static ast_data eval_expr(const ast_node *node)
             }
             return node->data->operator->eval(a, b);
         case TYPE_FUNCTION:
+            wind_data(node->data->function->data, node->data->function->vars);
             next = node->left;
             while (next != NULL)
             {
@@ -1061,6 +1063,7 @@ void ast_eval(void)
     {
         die("main() is not defined");
     }
+    wind_data(data->function->data, data->function->vars);
     eval_function(data->function->node, 0);
 }
 

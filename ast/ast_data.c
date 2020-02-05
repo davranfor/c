@@ -18,6 +18,42 @@ struct stack
 
 static struct stack stack;
 
+void wind_data(ast_data *data, int vars)
+{
+    if (vars == 0)
+    {
+        return;
+    }
+    if (stack.count + vars > MAX_DATA)
+    {
+        fprintf(stderr, "Stack overflow1\n");
+        exit(EXIT_FAILURE);
+    }
+    memcpy(stack.data + stack.count,
+           data,
+           sizeof(*data) * (size_t)vars
+    );
+    stack.count += vars;
+}
+
+void unwind_data(ast_data *data, int vars)
+{
+    if (vars == 0)
+    {
+        return;
+    }
+    if (stack.count - vars < 0)
+    {
+        fprintf(stderr, "Stack underflow\n");
+        exit(EXIT_FAILURE);
+    }
+    memcpy(data,
+           stack.data + (stack.count - vars),
+           sizeof(*data) * (size_t)vars
+    );
+    stack.count -= vars;
+}
+
 int push_data(ast_data data)
 {
     if (stack.count == MAX_DATA)
@@ -47,17 +83,6 @@ ast_data *peek_data(void)
         exit(EXIT_FAILURE);
     }
     return &stack.data[stack.count - 1];    
-}
-
-ast_data *peep_data(int count)
-{
-    if ((count == 0) || (count > stack.count))
-    {
-        fprintf(stderr, "Stack underflow\n");
-        exit(EXIT_FAILURE);
-    }
-    stack.count -= count;
-    return &stack.data[stack.count];    
 }
 
 ast_data *sync_data(int count)
@@ -415,14 +440,12 @@ static ast_data *new_function(void)
     ast_data *data = new_data(TYPE_FUNCTION);
     ast_function *function;
 
-    function = malloc(sizeof *function);
+    function = calloc(1, sizeof *function);
     if (function == NULL)
     {
-        perror("malloc");
+        perror("calloc");
         exit(EXIT_FAILURE);
     }
-    function->node = NULL;
-    function->vars = NULL;
     data->function = function;
     return data;
 }
@@ -622,7 +645,6 @@ static void free_variable(void *data)
 
 static hashmap *variables;
 static ast_data *data_var;
-static int nvars;
 
 ast_data *map_variable(const char *name)
 {
@@ -643,7 +665,7 @@ ast_data *map_variable(const char *name)
     }
     if (data == data_var)
     {
-        data->variable->offset = nvars++;
+        data->variable->offset = data_def->vars++;
         data_var = new_variable();
     }
     return data;
@@ -668,18 +690,17 @@ static void unmap_variables(void)
 
 void map_vars()
 {
-    if (nvars == 0)
+    if (data_def->vars == 0)
     {
         return;
     }
-    data_def->vars = calloc((size_t)nvars, sizeof *data_def->vars);
-    if (data_def->vars == NULL)
+    data_def->data = calloc((size_t)data_def->vars, sizeof *data_def->data);
+    if (data_def->data == NULL)
     {
         perror("calloc");
         exit(EXIT_FAILURE);
     }
     data_def = NULL;
-    nvars = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -893,10 +914,10 @@ void free_data(ast_data *data)
     switch (data->type)
     {
         case TYPE_FUNCTION:
-            if (data->function->vars != NULL)
+            if (data->function->data != NULL)
             {
-                free(data->function->vars);
-                data->function->vars = NULL;
+                free(data->function->data);
+                data->function->data = NULL;
             }
             break;
         case TYPE_NUMBER:
