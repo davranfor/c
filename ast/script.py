@@ -8,10 +8,15 @@ end
 def bar(var1, var2)
     x = 69;
     print(x, "\n");
+return;
     foo();
     print("bar = ", var1, " ", var2, "\n");
 end
 
+def square(x)
+    return x * x;
+end
+    
 def main()
     print("Starting ...\n");
 
@@ -58,6 +63,8 @@ def main()
 
     x = "prueba2";
     bar("prueba1", x);
+
+    print(square(9), "\n");
 
     print("Bye\n");
 end

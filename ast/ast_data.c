@@ -140,12 +140,12 @@ int valid_name(const char *str)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define DEF_OPERATOR(o, ...)                                \
-    [o] = {                                                 \
-        .type = TYPE_OPERATOR,                              \
-        .flags = 0,                                         \
-        .operator = &(const ast_operator){o, __VA_ARGS__}   \
-    }
+#define DEF_OPERATOR(o, ...) [o] =                      \
+{                                                       \
+    .type = TYPE_OPERATOR,                              \
+    .flags = 0,                                         \
+    .operator = &(const ast_operator){o, __VA_ARGS__}   \
+}
 
 static ast_data operators[] =
 {
@@ -352,21 +352,19 @@ int is_iterator(const ast_data *data)
     switch (data->statement->key)
     {
         case STATEMENT_WHILE:
-        case STATEMENT_UNTIL:
         case STATEMENT_FOR:
-        case STATEMENT_FOREACH:
             return 1;
         default:
             return 0;
     }
 }
 
-#define DEF_STATEMENT(...)                                  \
-    {                                                       \
-        .type = TYPE_STATEMENT,                             \
-        .flags = 0,                                         \
-        .statement = &(const ast_statement){__VA_ARGS__}    \
-    }
+#define DEF_STATEMENT(...)                              \
+{                                                       \
+    .type = TYPE_STATEMENT,                             \
+    .flags = 0,                                         \
+    .statement = &(const ast_statement){__VA_ARGS__}    \
+}
 
 static ast_data statements[] =
 {
@@ -377,11 +375,10 @@ static ast_data statements[] =
     DEF_STATEMENT(STATEMENT_ELIF,     1, "elif"),
     DEF_STATEMENT(STATEMENT_ELSE,     0, "else"),
     DEF_STATEMENT(STATEMENT_WHILE,    1, "while"),
-    DEF_STATEMENT(STATEMENT_UNTIL,    1, "until"),
     DEF_STATEMENT(STATEMENT_FOR,      3, "for"),
-    DEF_STATEMENT(STATEMENT_FOREACH,  2, "foreach"),
     DEF_STATEMENT(STATEMENT_CONTINUE, 0, "continue"),
     DEF_STATEMENT(STATEMENT_BREAK,    0, "break"),
+    DEF_STATEMENT(STATEMENT_RETURN,   0, "return"),
 };
 
 static ast_data branches[] =
@@ -526,12 +523,12 @@ ast_data *map_callable(const char *name)
     return data;
 }
 
-#define DEF_CALLABLE(...)                               \
-    {                                                   \
-        .type = TYPE_CALLABLE,                          \
-        .flags = 0,                                     \
-        .callable = &(const ast_callable){__VA_ARGS__}  \
-    }
+#define DEF_CALLABLE(...)                           \
+{                                                   \
+    .type = TYPE_CALLABLE,                          \
+    .flags = 0,                                     \
+    .callable = &(const ast_callable){__VA_ARGS__}  \
+}
 
 static ast_data callable_list[] =
 {
@@ -691,8 +688,8 @@ ast_data *map_boolean(const char *str)
 {
     static ast_data booleans[] =
     {
-        {TYPE_BOOLEAN, 0, .number = 0},
-        {TYPE_BOOLEAN, 0, .number = 1},
+        {.type = TYPE_BOOLEAN, .flags = 0, .number = 0},
+        {.type = TYPE_BOOLEAN, .flags = 0, .number = 1},
     };
 
     if (strcmp(str, "true") == 0)
@@ -708,136 +705,79 @@ ast_data *map_boolean(const char *str)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#define DEF_NUMBER(n)       \
+{                           \
+    .type = TYPE_NUMBER,    \
+    .flags = 0,             \
+    .number = n             \
+}
+
 static ast_data numbers[] =
 {
-    {TYPE_NUMBER, 0, .number =    0}, {TYPE_NUMBER, 0, .number =    1},
-    {TYPE_NUMBER, 0, .number =    2}, {TYPE_NUMBER, 0, .number =    3},
-    {TYPE_NUMBER, 0, .number =    4}, {TYPE_NUMBER, 0, .number =    5},
-    {TYPE_NUMBER, 0, .number =    6}, {TYPE_NUMBER, 0, .number =    7},
-    {TYPE_NUMBER, 0, .number =    8}, {TYPE_NUMBER, 0, .number =    9},
-    {TYPE_NUMBER, 0, .number =   10}, {TYPE_NUMBER, 0, .number =   11},
-    {TYPE_NUMBER, 0, .number =   12}, {TYPE_NUMBER, 0, .number =   13},
-    {TYPE_NUMBER, 0, .number =   14}, {TYPE_NUMBER, 0, .number =   15},
-    {TYPE_NUMBER, 0, .number =   16}, {TYPE_NUMBER, 0, .number =   17},
-    {TYPE_NUMBER, 0, .number =   18}, {TYPE_NUMBER, 0, .number =   19},
-    {TYPE_NUMBER, 0, .number =   20}, {TYPE_NUMBER, 0, .number =   21},
-    {TYPE_NUMBER, 0, .number =   22}, {TYPE_NUMBER, 0, .number =   23},
-    {TYPE_NUMBER, 0, .number =   24}, {TYPE_NUMBER, 0, .number =   25},
-    {TYPE_NUMBER, 0, .number =   26}, {TYPE_NUMBER, 0, .number =   27},
-    {TYPE_NUMBER, 0, .number =   28}, {TYPE_NUMBER, 0, .number =   29},
-    {TYPE_NUMBER, 0, .number =   30}, {TYPE_NUMBER, 0, .number =   31},
-    {TYPE_NUMBER, 0, .number =   32}, {TYPE_NUMBER, 0, .number =   33},
-    {TYPE_NUMBER, 0, .number =   34}, {TYPE_NUMBER, 0, .number =   35},
-    {TYPE_NUMBER, 0, .number =   36}, {TYPE_NUMBER, 0, .number =   37},
-    {TYPE_NUMBER, 0, .number =   38}, {TYPE_NUMBER, 0, .number =   39},
-    {TYPE_NUMBER, 0, .number =   40}, {TYPE_NUMBER, 0, .number =   41},
-    {TYPE_NUMBER, 0, .number =   42}, {TYPE_NUMBER, 0, .number =   43},
-    {TYPE_NUMBER, 0, .number =   44}, {TYPE_NUMBER, 0, .number =   45},
-    {TYPE_NUMBER, 0, .number =   46}, {TYPE_NUMBER, 0, .number =   47},
-    {TYPE_NUMBER, 0, .number =   48}, {TYPE_NUMBER, 0, .number =   49},
-    {TYPE_NUMBER, 0, .number =   50}, {TYPE_NUMBER, 0, .number =   51},
-    {TYPE_NUMBER, 0, .number =   52}, {TYPE_NUMBER, 0, .number =   53},
-    {TYPE_NUMBER, 0, .number =   54}, {TYPE_NUMBER, 0, .number =   55},
-    {TYPE_NUMBER, 0, .number =   56}, {TYPE_NUMBER, 0, .number =   57},
-    {TYPE_NUMBER, 0, .number =   58}, {TYPE_NUMBER, 0, .number =   59},
-    {TYPE_NUMBER, 0, .number =   60}, {TYPE_NUMBER, 0, .number =   61},
-    {TYPE_NUMBER, 0, .number =   62}, {TYPE_NUMBER, 0, .number =   63},
-    {TYPE_NUMBER, 0, .number =   64}, {TYPE_NUMBER, 0, .number =   65},
-    {TYPE_NUMBER, 0, .number =   66}, {TYPE_NUMBER, 0, .number =   67},
-    {TYPE_NUMBER, 0, .number =   68}, {TYPE_NUMBER, 0, .number =   69},
-    {TYPE_NUMBER, 0, .number =   70}, {TYPE_NUMBER, 0, .number =   71},
-    {TYPE_NUMBER, 0, .number =   72}, {TYPE_NUMBER, 0, .number =   73},
-    {TYPE_NUMBER, 0, .number =   74}, {TYPE_NUMBER, 0, .number =   75},
-    {TYPE_NUMBER, 0, .number =   76}, {TYPE_NUMBER, 0, .number =   77},
-    {TYPE_NUMBER, 0, .number =   78}, {TYPE_NUMBER, 0, .number =   79},
-    {TYPE_NUMBER, 0, .number =   80}, {TYPE_NUMBER, 0, .number =   81},
-    {TYPE_NUMBER, 0, .number =   82}, {TYPE_NUMBER, 0, .number =   83},
-    {TYPE_NUMBER, 0, .number =   84}, {TYPE_NUMBER, 0, .number =   85},
-    {TYPE_NUMBER, 0, .number =   86}, {TYPE_NUMBER, 0, .number =   87},
-    {TYPE_NUMBER, 0, .number =   88}, {TYPE_NUMBER, 0, .number =   89},
-    {TYPE_NUMBER, 0, .number =   90}, {TYPE_NUMBER, 0, .number =   91},
-    {TYPE_NUMBER, 0, .number =   92}, {TYPE_NUMBER, 0, .number =   93},
-    {TYPE_NUMBER, 0, .number =   94}, {TYPE_NUMBER, 0, .number =   95},
-    {TYPE_NUMBER, 0, .number =   96}, {TYPE_NUMBER, 0, .number =   97},
-    {TYPE_NUMBER, 0, .number =   98}, {TYPE_NUMBER, 0, .number =   99},
-    {TYPE_NUMBER, 0, .number =  100}, {TYPE_NUMBER, 0, .number =  101},
-    {TYPE_NUMBER, 0, .number =  102}, {TYPE_NUMBER, 0, .number =  103},
-    {TYPE_NUMBER, 0, .number =  104}, {TYPE_NUMBER, 0, .number =  105},
-    {TYPE_NUMBER, 0, .number =  106}, {TYPE_NUMBER, 0, .number =  107},
-    {TYPE_NUMBER, 0, .number =  108}, {TYPE_NUMBER, 0, .number =  109},
-    {TYPE_NUMBER, 0, .number =  110}, {TYPE_NUMBER, 0, .number =  111},
-    {TYPE_NUMBER, 0, .number =  112}, {TYPE_NUMBER, 0, .number =  113},
-    {TYPE_NUMBER, 0, .number =  114}, {TYPE_NUMBER, 0, .number =  115},
-    {TYPE_NUMBER, 0, .number =  116}, {TYPE_NUMBER, 0, .number =  117},
-    {TYPE_NUMBER, 0, .number =  118}, {TYPE_NUMBER, 0, .number =  119},
-    {TYPE_NUMBER, 0, .number =  120}, {TYPE_NUMBER, 0, .number =  121},
-    {TYPE_NUMBER, 0, .number =  122}, {TYPE_NUMBER, 0, .number =  123},
-    {TYPE_NUMBER, 0, .number =  124}, {TYPE_NUMBER, 0, .number =  125},
-    {TYPE_NUMBER, 0, .number =  126}, {TYPE_NUMBER, 0, .number =  127},
-    {TYPE_NUMBER, 0, .number =  128}, {TYPE_NUMBER, 0, .number =  129},
-    {TYPE_NUMBER, 0, .number =  130}, {TYPE_NUMBER, 0, .number =  131},
-    {TYPE_NUMBER, 0, .number =  132}, {TYPE_NUMBER, 0, .number =  133},
-    {TYPE_NUMBER, 0, .number =  134}, {TYPE_NUMBER, 0, .number =  135},
-    {TYPE_NUMBER, 0, .number =  136}, {TYPE_NUMBER, 0, .number =  137},
-    {TYPE_NUMBER, 0, .number =  138}, {TYPE_NUMBER, 0, .number =  139},
-    {TYPE_NUMBER, 0, .number =  140}, {TYPE_NUMBER, 0, .number =  141},
-    {TYPE_NUMBER, 0, .number =  142}, {TYPE_NUMBER, 0, .number =  143},
-    {TYPE_NUMBER, 0, .number =  144}, {TYPE_NUMBER, 0, .number =  145},
-    {TYPE_NUMBER, 0, .number =  146}, {TYPE_NUMBER, 0, .number =  147},
-    {TYPE_NUMBER, 0, .number =  148}, {TYPE_NUMBER, 0, .number =  149},
-    {TYPE_NUMBER, 0, .number =  150}, {TYPE_NUMBER, 0, .number =  151},
-    {TYPE_NUMBER, 0, .number =  152}, {TYPE_NUMBER, 0, .number =  153},
-    {TYPE_NUMBER, 0, .number =  154}, {TYPE_NUMBER, 0, .number =  155},
-    {TYPE_NUMBER, 0, .number =  156}, {TYPE_NUMBER, 0, .number =  157},
-    {TYPE_NUMBER, 0, .number =  158}, {TYPE_NUMBER, 0, .number =  159},
-    {TYPE_NUMBER, 0, .number =  160}, {TYPE_NUMBER, 0, .number =  161},
-    {TYPE_NUMBER, 0, .number =  162}, {TYPE_NUMBER, 0, .number =  163},
-    {TYPE_NUMBER, 0, .number =  164}, {TYPE_NUMBER, 0, .number =  165},
-    {TYPE_NUMBER, 0, .number =  166}, {TYPE_NUMBER, 0, .number =  167},
-    {TYPE_NUMBER, 0, .number =  168}, {TYPE_NUMBER, 0, .number =  169},
-    {TYPE_NUMBER, 0, .number =  170}, {TYPE_NUMBER, 0, .number =  171},
-    {TYPE_NUMBER, 0, .number =  172}, {TYPE_NUMBER, 0, .number =  173},
-    {TYPE_NUMBER, 0, .number =  174}, {TYPE_NUMBER, 0, .number =  175},
-    {TYPE_NUMBER, 0, .number =  176}, {TYPE_NUMBER, 0, .number =  177},
-    {TYPE_NUMBER, 0, .number =  178}, {TYPE_NUMBER, 0, .number =  179},
-    {TYPE_NUMBER, 0, .number =  180}, {TYPE_NUMBER, 0, .number =  181},
-    {TYPE_NUMBER, 0, .number =  182}, {TYPE_NUMBER, 0, .number =  183},
-    {TYPE_NUMBER, 0, .number =  184}, {TYPE_NUMBER, 0, .number =  185},
-    {TYPE_NUMBER, 0, .number =  186}, {TYPE_NUMBER, 0, .number =  187},
-    {TYPE_NUMBER, 0, .number =  188}, {TYPE_NUMBER, 0, .number =  189},
-    {TYPE_NUMBER, 0, .number =  190}, {TYPE_NUMBER, 0, .number =  191},
-    {TYPE_NUMBER, 0, .number =  192}, {TYPE_NUMBER, 0, .number =  193},
-    {TYPE_NUMBER, 0, .number =  194}, {TYPE_NUMBER, 0, .number =  195},
-    {TYPE_NUMBER, 0, .number =  196}, {TYPE_NUMBER, 0, .number =  197},
-    {TYPE_NUMBER, 0, .number =  198}, {TYPE_NUMBER, 0, .number =  199},
-    {TYPE_NUMBER, 0, .number =  200}, {TYPE_NUMBER, 0, .number =  201},
-    {TYPE_NUMBER, 0, .number =  202}, {TYPE_NUMBER, 0, .number =  203},
-    {TYPE_NUMBER, 0, .number =  204}, {TYPE_NUMBER, 0, .number =  205},
-    {TYPE_NUMBER, 0, .number =  206}, {TYPE_NUMBER, 0, .number =  207},
-    {TYPE_NUMBER, 0, .number =  208}, {TYPE_NUMBER, 0, .number =  209},
-    {TYPE_NUMBER, 0, .number =  210}, {TYPE_NUMBER, 0, .number =  211},
-    {TYPE_NUMBER, 0, .number =  212}, {TYPE_NUMBER, 0, .number =  213},
-    {TYPE_NUMBER, 0, .number =  214}, {TYPE_NUMBER, 0, .number =  215},
-    {TYPE_NUMBER, 0, .number =  216}, {TYPE_NUMBER, 0, .number =  217},
-    {TYPE_NUMBER, 0, .number =  218}, {TYPE_NUMBER, 0, .number =  219},
-    {TYPE_NUMBER, 0, .number =  220}, {TYPE_NUMBER, 0, .number =  221},
-    {TYPE_NUMBER, 0, .number =  222}, {TYPE_NUMBER, 0, .number =  223},
-    {TYPE_NUMBER, 0, .number =  224}, {TYPE_NUMBER, 0, .number =  225},
-    {TYPE_NUMBER, 0, .number =  226}, {TYPE_NUMBER, 0, .number =  227},
-    {TYPE_NUMBER, 0, .number =  228}, {TYPE_NUMBER, 0, .number =  229},
-    {TYPE_NUMBER, 0, .number =  230}, {TYPE_NUMBER, 0, .number =  231},
-    {TYPE_NUMBER, 0, .number =  232}, {TYPE_NUMBER, 0, .number =  233},
-    {TYPE_NUMBER, 0, .number =  234}, {TYPE_NUMBER, 0, .number =  235},
-    {TYPE_NUMBER, 0, .number =  236}, {TYPE_NUMBER, 0, .number =  237},
-    {TYPE_NUMBER, 0, .number =  238}, {TYPE_NUMBER, 0, .number =  239},
-    {TYPE_NUMBER, 0, .number =  240}, {TYPE_NUMBER, 0, .number =  241},
-    {TYPE_NUMBER, 0, .number =  242}, {TYPE_NUMBER, 0, .number =  243},
-    {TYPE_NUMBER, 0, .number =  244}, {TYPE_NUMBER, 0, .number =  245},
-    {TYPE_NUMBER, 0, .number =  246}, {TYPE_NUMBER, 0, .number =  247},
-    {TYPE_NUMBER, 0, .number =  248}, {TYPE_NUMBER, 0, .number =  249},
-    {TYPE_NUMBER, 0, .number =  250}, {TYPE_NUMBER, 0, .number =  251},
-    {TYPE_NUMBER, 0, .number =  252}, {TYPE_NUMBER, 0, .number =  253},
-    {TYPE_NUMBER, 0, .number =  254}, {TYPE_NUMBER, 0, .number =  255},
+    DEF_NUMBER(  0), DEF_NUMBER(  1), DEF_NUMBER(  2), DEF_NUMBER(  3),
+    DEF_NUMBER(  4), DEF_NUMBER(  5), DEF_NUMBER(  6), DEF_NUMBER(  7),
+    DEF_NUMBER(  8), DEF_NUMBER(  9), DEF_NUMBER( 10), DEF_NUMBER( 11),
+    DEF_NUMBER( 12), DEF_NUMBER( 13), DEF_NUMBER( 14), DEF_NUMBER( 15),
+    DEF_NUMBER( 16), DEF_NUMBER( 17), DEF_NUMBER( 18), DEF_NUMBER( 19),
+    DEF_NUMBER( 20), DEF_NUMBER( 21), DEF_NUMBER( 22), DEF_NUMBER( 23),
+    DEF_NUMBER( 24), DEF_NUMBER( 25), DEF_NUMBER( 26), DEF_NUMBER( 27),
+    DEF_NUMBER( 28), DEF_NUMBER( 29), DEF_NUMBER( 30), DEF_NUMBER( 31),
+    DEF_NUMBER( 32), DEF_NUMBER( 33), DEF_NUMBER( 34), DEF_NUMBER( 35),
+    DEF_NUMBER( 36), DEF_NUMBER( 37), DEF_NUMBER( 38), DEF_NUMBER( 39),
+    DEF_NUMBER( 40), DEF_NUMBER( 41), DEF_NUMBER( 42), DEF_NUMBER( 43),
+    DEF_NUMBER( 44), DEF_NUMBER( 45), DEF_NUMBER( 46), DEF_NUMBER( 47),
+    DEF_NUMBER( 48), DEF_NUMBER( 49), DEF_NUMBER( 50), DEF_NUMBER( 51),
+    DEF_NUMBER( 52), DEF_NUMBER( 53), DEF_NUMBER( 54), DEF_NUMBER( 55),
+    DEF_NUMBER( 56), DEF_NUMBER( 57), DEF_NUMBER( 58), DEF_NUMBER( 59),
+    DEF_NUMBER( 60), DEF_NUMBER( 61), DEF_NUMBER( 62), DEF_NUMBER( 63),
+    DEF_NUMBER( 64), DEF_NUMBER( 65), DEF_NUMBER( 66), DEF_NUMBER( 67),
+    DEF_NUMBER( 68), DEF_NUMBER( 69), DEF_NUMBER( 70), DEF_NUMBER( 71),
+    DEF_NUMBER( 72), DEF_NUMBER( 73), DEF_NUMBER( 74), DEF_NUMBER( 75),
+    DEF_NUMBER( 76), DEF_NUMBER( 77), DEF_NUMBER( 78), DEF_NUMBER( 79),
+    DEF_NUMBER( 80), DEF_NUMBER( 81), DEF_NUMBER( 82), DEF_NUMBER( 83),
+    DEF_NUMBER( 84), DEF_NUMBER( 85), DEF_NUMBER( 86), DEF_NUMBER( 87),
+    DEF_NUMBER( 88), DEF_NUMBER( 89), DEF_NUMBER( 90), DEF_NUMBER( 91),
+    DEF_NUMBER( 92), DEF_NUMBER( 93), DEF_NUMBER( 94), DEF_NUMBER( 95),
+    DEF_NUMBER( 96), DEF_NUMBER( 97), DEF_NUMBER( 98), DEF_NUMBER( 99),
+    DEF_NUMBER(100), DEF_NUMBER(101), DEF_NUMBER(102), DEF_NUMBER(103),
+    DEF_NUMBER(104), DEF_NUMBER(105), DEF_NUMBER(106), DEF_NUMBER(107),
+    DEF_NUMBER(108), DEF_NUMBER(109), DEF_NUMBER(110), DEF_NUMBER(111),
+    DEF_NUMBER(112), DEF_NUMBER(113), DEF_NUMBER(114), DEF_NUMBER(115),
+    DEF_NUMBER(116), DEF_NUMBER(117), DEF_NUMBER(118), DEF_NUMBER(119),
+    DEF_NUMBER(120), DEF_NUMBER(121), DEF_NUMBER(122), DEF_NUMBER(123),
+    DEF_NUMBER(124), DEF_NUMBER(125), DEF_NUMBER(126), DEF_NUMBER(127),
+    DEF_NUMBER(128), DEF_NUMBER(129), DEF_NUMBER(130), DEF_NUMBER(131),
+    DEF_NUMBER(132), DEF_NUMBER(133), DEF_NUMBER(134), DEF_NUMBER(135),
+    DEF_NUMBER(136), DEF_NUMBER(137), DEF_NUMBER(138), DEF_NUMBER(139),
+    DEF_NUMBER(140), DEF_NUMBER(141), DEF_NUMBER(142), DEF_NUMBER(143),
+    DEF_NUMBER(144), DEF_NUMBER(145), DEF_NUMBER(146), DEF_NUMBER(147),
+    DEF_NUMBER(148), DEF_NUMBER(149), DEF_NUMBER(150), DEF_NUMBER(151),
+    DEF_NUMBER(152), DEF_NUMBER(153), DEF_NUMBER(154), DEF_NUMBER(155),
+    DEF_NUMBER(156), DEF_NUMBER(157), DEF_NUMBER(158), DEF_NUMBER(159),
+    DEF_NUMBER(160), DEF_NUMBER(161), DEF_NUMBER(162), DEF_NUMBER(163),
+    DEF_NUMBER(164), DEF_NUMBER(165), DEF_NUMBER(166), DEF_NUMBER(167),
+    DEF_NUMBER(168), DEF_NUMBER(169), DEF_NUMBER(170), DEF_NUMBER(171),
+    DEF_NUMBER(172), DEF_NUMBER(173), DEF_NUMBER(174), DEF_NUMBER(175),
+    DEF_NUMBER(176), DEF_NUMBER(177), DEF_NUMBER(178), DEF_NUMBER(179),
+    DEF_NUMBER(180), DEF_NUMBER(181), DEF_NUMBER(182), DEF_NUMBER(183),
+    DEF_NUMBER(184), DEF_NUMBER(185), DEF_NUMBER(186), DEF_NUMBER(187),
+    DEF_NUMBER(188), DEF_NUMBER(189), DEF_NUMBER(190), DEF_NUMBER(191),
+    DEF_NUMBER(192), DEF_NUMBER(193), DEF_NUMBER(194), DEF_NUMBER(195),
+    DEF_NUMBER(196), DEF_NUMBER(197), DEF_NUMBER(198), DEF_NUMBER(199),
+    DEF_NUMBER(200), DEF_NUMBER(201), DEF_NUMBER(202), DEF_NUMBER(203),
+    DEF_NUMBER(204), DEF_NUMBER(205), DEF_NUMBER(206), DEF_NUMBER(207),
+    DEF_NUMBER(208), DEF_NUMBER(209), DEF_NUMBER(210), DEF_NUMBER(211),
+    DEF_NUMBER(212), DEF_NUMBER(213), DEF_NUMBER(214), DEF_NUMBER(215),
+    DEF_NUMBER(216), DEF_NUMBER(217), DEF_NUMBER(218), DEF_NUMBER(219),
+    DEF_NUMBER(220), DEF_NUMBER(221), DEF_NUMBER(222), DEF_NUMBER(223),
+    DEF_NUMBER(224), DEF_NUMBER(225), DEF_NUMBER(226), DEF_NUMBER(227),
+    DEF_NUMBER(228), DEF_NUMBER(229), DEF_NUMBER(230), DEF_NUMBER(231),
+    DEF_NUMBER(232), DEF_NUMBER(233), DEF_NUMBER(234), DEF_NUMBER(235),
+    DEF_NUMBER(236), DEF_NUMBER(237), DEF_NUMBER(238), DEF_NUMBER(239),
+    DEF_NUMBER(240), DEF_NUMBER(241), DEF_NUMBER(242), DEF_NUMBER(243),
+    DEF_NUMBER(244), DEF_NUMBER(245), DEF_NUMBER(246), DEF_NUMBER(247),
+    DEF_NUMBER(248), DEF_NUMBER(249), DEF_NUMBER(250), DEF_NUMBER(251),
+    DEF_NUMBER(252), DEF_NUMBER(253), DEF_NUMBER(254), DEF_NUMBER(255),
 };
 
 ast_data *map_number(const char *str)
@@ -921,7 +861,7 @@ static void unmap_strings(void)
 
 ast_data *map_null(const char *str)
 {
-    static ast_data null = {TYPE_NULL, 0, .number = 0};
+    static ast_data null = {.type = TYPE_NULL, .flags = 0, .number = 0};
 
     if (strcmp(str, "null") == 0)
     {

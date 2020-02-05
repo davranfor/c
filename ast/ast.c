@@ -411,6 +411,26 @@ static void move_block(bool end)
     }
 }
 
+static void move_return(void)
+{
+    const ast_node *branch = peek_branch();
+
+    if (branch == NULL)
+    {
+        return;
+    }
+    if (branch->data->statement->key == STATEMENT_RETURN)
+    {
+        if (operands != branch)
+        {
+            ast_node *node = operands->right;
+
+            move(&node->left, &operands);
+        }
+        pop_branch();
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 static ast_data *classify(const char **text)
@@ -533,7 +553,14 @@ static ast_data *classify(const char **text)
                 {
                     die("Unexpected statement");
                 }
-                starting = data->statement->args == 0;
+                if (data->statement->key == STATEMENT_RETURN)
+                {
+                    starting = (**text == ';');
+                }
+                else
+                {
+                    starting = data->statement->args == 0;
+                }
                 break;
             case TYPE_FUNCTION:
             case TYPE_CALLABLE:
@@ -618,6 +645,7 @@ static int build(const char *text)
                     {
                         move_operator();
                     }
+                    move_return();
                     break;
                 case '\0':
                     return 1;
@@ -647,9 +675,7 @@ static int build(const char *text)
                     break;
                 case STATEMENT_IF:
                 case STATEMENT_WHILE:
-                case STATEMENT_UNTIL:
                 case STATEMENT_FOR:
-                case STATEMENT_FOREACH:
                     push(&operands, data);
                     push_statement(operands);
                     push(&operators, map_operator(&text));
@@ -669,6 +695,10 @@ static int build(const char *text)
                     break;
                 case STATEMENT_END:
                     move_block(true);
+                    break;
+                case STATEMENT_RETURN:
+                    push(&operands, data);
+                    push_branch(operands);
                     break;
                 default:
                     push(&operands, data);
@@ -750,12 +780,10 @@ static void explain(const ast_node *node, int level)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static void eval_tree(const ast_node *);
+static ast_data eval_tree(const ast_node *);
 
 static ast_data eval_function(const ast_node *node, int args)
 {
-    ast_data data = {TYPE_NUMBER, 0, .number = 0};
-
     if (args != node->data->function->args)
     {
         die("'%s' was expecting %d argument(s), got %d",
@@ -768,10 +796,9 @@ static ast_data eval_function(const ast_node *node, int args)
     {
         memcpy(node->data->function->vars,
                peep_data(args),
-               sizeof(data) * (size_t)args);
+               sizeof(ast_data) * (size_t)args);
     }
-    eval_tree(node->right);
-    return data;
+    return eval_tree(node->right);
 }
 
 #define AST_GET_VAR(x)                                      \
@@ -868,7 +895,7 @@ static int eval_cond(const ast_node *node)
     }
 }
 
-static void eval_tree(const ast_node *node)
+static ast_data eval_tree(const ast_node *node)
 {
     while (node != NULL)
     {
@@ -899,8 +926,6 @@ static void eval_tree(const ast_node *node)
                         }
                         break;
                     case STATEMENT_WHILE:
-                    case STATEMENT_UNTIL:
-                    case STATEMENT_FOREACH:
                         if (node != peek_jump())
                         {
                             push_jump(node);
@@ -971,6 +996,13 @@ static void eval_tree(const ast_node *node)
                             }
                         }
                         break;
+                    case STATEMENT_RETURN:
+                        while (pop_jump());
+                        if (node->left == NULL)
+                        {
+                            return (ast_data){0};
+                        }
+                        return eval_expr(node->left);
                     default:
                         break;
                 }
@@ -995,6 +1027,7 @@ static void eval_tree(const ast_node *node)
             }
         }
     }
+    return (ast_data){0};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
