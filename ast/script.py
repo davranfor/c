@@ -1,8 +1,12 @@
 # Script example
 
 def foo()
+    (1) + 1;
     pow = pow(3, 2);
     print("pow = ", pow);
+    if (1)
+        end
+
 end
 
 def bar(var1, var2)

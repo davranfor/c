@@ -26,13 +26,10 @@ void wind_data(ast_data *data, int vars)
     }
     if (stack.count + vars > MAX_DATA)
     {
-        fprintf(stderr, "Stack overflow1\n");
+        fprintf(stderr, "Stack overflow\n");
         exit(EXIT_FAILURE);
     }
-    memcpy(stack.data + stack.count,
-           data,
-           sizeof(*data) * (size_t)vars
-    );
+    memcpy(stack.data + stack.count, data, sizeof(*data) * (size_t)vars);
     stack.count += vars;
 }
 
@@ -42,16 +39,13 @@ void unwind_data(ast_data *data, int vars)
     {
         return;
     }
-    if (stack.count - vars < 0)
+    if (vars > stack.count)
     {
         fprintf(stderr, "Stack underflow\n");
         exit(EXIT_FAILURE);
     }
-    memcpy(data,
-           stack.data + (stack.count - vars),
-           sizeof(*data) * (size_t)vars
-    );
     stack.count -= vars;
+    memcpy(data, stack.data + stack.count, sizeof(*data) * (size_t)vars);
 }
 
 int push_data(ast_data data)
@@ -437,17 +431,22 @@ ast_data *map_branch(int branch)
 
 static ast_data *new_function(void)
 {
-    ast_data *data = new_data(TYPE_FUNCTION);
-    ast_function *function;
+    struct reference
+    {
+        ast_data data;
+        ast_function function;
+    };
 
-    function = calloc(1, sizeof *function);
-    if (function == NULL)
+    struct reference *reference = calloc(1, sizeof *reference);
+
+    if (reference == NULL)
     {
         perror("calloc");
         exit(EXIT_FAILURE);
     }
-    data->function = function;
-    return data;
+    reference->data.type = TYPE_FUNCTION;
+    reference->data.function = &reference->function;
+    return &reference->data;
 }
 
 static int comp_function(const void *pa, const void *pb)
@@ -467,7 +466,7 @@ static unsigned long hash_function(const void *item)
 
 static void free_function(void *data)
 {
-    free(((ast_data *)data)->function);
+    free(((ast_data *)data)->function->data);
     free(data);
 }
 
@@ -607,17 +606,23 @@ static void unmap_callables(void)
 
 static ast_data *new_variable(void)
 {
-    ast_data *data = new_data(TYPE_VARIABLE);
-    ast_variable *variable;
+    struct reference
+    {
+        ast_data data;
+        ast_variable variable;
+    };
 
-    variable = malloc(sizeof *variable);
-    if (variable == NULL)
+    struct reference *reference = malloc(sizeof *reference);
+
+    if (reference == NULL)
     {
         perror("malloc");
         exit(EXIT_FAILURE);
     }
-    data->variable = variable;
-    return data;
+    reference->data.type = TYPE_VARIABLE;
+    reference->data.flags = 0;
+    reference->data.variable = &reference->variable;
+    return &reference->data;
 }
 
 static int comp_variable(const void *pa, const void *pb)
@@ -635,12 +640,6 @@ static unsigned long hash_variable(const void *item)
 
     return hash_str((const unsigned char *)data->variable->name) ^
            hash_str((const unsigned char *)data->variable->function->name);
-}
-
-static void free_variable(void *data)
-{
-    free(((ast_data *)data)->variable);
-    free(data);
 }
 
 static hashmap *variables;
@@ -668,6 +667,14 @@ ast_data *map_variable(const char *name)
         data->variable->offset = data_def->vars++;
         data_var = new_variable();
     }
+    else
+    {
+        // Check duplicated args names
+        if (data_def->node == NULL)
+        {
+            return NULL;
+        }
+    }
     return data;
 }
 
@@ -684,8 +691,8 @@ static void map_variables(void)
 
 static void unmap_variables(void)
 {
-    hashmap_destroy(variables, free_variable);
-    free_variable(data_var);
+    hashmap_destroy(variables, free);
+    free(data_var);
 }
 
 void map_vars()
@@ -913,13 +920,6 @@ void free_data(ast_data *data)
 {
     switch (data->type)
     {
-        case TYPE_FUNCTION:
-            if (data->function->data != NULL)
-            {
-                free(data->function->data);
-                data->function->data = NULL;
-            }
-            break;
         case TYPE_NUMBER:
             if ((data < numbers) ||
                 (data > numbers + 255))

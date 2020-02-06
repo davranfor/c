@@ -215,35 +215,40 @@ const ast_node *peek_branch(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+struct calls
+{
+    ast_node *node[MAX_HEAP];
+    int count;
+};
+
 static struct calls calls;
 
-void push_call(ast_type type)
+void push_call(ast_node *node)
 {
     if (calls.count == MAX_HEAP)
     {
         die();
     }
-    calls.call[calls.count].type = type;
-    calls.call[calls.count].args = 0;
+    calls.node[calls.count] = node;
     calls.count++;
 }
 
-struct call *pop_call(void)
+ast_node *pop_call(void)
 {
     if (calls.count == 0)
     {
         return NULL;
     }
-    return &calls.call[--calls.count];
+    return calls.node[--calls.count];
 }
 
-struct call *peek_call(void)
+ast_node *peek_call(void)
 {
     if (calls.count == 0)
     {
         return NULL;
     }
-    return &calls.call[calls.count - 1];
+    return calls.node[calls.count - 1];
 }
 
 ///////////////////////////////////////////////////////////////////////////////

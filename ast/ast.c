@@ -212,12 +212,7 @@ static bool starting = true;
 static void move_operator(void)
 {
     int args = arguments(operators->data);
-    struct call *call = peek_call();
 
-    if (call != NULL)
-    {
-        call->args += 1 - args;
-    }
     while (args--)
     {
         if (!move(&operators->left, &operands))
@@ -228,48 +223,45 @@ static void move_operator(void)
     move(&operands, &operators);
 }
 
-static void move_operands(int args)
+static int move_operands(ast_node *node)
 {
-    while (args--)
+    int args = 0;
+
+    while (operands != node)
     {
-        if (!move(&operators->left, &operands))
+        if (!move(&node->left, &operands))
         {
             die("Expected operand");
         }
+        args++;
     }
+    return args;
 }
 
 static void move_arguments(void)
 {
-    struct call *call = pop_call();
+    ast_node *call = pop_call();
+    int args = move_operands(call);
 
-    if (call == NULL)
-    {
-        die("')' without '('");
-    }
-    move_operands(call->args);
-    switch (call->type)
+    switch (call->data->type)
     {
         case TYPE_OPERATOR:
-            if (call->args == 1)
-            {
-                move(&operands, &operators->left);
-            }
-            else
+            if (args != 1)
             {
                 die("One argument was expected");
             }
+            move(&operands->right, &operands->left);
+            pop(&operands);
             break;
         case TYPE_STATEMENT:
-            if (call->args != operands->data->statement->args)
+            if (args != operands->data->statement->args)
             {
                 die("'%s' was expecting %d argument(s), got %d",
                     operands->data->statement->name,
                     operands->data->statement->args,
-                    call->args
+                    args
                 );
             }
-            operands->left = operators->left;
             expected = OPERAND;
             starting = true;
             break;
@@ -280,24 +272,22 @@ static void move_arguments(void)
                     operands->data->callable->name
                 );
             }
-            if ((call->args < operands->data->callable->args.min) ||
-                (call->args > operands->data->callable->args.max))
+            if ((args < operands->data->callable->args.min) ||
+                (args > operands->data->callable->args.max))
             {
                 die("%s() was expecting (min: %d, max: %d) argument(s), got %d",
                     operands->data->callable->name,
                     operands->data->callable->args.min,
                     operands->data->callable->args.max,
-                    call->args
+                    args
                 );
             }
-            operands->left = operators->left;
-            if (call->args == 0)
+            if (args == 0)
             {
                 expected = OPERATOR;
             }
             break;
         case TYPE_FUNCTION:
-            operands->left = operators->left;
             if (defining(operands->right))
             {
                 if (operands->data->function->node != NULL)
@@ -306,12 +296,33 @@ static void move_arguments(void)
                         operands->data->function->name
                     );
                 }
+/*
+                if (operands->data->function->vars != call->args)
+                {
+                    die("%s(): Unexpected expression within args section",
+                        operands->data->function->name
+                    );
+                }
+
+                ast_node *node = operators->left;
+
+                while (node != NULL)
+                {
+                    if (node->data->type != TYPE_VARIABLE)
+                    {
+                        die("%s(): Unexpected expression within args section",
+                            operands->data->function->name
+                        );
+                    }
+                    node = node->right;
+                }
+*/
                 operands->data->function->node = operands;
-                operands->data->function->args = call->args;
+                operands->data->function->args = args;
                 expected = OPERAND;
                 starting = true;
             }
-            else if (call->args == 0)
+            else if (args == 0)
             {
                 expected = OPERATOR;
             }
@@ -320,11 +331,6 @@ static void move_arguments(void)
             break;
     }
     pop(&operators);
-    call = peek_call();
-    if (call != NULL)
-    {
-        call->args++;
-    }
 }
 
 static void move_expressions(ast_node *node)
@@ -362,6 +368,7 @@ static void move_block(bool end)
     move_expressions(&node);
     if (operands == NULL)
     {
+        clear(node.left);
         die("'end' was not expected");
     }
     switch (operands->data->statement->args)
@@ -443,7 +450,13 @@ static ast_data *classify(const char **text)
         switch (data->operator->key)
         {
             case '(':
+                starting = false;
+                break;
             case ')':
+                if (peek_call() == NULL)
+                {
+                    die("')' without '('");
+                }
                 starting = false;
                 break;
             case ',':
@@ -610,8 +623,9 @@ static int build(const char *text)
             switch (data->operator->key)
             {
                 case '(':
+                    push(&operands, data);
                     push(&operators, data);
-                    push_call(TYPE_OPERATOR);
+                    push_call(operands);
                     break;
                 case ')':
                     while ((root = peek(operators)))
@@ -674,16 +688,16 @@ static int build(const char *text)
                 case STATEMENT_WHILE:
                 case STATEMENT_FOR:
                     push(&operands, data);
-                    push_statement(operands);
                     push(&operators, map_operator(&text));
-                    push_call(TYPE_STATEMENT);
+                    push_statement(operands);
+                    push_call(operands);
                     break;
                 case STATEMENT_ELIF:
                     move_block(false);
                     push(&operands, data);
-                    push_branch(operands);
                     push(&operators, map_operator(&text));
-                    push_call(TYPE_STATEMENT);
+                    push_branch(operands);
+                    push_call(operands);
                     break;
                 case STATEMENT_ELSE:
                     move_block(false);
@@ -706,21 +720,17 @@ static int build(const char *text)
         {
             push(&operands, data);
             push(&operators, map_operator(&text));
-            push_call(TYPE_FUNCTION);
+            push_call(operands);
         }
         else if (data->type == TYPE_CALLABLE)
         {
             push(&operands, data);
             push(&operators, map_operator(&text));
-            push_call(TYPE_CALLABLE);
+            push_call(operands);
         }
         else
         {
             push(&operands, data);
-            if (peek_call() != NULL)
-            {
-                peek_call()->args++;
-            }
         }
         check(data);
     }
@@ -777,12 +787,16 @@ static void explain(const ast_node *node, int level)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#define AST_GET_VAR(x)                                      \
+    if (x.type == TYPE_VARIABLE)                            \
+    {                                                       \
+        x = x.variable->function->data[x.variable->offset]; \
+    }
+
 static ast_data eval_tree(const ast_node *);
 
-static ast_data eval_function(const ast_node *node, int args)
+static ast_data eval_function(const ast_function *function, int args)
 {
-    ast_function *function = node->data->function;
-
     if (args != function->args)
     {
         die("'%s' was expecting %d argument(s), got %d",
@@ -793,17 +807,12 @@ static ast_data eval_function(const ast_node *node, int args)
     }
     unwind_data(function->data, function->args);
 
-    ast_data data = eval_tree(node->right);
+    ast_data data = eval_tree(function->node->right);
 
+    AST_GET_VAR(data);
     unwind_data(function->data, function->vars);
     return data;
 }
-
-#define AST_GET_VAR(x)                                      \
-    if (x.type == TYPE_VARIABLE)                            \
-    {                                                       \
-        x = x.variable->function->data[x.variable->offset]; \
-    }
 
 static ast_data eval_expr(const ast_node *node)
 {
@@ -857,7 +866,7 @@ static ast_data eval_expr(const ast_node *node)
             {
                 die("%s() is not defined", node->data->function->name);
             }
-            return eval_function(node->data->function->node, args);
+            return eval_function(node->data->function, args);
         case TYPE_CALLABLE:
             next = node->left;
             while (next != NULL)
@@ -1061,7 +1070,7 @@ void ast_eval(void)
         die("main() is not defined");
     }
     wind_data(data->function->data, data->function->vars);
-    eval_function(data->function->node, 0);
+    eval_function(data->function, 0);
 }
 
 void ast_help(void)

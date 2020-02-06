@@ -120,7 +120,7 @@ struct ast_operator
 struct ast_function
 {
     const char *name;
-    const void *node;
+    const struct ast_node *node;
     ast_data *data;
     int vars;
     int args;
