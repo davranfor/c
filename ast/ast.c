@@ -199,12 +199,22 @@ static ast_data *parse(const char **text)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-enum {OPERATOR, OPERAND};
-
 static ast_node *operators;
 static ast_node *operands;
 
+enum {OPERATOR, OPERAND};
 static int expected = OPERAND;
+
+enum
+{
+    SEPARATING = 0x01,
+    ASSIGNING  = 0x02,
+    MASK       = 0x03,
+    DEFINING   = 0x04,
+    DEFINED    = 0x08,
+};
+static int status = 0;
+
 static bool starting = true;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -282,7 +292,7 @@ static void move_arguments(void)
             }
             break;
         case TYPE_FUNCTION:
-            if (defining(operands->right))
+            if (status & DEFINING)
             {
                 if (operands->data->function->vars != args)
                 {
@@ -292,6 +302,8 @@ static void move_arguments(void)
                 }
                 operands->data->function->node = operands;
                 operands->data->function->args = args;
+                status &= ~DEFINING;
+                status |= DEFINED;
                 expected = OPERAND;
                 starting = true;
             }
@@ -358,11 +370,6 @@ static void move_block(bool end)
     }
     if (end)
     {
-        if (defs() && !defined())
-        {
-            die("'def' statement requires a name");
-        }
-
         const ast_node *statement = pop_statement();
 
         if (operands != statement)
@@ -371,6 +378,7 @@ static void move_block(bool end)
         }
         else if (operands->data->statement->key == STATEMENT_DEF)
         {
+            status = 0;
             map_vars();
         }
     }
@@ -407,63 +415,58 @@ static void move_return(void)
 
 static void verify(const ast_data *data)
 {
-    if (defs() != 0)
+    if (status == 0)
     {
-        if (!defined())
+        if ((data->type == TYPE_STATEMENT) &&
+            (data->statement->key == STATEMENT_DEF))
         {
-            if (peek_call() == NULL)
+            status |= DEFINING;
+            return;
+        }
+        if ((data->type == TYPE_OPERATOR) &&
+            (data->operator->key == OPERATOR_EOF))
+        {
+            return;
+        }
+        die("Only 'def's can be defined at global scope");
+    }
+    if (status & DEFINING)
+    {
+        if (peek_call() == NULL)
+        {
+            if (data->type == TYPE_CALLABLE)
             {
-                if (data->type == TYPE_CALLABLE)
+                die("def %s() shadows a standard function",
+                    data->callable->name
+                );
+            }
+            if (data->type == TYPE_FUNCTION)
+            {
+                if (data->function->node != NULL)
                 {
-                    die("def %s() shadows a standard function",
-                        data->callable->name
+                    die("def %s() was already defined",
+                        data->function->name
                     );
-                }
-                if (data->type == TYPE_FUNCTION)
-                {
-                    if (data->function->node != NULL)
-                    {
-                        die("%s() was already defined",
-                            data->function->name
-                        );
-                    }
-                }
-                else
-                {
-                    die("A function name was expected");
                 }
             }
             else
             {
-                if ((data->type == TYPE_OPERATOR) &&
-                    (arguments(data) == 0))
-                {
-                    return;
-                }
-                if (data->type != TYPE_VARIABLE)
-                {
-                    die("An argument was expected");
-                }
+                die("A function name was expected");
             }
         }
-        return;
-    }
-    if (data->type == TYPE_STATEMENT)
-    {
-        if ((data->statement->key == STATEMENT_DEF) ||
-            (data->statement->key == STATEMENT_END))
+        else
         {
-            return;
+            if ((data->type == TYPE_OPERATOR) &&
+                (arguments(data) == 0))
+            {
+                return;
+            }
+            if (data->type != TYPE_VARIABLE)
+            {
+                die("An argument was expected");
+            }
         }
     }
-    if (data->type == TYPE_OPERATOR)
-    {
-        if (data->operator->key == OPERATOR_EOF)
-        {
-            return;
-        }
-    }
-    die("Only 'def's can be defined at global scope");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -471,6 +474,7 @@ static void verify(const ast_data *data)
 static ast_data *classify(const char **text)
 {
     ast_data *data = parse(text);
+    int flags = 0;
 
     if (data == NULL)
     {
@@ -489,6 +493,10 @@ static ast_data *classify(const char **text)
                 {
                     die("')' without '('");
                 }
+                if (status & SEPARATING)
+                {
+                    die("Expected operand");
+                }
                 starting = false;
                 break;
             case ',':
@@ -500,6 +508,7 @@ static ast_data *classify(const char **text)
                 {
                     die("Expected operand");
                 }
+                flags |= SEPARATING;
                 expected = OPERAND;
                 starting = false;
                 break;
@@ -564,7 +573,7 @@ static ast_data *classify(const char **text)
                 switch (data->statement->key)
                 {
                     case STATEMENT_DEF:
-                        if (defs() > 0)
+                        if (status & DEFINED)
                         {
                             die("Nested 'def's are not allowed");
                         }
@@ -620,6 +629,9 @@ static ast_data *classify(const char **text)
                 break;
         }
     }
+    status &= ~MASK;
+    status |= flags;
+    flags = 0x0;
     return data;
 }
 

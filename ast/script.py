@@ -1,6 +1,6 @@
 # Script example
 
-def pepe(a)
+def pepe(a, b)
 end
 
 def foo()
