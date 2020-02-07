@@ -266,12 +266,6 @@ static void move_arguments(void)
             starting = true;
             break;
         case TYPE_CALLABLE:
-            if (defining(operands->right))
-            {
-                die("def %s() shadows a standard function",
-                    operands->data->callable->name
-                );
-            }
             if ((args < operands->data->callable->args.min) ||
                 (args > operands->data->callable->args.max))
             {
@@ -290,33 +284,12 @@ static void move_arguments(void)
         case TYPE_FUNCTION:
             if (defining(operands->right))
             {
-                if (operands->data->function->node != NULL)
+                if (operands->data->function->vars != args)
                 {
-                    die("%s() was already defined",
+                    die("%s(): Invalid arg section",
                         operands->data->function->name
                     );
                 }
-/*
-                if (operands->data->function->vars != call->args)
-                {
-                    die("%s(): Unexpected expression within args section",
-                        operands->data->function->name
-                    );
-                }
-
-                ast_node *node = operators->left;
-
-                while (node != NULL)
-                {
-                    if (node->data->type != TYPE_VARIABLE)
-                    {
-                        die("%s(): Unexpected expression within args section",
-                            operands->data->function->name
-                        );
-                    }
-                    node = node->right;
-                }
-*/
                 operands->data->function->node = operands;
                 operands->data->function->args = args;
                 expected = OPERAND;
@@ -366,11 +339,6 @@ static void move_block(bool end)
     ast_node node = {0};
 
     move_expressions(&node);
-    if (operands == NULL)
-    {
-        clear(node.left);
-        die("'end' was not expected");
-    }
     switch (operands->data->statement->args)
     {
         case 0:
@@ -437,6 +405,69 @@ static void move_return(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+static void verify(const ast_data *data)
+{
+    if (defs() != 0)
+    {
+        if (!defined())
+        {
+            if (peek_call() == NULL)
+            {
+                if (data->type == TYPE_CALLABLE)
+                {
+                    die("def %s() shadows a standard function",
+                        data->callable->name
+                    );
+                }
+                if (data->type == TYPE_FUNCTION)
+                {
+                    if (data->function->node != NULL)
+                    {
+                        die("%s() was already defined",
+                            data->function->name
+                        );
+                    }
+                }
+                else
+                {
+                    die("A function name was expected");
+                }
+            }
+            else
+            {
+                if ((data->type == TYPE_OPERATOR) &&
+                    (arguments(data) == 0))
+                {
+                    return;
+                }
+                if (data->type != TYPE_VARIABLE)
+                {
+                    die("An argument was expected");
+                }
+            }
+        }
+        return;
+    }
+    if (data->type == TYPE_STATEMENT)
+    {
+        if ((data->statement->key == STATEMENT_DEF) ||
+            (data->statement->key == STATEMENT_END))
+        {
+            return;
+        }
+    }
+    if (data->type == TYPE_OPERATOR)
+    {
+        if (data->operator->key == OPERATOR_EOF)
+        {
+            return;
+        }
+    }
+    die("Only 'def's can be defined at global scope");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 static ast_data *classify(const char **text)
 {
     ast_data *data = parse(text);
@@ -445,6 +476,7 @@ static ast_data *classify(const char **text)
     {
         return NULL;
     }
+    verify(data);
     if (data->type == TYPE_OPERATOR)
     {
         switch (data->operator->key)
@@ -556,6 +588,12 @@ static ast_data *classify(const char **text)
                                 " can't be used outside a loop");
                         }
                         break;
+                    case STATEMENT_END:
+                        if (peek_statement() == NULL)
+                        {
+                            die("'end' was not expected");
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -583,25 +621,6 @@ static ast_data *classify(const char **text)
         }
     }
     return data;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-static void check(const ast_data *data)
-{
-    if (defs() != 0)
-    {
-        return;
-    }
-    if (data->type == TYPE_STATEMENT)
-    {
-        if ((data->statement->key == STATEMENT_DEF) ||
-            (data->statement->key == STATEMENT_END))
-        {
-            return;
-        }
-    }
-    die("Only 'def's can be defined at global scope");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -732,7 +751,6 @@ static int build(const char *text)
         {
             push(&operands, data);
         }
-        check(data);
     }
     return 0;
 }

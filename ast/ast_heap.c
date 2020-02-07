@@ -74,7 +74,6 @@ void clear(ast_node *root)
     {
         clear(root->left);
         clear(root->right);
-        free_data(root->data);
         free(root);
     }
 }
@@ -160,8 +159,7 @@ int defining(const ast_node *node)
 {
     if (statements.defstatus == 1)
     {
-        if ((node != NULL) &&
-            (node->data->type == TYPE_STATEMENT) &&
+        if ((node->data->type == TYPE_STATEMENT) &&
             (node->data->statement->key == STATEMENT_DEF))
         {
             statements.defstatus = 2;

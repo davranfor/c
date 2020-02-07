@@ -169,7 +169,5 @@ void map_vars(void);
 void map_data(void);
 void unmap_data(void);
 
-void free_data(ast_data *);
-
 #endif /* AST_DATA_H */
 

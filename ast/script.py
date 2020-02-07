@@ -1,12 +1,14 @@
 # Script example
 
+def pepe(a)
+end
+
 def foo()
     (1) + 1;
     pow = pow(3, 2);
     print("pow = ", pow);
     if (1)
-        end
-
+    end
 end
 
 def bar(var1, var2)
@@ -14,6 +16,9 @@ def bar(var1, var2)
     print(x);
     foo();
     print("bar = ", var1, " ", var2);
+end
+
+def foobar(a, c)
 end
 
 def square(x)

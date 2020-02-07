@@ -92,6 +92,8 @@ ast_data *sync_data(int count)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+static hashmap *map;
+
 static ast_data *new_data(ast_type type)
 {
     ast_data *data;
@@ -105,6 +107,74 @@ static ast_data *new_data(ast_type type)
     data->type = type;
     data->flags = 0;
     return data;
+}
+
+static int comp_data(const void *pa, const void *pb)
+{
+    const ast_data *a = pa;
+    const ast_data *b = pb;
+
+    if (a->type != b->type)
+    {
+        return 1;
+    }
+    switch (a->type)
+    {
+        case TYPE_FUNCTION:
+            return strcmp(a->function->name, b->function->name);
+        case TYPE_CALLABLE:
+            return strcmp(a->callable->name, b->callable->name);
+        case TYPE_VARIABLE:
+            return (a->variable->function != b->variable->function) ||
+                   strcmp(a->variable->name, b->variable->name);
+        case TYPE_NUMBER:
+            return a->number != b->number;
+        case TYPE_STRING:
+            return strcmp(a->string, b->string);
+        default:
+            return 1;
+    }
+}
+
+static unsigned long hash_data(const void *item)
+{
+    const ast_data *data = item;
+
+    switch (data->type)
+    {
+        case TYPE_FUNCTION:
+            return hash_str((const unsigned char *)data->function->name);
+        case TYPE_CALLABLE:
+            return hash_str((const unsigned char *)data->callable->name);
+        case TYPE_VARIABLE:
+            return hash_str((const unsigned char *)data->variable->name) ^
+                   hash_str((const unsigned char *)data->variable->function->name);
+        case TYPE_NUMBER:
+            return hash_ullong((unsigned long long)data->number);
+        case TYPE_STRING:
+            return hash_str((const unsigned char *)data->string);
+        default:
+            return 0;
+    }
+}
+
+static void free_data(void *item)
+{
+    ast_data *data = item;
+
+    switch (data->type)
+    {
+        case TYPE_FUNCTION:
+            free(data->function->data);
+            free(data);
+            break;
+        case TYPE_VARIABLE:
+        case TYPE_NUMBER:
+        case TYPE_STRING:
+            free(data);
+        default:
+            break;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -449,28 +519,6 @@ static ast_data *new_function(void)
     return &reference->data;
 }
 
-static int comp_function(const void *pa, const void *pb)
-{
-    const ast_data *a = pa;
-    const ast_data *b = pb;
-
-    return strcmp(a->function->name, b->function->name);
-}
-
-static unsigned long hash_function(const void *item)
-{
-    const ast_data *data = item;
-
-    return hash_str((const unsigned char *)data->function->name);
-}
-
-static void free_function(void *data)
-{
-    free(((ast_data *)data)->function->data);
-    free(data);
-}
-
-static hashmap *functions;
 static ast_data *data_fnc;
 
 static ast_data *map_function(const char *name)
@@ -478,7 +526,7 @@ static ast_data *map_function(const char *name)
     ast_data *data;
 
     data_fnc->function->name = name;
-    data = hashmap_insert(functions, data_fnc);
+    data = hashmap_insert(map, data_fnc);
     if (data == NULL)
     {
         perror("hashmap_insert");
@@ -497,47 +545,23 @@ static ast_data *map_function(const char *name)
 
 static void map_functions(void)
 {
-    functions = hashmap_create(comp_function, hash_function, 1000);
-    if (functions == NULL)
-    {
-        perror("hashmap_create");
-        exit(EXIT_FAILURE);
-    }
     data_fnc = new_function();
 }
 
 static void unmap_functions(void)
 {
-    hashmap_destroy(functions, free_function);
-    free_function(data_fnc);
+    free_data(data_fnc);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static int comp_callable(const void *pa, const void *pb)
-{
-    const ast_data *a = pa;
-    const ast_data *b = pb;
-
-    return strcmp(a->callable->name, b->callable->name);
-}
-
-static unsigned long hash_callable(const void *item)
-{
-    const ast_data *data = item;
-
-    return hash_str((const unsigned char *)data->callable->name);
-}
-
-static hashmap *callables;
-
 ast_data *map_callable(const char *name)
 {
     const ast_callable callable = {.name = name};
-    ast_data temp = {.callable = &callable};
+    ast_data temp = {.type = TYPE_CALLABLE, .callable = &callable};
     ast_data *data;
 
-    data = hashmap_search(callables, &temp);
+    data = hashmap_search(map, &temp);
     if (data == NULL)
     {
         return map_function(name);
@@ -581,25 +605,14 @@ static void map_callables(void)
 {
     const size_t count = sizeof callable_list / sizeof *callable_list;
 
-    callables = hashmap_create(comp_callable, hash_callable, count * 4);
-    if (callables == NULL)
-    {
-        perror("hashmap_create");
-        exit(EXIT_FAILURE);
-    }
     for (size_t iter = 0; iter < count; iter++)
     {
-        if (hashmap_insert(callables, &callable_list[iter]) == NULL)
+        if (hashmap_insert(map, &callable_list[iter]) == NULL)
         {
             perror("hashmap_insert");
             exit(EXIT_FAILURE);
         }
     }
-}
-
-static void unmap_callables(void)
-{
-    hashmap_destroy(callables, NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -625,24 +638,6 @@ static ast_data *new_variable(void)
     return &reference->data;
 }
 
-static int comp_variable(const void *pa, const void *pb)
-{
-    const ast_data *a = pa;
-    const ast_data *b = pb;
-
-    return (a->variable->function != b->variable->function) ||
-           strcmp(a->variable->name, b->variable->name);
-}
-
-static unsigned long hash_variable(const void *item)
-{
-    const ast_data *data = item;
-
-    return hash_str((const unsigned char *)data->variable->name) ^
-           hash_str((const unsigned char *)data->variable->function->name);
-}
-
-static hashmap *variables;
 static ast_data *data_var;
 
 ast_data *map_variable(const char *name)
@@ -656,7 +651,7 @@ ast_data *map_variable(const char *name)
 
     ast_data *data;
 
-    data = hashmap_insert(variables, data_var);
+    data = hashmap_insert(map, data_var);
     if (data == NULL)
     {
         perror("hashmap_insert");
@@ -667,31 +662,16 @@ ast_data *map_variable(const char *name)
         data->variable->offset = data_def->vars++;
         data_var = new_variable();
     }
-    else
-    {
-        // Check duplicated args names
-        if (data_def->node == NULL)
-        {
-            return NULL;
-        }
-    }
     return data;
 }
 
 static void map_variables(void)
 {
-    variables = hashmap_create(comp_variable, hash_variable, 1000);
-    if (variables == NULL)
-    {
-        perror("hashmap_create");
-        exit(EXIT_FAILURE);
-    }
     data_var = new_variable();
 }
 
 static void unmap_variables(void)
 {
-    hashmap_destroy(variables, free);
     free(data_var);
 }
 
@@ -733,80 +713,7 @@ ast_data *map_boolean(const char *str)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define DEF_NUMBER(n)       \
-{                           \
-    .type = TYPE_NUMBER,    \
-    .flags = 0,             \
-    .number = n             \
-}
-
-static ast_data numbers[] =
-{
-    DEF_NUMBER(  0), DEF_NUMBER(  1), DEF_NUMBER(  2), DEF_NUMBER(  3),
-    DEF_NUMBER(  4), DEF_NUMBER(  5), DEF_NUMBER(  6), DEF_NUMBER(  7),
-    DEF_NUMBER(  8), DEF_NUMBER(  9), DEF_NUMBER( 10), DEF_NUMBER( 11),
-    DEF_NUMBER( 12), DEF_NUMBER( 13), DEF_NUMBER( 14), DEF_NUMBER( 15),
-    DEF_NUMBER( 16), DEF_NUMBER( 17), DEF_NUMBER( 18), DEF_NUMBER( 19),
-    DEF_NUMBER( 20), DEF_NUMBER( 21), DEF_NUMBER( 22), DEF_NUMBER( 23),
-    DEF_NUMBER( 24), DEF_NUMBER( 25), DEF_NUMBER( 26), DEF_NUMBER( 27),
-    DEF_NUMBER( 28), DEF_NUMBER( 29), DEF_NUMBER( 30), DEF_NUMBER( 31),
-    DEF_NUMBER( 32), DEF_NUMBER( 33), DEF_NUMBER( 34), DEF_NUMBER( 35),
-    DEF_NUMBER( 36), DEF_NUMBER( 37), DEF_NUMBER( 38), DEF_NUMBER( 39),
-    DEF_NUMBER( 40), DEF_NUMBER( 41), DEF_NUMBER( 42), DEF_NUMBER( 43),
-    DEF_NUMBER( 44), DEF_NUMBER( 45), DEF_NUMBER( 46), DEF_NUMBER( 47),
-    DEF_NUMBER( 48), DEF_NUMBER( 49), DEF_NUMBER( 50), DEF_NUMBER( 51),
-    DEF_NUMBER( 52), DEF_NUMBER( 53), DEF_NUMBER( 54), DEF_NUMBER( 55),
-    DEF_NUMBER( 56), DEF_NUMBER( 57), DEF_NUMBER( 58), DEF_NUMBER( 59),
-    DEF_NUMBER( 60), DEF_NUMBER( 61), DEF_NUMBER( 62), DEF_NUMBER( 63),
-    DEF_NUMBER( 64), DEF_NUMBER( 65), DEF_NUMBER( 66), DEF_NUMBER( 67),
-    DEF_NUMBER( 68), DEF_NUMBER( 69), DEF_NUMBER( 70), DEF_NUMBER( 71),
-    DEF_NUMBER( 72), DEF_NUMBER( 73), DEF_NUMBER( 74), DEF_NUMBER( 75),
-    DEF_NUMBER( 76), DEF_NUMBER( 77), DEF_NUMBER( 78), DEF_NUMBER( 79),
-    DEF_NUMBER( 80), DEF_NUMBER( 81), DEF_NUMBER( 82), DEF_NUMBER( 83),
-    DEF_NUMBER( 84), DEF_NUMBER( 85), DEF_NUMBER( 86), DEF_NUMBER( 87),
-    DEF_NUMBER( 88), DEF_NUMBER( 89), DEF_NUMBER( 90), DEF_NUMBER( 91),
-    DEF_NUMBER( 92), DEF_NUMBER( 93), DEF_NUMBER( 94), DEF_NUMBER( 95),
-    DEF_NUMBER( 96), DEF_NUMBER( 97), DEF_NUMBER( 98), DEF_NUMBER( 99),
-    DEF_NUMBER(100), DEF_NUMBER(101), DEF_NUMBER(102), DEF_NUMBER(103),
-    DEF_NUMBER(104), DEF_NUMBER(105), DEF_NUMBER(106), DEF_NUMBER(107),
-    DEF_NUMBER(108), DEF_NUMBER(109), DEF_NUMBER(110), DEF_NUMBER(111),
-    DEF_NUMBER(112), DEF_NUMBER(113), DEF_NUMBER(114), DEF_NUMBER(115),
-    DEF_NUMBER(116), DEF_NUMBER(117), DEF_NUMBER(118), DEF_NUMBER(119),
-    DEF_NUMBER(120), DEF_NUMBER(121), DEF_NUMBER(122), DEF_NUMBER(123),
-    DEF_NUMBER(124), DEF_NUMBER(125), DEF_NUMBER(126), DEF_NUMBER(127),
-    DEF_NUMBER(128), DEF_NUMBER(129), DEF_NUMBER(130), DEF_NUMBER(131),
-    DEF_NUMBER(132), DEF_NUMBER(133), DEF_NUMBER(134), DEF_NUMBER(135),
-    DEF_NUMBER(136), DEF_NUMBER(137), DEF_NUMBER(138), DEF_NUMBER(139),
-    DEF_NUMBER(140), DEF_NUMBER(141), DEF_NUMBER(142), DEF_NUMBER(143),
-    DEF_NUMBER(144), DEF_NUMBER(145), DEF_NUMBER(146), DEF_NUMBER(147),
-    DEF_NUMBER(148), DEF_NUMBER(149), DEF_NUMBER(150), DEF_NUMBER(151),
-    DEF_NUMBER(152), DEF_NUMBER(153), DEF_NUMBER(154), DEF_NUMBER(155),
-    DEF_NUMBER(156), DEF_NUMBER(157), DEF_NUMBER(158), DEF_NUMBER(159),
-    DEF_NUMBER(160), DEF_NUMBER(161), DEF_NUMBER(162), DEF_NUMBER(163),
-    DEF_NUMBER(164), DEF_NUMBER(165), DEF_NUMBER(166), DEF_NUMBER(167),
-    DEF_NUMBER(168), DEF_NUMBER(169), DEF_NUMBER(170), DEF_NUMBER(171),
-    DEF_NUMBER(172), DEF_NUMBER(173), DEF_NUMBER(174), DEF_NUMBER(175),
-    DEF_NUMBER(176), DEF_NUMBER(177), DEF_NUMBER(178), DEF_NUMBER(179),
-    DEF_NUMBER(180), DEF_NUMBER(181), DEF_NUMBER(182), DEF_NUMBER(183),
-    DEF_NUMBER(184), DEF_NUMBER(185), DEF_NUMBER(186), DEF_NUMBER(187),
-    DEF_NUMBER(188), DEF_NUMBER(189), DEF_NUMBER(190), DEF_NUMBER(191),
-    DEF_NUMBER(192), DEF_NUMBER(193), DEF_NUMBER(194), DEF_NUMBER(195),
-    DEF_NUMBER(196), DEF_NUMBER(197), DEF_NUMBER(198), DEF_NUMBER(199),
-    DEF_NUMBER(200), DEF_NUMBER(201), DEF_NUMBER(202), DEF_NUMBER(203),
-    DEF_NUMBER(204), DEF_NUMBER(205), DEF_NUMBER(206), DEF_NUMBER(207),
-    DEF_NUMBER(208), DEF_NUMBER(209), DEF_NUMBER(210), DEF_NUMBER(211),
-    DEF_NUMBER(212), DEF_NUMBER(213), DEF_NUMBER(214), DEF_NUMBER(215),
-    DEF_NUMBER(216), DEF_NUMBER(217), DEF_NUMBER(218), DEF_NUMBER(219),
-    DEF_NUMBER(220), DEF_NUMBER(221), DEF_NUMBER(222), DEF_NUMBER(223),
-    DEF_NUMBER(224), DEF_NUMBER(225), DEF_NUMBER(226), DEF_NUMBER(227),
-    DEF_NUMBER(228), DEF_NUMBER(229), DEF_NUMBER(230), DEF_NUMBER(231),
-    DEF_NUMBER(232), DEF_NUMBER(233), DEF_NUMBER(234), DEF_NUMBER(235),
-    DEF_NUMBER(236), DEF_NUMBER(237), DEF_NUMBER(238), DEF_NUMBER(239),
-    DEF_NUMBER(240), DEF_NUMBER(241), DEF_NUMBER(242), DEF_NUMBER(243),
-    DEF_NUMBER(244), DEF_NUMBER(245), DEF_NUMBER(246), DEF_NUMBER(247),
-    DEF_NUMBER(248), DEF_NUMBER(249), DEF_NUMBER(250), DEF_NUMBER(251),
-    DEF_NUMBER(252), DEF_NUMBER(253), DEF_NUMBER(254), DEF_NUMBER(255),
-};
+static ast_data *data_num;
 
 ast_data *map_number(const char *str)
 {
@@ -817,37 +724,33 @@ ast_data *map_number(const char *str)
     number = strtod(str, &ptr);
     if (*ptr == '\0')
     {
-        if ((number >= 0) && (number <= 255) && (number == (int)number))
+        data_num->number = number;
+        data = hashmap_insert(map, data_num);
+        if (data == NULL)
         {
-            data = &numbers[(int)number];
+            perror("hashmap_insert");
+            exit(EXIT_FAILURE);
         }
-        else
+        if (data == data_num)
         {
-            data = new_data(TYPE_NUMBER);
-            data->number = number;
+            data_num = new_data(TYPE_NUMBER);
         }
     }
     return data;
 }
 
+static void map_numbers(void)
+{
+    data_num = new_data(TYPE_NUMBER);
+}
+
+static void unmap_numbers(void)
+{
+    free(data_num);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
-static int comp_string(const void *pa, const void *pb)
-{
-    const ast_data *a = pa;
-    const ast_data *b = pb;
-
-    return strcmp(a->string, b->string);
-}
-
-static unsigned long hash_string(const void *item)
-{
-    const ast_data *data = item;
-
-    return hash_str((const unsigned char *)data->string);
-}
-
-static hashmap *strings;
 static ast_data *data_str;
 
 ast_data *map_string(const char *str)
@@ -855,7 +758,7 @@ ast_data *map_string(const char *str)
     ast_data *data;
 
     data_str->string = str;
-    data = hashmap_insert(strings, data_str);
+    data = hashmap_insert(map, data_str);
     if (data == NULL)
     {
         perror("hashmap_insert");
@@ -870,18 +773,11 @@ ast_data *map_string(const char *str)
 
 static void map_strings(void)
 {
-    strings = hashmap_create(comp_string, hash_string, 1000);
-    if (strings == NULL)
-    {
-        perror("hashmap_create");
-        exit(EXIT_FAILURE);
-    }
     data_str = new_data(TYPE_STRING);
 }
 
 static void unmap_strings(void)
 {
-    hashmap_destroy(strings, free);
     free(data_str);
 }
 
@@ -902,33 +798,25 @@ ast_data *map_null(const char *str)
 
 void map_data(void)
 {
+    map = hashmap_create(comp_data, hash_data, 10000);
+    if (map == NULL)
+    {
+        perror("hashmap_create");
+        exit(EXIT_FAILURE);
+    }
     map_functions();
     map_callables();
     map_variables();
+    map_numbers();
     map_strings();
 }
 
 void unmap_data(void)
 {
+    hashmap_destroy(map, free_data);
     unmap_functions();
-    unmap_callables();
     unmap_variables();
+    unmap_numbers();
     unmap_strings();
-}
-
-void free_data(ast_data *data)
-{
-    switch (data->type)
-    {
-        case TYPE_NUMBER:
-            if ((data < numbers) ||
-                (data > numbers + 255))
-            {
-                free(data);
-            }
-            break;
-        default:
-            break;
-    }
 }
 
