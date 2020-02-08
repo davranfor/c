@@ -12,7 +12,7 @@ void clear(ast_node *);
 void push_statement(const ast_node *);
 const ast_node *pop_statement(void);
 const ast_node *peek_statement(void);
-int statement_type(void);
+int statement_key(void);
 int iterating(void);
 
 void push_branch(const ast_node *);

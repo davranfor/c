@@ -127,7 +127,7 @@ const ast_node *peek_statement(void)
     return statements.node[statements.count - 1];
 }
 
-int statement_type(void)
+int statement_key(void)
 {
     if (statements.count == 0)
     {

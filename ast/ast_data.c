@@ -150,7 +150,7 @@ static unsigned long hash_data(const void *item)
             return hash_str((const unsigned char *)data->variable->name) ^
                    hash_str((const unsigned char *)data->variable->function->name);
         case TYPE_NUMBER:
-            return hash_ullong((unsigned long long)data->number);
+            return hash_ulong((unsigned long)data->number);
         case TYPE_STRING:
             return hash_str((const unsigned char *)data->string);
         default:

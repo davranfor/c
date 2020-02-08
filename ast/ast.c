@@ -18,18 +18,38 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
+static ast_node *operators;
+static ast_node *operands;
+
+enum {OPERATOR, OPERAND};
+static int expected = OPERAND;
+
+enum
+{
+    APPENDING  = 0x01,
+    ASSIGNING  = 0x02,
+    MASK       = 0x03,
+    DEFINING   = 0x04,
+    DEFINED    = 0x08,
+    EVALUATING = 0x10,
+};
+static int status = 0;
+
+static bool starting = true;
+
+///////////////////////////////////////////////////////////////////////////////
+
 static size_t lines;
-static int built;
 
 static void ast_die(const char *file, int line, const char *format, ...)
 {
-    if (built == 0)
+    if (status == EVALUATING)
     {
-        fprintf(stderr, "Error on line %zu:\n\t", lines + 1);
+        fprintf(stderr, "Error evaluating script:\n\t");
     }
     else
     {
-        fprintf(stderr, "Error evaluating script:\n\t");
+        fprintf(stderr, "Error on line %zu:\n\t", lines + 1);
     }
 
     va_list args;
@@ -196,26 +216,6 @@ static ast_data *parse(const char **text)
     *text = str;
     return data;
 }
-
-///////////////////////////////////////////////////////////////////////////////
-
-static ast_node *operators;
-static ast_node *operands;
-
-enum {OPERATOR, OPERAND};
-static int expected = OPERAND;
-
-enum
-{
-    SEPARATING = 0x01,
-    ASSIGNING  = 0x02,
-    MASK       = 0x03,
-    DEFINING   = 0x04,
-    DEFINED    = 0x08,
-};
-static int status = 0;
-
-static bool starting = true;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -395,11 +395,7 @@ static void move_return(void)
 {
     const ast_node *branch = peek_branch();
 
-    if (branch == NULL)
-    {
-        return;
-    }
-    if (branch->data->statement->key == STATEMENT_RETURN)
+    if ((branch != NULL) && (branch->data->statement->key == STATEMENT_RETURN))
     {
         if (operands != branch)
         {
@@ -493,7 +489,7 @@ static ast_data *classify(const char **text)
                 {
                     die("')' without '('");
                 }
-                if (status & SEPARATING)
+                if (status & APPENDING)
                 {
                     die("Expected operand");
                 }
@@ -508,7 +504,7 @@ static ast_data *classify(const char **text)
                 {
                     die("Expected operand");
                 }
-                flags |= SEPARATING;
+                flags |= APPENDING;
                 expected = OPERAND;
                 starting = false;
                 break;
@@ -578,7 +574,7 @@ static ast_data *classify(const char **text)
                         break;
                     case STATEMENT_ELIF:
                     case STATEMENT_ELSE:
-                        if (statement_type() != STATEMENT_IF)
+                        if (statement_key() != STATEMENT_IF)
                         {
                             die("'else' without 'if'");
                         }
@@ -687,6 +683,7 @@ static int build(const char *text)
                     move_return();
                     break;
                 case '\0':
+                    status = EVALUATING;
                     return 1;
                 default:
                     while ((root = peek(operators)))
@@ -1075,8 +1072,7 @@ void ast_create(void)
 int ast_build(char *script)
 {
     strings = script;
-    built = build(script);
-    return built;
+    return build(script);
 }
 
 void ast_explain(void)
