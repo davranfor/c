@@ -136,9 +136,9 @@ int statement_type(void)
     return statements.node[statements.count - 1]->data->statement->key;
 }
 
-int iterators(void)
+int iterating(void)
 {
-    return statements.iterators;
+    return statements.iterators != 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -194,8 +194,7 @@ void push_call(ast_node *node)
     {
         die();
     }
-    calls.node[calls.count] = node;
-    calls.count++;
+    calls.node[calls.count++] = node;
 }
 
 ast_node *pop_call(void)

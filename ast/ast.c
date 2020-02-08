@@ -517,12 +517,10 @@ static ast_data *classify(const char **text)
                 {
                     die("'(' without ')'");
                 }
-                if (expected == OPERAND)
+                if ((expected == OPERAND) &&
+                    (starting == false))
                 {
-                    if (starting == false)
-                    {
-                        die("Expected operand");
-                    }
+                    die("Expected operand");
                 }
                 expected = OPERAND;
                 starting = true;
@@ -587,14 +585,14 @@ static ast_data *classify(const char **text)
                         break;
                     case STATEMENT_CONTINUE:
                     case STATEMENT_BREAK:
-                        if (**text != ';')
-                        {
-                            die("';' was expected");
-                        }
-                        if (iterators() == 0)
+                        if (!iterating())
                         {
                             die("'continue' and 'break'"
                                 " can't be used outside a loop");
+                        }
+                        if (**text != ';')
+                        {
+                            die("';' was expected");
                         }
                         break;
                     case STATEMENT_END:
@@ -631,7 +629,6 @@ static ast_data *classify(const char **text)
     }
     status &= ~MASK;
     status |= flags;
-    flags = 0x0;
     return data;
 }
 
@@ -817,7 +814,7 @@ static void explain(const ast_node *node, int level)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define AST_GET_VAR(x)                                      \
+#define GET_VAR(x)                                          \
     if (x.type == TYPE_VARIABLE)                            \
     {                                                       \
         x = x.variable->function->data[x.variable->offset]; \
@@ -839,7 +836,7 @@ static ast_data eval_function(const ast_function *function, int args)
 
     ast_data data = eval_tree(function->node->right);
 
-    AST_GET_VAR(data);
+    GET_VAR(data);
     unwind_data(function->data, function->vars);
     return data;
 }
@@ -872,12 +869,12 @@ static ast_data eval_expr(const ast_node *node)
                 }
                 else
                 {
-                    AST_GET_VAR(a);
+                    GET_VAR(a);
                 }
                 if (node->left->right != NULL)
                 {
                     b = eval_expr(node->left->right);
-                    AST_GET_VAR(b);
+                    GET_VAR(b);
                 }
             }
             return node->data->operator->eval(a, b);
@@ -887,7 +884,7 @@ static ast_data eval_expr(const ast_node *node)
             while (next != NULL)
             {
                 a = eval_expr(next);
-                AST_GET_VAR(a);
+                GET_VAR(a);
                 push_data(a);
                 next = next->right;
                 args++;
@@ -902,7 +899,7 @@ static ast_data eval_expr(const ast_node *node)
             while (next != NULL)
             {
                 a = eval_expr(next);
-                AST_GET_VAR(a);
+                GET_VAR(a);
                 push_data(a);
                 next = next->right;
                 args++;
@@ -922,7 +919,7 @@ static int eval_cond(const ast_node *node)
 {
     ast_data data = eval_expr(node);
 
-    AST_GET_VAR(data);
+    GET_VAR(data);
     if (data.type == TYPE_STRING)
     {
         return data.string[0] != '\0';
