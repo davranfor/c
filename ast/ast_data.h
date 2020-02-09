@@ -33,6 +33,8 @@ enum
     OPERATOR_GT_OR_EQ      = '>' ^ 'z',
     OPERATOR_IS_EQ         = '=' ^ 'z',
     OPERATOR_NOT_EQ        = '!' ^ 'z',
+    OPERATOR_IDENTICAL     = '=' ^ ('=' ^ 'z'),
+    OPERATOR_NOT_IDENTICAL = '!' ^ ('=' ^ 'z'),
     OPERATOR_BIT_AND       = '&',
     OPERATOR_BIT_XOR       = '^',
     OPERATOR_BIT_OR        = '|',

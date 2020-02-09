@@ -108,7 +108,7 @@ ast_data ast_bit_lshift(ast_data a, ast_data b)
 {
     conv_number(&a);
     cast_number(&b);
-    a.number = (double)((unsigned long)a.number << (unsigned long)b.number);
+    a.number = (double)((long)a.number << (unsigned long)b.number);
     return a;
 }
 
@@ -116,7 +116,7 @@ ast_data ast_bit_rshift(ast_data a, ast_data b)
 {
     conv_number(&a);
     cast_number(&b);
-    a.number = (double)((unsigned long)a.number >> (unsigned long)b.number);
+    a.number = (double)((long)a.number >> (unsigned long)b.number);
     return a;
 }
 
@@ -168,11 +168,43 @@ ast_data ast_not_eq(ast_data a, ast_data b)
     return a;
 }
 
+ast_data ast_identical(ast_data a, ast_data b)
+{
+    if (a.type != b.type)
+    {
+        a.type = TYPE_BOOLEAN;
+        a.number = 0;
+    }
+    else
+    {
+        conv_boolean(&a);
+        cast_number(&b);
+        a.number = a.number == b.number;
+    }
+    return a;
+}
+
+ast_data ast_not_identical(ast_data a, ast_data b)
+{
+    if (a.type != b.type)
+    {
+        a.type = TYPE_BOOLEAN;
+        a.number = 1;
+    }
+    else
+    {
+        conv_boolean(&a);
+        cast_number(&b);
+        a.number = a.number != b.number;
+    }
+    return a;
+}
+
 ast_data ast_bit_and(ast_data a, ast_data b)
 {
     conv_number(&a);
     cast_number(&b);
-    a.number = (double)((unsigned long)a.number & (unsigned long)b.number);
+    a.number = (double)((long)a.number & (long)b.number);
     return a;
 }
 
@@ -180,7 +212,7 @@ ast_data ast_bit_xor(ast_data a, ast_data b)
 {
     conv_number(&a);
     cast_number(&b);
-    a.number = (double)((unsigned long)a.number ^ (unsigned long)b.number);
+    a.number = (double)((long)a.number ^ (long)b.number);
     return a;
 }
 
@@ -188,7 +220,7 @@ ast_data ast_bit_or(ast_data a, ast_data b)
 {
     conv_number(&a);
     cast_number(&b);
-    a.number = (double)((unsigned long)a.number | (unsigned long)b.number);
+    a.number = (double)((long)a.number | (long)b.number);
     return a;
 }
 
@@ -266,7 +298,7 @@ ast_data ast_eq_bit_and(ast_data a, ast_data b)
 {
     conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    EVAL_VAR(a).number = (double)((unsigned long)EVAL_VAR(a).number & (unsigned long)b.number);
+    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number & (long)b.number);
     return EVAL_VAR(a);
 }
 
@@ -274,7 +306,7 @@ ast_data ast_eq_bit_xor(ast_data a, ast_data b)
 {
     conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    EVAL_VAR(a).number = (double)((unsigned long)EVAL_VAR(a).number ^ (unsigned long)b.number);
+    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number ^ (long)b.number);
     return EVAL_VAR(a);
 }
 
@@ -282,7 +314,7 @@ ast_data ast_eq_bit_or(ast_data a, ast_data b)
 {
     conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    EVAL_VAR(a).number = (double)((unsigned long)EVAL_VAR(a).number | (unsigned long)b.number);
+    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number | (long)b.number);
     return EVAL_VAR(a);
 }
 
@@ -290,7 +322,7 @@ ast_data ast_eq_bit_lshift(ast_data a, ast_data b)
 {
     conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    EVAL_VAR(a).number = (double)((unsigned long)EVAL_VAR(a).number << (unsigned long)b.number);
+    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number << (unsigned long)b.number);
     return EVAL_VAR(a);
 }
 
@@ -298,7 +330,7 @@ ast_data ast_eq_bit_rshift(ast_data a, ast_data b)
 {
     conv_number(&EVAL_VAR(a));
     cast_number(&b);
-    EVAL_VAR(a).number = (double)((unsigned long)EVAL_VAR(a).number >> (unsigned long)b.number);
+    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number >> (unsigned long)b.number);
     return EVAL_VAR(a);
 }
 

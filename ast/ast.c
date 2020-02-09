@@ -250,10 +250,9 @@ static int move_operands(ast_node *node)
 
 static void move_arguments(void)
 {
-    ast_node *call = pop_call();
-    int args = move_operands(call);
+    int args = move_operands(pop_call());
 
-    switch (call->data->type)
+    switch (operands->data->type)
     {
         case TYPE_OPERATOR:
             if (args != 1)

@@ -18,6 +18,8 @@ ast_data ast_lt_or_eq(ast_data, ast_data);
 ast_data ast_gt_or_eq(ast_data, ast_data);
 ast_data ast_is_eq(ast_data, ast_data);
 ast_data ast_not_eq(ast_data, ast_data);
+ast_data ast_identical(ast_data, ast_data);
+ast_data ast_not_identical(ast_data, ast_data);
 ast_data ast_bit_and(ast_data, ast_data);
 ast_data ast_bit_xor(ast_data, ast_data);
 ast_data ast_bit_or(ast_data, ast_data);

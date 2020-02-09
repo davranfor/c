@@ -84,6 +84,40 @@ def main()
 
     reverse(0, 10);
 
+    if (1 == 1)
+        print("1 == 1");
+    end
+
+    if (1 != 1)
+        print("1 != 1");
+    end
+
+    if (1 == "1")
+        print("1 == \"1\"");
+    end
+
+    if (1 != "1")
+        print("1 != \"1\"");
+    end
+
+    print("");
+
+    if (1 === 1)
+        print("1 === 1");
+    end
+
+    if (1 !== 1)
+        print("1 !== 1");
+    end
+
+    if (1 === "1")
+        print("1 === \"1\"");
+    end
+
+    if (1 !== "1")
+        print("1 !== \"1\"");
+    end
+
     print("Bye");
 end
 

@@ -254,6 +254,8 @@ static ast_data operators[] =
     DEF_OPERATOR(OPERATOR_GT_OR_EQ,      2,  9, 'L', ">=",  ast_gt_or_eq),
     DEF_OPERATOR(OPERATOR_IS_EQ,         2,  8, 'L', "==",  ast_is_eq),
     DEF_OPERATOR(OPERATOR_NOT_EQ,        2,  8, 'L', "!=",  ast_not_eq),
+    DEF_OPERATOR(OPERATOR_IDENTICAL,     2,  8, 'L', "===", ast_identical),
+    DEF_OPERATOR(OPERATOR_NOT_IDENTICAL, 2,  8, 'L', "!==", ast_not_identical),
     DEF_OPERATOR(OPERATOR_BIT_AND,       2,  7, 'L', "&",   ast_bit_and),
     DEF_OPERATOR(OPERATOR_BIT_XOR,       2,  6, 'L', "^",   ast_bit_xor),
     DEF_OPERATOR(OPERATOR_BIT_OR,        2,  5, 'L', "|",   ast_bit_or),
@@ -304,7 +306,6 @@ int is_operator(int operator)
 {
     switch (operator)
     {
-        case OPERATOR_NOT:
         case OPERATOR_MUL:
         case OPERATOR_DIV:
         case OPERATOR_REM:
@@ -316,6 +317,7 @@ int is_operator(int operator)
         case OPERATOR_BIT_XOR:
         case OPERATOR_BIT_OR:
         case OPERATOR_EQ:
+        case OPERATOR_NOT:
         case OPERATOR_LPARENTHS:
         case OPERATOR_RPARENTHS:
         case OPERATOR_COMMA:
@@ -339,7 +341,6 @@ static int get_operator(const char **operator)
             result = **operator;
             (*operator)++;
             break;
-        case OPERATOR_NOT:
         case OPERATOR_MUL:
         case OPERATOR_DIV:
         case OPERATOR_REM:
@@ -353,10 +354,24 @@ static int get_operator(const char **operator)
                 (*operator)++;
             }
             break;
+        case OPERATOR_EQ:
+        case OPERATOR_NOT:
+            result = **operator;
+            (*operator)++;
+            if (**operator == '=')
+            {
+                result ^= 'z';
+                (*operator)++;
+            }
+            if (**operator == '=')
+            {
+                result ^= '=';
+                (*operator)++;
+            }
+            break;
         case OPERATOR_BIT_AND:
         case OPERATOR_BIT_XOR:
         case OPERATOR_BIT_OR:
-        case OPERATOR_EQ:
             result = **operator;
             (*operator)++;
             if (**operator == '=')
