@@ -118,6 +118,9 @@ def main()
         print("1 !== \"1\"");
     end
 
+    a = "Hola";
+    print(a >= "Hala");
+
     print("Bye");
 end
 

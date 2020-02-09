@@ -306,6 +306,7 @@ int is_operator(int operator)
 {
     switch (operator)
     {
+        case OPERATOR_NOT:
         case OPERATOR_MUL:
         case OPERATOR_DIV:
         case OPERATOR_REM:
@@ -317,7 +318,6 @@ int is_operator(int operator)
         case OPERATOR_BIT_XOR:
         case OPERATOR_BIT_OR:
         case OPERATOR_EQ:
-        case OPERATOR_NOT:
         case OPERATOR_LPARENTHS:
         case OPERATOR_RPARENTHS:
         case OPERATOR_COMMA:
