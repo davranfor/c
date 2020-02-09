@@ -163,7 +163,7 @@ ast_data ast_lt(ast_data a, ast_data b)
         }
         else
         {
-            a.number = (a.number < b.number);
+            a.number = a.number < b.number;
         }
     }
     else
@@ -192,7 +192,7 @@ ast_data ast_gt(ast_data a, ast_data b)
         }
         else
         {
-            a.number = (a.number > b.number);
+            a.number = a.number > b.number;
         }
     }
     else
@@ -221,7 +221,7 @@ ast_data ast_lt_or_eq(ast_data a, ast_data b)
         }
         else
         {
-            a.number = (a.number <= b.number);
+            a.number = a.number <= b.number;
         }
     }
     else
@@ -250,7 +250,7 @@ ast_data ast_gt_or_eq(ast_data a, ast_data b)
         }
         else
         {
-            a.number = (a.number >= b.number);
+            a.number = a.number >= b.number;
         }
     }
     else
