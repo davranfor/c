@@ -640,7 +640,7 @@ static ast_data *new_variable(void)
         ast_variable variable;
     };
 
-    struct reference *reference = malloc(sizeof *reference);
+    struct reference *reference = calloc(1, sizeof *reference);
 
     if (reference == NULL)
     {
@@ -648,7 +648,6 @@ static ast_data *new_variable(void)
         exit(EXIT_FAILURE);
     }
     reference->data.type = TYPE_VARIABLE;
-    reference->data.flags = 0;
     reference->data.variable = &reference->variable;
     return &reference->data;
 }
@@ -690,18 +689,38 @@ static void unmap_variables(void)
     free(data_var);
 }
 
-void map_vars()
+void map_args()
 {
     if (data_def->vars == 0)
     {
         return;
     }
-    data_def->data = calloc((size_t)data_def->vars, sizeof *data_def->data);
+    data_def->data = calloc((size_t)data_def->vars, sizeof(ast_data));
     if (data_def->data == NULL)
     {
         perror("calloc");
         exit(EXIT_FAILURE);
     }
+}
+
+void map_vars()
+{
+    if ((data_def->vars == 0) || (data_def->vars == data_def->args.max))
+    {
+        data_def = NULL;
+        return;
+    }
+
+    ast_data *data = calloc((size_t)data_def->vars, sizeof(ast_data));
+
+    if (data == NULL)
+    {
+        perror("realloc");
+        exit(EXIT_FAILURE);
+    }
+    memcpy(data, data_def->data, sizeof(ast_data) * (size_t)data_def->args.max);
+    free(data_def->data);
+    data_def->data = data;
     data_def = NULL;
 }
 

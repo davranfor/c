@@ -124,8 +124,11 @@ struct ast_function
     const char *name;
     const struct ast_node *node;
     ast_data *data;
+    struct
+    {
+        int min, max;
+    } args;
     int vars;
-    int args;
 };
 
 struct ast_variable
@@ -166,6 +169,7 @@ ast_data *map_number(const char *);
 ast_data *map_string(const char *);
 ast_data *map_null(const char *);
 
+void map_args(void);
 void map_vars(void);
 
 void map_data(void);

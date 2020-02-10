@@ -7,7 +7,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define EVAL_VAR(v) (v.variable->function->data[v.variable->offset])
+#define VAR(v) (v.variable->function->data[v.variable->offset])
 
 ///////////////////////////////////////////////////////////////////////////////
 // Operators
@@ -461,158 +461,158 @@ ast_data ast_or(ast_data a, ast_data b)
 
 ast_data ast_eq(ast_data a, ast_data b)
 {
-    EVAL_VAR(a) = b;
+    VAR(a) = b;
     return b;
 }
 
 ast_data ast_eq_add(ast_data a, ast_data b)
 {
-    if (EVAL_VAR(a).type == TYPE_STRING)
+    if (VAR(a).type == TYPE_STRING)
     {
-        EVAL_VAR(a).number = strtod(EVAL_VAR(a).string, NULL);
+        VAR(a).number = strtod(VAR(a).string, NULL);
     }
     if (b.type == TYPE_STRING)
     {
         b.number = strtod(b.string, NULL);
     }
-    EVAL_VAR(a).number += b.number;
-    EVAL_VAR(a).type = TYPE_NUMBER;
-    return EVAL_VAR(a);
+    VAR(a).number += b.number;
+    VAR(a).type = TYPE_NUMBER;
+    return VAR(a);
 }
 
 ast_data ast_eq_sub(ast_data a, ast_data b)
 {
-    if (EVAL_VAR(a).type == TYPE_STRING)
+    if (VAR(a).type == TYPE_STRING)
     {
-        EVAL_VAR(a).number = strtod(EVAL_VAR(a).string, NULL);
+        VAR(a).number = strtod(VAR(a).string, NULL);
     }
     if (b.type == TYPE_STRING)
     {
         b.number = strtod(b.string, NULL);
     }
-    EVAL_VAR(a).number -= b.number;
-    EVAL_VAR(a).type = TYPE_NUMBER;
-    return EVAL_VAR(a);
+    VAR(a).number -= b.number;
+    VAR(a).type = TYPE_NUMBER;
+    return VAR(a);
 }
 
 ast_data ast_eq_mul(ast_data a, ast_data b)
 {
-    if (EVAL_VAR(a).type == TYPE_STRING)
+    if (VAR(a).type == TYPE_STRING)
     {
-        EVAL_VAR(a).number = strtod(EVAL_VAR(a).string, NULL);
+        VAR(a).number = strtod(VAR(a).string, NULL);
     }
     if (b.type == TYPE_STRING)
     {
         b.number = strtod(b.string, NULL);
     }
-    EVAL_VAR(a).number *= b.number;
-    EVAL_VAR(a).type = TYPE_NUMBER;
-    return EVAL_VAR(a);
+    VAR(a).number *= b.number;
+    VAR(a).type = TYPE_NUMBER;
+    return VAR(a);
 }
 
 ast_data ast_eq_div(ast_data a, ast_data b)
 {
-    if (EVAL_VAR(a).type == TYPE_STRING)
+    if (VAR(a).type == TYPE_STRING)
     {
-        EVAL_VAR(a).number = strtod(EVAL_VAR(a).string, NULL);
+        VAR(a).number = strtod(VAR(a).string, NULL);
     }
     if (b.type == TYPE_STRING)
     {
         b.number = strtod(b.string, NULL);
     }
-    EVAL_VAR(a).number /= b.number;
-    EVAL_VAR(a).type = TYPE_NUMBER;
-    return EVAL_VAR(a);
+    VAR(a).number /= b.number;
+    VAR(a).type = TYPE_NUMBER;
+    return VAR(a);
 }
 
 ast_data ast_eq_rem(ast_data a, ast_data b)
 {
-    if (EVAL_VAR(a).type == TYPE_STRING)
+    if (VAR(a).type == TYPE_STRING)
     {
-        EVAL_VAR(a).number = strtod(EVAL_VAR(a).string, NULL);
+        VAR(a).number = strtod(VAR(a).string, NULL);
     }
     if (b.type == TYPE_STRING)
     {
         b.number = strtod(b.string, NULL);
     }
-    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number % (long)b.number);
-    EVAL_VAR(a).type = TYPE_NUMBER;
-    return EVAL_VAR(a);
+    VAR(a).number = (double)((long)VAR(a).number % (long)b.number);
+    VAR(a).type = TYPE_NUMBER;
+    return VAR(a);
 }
 
 ast_data ast_eq_bit_and(ast_data a, ast_data b)
 {
-    if (EVAL_VAR(a).type == TYPE_STRING)
+    if (VAR(a).type == TYPE_STRING)
     {
-        EVAL_VAR(a).number = strtod(EVAL_VAR(a).string, NULL);
+        VAR(a).number = strtod(VAR(a).string, NULL);
     }
     if (b.type == TYPE_STRING)
     {
         b.number = strtod(b.string, NULL);
     }
-    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number & (long)b.number);
-    EVAL_VAR(a).type = TYPE_NUMBER;
-    return EVAL_VAR(a);
+    VAR(a).number = (double)((long)VAR(a).number & (long)b.number);
+    VAR(a).type = TYPE_NUMBER;
+    return VAR(a);
 }
 
 ast_data ast_eq_bit_xor(ast_data a, ast_data b)
 {
-    if (EVAL_VAR(a).type == TYPE_STRING)
+    if (VAR(a).type == TYPE_STRING)
     {
-        EVAL_VAR(a).number = strtod(EVAL_VAR(a).string, NULL);
+        VAR(a).number = strtod(VAR(a).string, NULL);
     }
     if (b.type == TYPE_STRING)
     {
         b.number = strtod(b.string, NULL);
     }
-    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number ^ (long)b.number);
-    EVAL_VAR(a).type = TYPE_NUMBER;
-    return EVAL_VAR(a);
+    VAR(a).number = (double)((long)VAR(a).number ^ (long)b.number);
+    VAR(a).type = TYPE_NUMBER;
+    return VAR(a);
 }
 
 ast_data ast_eq_bit_or(ast_data a, ast_data b)
 {
-    if (EVAL_VAR(a).type == TYPE_STRING)
+    if (VAR(a).type == TYPE_STRING)
     {
-        EVAL_VAR(a).number = strtod(EVAL_VAR(a).string, NULL);
+        VAR(a).number = strtod(VAR(a).string, NULL);
     }
     if (b.type == TYPE_STRING)
     {
         b.number = strtod(b.string, NULL);
     }
-    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number | (long)b.number);
-    EVAL_VAR(a).type = TYPE_NUMBER;
-    return EVAL_VAR(a);
+    VAR(a).number = (double)((long)VAR(a).number | (long)b.number);
+    VAR(a).type = TYPE_NUMBER;
+    return VAR(a);
 }
 
 ast_data ast_eq_bit_lshift(ast_data a, ast_data b)
 {
-    if (EVAL_VAR(a).type == TYPE_STRING)
+    if (VAR(a).type == TYPE_STRING)
     {
-        EVAL_VAR(a).number = strtod(EVAL_VAR(a).string, NULL);
+        VAR(a).number = strtod(VAR(a).string, NULL);
     }
     if (b.type == TYPE_STRING)
     {
         b.number = strtod(b.string, NULL);
     }
-    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number << (unsigned long)b.number);
-    EVAL_VAR(a).type = TYPE_NUMBER;
-    return EVAL_VAR(a);
+    VAR(a).number = (double)((long)VAR(a).number << (unsigned long)b.number);
+    VAR(a).type = TYPE_NUMBER;
+    return VAR(a);
 }
 
 ast_data ast_eq_bit_rshift(ast_data a, ast_data b)
 {
-    if (EVAL_VAR(a).type == TYPE_STRING)
+    if (VAR(a).type == TYPE_STRING)
     {
-        EVAL_VAR(a).number = strtod(EVAL_VAR(a).string, NULL);
+        VAR(a).number = strtod(VAR(a).string, NULL);
     }
     if (b.type == TYPE_STRING)
     {
         b.number = strtod(b.string, NULL);
     }
-    EVAL_VAR(a).number = (double)((long)EVAL_VAR(a).number >> (unsigned long)b.number);
-    EVAL_VAR(a).type = TYPE_NUMBER;
-    return EVAL_VAR(a);
+    VAR(a).number = (double)((long)VAR(a).number >> (unsigned long)b.number);
+    VAR(a).type = TYPE_NUMBER;
+    return VAR(a);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

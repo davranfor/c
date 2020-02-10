@@ -248,10 +248,40 @@ static int move_operands(ast_node *node)
     return args;
 }
 
+static ast_data eval_expr(const ast_node *);
+
+static int move_params(ast_node *node)
+{
+    int args = 0;
+
+    map_args();
+    while (operands != node)
+    {
+        if (!move(&node->left, &operands))
+        {
+            die("Expected operand");
+        }
+        if (node->left->left != NULL)
+        {
+            eval_expr(node->left);
+        }
+        args++;
+    }
+    return args;
+}
+
 static void move_arguments(void)
 {
-    int args = move_operands(pop_call());
+    int args;
 
+    if (status & DEFINING)
+    {
+        args = move_params(pop_call());
+    }
+    else
+    {
+        args = move_operands(pop_call());
+    }
     switch (operands->data->type)
     {
         case TYPE_OPERATOR:
@@ -293,14 +323,7 @@ static void move_arguments(void)
         case TYPE_FUNCTION:
             if (status & DEFINING)
             {
-                if (operands->data->function->vars != args)
-                {
-                    die("%s(): Invalid arg section",
-                        operands->data->function->name
-                    );
-                }
                 operands->data->function->node = operands;
-                operands->data->function->args = args;
                 status &= ~DEFINING;
                 status |= DEFINED;
                 expected = OPERAND;
@@ -408,9 +431,9 @@ static void move_return(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static void verify(const ast_data *data)
+static void define(const ast_data *data)
 {
-    if (status == 0)
+    if (!(status & DEFINING))
     {
         if ((data->type == TYPE_STATEMENT) &&
             (data->statement->key == STATEMENT_DEF))
@@ -425,42 +448,68 @@ static void verify(const ast_data *data)
         }
         die("Only 'def's can be defined at global scope");
     }
-    if (status & DEFINING)
+
+    ast_node *call = peek_call();
+
+    if (call == NULL)
     {
-        if (peek_call() == NULL)
+        if (data->type == TYPE_CALLABLE)
         {
-            if (data->type == TYPE_CALLABLE)
+            die("def %s() shadows a standard function",
+                data->callable->name
+            );
+        }
+        if (data->type == TYPE_FUNCTION)
+        {
+            if (data->function->node != NULL)
             {
-                die("def %s() shadows a standard function",
-                    data->callable->name
+                die("def %s() was already defined",
+                    data->function->name
                 );
-            }
-            if (data->type == TYPE_FUNCTION)
-            {
-                if (data->function->node != NULL)
-                {
-                    die("def %s() was already defined",
-                        data->function->name
-                    );
-                }
-            }
-            else
-            {
-                die("A function name was expected");
             }
         }
         else
         {
-            if ((data->type == TYPE_OPERATOR) &&
-                (arguments(data) == 0))
+            die("A function name was expected");
+        }
+    }
+    else
+    {
+        if (status & ASSIGNING)
+        {
+            if ((call->data->function->args.min) ==
+                (call->data->function->args.max))
+            {
+                call->data->function->args.min--;
+            }
+            if ((data->type == TYPE_BOOLEAN) ||
+                (data->type == TYPE_NUMBER) ||
+                (data->type == TYPE_STRING) ||
+                (data->type == TYPE_NULL))
             {
                 return;
             }
-            if (data->type != TYPE_VARIABLE)
+        }
+        else if (data->type == TYPE_VARIABLE)
+        {
+            if ((call->data->function->args.min) ==
+                (call->data->function->args.max))
             {
-                die("An argument was expected");
+                call->data->function->args.min++;
+            }
+            call->data->function->args.max++;
+            return;
+        }
+        else if (data->type == TYPE_OPERATOR)
+        {
+            if ((data->operator->key == ',') ||
+                (data->operator->key == '=') ||
+                (data->operator->key == ')'))
+            {
+                return;
             }
         }
+        die("Wrong arg section");
     }
 }
 
@@ -475,7 +524,10 @@ static ast_data *classify(const char **text)
     {
         return NULL;
     }
-    verify(data);
+    if (!(status & DEFINED))
+    {
+        define(data);
+    }
     if (data->type == TYPE_OPERATOR)
     {
         switch (data->operator->key)
@@ -520,20 +572,9 @@ static ast_data *classify(const char **text)
                 expected = OPERAND;
                 starting = true;
                 break;
-            case '\0':
-                if (starting == false)
-                {
-                    die("Expected operand");
-                }
-                if (operators != NULL)
-                {
-                    die("Expected operand");
-                }
-                if (peek_statement() != NULL)
-                {
-                    die("'end' was expected");
-                }
-                break;
+            case '=':
+                flags |= ASSIGNING;
+                // fall through
             default:
                 if (expected == OPERAND)
                 {
@@ -551,6 +592,20 @@ static ast_data *classify(const char **text)
                     }
                 }
                 starting = false;
+                break;
+            case '\0':
+                if (starting == false)
+                {
+                    die("Expected operand");
+                }
+                if (operators != NULL)
+                {
+                    die("Expected operand");
+                }
+                if (peek_statement() != NULL)
+                {
+                    die("'end' was expected");
+                }
                 break;
         }
     }
@@ -820,15 +875,16 @@ static ast_data eval_tree(const ast_node *);
 
 static ast_data eval_function(const ast_function *function, int args)
 {
-    if (args != function->args)
+    if ((args < function->args.min) || (args > function->args.max))
     {
-        die("'%s' was expecting %d argument(s), got %d",
+        die("%s() was expecting (min: %d, max: %d) argument(s), got %d",
             function->name,
-            function->args,
+            function->args.min,
+            function->args.max,
             args
         );
     }
-    unwind_data(function->data, function->args);
+    unwind_data(function->data, args);
 
     ast_data data = eval_tree(function->node->right);
 
