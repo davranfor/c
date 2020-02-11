@@ -125,11 +125,8 @@ struct ast_function
 {
     const char *name;
     const struct ast_node *node;
+    struct {int min, max;} args;
     ast_data *data;
-    struct
-    {
-        int min, max;
-    } args;
     int vars;
 };
 
