@@ -80,13 +80,21 @@ static ast_data *parse(const char **text)
     {
         if (!(quotes & 1)) // Outside quotes
         {
+            if ((*str == '.') &&
+            (
+                isdigit((unsigned char)str[+1]) ||
+                isdigit((unsigned char)str[-1]))
+            )
+            {
+                // Skip decimal separator
+            }
             // Stop scanning on operator
-            if (is_operator(*str))
+            else if (is_operator(*str))
             {
                 break;
             }
             // Skip comments
-            if (*str == '#')
+            else if (*str == '#')
             {
                 while ((*str != '\0') && (*str != '\n'))
                 {
@@ -254,7 +262,7 @@ static int move_params(ast_node *node)
 {
     int args = 0;
 
-    map_args();
+    def_args();
     while (operands != node)
     {
         if (!move(&node->left, &operands))
@@ -400,8 +408,8 @@ static void move_block(bool end)
         }
         else if (operands->data->statement->key == STATEMENT_DEF)
         {
+            def_vars();
             status = 0;
-            map_vars();
         }
     }
     else
@@ -475,12 +483,13 @@ static void define(const ast_data *data)
     }
     else
     {
+        ast_function *function = call->data->function;
+
         if (status & ASSIGNING)
         {
-            if ((call->data->function->args.min) ==
-                (call->data->function->args.max))
+            if (function->args.min == function->args.max)
             {
-                call->data->function->args.min--;
+                function->args.min--;
             }
             if ((data->type == TYPE_BOOLEAN) ||
                 (data->type == TYPE_NUMBER) ||
@@ -492,12 +501,14 @@ static void define(const ast_data *data)
         }
         else if (data->type == TYPE_VARIABLE)
         {
-            if ((call->data->function->args.min) ==
-                (call->data->function->args.max))
+            if (function->args.min == function->args.max)
             {
-                call->data->function->args.min++;
+                function->args.min++;
             }
-            call->data->function->args.max++;
+            if (function->vars != ++function->args.max)
+            {
+                die("Duplicated arg name");
+            }
             return;
         }
         else if (data->type == TYPE_OPERATOR)

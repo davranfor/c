@@ -48,6 +48,18 @@ ast_data ast_not(ast_data a, ast_data b)
     return a;
 }
 
+ast_data ast_bit_not(ast_data a, ast_data b)
+{
+    (void)b;
+    if (a.type == TYPE_STRING)
+    {
+        a.number = strtod(a.string, NULL);
+    }
+    a.number = (double)(~(long)a.number);
+    a.type = TYPE_NUMBER;
+    return a;
+}
+
 ast_data ast_mul(ast_data a, ast_data b)
 {
     if (a.type == TYPE_STRING)

@@ -19,7 +19,9 @@ enum
     OPERATOR_EOF           = 0x0,
     OPERATOR_PLUS          = 0x1,
     OPERATOR_MINUS         = 0x2,
+    OPERATOR_DOT           = '.',
     OPERATOR_NOT           = '!',
+    OPERATOR_BIT_NOT       = '~',
     OPERATOR_MUL           = '*',
     OPERATOR_DIV           = '/',
     OPERATOR_REM           = '%',
@@ -156,9 +158,11 @@ int arguments(const ast_data *);
 int precedence(const ast_data *, const ast_data *);
 ast_data *unary(ast_data *);
 
-int is_iterator(const ast_data *);
 ast_data *map_statement(const char *);
 ast_data *map_branch(int);
+int is_iterator(const ast_data *);
+void def_args(void);
+void def_vars(void);
 
 ast_data *map_callable(const char *);
 
@@ -168,9 +172,6 @@ ast_data *map_boolean(const char *);
 ast_data *map_number(const char *);
 ast_data *map_string(const char *);
 ast_data *map_null(const char *);
-
-void map_args(void);
-void map_vars(void);
 
 void map_data(void);
 void unmap_data(void);

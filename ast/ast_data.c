@@ -238,9 +238,11 @@ int valid_name(const char *str)
 
 static ast_data operators[] =
 {
+    DEF_OPERATOR(OPERATOR_DOT,           2, 14, 'L', ".",   ast_mul),
     DEF_OPERATOR(OPERATOR_PLUS,          1, 13, 'R', "+",   ast_plus),
     DEF_OPERATOR(OPERATOR_MINUS,         1, 13, 'R', "-",   ast_minus),
     DEF_OPERATOR(OPERATOR_NOT,           1, 13, 'R', "!",   ast_not),
+    DEF_OPERATOR(OPERATOR_BIT_NOT,       1, 13, 'R', "~",   ast_bit_not),
     DEF_OPERATOR(OPERATOR_MUL,           2, 12, 'L', "*",   ast_mul),
     DEF_OPERATOR(OPERATOR_DIV,           2, 12, 'L', "/",   ast_div),
     DEF_OPERATOR(OPERATOR_REM,           2, 12, 'L', "%",   ast_rem),
@@ -306,7 +308,9 @@ int is_operator(int operator)
 {
     switch (operator)
     {
+        case OPERATOR_DOT:
         case OPERATOR_NOT:
+        case OPERATOR_BIT_NOT:
         case OPERATOR_MUL:
         case OPERATOR_DIV:
         case OPERATOR_REM:
@@ -338,6 +342,8 @@ static int get_operator(const char **operator)
         case OPERATOR_RPARENTHS:
         case OPERATOR_COMMA:
         case OPERATOR_SEMICOLON:
+        case OPERATOR_DOT:
+        case OPERATOR_BIT_NOT:
             result = **operator;
             (*operator)++;
             break;
@@ -451,18 +457,6 @@ ast_data *unary(ast_data *data)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int is_iterator(const ast_data *data)
-{
-    switch (data->statement->key)
-    {
-        case STATEMENT_WHILE:
-        case STATEMENT_FOR:
-            return 1;
-        default:
-            return 0;
-    }
-}
-
 #define DEF_STATEMENT(...)                              \
 {                                                       \
     .type = TYPE_STATEMENT,                             \
@@ -491,8 +485,6 @@ static ast_data branches[] =
     DEF_STATEMENT(STATEMENT_THEN,     0, "then"),
 };
 
-static ast_function *data_def;
-
 ast_data *map_statement(const char *name)
 {
     const size_t count = sizeof statements / sizeof *statements;
@@ -510,6 +502,54 @@ ast_data *map_statement(const char *name)
 ast_data *map_branch(int branch)
 {
     return &branches[branch];
+}
+
+int is_iterator(const ast_data *data)
+{
+    switch (data->statement->key)
+    {
+        case STATEMENT_WHILE:
+        case STATEMENT_FOR:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static ast_function *data_def;
+
+void def_args()
+{
+    if (data_def->vars > 0)
+    {
+        data_def->data = calloc((size_t)data_def->vars, sizeof(ast_data));
+        if (data_def->data == NULL)
+        {
+            perror("calloc");
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+
+void def_vars()
+{
+    if (data_def->vars != data_def->args.max)
+    {
+        ast_data *data = calloc((size_t)data_def->vars, sizeof(ast_data));
+
+        if (data == NULL)
+        {
+            perror("realloc");
+            exit(EXIT_FAILURE);
+        }
+        memcpy(data,
+               data_def->data,
+               sizeof(ast_data) * (size_t)data_def->args.max
+        );
+        free(data_def->data);
+        data_def->data = data;
+    }
+    data_def = NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -687,41 +727,6 @@ static void map_variables(void)
 static void unmap_variables(void)
 {
     free(data_var);
-}
-
-void map_args()
-{
-    if (data_def->vars == 0)
-    {
-        return;
-    }
-    data_def->data = calloc((size_t)data_def->vars, sizeof(ast_data));
-    if (data_def->data == NULL)
-    {
-        perror("calloc");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void map_vars()
-{
-    if ((data_def->vars == 0) || (data_def->vars == data_def->args.max))
-    {
-        data_def = NULL;
-        return;
-    }
-
-    ast_data *data = calloc((size_t)data_def->vars, sizeof(ast_data));
-
-    if (data == NULL)
-    {
-        perror("realloc");
-        exit(EXIT_FAILURE);
-    }
-    memcpy(data, data_def->data, sizeof(ast_data) * (size_t)data_def->args.max);
-    free(data_def->data);
-    data_def->data = data;
-    data_def = NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

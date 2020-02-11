@@ -4,6 +4,7 @@
 ast_data ast_plus(ast_data, ast_data);
 ast_data ast_minus(ast_data, ast_data);
 ast_data ast_not(ast_data, ast_data);
+ast_data ast_bit_not(ast_data, ast_data);
 ast_data ast_xor(ast_data, ast_data);
 ast_data ast_mul(ast_data, ast_data);
 ast_data ast_div(ast_data, ast_data);
