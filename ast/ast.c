@@ -31,7 +31,7 @@ enum
     MASK_ACCESS = ACCESSING | ACCESSED,
     APPENDING   = 0x04,
     ASSIGNING   = 0x08,
-    MASK_SCOPE  = APPENDING | ASSIGNING,
+    MASK_PARAMS = APPENDING | ASSIGNING,
     DEFINING    = 0x10,
     DEFINED     = 0x20,
     EVALUATING  = 0x40,
@@ -756,7 +756,7 @@ static ast_data *classify(const char **text)
                 break;
         }
     }
-    status &= ~MASK_SCOPE;
+    status &= ~MASK_PARAMS;
     status |= flags;
     return data;
 }

@@ -93,9 +93,15 @@ typedef struct
     int (*eval)(int);
 } ast_callable;
 
+typedef struct
+{
+    const char *name;
+    const void *base;
+    int offset;
+} ast_variable;
+
 typedef struct ast_operator ast_operator;
 typedef struct ast_function ast_function;
-typedef struct ast_variable ast_variable;
 typedef struct ast_object ast_object;
 
 typedef struct ast_data
@@ -139,13 +145,6 @@ struct ast_object
     ast_data *data;
     const char *name;
     int vars;
-};
-
-struct ast_variable
-{
-    const char *name;
-    const void *base;
-    int offset;
 };
 
 void wind_data(ast_data *, int);
