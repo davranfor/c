@@ -26,12 +26,19 @@ static int expected = OPERAND;
 
 enum
 {
-    APPENDING  = 0x01,
-    ASSIGNING  = 0x02,
-    MASK       = 0x03,
-    DEFINING   = 0x04,
-    DEFINED    = 0x08,
-    EVALUATING = 0x10,
+    ACCESSING   = 0x01,
+    ACCESSED    = 0x02,
+    MASK_ACCESS = ACCESSING | ACCESSED,
+    APPENDING   = 0x04,
+    ASSIGNING   = 0x08,
+    MASK_SCOPE  = APPENDING | ASSIGNING,
+    DEFINING    = 0x10,
+    DEFINED     = 0x20,
+    EVALUATING  = 0x40,
+    /* List of hex flags
+    0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080,
+    0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000, 0x8000, 
+    */
 };
 static int status = 0;
 
@@ -86,7 +93,8 @@ static ast_data *parse(const char **text)
                 isdigit((unsigned char)str[-1]))
             )
             {
-                // Skip decimal separator
+                // Skip decimal separator in order to not
+                // process the "access member" operator
             }
             // Stop scanning on operator
             else if (is_operator(*str))
@@ -166,10 +174,15 @@ static ast_data *parse(const char **text)
     }
 
     ast_data *data = NULL;
+    int flags = 0;
 
     if (start == NULL)
     {
         data = map_operator(&str);
+        if (data->operator->key == '.')
+        {
+            flags = MASK_ACCESS;
+        }
     }
     else
     {
@@ -208,10 +221,30 @@ static ast_data *parse(const char **text)
             {
                 if (data == NULL)
                 {
-                    data = map_variable(start);
-                    if (data == NULL)
+                    if (!(status & (DEFINING | DEFINED)))
                     {
                         die("Missing or invalid 'def'");
+                    }
+                    if ((*str == '.') || (status & MASK_ACCESS))
+                    {
+                        if (!(status & MASK_ACCESS))
+                        {
+                            data = map_object(start);
+                            flags = ACCESSING;
+                        }
+                        else
+                        {
+                            data = map_member(operands->data->function, start);
+                            flags = ACCESSED;
+                        }
+                    }
+                    else
+                    {
+                        data = map_variable(start);
+                    }
+                    if (data == NULL)
+                    {
+                        die("Mapping '%s'", start);
                     }
                 }
                 else if (data->statement->args > 0)
@@ -221,6 +254,8 @@ static ast_data *parse(const char **text)
             }
         }
     }
+    status &= ~MASK_ACCESS;
+    status |= flags;
     *text = str;
     return data;
 }
@@ -539,6 +574,23 @@ static ast_data *classify(const char **text)
     {
         define(data);
     }
+    switch (status & MASK_ACCESS)
+    {
+        case ACCESSING:
+            if (data->type != TYPE_FUNCTION)
+            {
+                die("A function was expected");
+            }
+            break;
+        case ACCESSED:
+            if (data->type != TYPE_VARIABLE)
+            {
+                die("A variable was expected");
+            }
+            break;
+        default:
+            break;
+    }
     if (data->type == TYPE_OPERATOR)
     {
         switch (data->operator->key)
@@ -557,6 +609,14 @@ static ast_data *classify(const char **text)
                 }
                 starting = false;
                 break;
+            case '.':
+                if (expected == OPERAND)
+                {
+                    die("Expected operand");
+                }
+                expected = OPERAND;
+                starting = false;
+                break;
             case ',':
                 if (peek_call() == NULL)
                 {
@@ -566,7 +626,7 @@ static ast_data *classify(const char **text)
                 {
                     die("Expected operand");
                 }
-                flags |= APPENDING;
+                flags = APPENDING;
                 expected = OPERAND;
                 starting = false;
                 break;
@@ -584,7 +644,7 @@ static ast_data *classify(const char **text)
                 starting = true;
                 break;
             case '=':
-                flags |= ASSIGNING;
+                flags = ASSIGNING;
                 // fall through
             default:
                 if (expected == OPERAND)
@@ -679,6 +739,12 @@ static ast_data *classify(const char **text)
                 }
                 break;
             case TYPE_FUNCTION:
+                if (status & ACCESSING)
+                {
+                    expected = OPERATOR;
+                }
+                starting = false;
+                break;
             case TYPE_CALLABLE:
                 starting = false;
                 break;
@@ -688,7 +754,7 @@ static ast_data *classify(const char **text)
                 break;
         }
     }
-    status &= ~MASK;
+    status &= ~MASK_SCOPE;
     status |= flags;
     return data;
 }
@@ -726,6 +792,8 @@ static int build(const char *text)
                         }
                         move_operator();
                     }
+                    break;
+                case '.':
                     break;
                 case ',':
                     while ((root = peek(operators)))
@@ -809,14 +877,25 @@ static int build(const char *text)
         else if (data->type == TYPE_FUNCTION)
         {
             push(&operands, data);
-            push(&operators, map_operator(&text));
-            push_call(operands);
+            if (!(status & ACCESSING))
+            {
+                push(&operators, map_operator(&text));
+                push_call(operands);
+            }
         }
         else if (data->type == TYPE_CALLABLE)
         {
             push(&operands, data);
             push(&operators, map_operator(&text));
             push_call(operands);
+        }
+        else if (data->type == TYPE_VARIABLE)
+        {
+            if (status & ACCESSED)
+            {
+                pop(&operands);
+            }
+            push(&operands, data);
         }
         else
         {

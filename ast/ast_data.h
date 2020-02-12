@@ -9,6 +9,7 @@ typedef enum
     TYPE_FUNCTION,
     TYPE_CALLABLE,
     TYPE_VARIABLE,
+    TYPE_OBJECT,
     TYPE_BOOLEAN,
     TYPE_NUMBER,
     TYPE_STRING,
@@ -56,6 +57,7 @@ enum
     OPERATOR_EQ_BIT_RSHIFT = '=' ^ ('>' ^ '!'),
     OPERATOR_LPARENTHS     = '(',
     OPERATOR_RPARENTHS     = ')',
+    OPERATOR_COLON         = ':',
     OPERATOR_COMMA         = ',',
     OPERATOR_SEMICOLON     = ';',
 };
@@ -94,6 +96,7 @@ typedef struct
 typedef struct ast_operator ast_operator;
 typedef struct ast_function ast_function;
 typedef struct ast_variable ast_variable;
+typedef struct ast_object ast_object;
 
 typedef struct ast_data
 {
@@ -137,6 +140,13 @@ struct ast_variable
     int offset;
 };
 
+struct ast_object
+{
+    const char *name;
+    ast_data *data;
+    int vars;
+};
+
 void wind_data(ast_data *, int);
 void unwind_data(ast_data *, int);
 int push_data(ast_data);
@@ -161,9 +171,12 @@ int is_iterator(const ast_data *);
 void def_args(void);
 void def_vars(void);
 
+ast_data *map_object(const char *);
+
 ast_data *map_callable(const char *);
 
 ast_data *map_variable(const char *);
+ast_data *map_member(const ast_function *, const char *);
 
 ast_data *map_boolean(const char *);
 ast_data *map_number(const char *);

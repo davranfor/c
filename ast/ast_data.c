@@ -598,6 +598,12 @@ static ast_data *map_function(const char *name)
     return data;
 }
 
+ast_data *map_object(const char *name)
+{
+    data_fnc->function->name = name;
+    return hashmap_search(map, data_fnc);
+}
+
 static void map_functions(void)
 {
     data_fnc = new_function();
@@ -696,12 +702,8 @@ static ast_data *data_var;
 
 ast_data *map_variable(const char *name)
 {
-    if (data_def == NULL)
-    {
-        return NULL;
-    }
-    data_var->variable->name = name;
     data_var->variable->function = data_def;
+    data_var->variable->name = name;
 
     ast_data *data;
 
@@ -717,6 +719,13 @@ ast_data *map_variable(const char *name)
         data_var = new_variable();
     }
     return data;
+}
+
+ast_data *map_member(const ast_function *function, const char *member)
+{
+    data_var->variable->function = function;
+    data_var->variable->name = member;
+    return hashmap_search(map, data_var);
 }
 
 static void map_variables(void)
