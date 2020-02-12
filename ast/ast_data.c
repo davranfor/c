@@ -125,7 +125,7 @@ static int comp_data(const void *pa, const void *pb)
         case TYPE_CALLABLE:
             return strcmp(a->callable->name, b->callable->name);
         case TYPE_VARIABLE:
-            return (a->variable->function != b->variable->function) ||
+            return (a->variable->base != b->variable->base) ||
                    strcmp(a->variable->name, b->variable->name);
         case TYPE_NUMBER:
             return a->number != b->number;
@@ -148,7 +148,7 @@ static unsigned long hash_data(const void *item)
             return hash_str((const unsigned char *)data->callable->name);
         case TYPE_VARIABLE:
             return hash_str((const unsigned char *)data->variable->name) ^
-                   hash_str((const unsigned char *)data->variable->function->name);
+                   hash_ullong((unsigned long long)data->variable->base);
         case TYPE_NUMBER:
             return hash_ulong((unsigned long)data->number);
         case TYPE_STRING:
@@ -702,7 +702,7 @@ static ast_data *data_var;
 
 ast_data *map_variable(const char *name)
 {
-    data_var->variable->function = data_def;
+    data_var->variable->base = data_def;
     data_var->variable->name = name;
 
     ast_data *data;
@@ -721,9 +721,9 @@ ast_data *map_variable(const char *name)
     return data;
 }
 
-ast_data *map_member(const ast_function *function, const char *member)
+ast_data *map_member(const void *base, const char *member)
 {
-    data_var->variable->function = function;
+    data_var->variable->base = base;
     data_var->variable->name = member;
     return hashmap_search(map, data_var);
 }

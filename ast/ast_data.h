@@ -7,9 +7,9 @@ typedef enum
     TYPE_OPERATOR,
     TYPE_STATEMENT,
     TYPE_FUNCTION,
+    TYPE_OBJECT,
     TYPE_CALLABLE,
     TYPE_VARIABLE,
-    TYPE_OBJECT,
     TYPE_BOOLEAN,
     TYPE_NUMBER,
     TYPE_STRING,
@@ -107,6 +107,7 @@ typedef struct ast_data
         const ast_operator *operator;
         const ast_statement *statement;
         ast_function *function;
+        ast_object *object;
         const ast_callable *callable;
         ast_variable *variable;
         double number;
@@ -126,25 +127,25 @@ struct ast_operator
 
 struct ast_function
 {
+    ast_data *data;
     const char *name;
     const struct ast_node *node;
     struct {int min, max;} args;
+    int vars;
+};
+
+struct ast_object
+{
     ast_data *data;
+    const char *name;
     int vars;
 };
 
 struct ast_variable
 {
     const char *name;
-    const ast_function *function;
+    const void *base;
     int offset;
-};
-
-struct ast_object
-{
-    const char *name;
-    ast_data *data;
-    int vars;
 };
 
 void wind_data(ast_data *, int);
@@ -176,7 +177,7 @@ ast_data *map_object(const char *);
 ast_data *map_callable(const char *);
 
 ast_data *map_variable(const char *);
-ast_data *map_member(const ast_function *, const char *);
+ast_data *map_member(const void *, const char *);
 
 ast_data *map_boolean(const char *);
 ast_data *map_number(const char *);

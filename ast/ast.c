@@ -300,14 +300,16 @@ static int move_params(ast_node *node)
     def_args();
     while (operands != node)
     {
-        if (!move(&node->left, &operands))
+        if (operands == NULL)
         {
             die("Expected operand");
         }
-        if (node->left->left != NULL)
+        if (operands->left != NULL)
         {
-            eval_expr(node->left);
+            eval_expr(operands);
+            clear(operands->left);
         }
+        pop(&operands);
         args++;
     }
     return args;
@@ -955,10 +957,10 @@ static void explain(const ast_node *node, int level)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define GET_VAR(x)                                          \
-    if (x.type == TYPE_VARIABLE)                            \
-    {                                                       \
-        x = x.variable->function->data[x.variable->offset]; \
+#define GET_VAR(x)                                                          \
+    if (x.type == TYPE_VARIABLE)                                            \
+    {                                                                       \
+        x = (*(ast_data * const *)(x.variable->base))[x.variable->offset];  \
     }
 
 static ast_data eval_tree(const ast_node *);
