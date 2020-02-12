@@ -179,10 +179,6 @@ static ast_data *parse(const char **text)
     if (start == NULL)
     {
         data = map_operator(&str);
-        if (data->operator->key == '.')
-        {
-            flags = MASK_ACCESS;
-        }
     }
     else
     {
@@ -616,6 +612,7 @@ static ast_data *classify(const char **text)
                 {
                     die("Expected operand");
                 }
+                flags = MASK_ACCESS;
                 expected = OPERAND;
                 starting = false;
                 break;
