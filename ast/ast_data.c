@@ -6,6 +6,7 @@
 #include "ast_data.h"
 #include "ast_eval.h"
 
+
 ///////////////////////////////////////////////////////////////////////////////
 
 #define MAX_DATA 16384
@@ -105,7 +106,7 @@ static ast_data *new_data(ast_type type)
         exit(EXIT_FAILURE);
     }
     data->type = type;
-    data->flags = 0;
+    data->key = 0;
     return data;
 }
 
@@ -125,8 +126,8 @@ static int comp_data(const void *pa, const void *pb)
         case TYPE_CALLABLE:
             return strcmp(a->callable->name, b->callable->name);
         case TYPE_VARIABLE:
-            return (a->variable->base != b->variable->base) ||
-                   strcmp(a->variable->name, b->variable->name);
+            return (a->address != b->address) ||
+                   strcmp(CAST_VAR(a)->name, CAST_VAR(b)->name);
         case TYPE_NUMBER:
             return a->number != b->number;
         case TYPE_STRING:
@@ -147,8 +148,8 @@ static unsigned long hash_data(const void *item)
         case TYPE_CALLABLE:
             return hash_str((const unsigned char *)data->callable->name);
         case TYPE_VARIABLE:
-            return hash_str((const unsigned char *)data->variable->name) ^
-                   hash_ullong((unsigned long long)data->variable->base);
+            return hash_str((const unsigned char *)CAST_VAR(data)->name) ^
+                   hash_ulong((unsigned long)data->address);
         case TYPE_NUMBER:
             return hash_ulong((unsigned long)data->number);
         case TYPE_STRING:
@@ -232,7 +233,7 @@ int valid_name(const char *str)
 #define DEF_OPERATOR(o, ...) [o] =                      \
 {                                                       \
     .type = TYPE_OPERATOR,                              \
-    .flags = 0,                                         \
+    .key = 0,                                           \
     .operator = &(const ast_operator){o, __VA_ARGS__}   \
 }
 
@@ -460,7 +461,7 @@ ast_data *unary(ast_data *data)
 #define DEF_STATEMENT(...)                              \
 {                                                       \
     .type = TYPE_STATEMENT,                             \
-    .flags = 0,                                         \
+    .key = 0,                                           \
     .statement = &(const ast_statement){__VA_ARGS__}    \
 }
 
@@ -633,7 +634,7 @@ ast_data *map_callable(const char *name)
 #define DEF_CALLABLE(...)                           \
 {                                                   \
     .type = TYPE_CALLABLE,                          \
-    .flags = 0,                                     \
+    .key = 0,                                       \
     .callable = &(const ast_callable){__VA_ARGS__}  \
 }
 
@@ -678,32 +679,25 @@ static void map_callables(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static ast_data *new_variable(void)
+static ast_variable *new_variable(void)
 {
-    struct reference
-    {
-        ast_data data;
-        ast_variable variable;
-    };
+    ast_variable *variable = calloc(1, sizeof *variable);
 
-    struct reference *reference = calloc(1, sizeof *reference);
-
-    if (reference == NULL)
+    if (variable == NULL)
     {
-        perror("malloc");
+        perror("calloc");
         exit(EXIT_FAILURE);
     }
-    reference->data.type = TYPE_VARIABLE;
-    reference->data.variable = &reference->variable;
-    return &reference->data;
+    variable->data.type = TYPE_VARIABLE;
+    return variable;
 }
 
-static ast_data *data_var;
+static ast_variable *data_var;
 
 ast_data *map_variable(const char *name)
 {
-    data_var->variable->base = data_def;
-    data_var->variable->name = name;
+    data_var->data.address = data_def;
+    data_var->name = name;
 
     ast_data *data;
 
@@ -713,18 +707,18 @@ ast_data *map_variable(const char *name)
         perror("hashmap_insert");
         exit(EXIT_FAILURE);
     }
-    if (data == data_var)
+    if (data == &data_var->data)
     {
-        data->variable->offset = data_def->vars++;
+        data->key = data_def->vars++;
         data_var = new_variable();
     }
     return data;
 }
 
-ast_data *map_member(const void *base, const char *member)
+ast_data *map_member(const void *address, const char *name)
 {
-    data_var->variable->base = base;
-    data_var->variable->name = member;
+    data_var->data.address = address;
+    data_var->name = name;
     return hashmap_search(map, data_var);
 }
 
@@ -744,8 +738,8 @@ ast_data *map_boolean(const char *str)
 {
     static ast_data booleans[] =
     {
-        {.type = TYPE_BOOLEAN, .flags = 0, .number = 0},
-        {.type = TYPE_BOOLEAN, .flags = 0, .number = 1},
+        {.type = TYPE_BOOLEAN, .key = 0, .number = 0},
+        {.type = TYPE_BOOLEAN, .key = 0, .number = 1},
     };
 
     if (strcmp(str, "true") == 0)
@@ -833,7 +827,7 @@ static void unmap_strings(void)
 
 ast_data *map_null(const char *str)
 {
-    static ast_data null = {.type = TYPE_NULL, .flags = 0, .number = 0};
+    static ast_data null = {.type = TYPE_NULL, .key = 0, .number = 0};
 
     if (strcmp(str, "null") == 0)
     {

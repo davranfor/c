@@ -93,13 +93,6 @@ typedef struct
     int (*eval)(int);
 } ast_callable;
 
-typedef struct
-{
-    const char *name;
-    const void *base;
-    int offset;
-} ast_variable;
-
 typedef struct ast_operator ast_operator;
 typedef struct ast_function ast_function;
 typedef struct ast_object ast_object;
@@ -107,7 +100,7 @@ typedef struct ast_object ast_object;
 typedef struct ast_data
 {
     ast_type type;
-    int flags;
+    int key;
     union
     {
         const ast_operator *operator;
@@ -115,9 +108,9 @@ typedef struct ast_data
         ast_function *function;
         ast_object *object;
         const ast_callable *callable;
-        ast_variable *variable;
         double number;
         const char *string;
+        const void *address;
     };
 } ast_data;
 
@@ -127,7 +120,7 @@ struct ast_operator
     int args;
     int precedence;
     int associativity;
-    const char *text;
+    const char *value;
     ast_data (*eval)(ast_data, ast_data);
 };
 
@@ -146,6 +139,14 @@ struct ast_object
     const char *name;
     int vars;
 };
+
+typedef struct
+{
+    ast_data data;
+    const char *name;
+} ast_variable;
+
+#define CAST_VAR(v) ((const ast_variable *)v)
 
 void wind_data(ast_data *, int);
 void unwind_data(ast_data *, int);

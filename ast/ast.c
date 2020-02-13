@@ -508,11 +508,9 @@ static void define(const ast_data *data)
                     data->function->name
                 );
             }
+            return;
         }
-        else
-        {
-            die("A function name was expected");
-        }
+        die("A 'def' name was expected");
     }
     else
     {
@@ -664,15 +662,7 @@ static ast_data *classify(const char **text)
                 starting = false;
                 break;
             case '\0':
-                if (starting == false)
-                {
-                    die("Expected operand");
-                }
-                if (operators != NULL)
-                {
-                    die("Expected operand");
-                }
-                if (peek_statement() != NULL)
+                if (status != 0)
                 {
                     die("'end' was expected");
                 }
@@ -815,7 +805,6 @@ static int build(const char *text)
                     move_return();
                     break;
                 case '\0':
-                    status = EVALUATING;
                     return 1;
                 default:
                     while ((root = peek(operators)))
@@ -917,7 +906,7 @@ static void explain(const ast_node *node, int level)
         switch (node->data->type)
         {
             case TYPE_OPERATOR:
-                printf("%s\n", node->data->operator->text);
+                printf("%s\n", node->data->operator->value);
                 break;
             case TYPE_STATEMENT:
                 printf("%s\n", node->data->statement->name);
@@ -929,7 +918,7 @@ static void explain(const ast_node *node, int level)
                 printf("%s()\n", node->data->callable->name);
                 break;
             case TYPE_VARIABLE:
-                printf("%s\n", node->data->variable->name);
+                printf("%s\n", CAST_VAR(node->data)->name);
                 break;
             case TYPE_BOOLEAN:
                 printf("%s\n", node->data->number ? "true" : "false");
@@ -954,10 +943,10 @@ static void explain(const ast_node *node, int level)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define GET_VAR(x)                                                          \
-    if (x.type == TYPE_VARIABLE)                                            \
-    {                                                                       \
-        x = (*(ast_data * const *)(x.variable->base))[x.variable->offset];  \
+#define GET_VAR(x)                                      \
+    if (x.type == TYPE_VARIABLE)                        \
+    {                                                   \
+        x = (*(ast_data * const *)(x.address))[x.key];  \
     }
 
 static ast_data eval_tree(const ast_node *);
@@ -1230,6 +1219,8 @@ void ast_explain(void)
 
 void ast_eval(void)
 {
+    status = EVALUATING;
+
     const ast_data *data = map_callable("main");
 
     if ((data == NULL) || (data->function->node == NULL))
