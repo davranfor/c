@@ -26,15 +26,16 @@ static int expected = OPERAND;
 
 enum
 {
-    ACCESSING   = 0x01,
-    ACCESSED    = 0x02,
+    DEFINING    = 0x01,
+    DEFINED     = 0x02,
+    ACCESSING   = 0x04,
+    ACCESSED    = 0x08,
     MASK_ACCESS = ACCESSING | ACCESSED,
-    APPENDING   = 0x04,
-    ASSIGNING   = 0x08,
+    APPENDING   = 0x10,
+    ASSIGNING   = 0x20,
     MASK_PARAMS = APPENDING | ASSIGNING,
-    DEFINING    = 0x10,
-    DEFINED     = 0x20,
-    EVALUATING  = 0x40,
+    RETURNING   = 0x40,
+    EVALUATING  = 0x80,
     /* List of hex flags
     0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080,
     0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000, 0x8000, 
@@ -287,7 +288,7 @@ static int move_operands(ast_node *node)
     return args;
 }
 
-static ast_data eval_expr(const ast_node *);
+static ast_data eval_expression(const ast_node *);
 
 static int move_params(ast_node *node)
 {
@@ -302,7 +303,7 @@ static int move_params(ast_node *node)
         }
         if (operands->left != NULL)
         {
-            eval_expr(operands);
+            eval_expression(operands);
             clear(operands->left);
         }
         pop(&operands);
@@ -381,6 +382,24 @@ static void move_arguments(void)
     pop(&operators);
 }
 
+static void move_expression(void)
+{
+    if (status & RETURNING)
+    {
+        if (operands == NULL)
+        {
+            die("Expected operand");
+        }
+        if (operands->data->type != TYPE_STATEMENT)
+        {
+            ast_node *node = operands->right;
+
+            move(&node->left, &operands);
+        }
+        status &= ~RETURNING;
+    }
+}
+
 static void move_expressions(ast_node *node)
 {
     const ast_node *statement = peek_statement();
@@ -451,22 +470,6 @@ static void move_block(bool end)
         {
             die("An 'else' block can not be followed by another statement");
         }
-    }
-}
-
-static void move_return(void)
-{
-    const ast_node *branch = peek_branch();
-
-    if ((branch != NULL) && (branch->data->statement->key == STATEMENT_RETURN))
-    {
-        if (operands != branch)
-        {
-            ast_node *node = operands->right;
-
-            move(&node->left, &operands);
-        }
-        pop_branch();
     }
 }
 
@@ -721,6 +724,7 @@ static ast_data *classify(const char **text)
                 if (data->statement->key == STATEMENT_RETURN)
                 {
                     starting = **text == ';';
+                    flags = RETURNING;
                 }
                 else
                 {
@@ -802,7 +806,7 @@ static int build(const char *text)
                     {
                         move_operator();
                     }
-                    move_return();
+                    move_expression();
                     break;
                 case '\0':
                     return 1;
@@ -852,10 +856,6 @@ static int build(const char *text)
                     break;
                 case STATEMENT_END:
                     move_block(true);
-                    break;
-                case STATEMENT_RETURN:
-                    push(&operands, data);
-                    push_branch(operands);
                     break;
                 default:
                     push(&operands, data);
@@ -971,7 +971,7 @@ static ast_data eval_function(const ast_function *function, int args)
     return data;
 }
 
-static ast_data eval_expr(const ast_node *node)
+static ast_data eval_expression(const ast_node *node)
 {
     ast_node *next = NULL;
     ast_data a = {0};
@@ -989,7 +989,7 @@ static ast_data eval_expr(const ast_node *node)
         case TYPE_OPERATOR:
             if (node->left != NULL)
             {
-                a = eval_expr(node->left);
+                a = eval_expression(node->left);
                 if (is_assignment(node->data->operator->key))
                 {
                     if (a.type != TYPE_VARIABLE)
@@ -1003,7 +1003,7 @@ static ast_data eval_expr(const ast_node *node)
                 }
                 if (node->left->right != NULL)
                 {
-                    b = eval_expr(node->left->right);
+                    b = eval_expression(node->left->right);
                     GET_VAR(b);
                 }
             }
@@ -1013,7 +1013,7 @@ static ast_data eval_expr(const ast_node *node)
             next = node->left;
             while (next != NULL)
             {
-                a = eval_expr(next);
+                a = eval_expression(next);
                 GET_VAR(a);
                 push_data(a);
                 next = next->right;
@@ -1028,7 +1028,7 @@ static ast_data eval_expr(const ast_node *node)
             next = node->left;
             while (next != NULL)
             {
-                a = eval_expr(next);
+                a = eval_expression(next);
                 GET_VAR(a);
                 push_data(a);
                 next = next->right;
@@ -1045,9 +1045,9 @@ static ast_data eval_expr(const ast_node *node)
     }
 }
 
-static int eval_cond(const ast_node *node)
+static int eval_condition(const ast_node *node)
 {
-    ast_data data = eval_expr(node);
+    ast_data data = eval_expression(node);
 
     GET_VAR(data);
     if (data.type == TYPE_STRING)
@@ -1073,15 +1073,15 @@ static ast_data eval_tree(const ast_node *node)
                         if (node != peek_jump())
                         {
                             push_jump(node);
-                            eval_expr(node->left);
+                            eval_expression(node->left);
                             node = node->left->right;
                         }
                         else
                         {
                             node = node->left->right;
-                            eval_expr(node->right);
+                            eval_expression(node->right);
                         }
-                        if (eval_cond(node) == 0)
+                        if (eval_condition(node) == 0)
                         {
                             node = pop_jump()->right;
                         }
@@ -1095,7 +1095,7 @@ static ast_data eval_tree(const ast_node *node)
                         {
                             push_jump(node);
                         }
-                        if (eval_cond(node->left) == 0)
+                        if (eval_condition(node->left) == 0)
                         {
                             node = pop_jump()->right;
                         }
@@ -1106,7 +1106,7 @@ static ast_data eval_tree(const ast_node *node)
                         break;
                     case STATEMENT_IF:
                         push_jump(node);
-                        if (eval_cond(node->left) == 0)
+                        if (eval_condition(node->left) == 0)
                         {
                             node = pop_jump()->right;
                         }
@@ -1118,7 +1118,7 @@ static ast_data eval_tree(const ast_node *node)
                     case STATEMENT_IFEL:
                         push_jump(node);
                         node = node->left;
-                        if (eval_cond(node) == 0)
+                        if (eval_condition(node) == 0)
                         {
                             node = node->right->right;
                         }
@@ -1128,7 +1128,7 @@ static ast_data eval_tree(const ast_node *node)
                         }
                         break;
                     case STATEMENT_ELIF:
-                        if (eval_cond(node->left) == 0)
+                        if (eval_condition(node->left) == 0)
                         {
                             node = node->right;
                         }
@@ -1167,13 +1167,13 @@ static ast_data eval_tree(const ast_node *node)
                         {
                             return (ast_data){0};
                         }
-                        return eval_expr(node->left);
+                        return eval_expression(node->left);
                     default:
                         break;
                 }
                 break;
             default:
-                eval_expr(node);
+                eval_expression(node);
                 node = node->right;
                 break;
         }
