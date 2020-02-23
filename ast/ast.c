@@ -693,8 +693,8 @@ static ast_data *classify(const char **text)
                     case STATEMENT_BREAK:
                         if (!iterating())
                         {
-                            die("'continue' and 'break'"
-                                " can't be used outside a loop"
+                            die("'%s' can't be used outside a loop",
+                                data->statement->name
                             );
                         }
                         if (**text != ';')
