@@ -80,72 +80,10 @@ void clear(ast_node *root)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-struct statements
-{
-    const ast_node *node[MAX_HEAP];
-    int iterators;
-    int count;
-};
-
-static struct statements statements;
-
-void push_statement(const ast_node *node)
-{
-    if (statements.count == MAX_HEAP)
-    {
-        die();
-    }
-    statements.node[statements.count++] = node;
-    if (is_iterator(node->data))
-    {
-        statements.iterators++;
-    }
-}
-
-const ast_node *pop_statement(void)
-{
-    if (statements.count == 0)
-    {
-        return NULL;
-    }
-
-    const ast_node *node = statements.node[--statements.count];
-
-    if (is_iterator(node->data))
-    {
-        statements.iterators--;
-    }
-    return node;
-}
-
-const ast_node *peek_statement(void)
-{
-    if (statements.count == 0)
-    {
-        return NULL;
-    }
-    return statements.node[statements.count - 1];
-}
-
-int statement_key(void)
-{
-    if (statements.count == 0)
-    {
-        return 0;
-    }
-    return statements.node[statements.count - 1]->data->statement->key;
-}
-
-int iterating(void)
-{
-    return statements.iterators != 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 struct branches
 {
     const ast_node *node[MAX_HEAP];
+    int iterators;
     int count;
 };
 
@@ -158,6 +96,10 @@ void push_branch(const ast_node *node)
         die();
     }
     branches.node[branches.count++] = node;
+    if (is_iterator(node->data))
+    {
+        branches.iterators++;
+    }
 }
 
 const ast_node *pop_branch(void)
@@ -166,7 +108,14 @@ const ast_node *pop_branch(void)
     {
         return NULL;
     }
-    return branches.node[--branches.count];
+
+    const ast_node *node = branches.node[--branches.count];
+
+    if (is_iterator(node->data))
+    {
+        branches.iterators--;
+    }
+    return node;
 }
 
 const ast_node *peek_branch(void)
@@ -176,6 +125,20 @@ const ast_node *peek_branch(void)
         return NULL;
     }
     return branches.node[branches.count - 1];
+}
+
+int current_branch(void)
+{
+    if (branches.count == 0)
+    {
+        return 0;
+    }
+    return branches.node[branches.count - 1]->data->statement->key;
+}
+
+int iterating(void)
+{
+    return branches.iterators != 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

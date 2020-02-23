@@ -21,32 +21,30 @@ static struct stack stack;
 
 void wind_data(ast_data *data, int vars)
 {
-    if (vars == 0)
+    if (vars > 0)
     {
-        return;
+        if (stack.count + vars > MAX_DATA)
+        {
+            fprintf(stderr, "Stack overflow\n");
+            exit(EXIT_FAILURE);
+        }
+        memcpy(stack.data + stack.count, data, sizeof(*data) * (size_t)vars);
+        stack.count += vars;
     }
-    if (stack.count + vars > MAX_DATA)
-    {
-        fprintf(stderr, "Stack overflow\n");
-        exit(EXIT_FAILURE);
-    }
-    memcpy(stack.data + stack.count, data, sizeof(*data) * (size_t)vars);
-    stack.count += vars;
 }
 
 void unwind_data(ast_data *data, int vars)
 {
-    if (vars == 0)
+    if (vars > 0)
     {
-        return;
+        if (vars > stack.count)
+        {
+            fprintf(stderr, "Stack underflow\n");
+            exit(EXIT_FAILURE);
+        }
+        stack.count -= vars;
+        memcpy(data, stack.data + stack.count, sizeof(*data) * (size_t)vars);
     }
-    if (vars > stack.count)
-    {
-        fprintf(stderr, "Stack underflow\n");
-        exit(EXIT_FAILURE);
-    }
-    stack.count -= vars;
-    memcpy(data, stack.data + stack.count, sizeof(*data) * (size_t)vars);
 }
 
 int push_data(ast_data data)
@@ -482,7 +480,7 @@ static ast_data statements[] =
 
 static ast_data branches[] =
 {
-    DEF_STATEMENT(STATEMENT_IFEL,     0, "if"),
+    DEF_STATEMENT(STATEMENT_IFEL,     2, "if"),
     DEF_STATEMENT(STATEMENT_THEN,     0, "then"),
 };
 

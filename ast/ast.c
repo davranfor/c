@@ -30,16 +30,16 @@ enum
     DEFINED     = 0x02,
     ACCESSING   = 0x04,
     ACCESSED    = 0x08,
-    MASK_ACCESS = ACCESSING | ACCESSED,
     APPENDING   = 0x10,
     ASSIGNING   = 0x20,
-    MASK_PARAMS = APPENDING | ASSIGNING,
     RETURNING   = 0x40,
     EVALUATING  = 0x80,
     /* List of hex flags
     0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080,
     0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000, 0x8000, 
     */
+    MASK_ACCESS = ACCESSING | ACCESSED,
+    MASK_PARAMS = APPENDING | ASSIGNING,
 };
 static int status = 0;
 
@@ -402,10 +402,9 @@ static void move_expression(void)
 
 static void move_expressions(ast_node *node)
 {
-    const ast_node *statement = peek_statement();
     const ast_node *branch = peek_branch();
 
-    while ((operands != statement) && (operands != branch))
+    while (operands != branch)
     {
         if (!move(&node->left, &operands))
         {
@@ -414,25 +413,19 @@ static void move_expressions(ast_node *node)
     }
 }
 
-static void move_branch(const ast_node *node)
-{
-    push(&operators, map_branch(1));
-    operators->left = node->left->right;
-    node->left->right = NULL;
-    while (operands != node)
-    {
-        move(&node->left->right, &operands);
-    }
-    move(&operands->left->right, &operators);
-    operands->data = map_branch(0);
-    pop_branch();
-}
-
 static void move_block(bool end)
 {
     ast_node node = {0};
 
     move_expressions(&node);
+    if (!end && (operands->data->statement->key == STATEMENT_IF))
+    {
+        operands->data = map_branch(0);
+        push(&operators, map_branch(1));
+        operators->left = node.left;
+        move(&operands->left->right, &operators);
+        return;
+    }
     switch (operands->data->statement->args)
     {
         case 0:
@@ -450,25 +443,22 @@ static void move_block(bool end)
         default:
             break;
     }
+    pop_branch();
     if (end)
     {
-        const ast_node *statement = pop_statement();
-
-        if (operands != statement)
+        switch (operands->data->statement->key)
         {
-            move_branch(statement);
-        }
-        else if (operands->data->statement->key == STATEMENT_DEF)
-        {
-            def_vars();
-            status = 0;
-        }
-    }
-    else
-    {
-        if (operands->data->statement->key == STATEMENT_ELSE)
-        {
-            die("An 'else' block can not be followed by another statement");
+            case STATEMENT_DEF:
+                def_vars();
+                status = 0;
+                break;
+            case STATEMENT_ELIF:
+            case STATEMENT_ELSE:
+                // move IFEL
+                move_block(false);
+                break;
+            default:
+                break;
         }
     }
 }
@@ -691,9 +681,12 @@ static ast_data *classify(const char **text)
                         break;
                     case STATEMENT_ELIF:
                     case STATEMENT_ELSE:
-                        if (statement_key() != STATEMENT_IF)
+                        if ((current_branch() != STATEMENT_IF) &&
+                            (current_branch() != STATEMENT_ELIF))
                         {
-                            die("'else' without 'if'");
+                            die("'%s' was not expected",
+                                data->statement->name
+                            );
                         }
                         break;
                     case STATEMENT_CONTINUE:
@@ -701,7 +694,8 @@ static ast_data *classify(const char **text)
                         if (!iterating())
                         {
                             die("'continue' and 'break'"
-                                " can't be used outside a loop");
+                                " can't be used outside a loop"
+                            );
                         }
                         if (**text != ';')
                         {
@@ -709,7 +703,7 @@ static ast_data *classify(const char **text)
                         }
                         break;
                     case STATEMENT_END:
-                        if (peek_statement() == NULL)
+                        if (peek_branch() == NULL)
                         {
                             die("'end' was not expected");
                         }
@@ -832,14 +826,14 @@ static int build(const char *text)
             {
                 case STATEMENT_DEF:
                     push(&operands, data);
-                    push_statement(operands);
+                    push_branch(operands);
                     break;
                 case STATEMENT_IF:
                 case STATEMENT_WHILE:
                 case STATEMENT_FOR:
                     push(&operands, data);
                     push(&operators, map_operator(&text));
-                    push_statement(operands);
+                    push_branch(operands);
                     push_call(operands);
                     break;
                 case STATEMENT_ELIF:
