@@ -95,6 +95,8 @@ static void sample_dates(void)
     printf("Yesterday: %02d/%02d/%d\n", day, month, year);
     day_add(&day, &month, &year, +2);
     printf("Tomorrow: %02d/%02d/%d\n", day, month, year);
+    printf("Days between 01/02/2000 and 01/02/2004: %d\n",
+        days_diff(1, 2, 2000, 1, 2, 2004));
 }
 
 int main(void)

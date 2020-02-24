@@ -330,6 +330,18 @@ void day_add(int *day, int *month, int *year, int days)
     *year = tm.tm_year + 1900;
 }
 
+int days_diff(int day1, int month1, int year1,
+              int day2, int month2, int year2)
+{
+    static const int days[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+    long int days1 = (year1 * 365) + day1;
+    long int days2 = (year2 * 365) + day2;
+
+    days1 += days[month1 - 1] + leap_years(month1, year1);
+    days2 += days[month2 - 1] + leap_years(month2, year2);
+    return (int)(days2 - days1);
+}
+
 /**
  * Tomohiko Sakamoto's Algorithm
  * Sunday = 0 ... Saturday = 6
@@ -391,5 +403,16 @@ int month_days(int month, int year)
 int year_is_leap(int year)
 {
     return (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
+}
+
+int leap_years(int month, int year)
+{
+    int years = year;
+
+    if (month <= 2)
+    {
+        years--;
+    }
+    return (years / 4) - (years / 100) + (years / 400);
 }
 
