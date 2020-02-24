@@ -10,7 +10,9 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
+// Uncomment the next line to disable assert
+// #define NDEBUG 
+#include <assert.h>
 #include "ast.h"
 #include "ast_data.h"
 #include "ast_eval.h"
@@ -23,6 +25,8 @@ static ast_node *operands;
 
 enum {OPERATOR, OPERAND};
 static int expected = OPERAND;
+static bool starting = true;
+static int status = 0;
 
 enum
 {
@@ -34,16 +38,10 @@ enum
     ASSIGNING   = 0x20,
     RETURNING   = 0x40,
     EVALUATING  = 0x80,
-    /* List of hex flags
-    0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080,
-    0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000, 0x8000, 
-    */
+
     MASK_ACCESS = ACCESSING | ACCESSED,
     MASK_PARAMS = APPENDING | ASSIGNING,
 };
-static int status = 0;
-
-static bool starting = true;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -89,10 +87,10 @@ static ast_data *parse(const char **text)
         if (!(quotes & 1)) // Outside quotes
         {
             if ((*str == '.') &&
-            (
-                isdigit((unsigned char)str[+1]) ||
-                isdigit((unsigned char)str[-1]))
-            )
+                (
+                    isdigit((unsigned char)str[+1]) ||
+                    isdigit((unsigned char)str[-1]))
+                )
             {
                 // Skip decimal separator in order to not
                 // process the "access member" operator
@@ -265,10 +263,8 @@ static void move_operator(void)
 
     while (args--)
     {
-        if (!move(&operators->left, &operands))
-        {
-            die("Expected operand");
-        }
+        assert(operands != NULL);
+        move(&operators->left, &operands);
     }
     move(&operands, &operators);
 }
@@ -277,12 +273,10 @@ static int move_operands(ast_node *node)
 {
     int args = 0;
 
+    assert(operands != NULL);
     while (operands != node)
     {
-        if (!move(&node->left, &operands))
-        {
-            die("Expected operand");
-        }
+        move(&node->left, &operands);
         args++;
     }
     return args;
@@ -295,21 +289,41 @@ static int move_params(ast_node *node)
     int args = 0;
 
     def_args();
+    assert(operands != NULL);
     while (operands != node)
     {
-        if (operands == NULL)
-        {
-            die("Expected operand");
-        }
         if (operands->left != NULL)
         {
             eval_expression(operands);
-            clear(operands->left);
         }
-        pop(&operands);
+        move(&node->left, &operands);
         args++;
     }
     return args;
+}
+
+static void move_expression(void)
+{
+    if (status & RETURNING)
+    {
+        assert(operands != NULL);
+        if (operands->data->type != TYPE_STATEMENT)
+        {
+            move(&operands->right->left, &operands);
+        }
+        status &= ~RETURNING;
+    }
+}
+
+static void move_expressions(ast_node *node)
+{
+    const ast_node *branch = peek_branch();
+
+    assert(operands != NULL);
+    while (operands != branch)
+    {
+        move(&node->left, &operands);
+    }
 }
 
 static void move_arguments(void)
@@ -380,37 +394,6 @@ static void move_arguments(void)
             break;
     }
     pop(&operators);
-}
-
-static void move_expression(void)
-{
-    if (status & RETURNING)
-    {
-        if (operands == NULL)
-        {
-            die("Expected operand");
-        }
-        if (operands->data->type != TYPE_STATEMENT)
-        {
-            ast_node *node = operands->right;
-
-            move(&node->left, &operands);
-        }
-        status &= ~RETURNING;
-    }
-}
-
-static void move_expressions(ast_node *node)
-{
-    const ast_node *branch = peek_branch();
-
-    while (operands != branch)
-    {
-        if (!move(&node->left, &operands))
-        {
-            die("Expected operand");
-        }
-    }
 }
 
 static void move_block(bool end)
@@ -550,19 +533,8 @@ static void define(const ast_data *data)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static ast_data *classify(const char **text)
+static void verify(const ast_data *data)
 {
-    ast_data *data = parse(text);
-    int flags = 0;
-
-    if (data == NULL)
-    {
-        return NULL;
-    }
-    if (!(status & DEFINED))
-    {
-        define(data);
-    }
     switch (status & MASK_ACCESS)
     {
         case ACCESSING:
@@ -579,6 +551,27 @@ static ast_data *classify(const char **text)
             break;
         default:
             break;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+static ast_data *classify(const char **text)
+{
+    ast_data *data = parse(text);
+    int flags = 0;
+
+    if (data == NULL)
+    {
+        return NULL;
+    }
+    if (!(status & DEFINED))
+    {
+        define(data);
+    }
+    else
+    {
+        verify(data);
     }
     if (data->type == TYPE_OPERATOR)
     {
@@ -713,7 +706,9 @@ static ast_data *classify(const char **text)
                 }
                 if (starting == false)
                 {
-                    die("Unexpected statement");
+                    die("'%s' was not expected",
+                        data->statement->name
+                    );
                 }
                 if (data->statement->key == STATEMENT_RETURN)
                 {
