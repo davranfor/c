@@ -540,7 +540,7 @@ static void verify(const ast_data *data)
         case ACCESSING:
             if (data->type != TYPE_FUNCTION)
             {
-                die("A function was expected");
+                die("An object was expected");
             }
             break;
         case ACCESSED:

@@ -273,7 +273,11 @@ static ast_data operators[] =
     DEF_OPERATOR(OPERATOR_EQ_BIT_OR,     2,  1, 'R', "|=",  ast_eq_bit_or),
     DEF_OPERATOR(OPERATOR_EQ_BIT_LSHIFT, 2,  1, 'R', "<<=", ast_eq_bit_lshift),
     DEF_OPERATOR(OPERATOR_EQ_BIT_RSHIFT, 2,  1, 'R', ">>=", ast_eq_bit_rshift),
-
+    DEF_OPERATOR(OPERATOR_COLON,         2,  1, 'R', ":",   ast_eq),
+    DEF_OPERATOR(OPERATOR_LKEY,          0,  0, 'L', "[",   NULL),
+    DEF_OPERATOR(OPERATOR_RKEY,          0,  0, 'L', "]" ,  NULL),
+    DEF_OPERATOR(OPERATOR_LBRACKET,      0,  0, 'L', "[",   NULL),
+    DEF_OPERATOR(OPERATOR_RBRACKET,      0,  0, 'L', "]" ,  NULL),
     DEF_OPERATOR(OPERATOR_LPARENTHS,     0,  0, 'L', "(",   NULL),
     DEF_OPERATOR(OPERATOR_RPARENTHS,     0,  0, 'L', ")" ,  NULL),
     DEF_OPERATOR(OPERATOR_COMMA,         0,  0, 'L', ",",   NULL),
@@ -296,6 +300,7 @@ int is_assignment(int operator)
         case OPERATOR_EQ_BIT_OR:
         case OPERATOR_EQ_BIT_LSHIFT:
         case OPERATOR_EQ_BIT_RSHIFT:
+        case OPERATOR_COLON:
             return 1;
         default:
             return 0;
@@ -320,6 +325,11 @@ int is_operator(int operator)
         case OPERATOR_BIT_XOR:
         case OPERATOR_BIT_OR:
         case OPERATOR_EQ:
+        case OPERATOR_COLON:
+        case OPERATOR_LKEY:
+        case OPERATOR_RKEY:
+        case OPERATOR_LBRACKET:
+        case OPERATOR_RBRACKET:
         case OPERATOR_LPARENTHS:
         case OPERATOR_RPARENTHS:
         case OPERATOR_COMMA:
@@ -336,12 +346,17 @@ static int get_operator(const char **operator)
 
     switch (**operator)
     {
+        case OPERATOR_DOT:
+        case OPERATOR_BIT_NOT:
+        case OPERATOR_COLON:
+        case OPERATOR_LKEY:
+        case OPERATOR_RKEY:
+        case OPERATOR_LBRACKET:
+        case OPERATOR_RBRACKET:
         case OPERATOR_LPARENTHS:
         case OPERATOR_RPARENTHS:
         case OPERATOR_COMMA:
         case OPERATOR_SEMICOLON:
-        case OPERATOR_DOT:
-        case OPERATOR_BIT_NOT:
             result = **operator;
             (*operator)++;
             break;
@@ -354,7 +369,7 @@ static int get_operator(const char **operator)
             (*operator)++;
             if (**operator == '=')
             {
-                result ^= 'z';
+                result ^= 'y';
                 (*operator)++;
             }
             break;
@@ -364,7 +379,7 @@ static int get_operator(const char **operator)
             (*operator)++;
             if (**operator == '=')
             {
-                result ^= 'z';
+                result ^= 'y';
                 (*operator)++;
             }
             if (**operator == '=')
@@ -380,12 +395,12 @@ static int get_operator(const char **operator)
             (*operator)++;
             if (**operator == '=')
             {
-                result ^= 'z';
+                result ^= 'y';
                 (*operator)++;
             }
             else if (**operator == result)
             {
-                result ^= '!';
+                result ^= '0';
                 (*operator)++;
             }
             break;
@@ -395,12 +410,12 @@ static int get_operator(const char **operator)
             (*operator)++;
             if (**operator == '=')
             {
-                result ^= 'z';
+                result ^= 'y';
                 (*operator)++;
             }
             else if (**operator == result)
             {
-                result ^= '!';
+                result ^= '0';
                 (*operator)++;
                 if (**operator == '=')
                 {
