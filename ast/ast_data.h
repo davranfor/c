@@ -6,9 +6,10 @@ typedef enum
     TYPE_NULL,
     TYPE_OPERATOR,
     TYPE_STATEMENT,
+    TYPE_CALLABLE,
     TYPE_FUNCTION,
     TYPE_OBJECT,
-    TYPE_CALLABLE,
+    TYPE_ARRAY,
     TYPE_VARIABLE,
     TYPE_BOOLEAN,
     TYPE_NUMBER,
@@ -86,15 +87,15 @@ enum
 typedef struct
 {
     int key;
-    int args;
+    unsigned args;
     const char *name;
 } ast_statement;
 
 typedef struct
 {
     const char *name;
-    struct {int min, max;} args;
-    int (*eval)(int);
+    struct {unsigned min, max;} args;
+    int (*eval)(unsigned);
 } ast_callable;
 
 typedef struct ast_operator ast_operator;
@@ -104,14 +105,14 @@ typedef struct ast_object ast_object;
 typedef struct ast_data
 {
     ast_type type;
-    int key;
+    unsigned key;
     union
     {
         const ast_operator *operator;
         const ast_statement *statement;
+        const ast_callable *callable;
         ast_function *function;
         ast_object *object;
-        const ast_callable *callable;
         double number;
         const char *string;
         const void *address;
@@ -121,7 +122,7 @@ typedef struct ast_data
 struct ast_operator
 {
     int key;
-    int args;
+    unsigned args;
     int precedence;
     int associativity;
     const char *value;
@@ -133,15 +134,15 @@ struct ast_function
     ast_data *data;
     const char *name;
     const struct ast_node *node;
-    struct {int min, max;} args;
-    int vars;
+    struct {unsigned min, max;} args;
+    unsigned vars;
 };
 
 struct ast_object
 {
     ast_data *data;
     const char *name;
-    int vars;
+    unsigned vars;
 };
 
 typedef struct
@@ -152,12 +153,12 @@ typedef struct
 
 #define CAST_VAR(v) ((const ast_variable *)v)
 
-void wind_data(ast_data *, int);
-void unwind_data(ast_data *, int);
+void wind_data(ast_data *, unsigned);
+void unwind_data(ast_data *, unsigned);
 int push_data(ast_data);
 ast_data pop_data(void);
 ast_data *peek_data(void);
-ast_data *sync_data(int);
+ast_data *sync_data(unsigned);
 
 int is_sequence(int);
 int get_sequence(int);
@@ -166,7 +167,7 @@ int valid_name(const char *);
 int is_assignment(int);
 int is_operator(int);
 ast_data *map_operator(const char **);
-int arguments(const ast_data *);
+unsigned arguments(const ast_data *);
 int precedence(const ast_data *, const ast_data *);
 ast_data *unary(ast_data *);
 

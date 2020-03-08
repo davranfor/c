@@ -13,12 +13,12 @@
 struct stack
 {
     ast_data data[MAX_DATA];
-    int count;
+    unsigned count;
 };
 
 static struct stack stack;
 
-void wind_data(ast_data *data, int vars)
+void wind_data(ast_data *data, unsigned vars)
 {
     if (vars > 0)
     {
@@ -27,12 +27,12 @@ void wind_data(ast_data *data, int vars)
             fprintf(stderr, "Stack overflow\n");
             exit(EXIT_FAILURE);
         }
-        memcpy(stack.data + stack.count, data, sizeof(*data) * (size_t)vars);
+        memcpy(stack.data + stack.count, data, sizeof(*data) * vars);
         stack.count += vars;
     }
 }
 
-void unwind_data(ast_data *data, int vars)
+void unwind_data(ast_data *data, unsigned vars)
 {
     if (vars > 0)
     {
@@ -42,7 +42,7 @@ void unwind_data(ast_data *data, int vars)
             exit(EXIT_FAILURE);
         }
         stack.count -= vars;
-        memcpy(data, stack.data + stack.count, sizeof(*data) * (size_t)vars);
+        memcpy(data, stack.data + stack.count, sizeof(*data) * vars);
     }
 }
 
@@ -77,7 +77,7 @@ ast_data *peek_data(void)
     return &stack.data[stack.count - 1];    
 }
 
-ast_data *sync_data(int count)
+ast_data *sync_data(unsigned count)
 {
     if ((count == 0) || (count > stack.count))
     {
@@ -435,7 +435,7 @@ ast_data *map_operator(const char **operator)
     return &operators[get_operator(operator)];
 }
 
-int arguments(const ast_data *data)
+unsigned arguments(const ast_data *data)
 {
     return data->operator->args;
 }
@@ -535,7 +535,7 @@ void def_args()
 {
     if (data_def->vars > 0)
     {
-        data_def->data = calloc((size_t)data_def->vars, sizeof(ast_data));
+        data_def->data = calloc(data_def->vars, sizeof(ast_data));
         if (data_def->data == NULL)
         {
             perror("calloc");
@@ -548,17 +548,14 @@ void def_vars()
 {
     if (data_def->vars != data_def->args.max)
     {
-        ast_data *data = calloc((size_t)data_def->vars, sizeof(ast_data));
+        ast_data *data = calloc(data_def->vars, sizeof(ast_data));
 
         if (data == NULL)
         {
             perror("realloc");
             exit(EXIT_FAILURE);
         }
-        memcpy(data,
-               data_def->data,
-               sizeof(ast_data) * (size_t)data_def->args.max
-        );
+        memcpy(data, data_def->data, sizeof(ast_data) * data_def->args.max);
         free(data_def->data);
         data_def->data = data;
     }

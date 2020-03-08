@@ -631,7 +631,7 @@ ast_data ast_eq_bit_rshift(ast_data a, ast_data b)
 // Maths
 ///////////////////////////////////////////////////////////////////////////////
 
-int ast_abs(int args)
+int ast_abs(unsigned args)
 {
     (void)args;
 
@@ -646,7 +646,7 @@ int ast_abs(int args)
     return 1;
 }
 
-int ast_ceil(int args)
+int ast_ceil(unsigned args)
 {
     (void)args;
 
@@ -661,7 +661,7 @@ int ast_ceil(int args)
     return 1;
 }
 
-int ast_cos(int args)
+int ast_cos(unsigned args)
 {
     (void)args;
 
@@ -676,7 +676,7 @@ int ast_cos(int args)
     return 1;
 }
 
-int ast_cosh(int args)
+int ast_cosh(unsigned args)
 {
     (void)args;
 
@@ -691,7 +691,7 @@ int ast_cosh(int args)
     return 1;
 }
 
-int ast_exp(int args)
+int ast_exp(unsigned args)
 {
     (void)args;
 
@@ -706,7 +706,7 @@ int ast_exp(int args)
     return 1;
 }
 
-int ast_floor(int args)
+int ast_floor(unsigned args)
 {
     (void)args;
 
@@ -721,7 +721,7 @@ int ast_floor(int args)
     return 1;
 }
 
-int ast_log(int args)
+int ast_log(unsigned args)
 {
     (void)args;
 
@@ -736,7 +736,7 @@ int ast_log(int args)
     return 1;
 }
 
-int ast_log10(int args)
+int ast_log10(unsigned args)
 {
     (void)args;
 
@@ -751,7 +751,7 @@ int ast_log10(int args)
     return 1;
 }
 
-int ast_pow(int args)
+int ast_pow(unsigned args)
 {
     (void)args;
 
@@ -771,7 +771,7 @@ int ast_pow(int args)
     return 1;
 }
 
-int ast_rand(int args)
+int ast_rand(unsigned args)
 {
     (void)args;
 
@@ -782,7 +782,7 @@ int ast_rand(int args)
     return push_data(data);
 }
 
-int ast_round(int args)
+int ast_round(unsigned args)
 {
     (void)args;
 
@@ -797,7 +797,7 @@ int ast_round(int args)
     return 1;
 }
 
-int ast_sin(int args)
+int ast_sin(unsigned args)
 {
     (void)args;
 
@@ -812,7 +812,7 @@ int ast_sin(int args)
     return 1;
 }
 
-int ast_sinh(int args)
+int ast_sinh(unsigned args)
 {
     (void)args;
 
@@ -827,7 +827,7 @@ int ast_sinh(int args)
     return 1;
 }
 
-int ast_sqrt(int args)
+int ast_sqrt(unsigned args)
 {
     (void)args;
 
@@ -842,7 +842,7 @@ int ast_sqrt(int args)
     return 1;
 }
 
-int ast_tan(int args)
+int ast_tan(unsigned args)
 {
     (void)args;
 
@@ -857,7 +857,7 @@ int ast_tan(int args)
     return 1;
 }
 
-int ast_tanh(int args)
+int ast_tanh(unsigned args)
 {
     (void)args;
 
@@ -872,7 +872,7 @@ int ast_tanh(int args)
     return 1;
 }
 
-int ast_trunc(int args)
+int ast_trunc(unsigned args)
 {
     (void)args;
 
@@ -891,7 +891,7 @@ int ast_trunc(int args)
 // Misc
 ///////////////////////////////////////////////////////////////////////////////
 
-int ast_typeof(int args)
+int ast_typeof(unsigned args)
 {
     (void)args;
 
@@ -902,7 +902,7 @@ int ast_typeof(int args)
     return 1;
 }
 
-int ast_cond(int args)
+int ast_cond(unsigned args)
 {
     ast_data *data = sync_data(args);
     int offset = 1;
@@ -920,12 +920,12 @@ int ast_cond(int args)
     return 1;
 }
 
-int ast_print(int args)
+int ast_print(unsigned args)
 {
     ast_data *data = sync_data(args);
     int result = 0;
 
-    for (int iter = 0; iter < args; iter++)
+    for (unsigned iter = 0; iter < args; iter++)
     {
         switch (data[iter].type)
         {

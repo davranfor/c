@@ -26,7 +26,7 @@ static ast_node *operands;
 enum {OPERATOR, OPERAND};
 static int expected = OPERAND;
 static bool starting = true;
-static int status = 0;
+static long status = 0;
 
 enum
 {
@@ -259,7 +259,7 @@ static ast_data *parse(const char **text)
 
 static void move_operator(void)
 {
-    int args = arguments(operators->data);
+    unsigned args = arguments(operators->data);
 
     while (args--)
     {
@@ -269,9 +269,9 @@ static void move_operator(void)
     move(&operands, &operators);
 }
 
-static int move_operands(ast_node *node)
+static unsigned move_operands(ast_node *node)
 {
-    int args = 0;
+    unsigned args = 0;
 
     assert(operands != NULL);
     while (operands != node)
@@ -284,9 +284,9 @@ static int move_operands(ast_node *node)
 
 static ast_data eval_expression(const ast_node *);
 
-static int move_params(ast_node *node)
+static unsigned move_params(ast_node *node)
 {
-    int args = 0;
+    unsigned args = 0;
 
     def_args();
     assert(operands != NULL);
@@ -328,7 +328,7 @@ static void move_expressions(ast_node *node)
 
 static void move_arguments(void)
 {
-    int args;
+    unsigned args;
 
     if (status & DEFINING)
     {
@@ -351,7 +351,7 @@ static void move_arguments(void)
         case TYPE_STATEMENT:
             if (args != operands->data->statement->args)
             {
-                die("'%s' was expecting %d argument(s), got %d",
+                die("'%s' was expecting %u argument(s), got %u",
                     operands->data->statement->name,
                     operands->data->statement->args,
                     args
@@ -364,7 +364,7 @@ static void move_arguments(void)
             if ((args < operands->data->callable->args.min) ||
                 (args > operands->data->callable->args.max))
             {
-                die("%s() was expecting (min: %d, max: %d) argument(s), got %d",
+                die("%s() was expecting (min: %u, max: %u) argument(s), got %u",
                     operands->data->callable->name,
                     operands->data->callable->args.min,
                     operands->data->callable->args.max,
@@ -398,30 +398,30 @@ static void move_arguments(void)
 
 static void move_block(bool end)
 {
-    ast_node node = {0};
+    ast_node expressions = {0};
 
-    move_expressions(&node);
+    move_expressions(&expressions);
     if (!end && (operands->data->statement->key == STATEMENT_IF))
     {
         operands->data = map_branch(0);
         push(&operators, map_branch(1));
-        operators->left = node.left;
+        operators->left = expressions.left;
         move(&operands->left->right, &operators);
         return;
     }
     switch (operands->data->statement->args)
     {
         case 0:
-            operands->left = node.left;
+            operands->left = expressions.left;
             break;
         case 1:
-            operands->left->right = node.left;
+            operands->left->right = expressions.left;
             break;
         case 2:
-            operands->left->right->right = node.left;
+            operands->left->right->right = expressions.left;
             break;
         case 3:
-            operands->left->right->right->right = node.left;
+            operands->left->right->right->right = expressions.left;
             break;
         default:
             break;
@@ -940,11 +940,11 @@ static void explain(const ast_node *node, int level)
 
 static ast_data eval_tree(const ast_node *);
 
-static ast_data eval_function(const ast_function *function, int args)
+static ast_data eval_function(const ast_function *function, unsigned args)
 {
     if ((args < function->args.min) || (args > function->args.max))
     {
-        die("%s() was expecting (min: %d, max: %d) argument(s), got %d",
+        die("%s() was expecting (min: %u, max: %u) argument(s), got %u",
             function->name,
             function->args.min,
             function->args.max,
@@ -963,9 +963,9 @@ static ast_data eval_function(const ast_function *function, int args)
 static ast_data eval_expression(const ast_node *node)
 {
     ast_node *next = NULL;
+    unsigned args = 0;
     ast_data a = {0};
     ast_data b = {0};
-    int args = 0;
 
     switch (node->data->type)
     {

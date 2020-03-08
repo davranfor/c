@@ -83,8 +83,8 @@ void clear(ast_node *root)
 struct branches
 {
     const ast_node *node[MAX_HEAP];
-    int iterators;
-    int count;
+    unsigned iterators;
+    unsigned count;
 };
 
 static struct branches branches;
@@ -146,7 +146,7 @@ int iterating(void)
 struct calls
 {
     ast_node *node[MAX_HEAP];
-    int count;
+    unsigned count;
 };
 
 static struct calls calls;
@@ -183,7 +183,7 @@ ast_node *peek_call(void)
 struct jumps
 {
     const ast_node *node[MAX_HEAP];
-    int count;
+    unsigned count;
 };
 
 static struct jumps jumps;
