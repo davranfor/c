@@ -9,7 +9,6 @@ int main(void)
 
     if (node == NULL)
     {
-        perror("json_load_file");
         fprintf(stderr, "Can not parse %s\n", path);
         exit(EXIT_FAILURE);
     }

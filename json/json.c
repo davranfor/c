@@ -68,33 +68,40 @@ static const char *json_scan(const char **text)
 
     *text = NULL;
 
-    /* Centinela para saber si estamos dentro de un string */
-    int quoted = 0;
+    int quotes = 0;
 
-    /* Mientras haya texto que parsear */
     while (*str != '\0')
     {
         /* Si es un código de escape */
         if (*str == '\\')
         {
             /*
-             * Si aparece fuera de un string es una cadena mal formada
+             * Si no está entre comillas es una cadena mal formada
              * Si no es un código de escape válido es una cadena mal formada
              */
-            if ((quoted == 0) || !json_isescape(*(++str)))
+            if (!(quotes & 1) || !json_isescape(*(++str)))
             {
                 return NULL;
             }
         }
-        /* Si es una comilla cambiamos el estado */
+        /* Si es una comilla, cambiamos el estado */
         else if (*str == '"')
         {
-            quoted ^= 1;
+            quotes++;
         }
-        /* Si estamos fuera de un string y el caracter es una entidad */
-        if ((quoted == 0) && json_istoken(*str))
+        /* Si estamos fuera de un string */
+        else if (!(quotes & 1))
         {
-            break;
+            /* Si es una entidad JSON */
+            if (json_istoken(*str))
+            {
+                break;
+            }
+            /* Si es un texto entre strings p.ej: <"abc" 123 "def"> */
+            if ((quotes > 0) && !isspace(*str))
+            {
+                return NULL;
+            }
         }
         /* Si es el primer caracter que no es un espacio */
         if ((*text == NULL) && !isspace(*str))
@@ -104,7 +111,7 @@ static const char *json_scan(const char **text)
         str++;
     }
     /* Si no se han cerrado comillas */
-    if (quoted != 0)
+    if (quotes & 1)
     {
         return NULL;
     }
@@ -657,7 +664,7 @@ json *json_node(const json *root, const char *name)
     return NULL;
 }
 
-/* Localiza un nodo por clave recorriendo los nodos derechos del nodo pasado y devuelve el hijo*/
+/* Localiza un nodo por clave recorriendo los nodos derechos del nodo pasado y devuelve el hijo */
 json *json_child(const json *node, const char *name)
 {
     if ((node != NULL) && (node = node->left))
