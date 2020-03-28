@@ -44,20 +44,20 @@ long file_get_size(const char *path)
     return size;
 }
 
-static char *f_get_mem(FILE *file, size_t size, size_t extra)
+static char *f_get_mem(FILE *file, size_t size, size_t prefix, size_t suffix)
 {
-    char *str = malloc(size + extra + 1);
+    char *str = malloc(size + prefix + suffix + 1);
 
     if (str == NULL)
     {
         return NULL;
     }
-    if (fread(str + extra, 1, size, file) != size)
+    if (fread(str + prefix, 1, size, file) != size)
     {
         free(str);
         return NULL;
     }
-    str[size + extra] = '\0';
+    str[size + prefix + suffix] = '\0';
     return str;
 }
 
@@ -69,7 +69,7 @@ static char *f_read(FILE *file)
     {
         return NULL;
     }
-    return f_get_mem(file, (size_t)size, 0);
+    return f_get_mem(file, (size_t)size, 0, 0);
 }
 
 static char *f_read_with_prefix(FILE *file, const char *prefix)
@@ -82,11 +82,30 @@ static char *f_read_with_prefix(FILE *file, const char *prefix)
     }
 
     size_t len = strlen(prefix);
-    char *str = f_get_mem(file, (size_t)size, len);
+    char *str = f_get_mem(file, (size_t)size, len, 0);
 
     if (str != NULL)
     {
         memcpy(str, prefix, len);
+    }
+    return str;
+}
+
+static char *f_read_with_suffix(FILE *file, const char *suffix)
+{
+    long size = f_get_size(file);
+
+    if (size == -1)
+    {
+        return NULL;
+    }
+
+    size_t len = strlen(suffix);
+    char *str = f_get_mem(file, (size_t)size, 0, len);
+
+    if (str != NULL)
+    {
+        memcpy(str + size, suffix, len);
     }
     return str;
 }
@@ -116,6 +135,21 @@ char *file_read_with_prefix(const char *path, const char *prefix)
     }
 
     char *str = f_read_with_prefix(file, prefix);
+
+    fclose(file);
+    return str;
+}
+
+char *file_read_with_suffix(const char *path, const char *suffix)
+{
+    FILE *file = fopen(path, "r");
+
+    if (file == NULL)
+    {
+        return NULL;
+    }
+
+    char *str = f_read_with_suffix(file, suffix);
 
     fclose(file);
     return str;
