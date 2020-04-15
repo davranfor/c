@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "utils.h"
 #include "json.h"
 
 struct json
@@ -253,6 +252,12 @@ static char *json_set_value(json *node, const char *left, const char *right)
     return node->value;
 }
 
+/* Devuelve un nodo nuevo */
+static json *json_create(void)
+{
+    return calloc(1, sizeof(struct json));
+}
+
 /* Recorre el texto y rellena los nodos */
 static json *json_build(json *node, const char *text)
 {
@@ -402,44 +407,6 @@ static json *json_build(json *node, const char *text)
         text = token + 1;
     }
     return NULL;
-}
-
-/* Devuelve un nodo nuevo */
-json *json_create(void)
-{
-    return calloc(1, sizeof(struct json));
-}
-
-/* Crea el nodo root y lo pasa al parseador junto con un puntero al texto */
-json *json_parse(const char *text)
-{
-    json *node = json_create();
-
-    if (node != NULL)
-    {
-        if (json_build(node, text) == NULL)
-        {
-            json_free(node);
-            return NULL;
-        }
-    }
-    return node;
-}
-
-/* Crea el árbol a partir de un archivo */
-json *json_load_file(const char *path)
-{
-    char *text = file_read(path);
-
-    if (text == NULL)
-    {
-        return NULL;
-    }
-
-    json *node = json_parse(text);
-
-    free(text);
-    return node;
 }
 
 /* Devuelve el tipo de un nodo */
@@ -633,6 +600,22 @@ int json_streq(const json *node, const char *str)
         return 0;
     }
     return !strcmp(node->value, str);
+}
+
+/* Crea el nodo root y lo pasa al parseador junto con un puntero al texto */
+json *json_parse(const char *text)
+{
+    json *node = json_create();
+
+    if (node != NULL)
+    {
+        if (json_build(node, text) == NULL)
+        {
+            json_free(node);
+            return NULL;
+        }
+    }
+    return node;
 }
 
 /* Devuelve el nodo padre */

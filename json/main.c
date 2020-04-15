@@ -1,17 +1,34 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "utils.h"
 #include "json.h"
+
+static json *parse(const char *path)
+{
+    char *text = file_read(path);
+
+    if (text == NULL)
+    {
+        fprintf(stderr, "Can't read %s\n", path);
+        exit(EXIT_FAILURE);
+    }
+
+    json *node = json_parse(text);
+
+    free(text);
+    if (node == NULL)
+    {
+        fprintf(stderr, "Can't parse %s\n", path);
+        exit(EXIT_FAILURE);
+    }
+    return node;
+}
+
 
 int main(void)
 {
-    const char *path = "test.json";
-    json *node = json_load_file(path);
+    json *node = parse("test.json");
 
-    if (node == NULL)
-    {
-        fprintf(stderr, "Can not parse %s\n", path);
-        exit(EXIT_FAILURE);
-    }
     json_print(node);
     json_free(node);
     return 0;

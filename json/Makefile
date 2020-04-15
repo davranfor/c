@@ -7,9 +7,9 @@ OBJECTS = main.o utils.o json.o
 
 all: json
 
-main.o: json.h
+main.o: utils.h json.h
 utils.o: utils.h
-json.o: utils.h json.h
+json.o: json.h
 
 json: $(OBJECTS)
 	$(CC) $(OBJECTS) -o json
