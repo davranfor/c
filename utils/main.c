@@ -31,6 +31,14 @@ static void sample_strings(void)
 
     str = "María";
     printf("\"%s\" -> length = %zu\n", str, string_length(str));
+    
+    char arr[] = "one,two,three";
+    char *ptr = arr;
+
+    while ((str = string_tokenize(&ptr, ',')))
+    {
+        printf("%s\n", str);
+    }
 }
 
 static void sample_files(void)

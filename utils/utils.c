@@ -278,7 +278,7 @@ char *string_trim(const char *str)
 {
     str += string_lskip(str, isspace);
 
-    return string_slice(str, 0,  string_rskip(str, isspace));
+    return string_slice(str, 0, string_rskip(str, isspace));
 }
 
 char *string_ltrim(const char *str)
@@ -289,6 +289,30 @@ char *string_ltrim(const char *str)
 char *string_rtrim(const char *str)
 {
     return string_slice(str, 0, string_rskip(str, isspace));
+}
+
+char *string_tokenize(char **str, int delimiter)
+{
+    char *res = *str, *ptr = res;
+    
+    if (ptr == NULL)
+    {
+        return NULL;
+    }
+    while ((*ptr != delimiter) && (*ptr != '\0'))
+    {
+        ptr++;
+    }
+    if (*ptr != '\0')
+    {
+        *ptr = '\0';
+        *str = ptr + 1;
+    }
+    else
+    {
+        *str = NULL;
+    }
+    return res;
 }
 
 size_t string_length(const char *str)
