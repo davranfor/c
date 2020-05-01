@@ -291,7 +291,7 @@ char *string_rtrim(const char *str)
     return string_slice(str, 0, string_rskip(str, isspace));
 }
 
-char *string_tokenize(char **str, int delimiter)
+char *string_tokenize(char **str, int del)
 {
     char *res = *str, *ptr = res;
     
@@ -299,7 +299,7 @@ char *string_tokenize(char **str, int delimiter)
     {
         return NULL;
     }
-    while ((*ptr != delimiter) && (*ptr != '\0'))
+    while ((*ptr != del) && (*ptr != '\0'))
     {
         ptr++;
     }
