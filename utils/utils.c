@@ -231,6 +231,83 @@ char *string_clone(const char *str)
     return memcpy(ptr, str, size);
 }
 
+static char *string_replace_char(const char *str, char chr1, char chr2)
+{
+    char *buf = malloc(strlen(str) + 1);
+
+    if (buf == NULL)
+    {
+        return NULL;
+    }
+
+    char *ptr = buf;
+
+    while (*str != '\0')
+    {
+        *ptr++ = (*str == chr1) ? chr2 : *str;
+        str++;
+    }
+    *ptr = '\0';
+    return buf;
+}
+
+char *string_replace(const char *str, const char *str1, const char *str2)
+{
+    size_t len1 = strlen(str1);
+    size_t len2 = strlen(str2);
+    size_t len = 0;
+
+    if (len1 == len2)
+    {
+        if (len1 == 1)
+        {
+            return string_replace_char(str, str1[0], str2[0]);
+        }
+        len = strlen(str);
+    }
+    else
+    {
+        const char *ptr = str;
+
+        while (*ptr != '\0')
+        {
+            if (strncmp(ptr, str1, len1) == 0)
+            {
+                ptr += len1;
+                len += len2;
+            }
+            else
+            {
+                ptr += 1;
+                len += 1;
+            }
+        }
+    }
+
+    char *buf, *ptr;
+    
+    buf = ptr = malloc(len + 1);
+    if (buf == NULL)
+    {
+        return NULL;
+    }
+    while (*str != '\0')
+    {
+        if (strncmp(str, str1, len1) == 0)
+        {
+            memcpy(ptr, str2, len2);
+            str += len1;
+            ptr += len2;
+        }
+        else
+        {
+            *ptr++ = *str++;
+        }
+    }
+    *ptr = '\0';
+    return buf;
+}
+
 char *string_slice(const char *str, size_t start, size_t end)
 {
     size_t diff = end - start;

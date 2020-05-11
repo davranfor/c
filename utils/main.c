@@ -32,6 +32,14 @@ static void sample_strings(void)
     str = "María";
     printf("\"%s\" -> length = %zu\n", str, string_length(str));
     
+    str = "El camión de Ramón";
+    str = string_replace(str, "ó", "o");
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
+        free(str);
+    }
+    
     char arr[] = "one,two,three";
     char *ptr = arr;
 
