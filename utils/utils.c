@@ -406,6 +406,46 @@ size_t string_length(const char *str)
     return len;
 }
 
+static size_t string_count_char(const char *str, char chr)
+{
+    size_t res = 0;
+
+    while (*str != '\0')
+    {
+        if (*str++ == chr)
+        {
+            res++;
+        }
+    }
+    return res;
+}
+
+size_t string_count(const char *str, const char *substr)
+{
+    size_t len = strlen(substr);
+
+    if (len == 1)
+    {
+        return string_count_char(str, substr[0]);
+    }
+
+    size_t res = 0;
+
+    while (*str != '\0')
+    {
+        if (strncmp(str, substr, len) == 0)
+        {
+            str += len;
+            res += 1;
+        }
+        else
+        {
+            str += 1;
+        }
+    }
+    return res;
+}
+
 size_t string_lskip(const char *str, int func(int))
 {
     size_t pos = 0;

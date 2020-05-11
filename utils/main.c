@@ -32,11 +32,12 @@ static void sample_strings(void)
     str = "María";
     printf("\"%s\" -> length = %zu\n", str, string_length(str));
     
-    str = "El camión de Ramón";
-    str = string_replace(str, "ó", "o");
+    str = "El camion de Ramon";
+    str = string_replace(str, "o", "ó");
     if (str != NULL)
     {
         printf("<%s>\n", str);
+        printf("'ó' appears %zu times\n", string_count(str, "ó"));
         free(str);
     }
     
