@@ -231,6 +231,20 @@ char *string_clone(const char *str)
     return memcpy(ptr, str, size);
 }
 
+char *string_slice(const char *str, size_t start, size_t end)
+{
+    size_t diff = end - start;
+    char *ptr = malloc(diff + 1);
+
+    if (ptr == NULL)
+    {
+        return NULL;
+    }
+    memcpy(ptr, str + start, diff);
+    ptr[diff] = '\0';
+    return ptr;
+}
+
 static char *string_replace_char(const char *str, char chr1, char chr2)
 {
     char *buf = malloc(strlen(str) + 1);
@@ -306,20 +320,6 @@ char *string_replace(const char *str, const char *str1, const char *str2)
     }
     *ptr = '\0';
     return buf;
-}
-
-char *string_slice(const char *str, size_t start, size_t end)
-{
-    size_t diff = end - start;
-    char *ptr = malloc(diff + 1);
-
-    if (ptr == NULL)
-    {
-        return NULL;
-    }
-    memcpy(ptr, str + start, diff);
-    ptr[diff] = '\0';
-    return ptr;
 }
 
 static char *string_vprint(const char *fmt, va_list args)
