@@ -284,16 +284,7 @@ char *string_replace(const char *str, const char *str1, const char *str2)
 
         while (*ptr != '\0')
         {
-            size_t iter;
-
-            for (iter = 0; iter < len1; iter++)
-            {
-                if (ptr[iter] != str1[iter])
-                {
-                    break;
-                }
-            }
-            if (iter == len1)
+            if (memcmp(ptr, str1, len1) == 0)
             {
                 ptr += len1;
                 count++;
@@ -314,16 +305,7 @@ char *string_replace(const char *str, const char *str1, const char *str2)
     }
     while (*str != '\0')
     {
-        size_t iter;
-
-        for (iter = 0; iter < len1; iter++)
-        {
-            if (str[iter] != str1[iter])
-            {
-                break;
-            }
-        }
-        if (iter == len1)
+        if (memcmp(str, str1, len1) == 0)
         {
             memcpy(buf, str2, len2);
             str += len1;
@@ -449,16 +431,7 @@ size_t string_count(const char *str, const char *substr)
 
     while (*str != '\0')
     {
-        size_t iter;
-
-        for (iter = 0; iter < len; iter++)
-        {
-            if (str[iter] != substr[iter])
-            {
-                break;
-            }
-        }
-        if (iter == len)
+        if (memcmp(str, substr, len) == 0)
         {
             str += len;
             count++;
