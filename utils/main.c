@@ -36,8 +36,8 @@ static void sample_strings(void)
     str = string_replace(str, "o", "ó");
     if (str != NULL)
     {
-        printf("<%s>\n", str);
-        printf("'ó' appears %zu times\n", string_count(str, "ó"));
+        printf("%s ", str);
+        printf("<- 'ó' appears %zu times\n", string_count(str, "ó"));
         free(str);
     }
     

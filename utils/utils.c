@@ -247,29 +247,27 @@ char *string_slice(const char *str, size_t start, size_t end)
 
 static char *string_replace_char(const char *str, char chr1, char chr2)
 {
-    char *buf = malloc(strlen(str) + 1);
+    size_t len = strlen(str);
+    char *buf = malloc(len + 1);
 
     if (buf == NULL)
     {
         return NULL;
     }
-
-    char *ptr = buf;
-
     while (*str != '\0')
     {
-        *ptr++ = (*str == chr1) ? chr2 : *str;
+        *buf++ = (*str == chr1) ? chr2 : *str;
         str++;
     }
-    *ptr = '\0';
-    return buf;
+    *buf = '\0';
+    return buf - len;
 }
 
 char *string_replace(const char *str, const char *str1, const char *str2)
 {
     size_t len1 = strlen(str1);
     size_t len2 = strlen(str2);
-    size_t len = 0;
+    size_t len;
 
     if (len1 == len2)
     {
@@ -282,44 +280,62 @@ char *string_replace(const char *str, const char *str1, const char *str2)
     else
     {
         const char *ptr = str;
+        size_t count = 0;
 
         while (*ptr != '\0')
         {
-            if (strncmp(ptr, str1, len1) == 0)
+            size_t iter;
+
+            for (iter = 0; iter < len1; iter++)
+            {
+                if (ptr[iter] != str1[iter])
+                {
+                    break;
+                }
+            }
+            if (iter == len1)
             {
                 ptr += len1;
-                len += len2;
+                count++;
             }
             else
             {
-                ptr += 1;
-                len += 1;
+                ptr++;
             }
         }
+        len = (size_t)(ptr - str) - (count * len1) + (count * len2);
     }
 
-    char *buf, *ptr;
-    
-    buf = ptr = malloc(len + 1);
+    char *buf = malloc(len + 1);
+
     if (buf == NULL)
     {
         return NULL;
     }
     while (*str != '\0')
     {
-        if (strncmp(str, str1, len1) == 0)
+        size_t iter;
+
+        for (iter = 0; iter < len1; iter++)
         {
-            memcpy(ptr, str2, len2);
+            if (str[iter] != str1[iter])
+            {
+                break;
+            }
+        }
+        if (iter == len1)
+        {
+            memcpy(buf, str2, len2);
             str += len1;
-            ptr += len2;
+            buf += len2;
         }
         else
         {
-            *ptr++ = *str++;
+            *buf++ = *str++;
         }
     }
-    *ptr = '\0';
-    return buf;
+    *buf = '\0';
+    return buf - len;
 }
 
 static char *string_vprint(const char *fmt, va_list args)
@@ -408,16 +424,16 @@ size_t string_length(const char *str)
 
 static size_t string_count_char(const char *str, char chr)
 {
-    size_t res = 0;
+    size_t count = 0;
 
     while (*str != '\0')
     {
         if (*str++ == chr)
         {
-            res++;
+            count++;
         }
     }
-    return res;
+    return count;
 }
 
 size_t string_count(const char *str, const char *substr)
@@ -429,21 +445,30 @@ size_t string_count(const char *str, const char *substr)
         return string_count_char(str, substr[0]);
     }
 
-    size_t res = 0;
+    size_t count = 0;
 
     while (*str != '\0')
     {
-        if (strncmp(str, substr, len) == 0)
+        size_t iter;
+
+        for (iter = 0; iter < len; iter++)
+        {
+            if (str[iter] != substr[iter])
+            {
+                break;
+            }
+        }
+        if (iter == len)
         {
             str += len;
-            res += 1;
+            count++;
         }
         else
         {
-            str += 1;
+            str++;
         }
     }
-    return res;
+    return count;
 }
 
 size_t string_lskip(const char *str, int func(int))
