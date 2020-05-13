@@ -248,19 +248,19 @@ char *string_slice(const char *str, size_t start, size_t end)
 static char *string_replace_char(const char *str, char chr1, char chr2)
 {
     size_t len = strlen(str);
-    char *buf = malloc(len + 1);
+    char *ptr = malloc(len + 1);
 
-    if (buf == NULL)
+    if (ptr == NULL)
     {
         return NULL;
     }
     while (*str != '\0')
     {
-        *buf++ = (*str == chr1) ? chr2 : *str;
+        *ptr++ = (*str == chr1) ? chr2 : *str;
         str++;
     }
-    *buf = '\0';
-    return buf - len;
+    *ptr = '\0';
+    return ptr - len;
 }
 
 char *string_replace(const char *str, const char *str1, const char *str2)
@@ -269,6 +269,10 @@ char *string_replace(const char *str, const char *str1, const char *str2)
     size_t len2 = strlen(str2);
     size_t len;
 
+    if (len1 == 0)
+    {
+        return NULL;
+    }
     if (len1 == len2)
     {
         if (len1 == 1)
@@ -284,7 +288,7 @@ char *string_replace(const char *str, const char *str1, const char *str2)
 
         while (*ptr != '\0')
         {
-            if (memcmp(ptr, str1, len1) == 0)
+            if ((*ptr == *str1) && (memcmp(ptr, str1, len1) == 0))
             {
                 ptr += len1;
                 count++;
@@ -297,27 +301,27 @@ char *string_replace(const char *str, const char *str1, const char *str2)
         len = (size_t)(ptr - str) - (count * len1) + (count * len2);
     }
 
-    char *buf = malloc(len + 1);
+    char *ptr = malloc(len + 1);
 
-    if (buf == NULL)
+    if (ptr == NULL)
     {
         return NULL;
     }
     while (*str != '\0')
     {
-        if (memcmp(str, str1, len1) == 0)
+        if ((*str == *str1) && (memcmp(str, str1, len1) == 0))
         {
-            memcpy(buf, str2, len2);
+            memcpy(ptr, str2, len2);
             str += len1;
-            buf += len2;
+            ptr += len2;
         }
         else
         {
-            *buf++ = *str++;
+            *ptr++ = *str++;
         }
     }
-    *buf = '\0';
-    return buf - len;
+    *ptr = '\0';
+    return ptr - len;
 }
 
 static char *string_vprint(const char *fmt, va_list args)
@@ -422,6 +426,10 @@ size_t string_count(const char *str, const char *substr)
 {
     size_t len = strlen(substr);
 
+    if (len == 0)
+    {
+        return 0;
+    }
     if (len == 1)
     {
         return string_count_char(str, substr[0]);
@@ -431,7 +439,7 @@ size_t string_count(const char *str, const char *substr)
 
     while (*str != '\0')
     {
-        if (memcmp(str, substr, len) == 0)
+        if ((*str == *substr) && (memcmp(str, substr, len) == 0))
         {
             str += len;
             count++;
