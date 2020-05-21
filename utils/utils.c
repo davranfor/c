@@ -160,29 +160,29 @@ char *file_read_line(FILE *file)
     char str[FILE_LINE_MAX];
     char *buf = NULL;
     char *ptr = NULL;
-    size_t size = 0;
+    size_t len = 0;
 
     while (fgets(str, sizeof str, file) != NULL)
     {
-        size_t len = sizeof str;
+        size_t size = sizeof str;
 
         ptr = strchr(str, '\n');
         if (ptr != NULL)
         {
-            len = (size_t)(ptr - str) + 1;
             *ptr = '\0';
+            size = (size_t)(ptr - str) + 1;
         }
-        ptr = realloc(buf, size + len);
+        ptr = realloc(buf, len + size);
         if (ptr == NULL)
         {
             break;
         }
-        memcpy(ptr + size, str, len);
-        if (len != sizeof str)
+        memcpy(ptr + len, str, size);
+        if (size != sizeof str)
         {
             return ptr;
         }
-        size += len - 1;
+        len += size - 1;
         buf = ptr;
     }
     free(buf);
