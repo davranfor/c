@@ -368,14 +368,20 @@ void *linklist_search(const linklist *list, const void *data, int (*comp)(const 
 
 void linklist_destroy(linklist *list, void (*func)(void *))
 {
-    struct node *node;
+    struct node *node = list->head;
 
-    while ((node = linklist_pop_head(list)))
+    while (node != NULL)
     {
         if (func != NULL)
         {
-            func(node);
+            func(node->data);
         }
+
+        struct node *next = node;
+
+        next = node->next;
+        free(node);
+        node = next;
     }
     free(list);
 }
