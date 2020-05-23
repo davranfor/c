@@ -302,48 +302,66 @@ size_t linklist_size(const linklist *list)
     return list->size;
 }
 
-static void swap(void **a, void **b)
+static struct node *split(struct node *head)
 {
-    void *pa;
+    struct node *fast = head;
+    struct node *slow = head;
 
-    pa = *a;
-    *a = *b;
-    *b = pa;
+    while ((fast->next != NULL) && (fast->next->next != NULL))
+    {
+        fast = fast->next->next;
+        slow = slow->next;
+    }
+
+    struct node *temp = slow->next;
+
+    slow->next = NULL;
+    return temp;
 }
 
-static struct node *partition(struct node *head, struct node *tail, int (*comp)(const void *, const void *))
+static struct node *merge(struct node *first, struct node *second, int (*comp)(const void *, const void *))
 {
-    struct node *prev = head->prev;
-    struct node *iter;
-
-    for (iter = head; iter != tail; iter = iter->next)
+    if (first == NULL)
     {
-        if (comp(iter->data, tail->data) <= 0)
-        {
-            prev = (prev == NULL) ? head : prev->next;
-            swap(&(prev->data), &(iter->data));
-        }
+        return second;
     }
-    prev = (prev == NULL) ? head : prev->next;
-    swap(&(prev->data), &(tail->data));
-    return prev;
+    if (second == NULL)
+    {
+        return first;
+    }
+    if (comp(first->data, second->data) < 0)
+    {
+        first->next = merge(first->next, second, comp);
+        first->next->prev = first;
+        first->prev = NULL;
+        return first;
+    }
+    else
+    {
+        second->next = merge(first, second->next, comp);
+        second->next->prev = second;
+        second->prev = NULL;
+        return second;
+    }
 }
- 
-static void sort(struct node *head, struct node *tail, int (*comp)(const void *, const void *))
-{
-    struct node *part;
 
-    if ((tail != NULL) && (head != tail) && (head != tail->next))
+static struct node *merge_sort(struct node *head, int (*comp)(const void *, const void *))
+{
+    if ((head == NULL) || (head->next == NULL))
     {
-        part = partition(head, tail, comp);
-        sort(head, part->prev, comp);
-        sort(part->next, tail, comp);
+        return head;
     }
+
+    struct node *second = split(head);
+
+    head = merge_sort(head, comp);
+    second = merge_sort(second, comp);
+    return merge(head, second, comp);
 }
 
 void linklist_sort(linklist *list, int (*comp)(const void *, const void *))
 {
-    sort(list->head, list->tail, comp);
+    list->head = merge_sort(list->head, comp);
 }
 
 /* Silence compiler casting non const to const with `(void *)const_var` */
@@ -377,11 +395,10 @@ void linklist_destroy(linklist *list, void (*func)(void *))
             func(node->data);
         }
 
-        struct node *next = node;
+        struct node *temp = node->next;
 
-        next = node->next;
         free(node);
-        node = next;
+        node = temp;
     }
     free(list);
 }
