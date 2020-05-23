@@ -101,14 +101,20 @@ size_t stack_size(const stack *list)
 
 void stack_destroy(stack *list, void (*func)(void *))
 {
-    struct node *node;
+    struct node *node = list->head;
 
-    while ((node = stack_pop(list)))
+    while (node != NULL)
     {
         if (func != NULL)
         {
-            func(node);
+            func(node->data);
         }
+
+        struct node *next = node;
+
+        next = node->next;
+        free(node);
+        node = next;
     }
     free(list);
 }
