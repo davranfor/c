@@ -147,14 +147,20 @@ size_t deque_size(const deque *list)
 
 void deque_destroy(deque *list, void (*func)(void *))
 {
-    struct node *node;
+    struct node *node = list->head;
 
-    while ((node = deque_pop(list)))
+    while (node != NULL)
     {
         if (func != NULL)
         {
-            func(node);
+            func(node->data);
         }
+
+        struct node *next = node;
+
+        next = node->next;
+        free(node);
+        node = next;
     }
     free(list);
 }
