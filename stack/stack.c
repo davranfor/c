@@ -110,11 +110,10 @@ void stack_destroy(stack *list, void (*func)(void *))
             func(node->data);
         }
 
-        struct node *next = node;
+        struct node *temp = node->next;
 
-        next = node->next;
         free(node);
-        node = next;
+        node = temp;
     }
     free(list);
 }
