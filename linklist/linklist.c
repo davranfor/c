@@ -345,7 +345,7 @@ static struct node *merge(struct node *first, struct node *second, int (*comp)(c
     }
 }
 
-static struct node *merge_sort(struct node *head, int (*comp)(const void *, const void *))
+static struct node *sort(struct node *head, int (*comp)(const void *, const void *))
 {
     if ((head == NULL) || (head->next == NULL))
     {
@@ -354,14 +354,14 @@ static struct node *merge_sort(struct node *head, int (*comp)(const void *, cons
 
     struct node *second = split(head);
 
-    head = merge_sort(head, comp);
-    second = merge_sort(second, comp);
+    head = sort(head, comp);
+    second = sort(second, comp);
     return merge(head, second, comp);
 }
 
 void linklist_sort(linklist *list, int (*comp)(const void *, const void *))
 {
-    list->head = merge_sort(list->head, comp);
+    list->head = sort(list->head, comp);
 }
 
 /* Silence compiler casting non const to const with `(void *)const_var` */
