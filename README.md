@@ -1,5 +1,6 @@
 # c
 C generic data structures and utilities
+- Dynamic growable array
 - HashMap - Optimized hash table
 - JSON - Ligthweight JSON parser
 - List - Stacks, queues, deques, linked lists
