@@ -9,7 +9,7 @@ main.o: linklist.h
 linklist.o: linklist.h
 
 linklist: $(OBJECTS)
-	$(CC) $(OBJECTS) -o linklist
+	$(CC) $(CFLAGS) $(OBJECTS) -o linklist
 
 clean:
 	rm -f *.o linklist
