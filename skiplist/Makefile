@@ -9,7 +9,7 @@ main.o: skiplist.h
 skiplist.o: skiplist.h
 
 skiplist: $(OBJECTS)
-	$(CC) $(OBJECTS) -o skiplist
+	$(CC) $(CFLAGS) $(OBJECTS) -o skiplist
 
 clean:
 	rm -f *.o skiplist

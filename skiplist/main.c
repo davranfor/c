@@ -10,6 +10,24 @@ struct data
     char *value;
 };
 
+static char *keytostr(int key)
+{
+    char buf[32];
+    size_t len;
+
+    len = (size_t)snprintf(buf, sizeof buf, "(%d)", key);
+
+    char *str = malloc(len + 1);
+
+    if (str == NULL)
+    {
+        perror("keytostr");
+        exit(EXIT_FAILURE);
+    }
+    memcpy(str, buf, len + 1);
+    return str;
+}
+
 static int comp_key(const void *a, const void *b)
 {
     const struct data *pa = a;
@@ -52,22 +70,6 @@ static void filter(skiplist *list, int min, int max)
     {
         printf("%d %s fetched\n", data->key, data->value);
     }
-}
-
-static char *keytostr(int key)
-{
-    char buf[32];
-    size_t len;
-
-    len = (size_t)snprintf(buf, sizeof buf, "(%d)", key);
-
-    char *str = malloc(len + 1);
-
-    if (str != NULL)
-    {
-        memcpy(str, buf, len + 1);
-    }
-    return str;
 }
 
 static void destroy(void *data)
@@ -120,11 +122,6 @@ int main(void)
         if (data == item)
         {
             data->value = keytostr(data->key);
-            if (data->value == NULL)
-            {
-                perror("keytostr");
-                exit(EXIT_FAILURE);
-            }
             data = malloc(sizeof *data);
             if (data == NULL)
             {
@@ -147,15 +144,13 @@ int main(void)
     }
 
     // Delete records
-    for (int key = 0; key < 10; key++)
+    for (data->key = 0; data->key < 10; data->key++)
     {
-        data->key = key;
         item = skiplist_delete(list, data);
         if (item != NULL)
         {
             printf("%d %s deleted\n", item->key, item->value);
-            free(item->value);
-            free(item);
+            destroy(item);
         }
     }
 
