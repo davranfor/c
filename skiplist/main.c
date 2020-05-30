@@ -72,7 +72,7 @@ static void filter(skiplist *list, int min, int max)
     }
 }
 
-static void destroy(void *data)
+static void delete(void *data)
 {
     free(((struct data *)data)->value);
     free(data);
@@ -82,7 +82,7 @@ static skiplist *list;
 
 static void clean(void)
 {
-    skiplist_destroy(list, destroy);
+    skiplist_destroy(list, delete);
 }
 
 int main(void)
@@ -150,7 +150,7 @@ int main(void)
         if (item != NULL)
         {
             printf("%d %s deleted\n", item->key, item->value);
-            destroy(item);
+            delete(item);
         }
     }
 
