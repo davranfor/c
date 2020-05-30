@@ -9,7 +9,7 @@ main.o: stack.h
 stack.o: stack.h
 
 stack: $(OBJECTS)
-	$(CC) $(OBJECTS) -o stack
+	$(CC) $(CFLAGS) $(OBJECTS) -o stack
 
 clean:
 	rm -f *.o stack

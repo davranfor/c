@@ -19,10 +19,12 @@ static char *keytostr(int key)
 
     char *str = malloc(len + 1);
 
-    if (str != NULL)
+    if (str == NULL)
     {
-        memcpy(str, buf, len + 1);
+        perror("keytostr");
+        exit(EXIT_FAILURE);
     }
+    memcpy(str, buf, len + 1);
     return str;
 }
 
@@ -75,11 +77,6 @@ int main(void)
         }
         item->key = key;
         item->value = keytostr(key);
-        if (item->value == NULL)
-        {
-            perror("keytostr");
-            exit(EXIT_FAILURE);
-        }
     }
     print(list);
     printf("%zu elements:\n", stack_size(list));
