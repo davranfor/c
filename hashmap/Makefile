@@ -9,7 +9,7 @@ main.o: hashmap.h
 hashmap.o: hashmap.h
 
 hashmap: $(OBJECTS)
-	$(CC) $(OBJECTS) -o hashmap
+	$(CC) $(CFLAGS) $(OBJECTS) -o hashmap
 
 clean:
 	rm -f *.o hashmap

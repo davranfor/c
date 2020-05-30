@@ -10,6 +10,24 @@ struct data
     char *value;
 };
 
+static char *keytostr(int key)
+{
+    char buf[32];
+    size_t len;
+
+    len = (size_t)snprintf(buf, sizeof buf, "(%d)", key);
+
+    char *str = malloc(len + 1);
+
+    if (str == NULL)
+    {
+        perror("keytostr");
+        exit(EXIT_FAILURE);
+    }
+    memcpy(str, buf, len + 1);
+    return str;
+}
+
 static int comp_key(const void *pa, const void *pb)
 {
     const struct data *a = pa;
@@ -20,10 +38,10 @@ static int comp_key(const void *pa, const void *pb)
 
 static int comp_pkey(const void *pa, const void *pb)
 {
-    const struct data * const *a = pa;
-    const struct data * const *b = pb;
+    const struct data *a = *(const struct data * const *)pa;
+    const struct data *b = *(const struct data * const *)pb;
 
-    return (*a)->key < (*b)->key ? -1 : (*a)->key > (*b)->key;
+    return a->key < b->key ? -1 : a->key > b->key;
 }
 
 static unsigned long hash_key(const void *item)
@@ -50,21 +68,6 @@ static unsigned long hash_value(const void *item)
 }
 */
 
-static char *keytostr(int key)
-{
-    char buf[32];
-    size_t len;
-
-    len = (size_t)snprintf(buf, sizeof buf, "(%d)", key);
-
-    char *str = malloc(len + 1);
-
-    if (str != NULL)
-    {
-        memcpy(str, buf, len + 1);
-    }
-    return str;
-}
 
 static void destroy(void *data)
 {
@@ -141,11 +144,6 @@ int main(void)
         if (data == item)
         {
             data->value = keytostr(data->key);
-            if (data->value == NULL)
-            {
-                perror("keytostr");
-                exit(EXIT_FAILURE);
-            }
             data = malloc(sizeof *data);
             if (data == NULL)
             {
