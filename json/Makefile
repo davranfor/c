@@ -12,7 +12,7 @@ utils.o: utils.h
 json.o: json.h
 
 json: $(OBJECTS)
-	$(CC) $(OBJECTS) -o json
+	$(CC) $(CFLAGS) $(OBJECTS) -o json
 
 clean:
 	rm -f *.o json
