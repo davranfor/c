@@ -19,19 +19,21 @@ static char *keytostr(int key)
 
     char *str = malloc(len + 1);
 
-    if (str != NULL)
+    if (str == NULL)
     {
-        memcpy(str, buf, len + 1);
+        perror("keytostr");
+        exit(EXIT_FAILURE);
     }
+    memcpy(str, buf, len + 1);
     return str;
 }
 
 static int comp(const void *pa, const void *pb)
 {
-    const struct data * const *a = pa;
-    const struct data * const *b = pb;
+    const struct data *a = *(const struct data * const *)pa;
+    const struct data *b = *(const struct data * const *)pb;
 
-    return (*a)->key < (*b)->key ? -1 : (*a)->key > (*b)->key;
+    return a->key < b->key ? -1 : a->key > b->key;
 }
 
 static void destroy(void *data)
@@ -74,11 +76,6 @@ int main(void)
         }
         data->key = rand() % NELEMS;
         data->value = keytostr(data->key);
-        if (data->value == NULL)
-        {
-            perror("keytostr");
-            exit(EXIT_FAILURE);
-        }
     }
     dynarray_sort(array, comp);
     data = &(struct data){.key = NELEMS / 2};
