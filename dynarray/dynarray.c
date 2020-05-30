@@ -75,7 +75,11 @@ void *dynarray_add(dynarray *array, void *data)
 
 void *dynarray_get(dynarray *array, size_t index)
 {
-    return array->data[index];
+    if (index < array->size)
+    {
+        return array->data[index];
+    }
+    return NULL;
 }
 
 size_t dynarray_size(dynarray *array)
@@ -126,9 +130,9 @@ void *dynarray_resize(dynarray *array, size_t size, void (*func)(void *))
             func(array->data[iter]);
         }
     }
+    array->size = size;
     if (size > array->room / 2)
     {
-        array->size = size;
         return array;
     }
 
@@ -140,7 +144,6 @@ void *dynarray_resize(dynarray *array, size_t size, void (*func)(void *))
         return NULL;
     }
     array->data = temp;
-    array->size = size;
     array->room = room;
     return array;
 }
