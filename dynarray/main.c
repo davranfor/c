@@ -36,7 +36,7 @@ static int comp(const void *pa, const void *pb)
     return a->key < b->key ? -1 : a->key > b->key;
 }
 
-static void destroy(void *data)
+static void delete(void *data)
 {
     free(((struct data *)data)->value);
     free(data);
@@ -47,7 +47,7 @@ static dynarray *array;
 static void clean(void)
 {
     puts("\nDestroying ...");
-    dynarray_destroy(array, destroy);
+    dynarray_destroy(array, delete);
 }
 
 int main(void)
@@ -84,7 +84,7 @@ int main(void)
     {
         printf("Found: %d %s\n", data->key, data->value);
     }
-    if (dynarray_resize(array, 10, destroy) == NULL)
+    if (dynarray_resize(array, 10, delete) == NULL)
     {
         perror("dynarray_resize");
         exit(EXIT_FAILURE);
