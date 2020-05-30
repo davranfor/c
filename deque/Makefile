@@ -9,7 +9,7 @@ main.o: deque.h
 deque.o: deque.h
 
 deque: $(OBJECTS)
-	$(CC) $(OBJECTS) -o deque
+	$(CC) $(CFLAGS) $(OBJECTS) -o deque
 
 clean:
 	rm -f *.o deque
