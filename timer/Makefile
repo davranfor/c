@@ -9,7 +9,7 @@ main.o: timer.h
 timer.o: timer.h
 
 timer: $(OBJECTS)
-	$(CC) $(OBJECTS) -o timer -lpthread
+	$(CC) $(CFLAGS) $(OBJECTS) -o timer -lpthread
 
 clean:
 	rm -f *.o timer
