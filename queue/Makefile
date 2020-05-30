@@ -9,7 +9,7 @@ main.o: queue.h
 queue.o: queue.h
 
 queue: $(OBJECTS)
-	$(CC) $(OBJECTS) -o queue
+	$(CC) $(CFLAGS) $(OBJECTS) -o queue
 
 clean:
 	rm -f *.o queue
