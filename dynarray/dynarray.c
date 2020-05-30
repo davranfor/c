@@ -14,8 +14,8 @@ struct dynarray
     size_t size;
 };
 
-/* Compute next power of 2 of a given size */
-static size_t next_size(size_t size)
+/* Compute next power of 2 for a given size */
+static size_t next_pow2(size_t size)
 {
     size--;
     size |= size >> 1;
@@ -28,6 +28,11 @@ static size_t next_size(size_t size)
     return size;
 }
 
+static size_t next_size(size_t size)
+{
+    return size == 0 ? 1 : next_pow2(size);
+}
+
 dynarray *dynarray_create(size_t room)
 {
     dynarray *array = calloc(1, sizeof *array);
@@ -36,14 +41,7 @@ dynarray *dynarray_create(size_t room)
     {
         return NULL;
     }
-    if (room == 0)
-    {
-        array->room = 1;
-    }
-    else
-    {
-        array->room = next_size(room);
-    }
+    array->room = next_size(room);
     array->data = malloc(array->room * sizeof(void *));
     if (array->data == NULL)
     {
@@ -80,48 +78,6 @@ void *dynarray_get(dynarray *array, size_t index)
     return array->data[index];
 }
 
-void *dynarray_resize(dynarray *array, size_t size, void (*func)(void *))
-{
-    if (size >= array->size) 
-    {
-        return array;
-    }
-    if (func != NULL)
-    {
-        for (size_t iter = size; iter < array->size; iter++)
-        {
-            func(array->data[iter]);
-        }
-    }
-    if (size > array->room / 2)
-    {
-        array->size = size;
-        return array;
-    }
-
-    size_t room;
-
-    if (size == 0)
-    {
-        room = 1;
-    }
-    else
-    {
-        room = next_size(size);
-    }
-
-    void *temp = realloc(array->data, room * sizeof(void *));
-
-    if (temp == NULL)
-    {
-        return NULL;
-    }
-    array->data = temp;
-    array->size = size;
-    array->room = room;
-    return array;
-}
-
 size_t dynarray_size(dynarray *array)
 {
     return array->size;
@@ -155,6 +111,38 @@ void *dynarray_lsearch(const dynarray *array, const void *key, int (*comp)(const
         }
     }
     return NULL;
+}
+
+void *dynarray_resize(dynarray *array, size_t size, void (*func)(void *))
+{
+    if (size >= array->size) 
+    {
+        return array;
+    }
+    if (func != NULL)
+    {
+        for (size_t iter = size; iter < array->size; iter++)
+        {
+            func(array->data[iter]);
+        }
+    }
+    if (size > array->room / 2)
+    {
+        array->size = size;
+        return array;
+    }
+
+    size_t room = next_size(size);
+    void *temp = realloc(array->data, room * sizeof(void *));
+
+    if (temp == NULL)
+    {
+        return NULL;
+    }
+    array->data = temp;
+    array->size = size;
+    array->room = room;
+    return array;
 }
 
 void dynarray_destroy(dynarray *array, void (*func)(void *data))

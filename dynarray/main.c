@@ -26,7 +26,7 @@ static char *keytostr(int key)
     return str;
 }
 
-static int comp_key(const void *pa, const void *pb)
+static int comp(const void *pa, const void *pb)
 {
     const struct data * const *a = pa;
     const struct data * const *b = pb;
@@ -80,9 +80,9 @@ int main(void)
             exit(EXIT_FAILURE);
         }
     }
-    dynarray_sort(array, comp_key);
+    dynarray_sort(array, comp);
     data = &(struct data){.key = NELEMS / 2};
-    data = dynarray_bsearch(array, &data, comp_key);
+    data = dynarray_bsearch(array, &data, comp);
     if (data != NULL)
     {
         printf("Found: %d %s\n", data->key, data->value);
