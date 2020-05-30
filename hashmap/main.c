@@ -68,7 +68,6 @@ static unsigned long hash_value(const void *item)
 }
 */
 
-
 static void destroy(void *data)
 {
     free(((struct data *)data)->value);
@@ -172,8 +171,7 @@ int main(void)
         if (item != NULL)
         {
             printf("%d %s deleted\n", item->key, item->value);
-            free(item->value);
-            free(item);
+            destroy(item);
         }
     }
 
