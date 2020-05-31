@@ -37,11 +37,11 @@ static void delete(void *data)
 static void print(const stack *list)
 {
     const void *iter = list;
-    struct data *item;
+    const struct data *data;
 
-    while ((item = stack_fetch(list, &iter)))
+    while ((data = stack_fetch(list, &iter)))
     {
-        printf("%d %s\n", item->key, item->value);
+        printf("%d %s\n", data->key, data->value);
     }
 }
 
@@ -65,25 +65,25 @@ int main(void)
     }
 
     int size = rand() % 10;
-    struct data *item;
+    struct data *data;
 
     for (int key = 0; key < size; key++)
     {
-        item = stack_push(list, malloc(sizeof *item));
-        if (item == NULL)
+        data = stack_push(list, malloc(sizeof *data));
+        if (data == NULL)
         {
             perror("stack_push");
             exit(EXIT_FAILURE);
         }
-        item->key = key;
-        item->value = keytostr(key);
+        data->key = key;
+        data->value = keytostr(key);
     }
     print(list);
     printf("%zu elements:\n", stack_size(list));
-    while ((item = stack_pop(list)))
+    while ((data = stack_pop(list)))
     {
-        printf("%d %s\n", item->key, item->value);
-        delete(item);
+        printf("%d %s\n", data->key, data->value);
+        delete(data);
     }
     return 0;
 }
