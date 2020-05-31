@@ -46,8 +46,8 @@ static int comp_range(const void *a, const void *b)
 
 static void walk(skiplist *list)
 {
-    void *cursor = NULL;
-    struct data *data;
+    const void *cursor = NULL;
+    const struct data *data;
     int count = 0;
  
     printf("First 5 records:\n");
@@ -62,8 +62,8 @@ static void walk(skiplist *list)
 
 static void filter(skiplist *list, int min, int max)
 {
-    void *cursor = NULL;
-    struct data *data;
+    const void *cursor = NULL;
+    const struct data *data;
 
     printf("Filtering records from %d to %d\n", min, max);
     while ((data = skiplist_fetch(list, &cursor, (int []){min, max}, comp_range)))

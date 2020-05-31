@@ -152,7 +152,7 @@ void *skiplist_delete(skiplist *list, const void *data)
     return NULL;
 }
 
-void *skiplist_search(skiplist *list, const void *data)
+void *skiplist_search(const skiplist *list, const void *data)
 {
     struct node *node = list->head;
 
@@ -179,7 +179,7 @@ void *skiplist_search(skiplist *list, const void *data)
     return NULL;
 }
 
-static struct node *fetch(skiplist *list, const void *data,
+static struct node *fetch(const skiplist *list, const void *data,
     int (*comp)(const void *, const void *))
 {
     struct node *node = list->head;
@@ -198,10 +198,10 @@ static struct node *fetch(skiplist *list, const void *data,
     return node;
 }
 
-void *skiplist_fetch(skiplist *list, void **cursor, const void *data,
+void *skiplist_fetch(const skiplist *list, const void **cursor, const void *data,
     int (*comp)(const void *, const void *))
 {
-    struct node *node;
+    const struct node *node;
 
     if (*cursor == NULL)
     {
