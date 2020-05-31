@@ -219,7 +219,7 @@ void *hashmap_search(const hashmap *map, const void *data)
 
     while (map != NULL)
     {
-        struct node *node = map->list + hash % map->room;
+        const struct node *node = map->list + hash % map->room;
 
         if (node->data != NULL) do
         {
@@ -269,7 +269,7 @@ void *hashmap_copy(const hashmap *map, size_t *size)
     {
         for (size_t index = 0, elems = count; count - elems < map->size; index++)
         {
-            struct node *node = map->list + index;
+            const struct node *node = map->list + index;
 
             if (node->data != NULL) do
             {
