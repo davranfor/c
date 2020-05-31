@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "queue.h"
+#include "deque.h"
 
 struct data
 {
@@ -34,22 +34,22 @@ static void delete(void *data)
     free(data);
 }
 
-static void print(const queue *list)
+static void print(const deque *list)
 {
     const void *iter = list;
-    struct data *item;
+    const struct data *data;
 
-    while ((item = queue_fetch(list, &iter)))
+    while ((data = deque_fetch(list, &iter)))
     {
-        printf("%d %s\n", item->key, item->value);
+        printf("%d %s\n", data->key, data->value);
     }
 }
 
-static queue *list;
+static deque *list;
 
 static void clean(void)
 {
-    queue_destroy(list, delete);
+    deque_destroy(list, delete);
 }
 
 int main(void)
@@ -57,33 +57,40 @@ int main(void)
     atexit(clean);
     srand((unsigned)time(NULL));
 
-    list = queue_create();
+    list = deque_create();
     if (list == NULL)
     {
-        perror("queue_create");
+        perror("deque_create");
         exit(EXIT_FAILURE);
     }
 
     int size = rand() % 10;
-    struct data *item;
+    struct data *data;
 
     for (int key = 0; key < size; key++)
     {
-        item = queue_push(list, malloc(sizeof *item));
-        if (item == NULL)
+        if (key & 0x01)
         {
-            perror("queue_push");
+            data = deque_push_head(list, malloc(sizeof *data));
+        }
+        else
+        {
+            data = deque_push_tail(list, malloc(sizeof *data));
+        }
+        if (data == NULL)
+        {
+            perror("deque_push");
             exit(EXIT_FAILURE);
         }
-        item->key = key;
-        item->value = keytostr(key);
+        data->key = key;
+        data->value = keytostr(key);
     }
     print(list);
-    printf("%zu elements:\n", queue_size(list));
-    while ((item = queue_pop(list)))
+    printf("%zu elements:\n", deque_size(list));
+    while ((data = deque_pop(list)))
     {
-        printf("%d %s\n", item->key, item->value);
-        delete(item);
+        printf("%d %s\n", data->key, data->value);
+        delete(data);
     }
     return 0;
 }
