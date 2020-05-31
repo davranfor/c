@@ -332,15 +332,11 @@ static struct node *merge(struct node *first, struct node *second, int (*comp)(c
     if (comp(first->data, second->data) < 0)
     {
         first->next = merge(first->next, second, comp);
-        first->next->prev = first;
-        first->prev = NULL;
         return first;
     }
     else
     {
         second->next = merge(first, second->next, comp);
-        second->next->prev = second;
-        second->prev = NULL;
         return second;
     }
 }
@@ -359,9 +355,29 @@ static struct node *sort(struct node *head, int (*comp)(const void *, const void
     return merge(head, second, comp);
 }
 
-void linklist_sort(linklist *list, int (*comp)(const void *, const void *))
+/** 
+ * Merge sort:
+ * Since we need to update the tail, we use a singly linked list sort approach and
+ * adjust the `prev` nodes and `list->tail` at the end
+ */
+void linklist_sort(struct linklist *list, int (*comp)(const void *, const void *))
 {
-    list->head = sort(list->head, comp);
+    if (list->size > 1)
+    {
+        list->head = sort(list->head, comp);
+        list->head->prev = NULL;
+
+        struct node *prev = list->head;
+        struct node *node = prev->next;
+        
+        while (node != NULL)
+        {
+            node->prev = prev;
+            prev = node;
+            node = node->next;
+        }
+        list->tail = prev;
+    }
 }
 
 /* Silence compiler casting non const to const with `(void *)const_var` */
