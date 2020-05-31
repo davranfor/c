@@ -37,11 +37,11 @@ static void delete(void *data)
 static void print(const deque *list)
 {
     const void *iter = list;
-    struct data *item;
+    const struct data *data;
 
-    while ((item = deque_fetch(list, &iter)))
+    while ((data = deque_fetch(list, &iter)))
     {
-        printf("%d %s\n", item->key, item->value);
+        printf("%d %s\n", data->key, data->value);
     }
 }
 
@@ -65,32 +65,32 @@ int main(void)
     }
 
     int size = rand() % 10;
-    struct data *item;
+    struct data *data;
 
     for (int key = 0; key < size; key++)
     {
         if (key & 0x01)
         {
-            item = deque_push_head(list, malloc(sizeof *item));
+            data = deque_push_head(list, malloc(sizeof *data));
         }
         else
         {
-            item = deque_push_tail(list, malloc(sizeof *item));
+            data = deque_push_tail(list, malloc(sizeof *data));
         }
-        if (item == NULL)
+        if (data == NULL)
         {
             perror("deque_push");
             exit(EXIT_FAILURE);
         }
-        item->key = key;
-        item->value = keytostr(key);
+        data->key = key;
+        data->value = keytostr(key);
     }
     print(list);
     printf("%zu elements:\n", deque_size(list));
-    while ((item = deque_pop(list)))
+    while ((data = deque_pop(list)))
     {
-        printf("%d %s\n", item->key, item->value);
-        delete(item);
+        printf("%d %s\n", data->key, data->value);
+        delete(data);
     }
     return 0;
 }
