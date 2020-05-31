@@ -134,7 +134,7 @@ void *linklist_pop_tail(linklist *list)
     return data;
 }
 
-static struct node *linklist_node(linklist *list, size_t index)
+static struct node *linklist_node(const linklist *list, size_t index)
 {
     struct node *node;
 
@@ -220,7 +220,7 @@ void *linklist_delete(linklist *list, size_t index)
     return data;
 }
 
-void *linklist_index(linklist *list, size_t index)
+void *linklist_index(const linklist *list, size_t index)
 {
     if (index >= list->size)
     {
@@ -229,12 +229,12 @@ void *linklist_index(linklist *list, size_t index)
     return linklist_node(list, index)->data;
 }
 
-void *linklist_head(linklist *list)
+void *linklist_head(const linklist *list)
 {
     return list->head;
 }
 
-void *linklist_prev(linklist *list, void **iter)
+void *linklist_prev(const linklist *list, void **iter)
 {
     void *data = NULL;
 
@@ -263,7 +263,7 @@ void *linklist_prev(linklist *list, void **iter)
     return data;
 }
 
-void *linklist_next(linklist *list, void **iter)
+void *linklist_next(const linklist *list, void **iter)
 {
     void *data = NULL;
 
@@ -292,7 +292,7 @@ void *linklist_next(linklist *list, void **iter)
     return data;
 }
 
-void *linklist_tail(linklist *list)
+void *linklist_tail(const linklist *list)
 {
     return list->tail;
 }
@@ -380,10 +380,6 @@ void linklist_sort(struct linklist *list, int (*comp)(const void *, const void *
     }
 }
 
-/* Silence compiler casting non const to const with `(void *)const_var` */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-qual"
-
 void *linklist_search(const linklist *list, const void *data, int (*comp)(const void *, const void *))
 {
     struct node *iter;
@@ -392,13 +388,28 @@ void *linklist_search(const linklist *list, const void *data, int (*comp)(const 
     {
         if (comp(iter->data, data) == 0)
         {
-            return (void *)iter->data;
+            return iter->data;
         }
     }
     return NULL;
 }
 
-#pragma GCC diagnostic pop
+void linklist_reverse(const linklist *list)
+{
+    struct node *a = list->head;
+    struct node *b = list->tail;
+    size_t mid = list->size / 2;
+
+    for (size_t iter = 0; iter < mid; iter++)
+    {
+        void *temp = a->data;
+
+        a->data = b->data;
+        b->data = temp;
+        a = a->next;
+        b = b->prev;
+    }
+}
 
 void linklist_destroy(linklist *list, void (*func)(void *))
 {

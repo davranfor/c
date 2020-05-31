@@ -16,14 +16,15 @@ void *linklist_pop_head(linklist *);
 void *linklist_pop_tail(linklist *);
 void *linklist_insert(linklist *, size_t, void *);
 void *linklist_delete(linklist *, size_t);
-void *linklist_index(linklist *, size_t);
-void *linklist_head(linklist *);
-void *linklist_prev(linklist *, void **);
-void *linklist_next(linklist *, void **);
-void *linklist_tail(linklist *);
+void *linklist_index(const linklist *, size_t);
+void *linklist_head(const linklist *);
+void *linklist_prev(const linklist *, void **);
+void *linklist_next(const linklist *, void **);
+void *linklist_tail(const linklist *);
 size_t linklist_size(const linklist *);
 void linklist_sort(linklist *, int (*)(const void *, const void *));
 void *linklist_search(const linklist *, const void *, int (*)(const void *, const void *));
+void linklist_reverse(const linklist *);
 void linklist_destroy(linklist *, void (*)(void *));
 
 #endif /* LINKLIST_H */

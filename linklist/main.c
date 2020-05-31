@@ -99,6 +99,9 @@ int main(void)
     linklist_sort(list, comp);
     puts("Sorted:");
     print(list);
+    linklist_reverse(list);
+    puts("Reversed:");
+    print(list);
     puts("Search item 2:");
     item = linklist_search(list, &(struct data){2, NULL}, comp);
     if (item != NULL)
