@@ -73,7 +73,7 @@ void *queue_pop(queue *list)
     return data;
 }
 
-void *queue_fetch(queue *list, void **iter)
+void *queue_fetch(const queue *list, const void **iter)
 {
     void *data = NULL;
 
@@ -87,7 +87,7 @@ void *queue_fetch(queue *list, void **iter)
     }
     else
     {
-        struct node *node = *iter;
+        const struct node *node = *iter;
 
         if (node == NULL)
         {
@@ -102,12 +102,12 @@ void *queue_fetch(queue *list, void **iter)
     return data;
 }
 
-void *queue_head(queue *list)
+void *queue_head(const queue *list)
 {
     return list->head;
 }
 
-void *queue_tail(queue *list)
+void *queue_tail(const queue *list)
 {
     return list->tail;
 }

@@ -34,10 +34,10 @@ static void delete(void *data)
     free(data);
 }
 
-static void print(queue *list)
+static void print(const queue *list)
 {
+    const void *iter = list;
     struct data *item;
-    void *iter = list;
 
     while ((item = queue_fetch(list, &iter)))
     {

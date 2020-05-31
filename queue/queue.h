@@ -12,9 +12,9 @@ typedef struct queue queue;
 queue *queue_create(void);
 void *queue_push(queue *, void *);
 void *queue_pop(queue *);
-void *queue_fetch(queue *, void **);
-void *queue_head(queue *);
-void *queue_tail(queue *);
+void *queue_fetch(const queue *, const void **);
+void *queue_head(const queue *);
+void *queue_tail(const queue *);
 size_t queue_size(const queue *);
 void queue_destroy(queue *, void (*)(void *));
 
