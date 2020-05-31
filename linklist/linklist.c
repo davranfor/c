@@ -382,7 +382,7 @@ void linklist_sort(struct linklist *list, int (*comp)(const void *, const void *
 
 void *linklist_search(const linklist *list, const void *data, int (*comp)(const void *, const void *))
 {
-    struct node *iter;
+    const struct node *iter;
 
     for (iter = list->head; iter != NULL; iter = iter->next)
     {
