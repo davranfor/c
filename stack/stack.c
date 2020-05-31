@@ -60,7 +60,7 @@ void *stack_pop(stack *list)
     return data;
 }
 
-void *stack_fetch(stack *list, void **iter)
+void *stack_fetch(const stack *list, const void **iter)
 {
     void *data = NULL;
 
@@ -74,7 +74,7 @@ void *stack_fetch(stack *list, void **iter)
     }
     else
     {
-        struct node *node = *iter;
+        const struct node *node = *iter;
 
         if (node == NULL)
         {
@@ -89,7 +89,7 @@ void *stack_fetch(stack *list, void **iter)
     return data;
 }
 
-void *stack_head(stack *list)
+void *stack_head(const stack *list)
 {
     return list->head;
 }

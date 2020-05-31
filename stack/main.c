@@ -34,10 +34,10 @@ static void delete(void *data)
     free(data);
 }
 
-static void print(stack *list)
+static void print(const stack *list)
 {
+    const void *iter = list;
     struct data *item;
-    void *iter = list;
 
     while ((item = stack_fetch(list, &iter)))
     {
