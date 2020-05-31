@@ -234,7 +234,7 @@ void *linklist_head(const linklist *list)
     return list->head;
 }
 
-void *linklist_prev(const linklist *list, void **iter)
+void *linklist_prev(const linklist *list, const void **iter)
 {
     void *data = NULL;
 
@@ -248,7 +248,7 @@ void *linklist_prev(const linklist *list, void **iter)
     }
     else
     {
-        struct node *node = *iter;
+        const struct node *node = *iter;
 
         if (node == NULL)
         {
@@ -263,7 +263,7 @@ void *linklist_prev(const linklist *list, void **iter)
     return data;
 }
 
-void *linklist_next(const linklist *list, void **iter)
+void *linklist_next(const linklist *list, const void **iter)
 {
     void *data = NULL;
 
@@ -277,7 +277,7 @@ void *linklist_next(const linklist *list, void **iter)
     }
     else
     {
-        struct node *node = *iter;
+        const struct node *node = *iter;
 
         if (node == NULL)
         {

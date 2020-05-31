@@ -42,10 +42,10 @@ static void delete(void *data)
     free(data);
 }
 
-static void print(linklist *list)
+static void print(const linklist *list)
 {
+    const void *iter = list;
     struct data *item;
-    void *iter = list;
 
     while ((item = linklist_next(list, &iter)))
     {
