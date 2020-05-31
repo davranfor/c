@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "deque.h"
+#include "queue.h"
 
 struct data
 {
@@ -34,22 +34,22 @@ static void delete(void *data)
     free(data);
 }
 
-static void print(const deque *list)
+static void print(const queue *list)
 {
     const void *iter = list;
     const struct data *data;
 
-    while ((data = deque_fetch(list, &iter)))
+    while ((data = queue_fetch(list, &iter)))
     {
         printf("%d %s\n", data->key, data->value);
     }
 }
 
-static deque *list;
+static queue *list;
 
 static void clean(void)
 {
-    deque_destroy(list, delete);
+    queue_destroy(list, delete);
 }
 
 int main(void)
@@ -57,10 +57,10 @@ int main(void)
     atexit(clean);
     srand((unsigned)time(NULL));
 
-    list = deque_create();
+    list = queue_create();
     if (list == NULL)
     {
-        perror("deque_create");
+        perror("queue_create");
         exit(EXIT_FAILURE);
     }
 
@@ -69,25 +69,18 @@ int main(void)
 
     for (int key = 0; key < size; key++)
     {
-        if (key & 0x01)
-        {
-            data = deque_push_head(list, malloc(sizeof *data));
-        }
-        else
-        {
-            data = deque_push_tail(list, malloc(sizeof *data));
-        }
+        data = queue_push(list, malloc(sizeof *data));
         if (data == NULL)
         {
-            perror("deque_push");
+            perror("queue_push");
             exit(EXIT_FAILURE);
         }
         data->key = key;
         data->value = keytostr(key);
     }
     print(list);
-    printf("%zu elements:\n", deque_size(list));
-    while ((data = deque_pop(list)))
+    printf("%zu elements:\n", queue_size(list));
+    while ((data = queue_pop(list)))
     {
         printf("%d %s\n", data->key, data->value);
         delete(data);
