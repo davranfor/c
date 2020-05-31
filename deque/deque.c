@@ -101,7 +101,7 @@ void *deque_pop(deque *list)
     return data;
 }
 
-void *deque_fetch(deque *list, void **iter)
+void *deque_fetch(const deque *list, const void **iter)
 {
     void *data = NULL;
 
@@ -115,7 +115,7 @@ void *deque_fetch(deque *list, void **iter)
     }
     else
     {
-        struct node *node = *iter;
+        const struct node *node = *iter;
 
         if (node == NULL)
         {
@@ -130,12 +130,12 @@ void *deque_fetch(deque *list, void **iter)
     return data;
 }
 
-void *deque_head(deque *list)
+void *deque_head(const deque *list)
 {
     return list->head;
 }
 
-void *deque_tail(deque *list)
+void *deque_tail(const deque *list)
 {
     return list->tail;
 }
