@@ -154,7 +154,7 @@ void *skiplist_delete(skiplist *list, const void *data)
 
 void *skiplist_search(const skiplist *list, const void *data)
 {
-    struct node *node = list->head;
+    const struct node *node = list->head;
 
     for (int level = list->levels; level >= 0; level--)
     {
