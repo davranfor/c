@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "linklist.h"
+#include "deque.h"
 
 struct data
 {
@@ -28,36 +28,28 @@ static char *keytostr(int key)
     return str;
 }
 
-static int comp(const void *pa, const void *pb)
-{
-    const struct data *a = pa;
-    const struct data *b = pb;
-
-    return a->key < b->key ? -1 : a->key > b->key;
-}
-
 static void delete(void *data)
 {
     free(((struct data *)data)->value);
     free(data);
 }
 
-static void print(const linklist *list)
+static void print(const deque *list)
 {
     const void *iter = list;
-    struct data *item;
+    const struct data *data;
 
-    while ((item = linklist_next(list, &iter)))
+    while ((data = deque_fetch(list, &iter)))
     {
-        printf("%d %s\n", item->key, item->value);
+        printf("%d %s\n", data->key, data->value);
     }
 }
 
-static linklist *list;
+static deque *list;
 
 static void clean(void)
 {
-    linklist_destroy(list, delete);
+    deque_destroy(list, delete);
 }
 
 int main(void)
@@ -65,58 +57,41 @@ int main(void)
     atexit(clean);
     srand((unsigned)time(NULL));
 
-    list = linklist_create();
+    list = deque_create();
     if (list == NULL)
     {
-        perror("list_create");
+        perror("deque_create");
         exit(EXIT_FAILURE);
     }
 
     int size = rand() % 10;
-    struct data *item;
+    struct data *data;
 
     for (int key = 0; key < size; key++)
     {
         if (key & 0x01)
         {
-            item = linklist_push_head(list, malloc(sizeof *item));
+            data = deque_push_head(list, malloc(sizeof *data));
         }
         else
         {
-            item = linklist_push_tail(list, malloc(sizeof *item));
+            data = deque_push_tail(list, malloc(sizeof *data));
         }
-        if (item == NULL)
+        if (data == NULL)
         {
-            perror("linklist_push");
+            perror("deque_push");
             exit(EXIT_FAILURE);
         }
-        item->key = key;
-        item->value = keytostr(key);
+        data->key = key;
+        data->value = keytostr(key);
     }
-    printf("%zu elements:\n", linklist_size(list));
-    puts("Unsorted:");
     print(list);
-    linklist_sort(list, comp);
-    puts("Sorted:");
-    print(list);
-    linklist_reverse(list);
-    puts("Reversed:");
-    print(list);
-    puts("Search item 2:");
-    item = linklist_search(list, &(struct data){2, NULL}, comp);
-    if (item != NULL)
+    printf("%zu elements:\n", deque_size(list));
+    while ((data = deque_pop(list)))
     {
-        printf("%d %s\n", item->key, item->value);
+        printf("%d %s\n", data->key, data->value);
+        delete(data);
     }
-    printf("Delete item %zu:\n", linklist_size(list) / 2);
-    item = linklist_delete(list, linklist_size(list) / 2);
-    if (item != NULL)
-    {
-        printf("%d %s\n", item->key, item->value);
-        delete(item);
-    }
-    puts("Final:");
-    print(list);
     return 0;
 }
 
