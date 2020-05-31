@@ -73,7 +73,7 @@ void *dynarray_add(dynarray *array, void *data)
     return data;
 }
 
-void *dynarray_get(dynarray *array, size_t index)
+void *dynarray_get(const dynarray *array, size_t index)
 {
     if (index < array->size)
     {
@@ -82,7 +82,7 @@ void *dynarray_get(dynarray *array, size_t index)
     return NULL;
 }
 
-size_t dynarray_size(dynarray *array)
+size_t dynarray_size(const dynarray *array)
 {
     return array->size;
 }

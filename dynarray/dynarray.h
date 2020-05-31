@@ -11,8 +11,8 @@ typedef struct dynarray dynarray;
 
 dynarray *dynarray_create(size_t);
 void *dynarray_add(dynarray *, void *);
-void *dynarray_get(dynarray *, size_t);
-size_t dynarray_size(dynarray *);
+void *dynarray_get(const dynarray *, size_t);
+size_t dynarray_size(const dynarray *);
 void dynarray_sort(dynarray *, int (*)(const void *, const void *));
 void *dynarray_bsearch(const dynarray *, const void *, int (*)(const void *, const void *));
 void *dynarray_lsearch(const dynarray *, const void *, int (*)(const void *, const void *));
