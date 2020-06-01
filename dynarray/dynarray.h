@@ -16,6 +16,7 @@ size_t dynarray_size(const dynarray *);
 void dynarray_sort(dynarray *, int (*)(const void *, const void *));
 void *dynarray_bsearch(const dynarray *, const void *, int (*)(const void *, const void *));
 void *dynarray_lsearch(const dynarray *, const void *, int (*)(const void *, const void *));
+void dynarray_reverse(const dynarray *);
 void *dynarray_resize(dynarray *, size_t, void (*)(void *));
 void dynarray_destroy(dynarray *, void (*)(void *));
 

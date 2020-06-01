@@ -117,6 +117,20 @@ void *dynarray_lsearch(const dynarray *array, const void *key, int (*comp)(const
     return NULL;
 }
 
+void dynarray_reverse(const dynarray *array)
+{
+    if (array->size > 1)
+    {
+        for (size_t a = 0, b = array->size - 1; a < b; a++, b--)
+        {
+            struct node *temp = array->data[a];
+
+            array->data[a] = array->data[b];
+            array->data[b] = temp;
+        }
+    }
+}
+
 void *dynarray_resize(dynarray *array, size_t size, void (*func)(void *))
 {
     if (size >= array->size) 

@@ -78,6 +78,7 @@ int main(void)
         data->value = keytostr(data->key);
     }
     dynarray_sort(array, comp);
+    dynarray_reverse(array);
     data = &(struct data){.key = NELEMS / 2};
     data = dynarray_bsearch(array, &data, comp);
     if (data != NULL)
