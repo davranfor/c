@@ -367,16 +367,14 @@ void linklist_sort(struct linklist *list, int (*comp)(const void *, const void *
         list->head = sort(list->head, comp);
         list->head->prev = NULL;
 
-        struct node *prev = list->head;
-        struct node *node = prev->next;
-        
-        while (node != NULL)
+        struct node *node = list->head;
+
+        while (node->next != NULL)
         {
-            node->prev = prev;
-            prev = node;
+            node->next->prev = node;
             node = node->next;
         }
-        list->tail = prev;
+        list->tail = node;
     }
 }
 
