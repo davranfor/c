@@ -17,6 +17,7 @@ char *file_read(const char *);
 char *file_read_with_prefix(const char *, const char *);
 char *file_read_with_suffix(const char *, const char *);
 char *file_read_line(FILE *);
+char *file_read_buffer(FILE *, char *, size_t);
 size_t file_write(const char *, const char *, int);
 int file_error(FILE *);
 

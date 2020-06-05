@@ -189,6 +189,27 @@ char *file_read_line(FILE *file)
     return NULL;
 }
 
+char *file_read_buffer(FILE *file, char *str, size_t size)
+{
+    if (fgets(str, (int)size, file) != NULL)
+    {
+        char *ptr = strchr(str, '\n');
+
+        if (ptr != NULL)
+        {
+            *ptr = '\0';
+        }
+        else
+        {
+            int c;
+
+            while (((c = fgetc(file)) != '\n') && (c != EOF));
+        }
+        return str;
+    }
+    return NULL;
+}
+
 size_t file_write(const char *path, const char *str, int append)
 {
     FILE *file = fopen(path, append ? "a" : "w");

@@ -77,7 +77,6 @@ static void sample_files(void)
         printf("%s", str);
         free(str);
     }
-
     while ((str = file_read_line(stdin)))
     {
         printf("<%s>\n>", str);
@@ -86,6 +85,25 @@ static void sample_files(void)
     if (file_error(stdin) != 0)
     {
         perror("file_read_line");
+        fprintf(stderr, "File error #%d\n", file_error(stdin));
+    }
+    else
+    {
+        // Restart stdin after EOF
+        clearerr(stdin);
+    }
+    puts("");
+
+    char buf[10];
+
+    puts("Enter text (Press CTRL + D to stop)");
+    while (file_read_buffer(stdin, buf, sizeof buf))
+    {
+        printf("<%s>\n>", buf);
+    }
+    if (file_error(stdin) != 0)
+    {
+        perror("file_read_buffer");
         fprintf(stderr, "File error #%d\n", file_error(stdin));
     }
     puts("");
