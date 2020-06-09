@@ -376,9 +376,9 @@ char *string_print(const char *fmt, ...)
 
 char *string_trim(const char *str)
 {
-    str += string_lskip(str, isspace);
-
-    return string_slice(str, 0, string_rskip(str, isspace));
+    return string_slice(str,
+                        string_lskip(str, isspace),
+                        string_rskip(str, isspace));
 }
 
 char *string_ltrim(const char *str)
