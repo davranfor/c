@@ -23,7 +23,10 @@ static size_t next_pow2(size_t size)
     size |= size >> 4;
     size |= size >> 8;
     size |= size >> 16;
-    size |= size >> 32;
+    if (sizeof size >= 8)
+    {
+        size |= size >> 32;
+    }
     return ++size;
 }
 
