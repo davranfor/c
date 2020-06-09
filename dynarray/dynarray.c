@@ -24,8 +24,7 @@ static size_t next_pow2(size_t size)
     size |= size >> 8;
     size |= size >> 16;
     size |= size >> 32;
-    size++;
-    return size;
+    return ++size;
 }
 
 static size_t next_size(size_t size)
