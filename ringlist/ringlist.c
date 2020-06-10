@@ -60,12 +60,12 @@ void *ringlist_pop(ringlist *list)
     {
         struct node *node = list->tail->next;
 
+        data = node->data;
         list->tail->next = node->next;
         if (--list->size == 0)
         {
             list->tail = NULL;
         }
-        data = node->data;
         free(node);
     }
     return data;
