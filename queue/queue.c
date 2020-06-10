@@ -104,12 +104,20 @@ void *queue_fetch(const queue *list, const void **iter)
 
 void *queue_head(const queue *list)
 {
-    return list->head;
+    if (list->head != NULL)
+    {
+        return list->head->data;
+    }
+    return NULL;
 }
 
 void *queue_tail(const queue *list)
 {
-    return list->tail;
+    if (list->tail != NULL)
+    {
+        return list->tail->data;
+    }
+    return NULL;
 }
 
 size_t queue_size(const queue *list)
