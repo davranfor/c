@@ -231,7 +231,11 @@ void *linklist_index(const linklist *list, size_t index)
 
 void *linklist_head(const linklist *list)
 {
-    return list->head;
+    if (list->head != NULL)
+    {
+        return list->head->data;
+    }
+    return NULL;
 }
 
 void *linklist_prev(const linklist *list, const void **iter)
@@ -294,7 +298,11 @@ void *linklist_next(const linklist *list, const void **iter)
 
 void *linklist_tail(const linklist *list)
 {
-    return list->tail;
+    if (list->tail != NULL)
+    {
+        return list->tail->data;
+    }
+    return NULL;
 }
 
 size_t linklist_size(const linklist *list)
