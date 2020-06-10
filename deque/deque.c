@@ -132,12 +132,20 @@ void *deque_fetch(const deque *list, const void **iter)
 
 void *deque_head(const deque *list)
 {
-    return list->head;
+    if (list->head != NULL)
+    {
+        return list->head->data;
+    }
+    return NULL;
 }
 
 void *deque_tail(const deque *list)
 {
-    return list->tail;
+    if (list->tail != NULL)
+    {
+        return list->tail->data;
+    }
+    return NULL;
 }
 
 size_t deque_size(const deque *list)
