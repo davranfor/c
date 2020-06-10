@@ -91,7 +91,11 @@ void *stack_fetch(const stack *list, const void **iter)
 
 void *stack_head(const stack *list)
 {
-    return list->head;
+    if (list->head != NULL)
+    {
+        return list->head->data;
+    }
+    return NULL;
 }
 
 size_t stack_size(const stack *list)
