@@ -61,8 +61,7 @@ void *ringlist_pop(ringlist *list)
         struct node *node = list->tail->next;
 
         list->tail->next = node->next;
-        list->size--;
-        if (list->size == 0)
+        if (--list->size == 0)
         {
             list->tail = NULL;
         }
