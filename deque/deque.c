@@ -91,11 +91,10 @@ void *deque_pop(deque *list)
 
         data = node->data;
         list->head = node->next;
-        if ((list->head == NULL) || (list->head->next == NULL))
+        if (--list->size <= 1)
         {
             list->tail = list->head;
         }
-        list->size--;
         free(node);
     }
     return data;
