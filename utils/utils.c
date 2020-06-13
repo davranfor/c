@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>
 #include <time.h>
 #include "utils.h"
 
@@ -616,5 +617,11 @@ int leap_years(int month, int year)
         years--;
     }
     return (years / 4) - (years / 100) + (years / 400);
+}
+
+/* Random value between 0 and range - 1 */
+int rrand(int range)
+{
+    return (int)((double)range * (rand() / (RAND_MAX + 1.0)));
 }
 
