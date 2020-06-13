@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
+#include <time.h>
 #include "utils.h"
 
 static void sample_strings(void)
@@ -134,12 +135,44 @@ static void sample_dates(void)
         days_diff(1, 2, 2000, 1, 2, 2004));
 }
 
+/* Knuth shuffle algorithm */
+static void randomize(int arr[], int size)
+{
+    while (size > 1)
+    {
+        int item = rrand(size--);
+        int temp = arr[size];
+
+        arr[size] = arr[item];
+        arr[item] = temp;
+    }
+}
+
+static void sample_misc(void)
+{
+    enum {N = 5};
+    int arr[N];
+
+    for (int iter = 0; iter < N; iter++)
+    {
+        arr[iter] = iter;
+    }
+    randomize(arr, N);
+    printf("Random numbers between 0 and %d:\n", N);
+    for (int iter = 0; iter < N; iter++)
+    {
+        printf("%d\n", arr[iter]);
+    }
+}
+
 int main(void)
 {
+    srand((unsigned)time(NULL));
     setlocale(LC_CTYPE, "");
     sample_strings();
     sample_files();
     sample_dates();
+    sample_misc();
     return 0;
 }
 
