@@ -78,13 +78,13 @@ int main(void)
         data->value = keytostr(data->key);
     }
     dynarray_sort(array, comp);
-    dynarray_reverse(array);
     data = &(struct data){.key = NELEMS / 2};
     data = dynarray_bsearch(array, &data, comp);
     if (data != NULL)
     {
         printf("Found: %d %s\n", data->key, data->value);
     }
+    dynarray_reverse(array);
     if (dynarray_resize(array, 10, delete) == NULL)
     {
         perror("dynarray_resize");
