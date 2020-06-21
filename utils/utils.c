@@ -619,6 +619,23 @@ int leap_years(int month, int year)
     return (years / 4) - (years / 100) + (years / 400);
 }
 
+int date_is_valid(int day, int month, int year)
+{
+    if (year < 0 || year > 9999)
+    {
+        return 0;
+    }
+    if (month < 1 || month > 12)
+    {
+        return 0;
+    }
+    if (day < 1 || day > month_days(month, year))
+    {
+        return 0;
+    }
+    return 1;
+}
+
 /* Random value between 0 and range - 1 */
 int rrand(int range)
 {

@@ -56,6 +56,7 @@ int week_of_year(int, int, int);
 int month_days(int, int);
 int year_is_leap(int);
 int leap_years(int, int);
+int date_is_valid(int, int, int);
 
 /* ************************************************************************* */
 /* Misc utilities                                                            */
