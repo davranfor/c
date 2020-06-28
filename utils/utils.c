@@ -392,6 +392,53 @@ char *string_rtrim(const char *str)
     return string_slice(str, 0, string_rskip(str, isspace));
 }
 
+char *string_format(double number, int decimals, char *separator)
+{
+	char buf[64];
+
+    if (decimals < 0)
+    {
+        decimals = 0;
+    }
+
+    int len = snprintf(buf, sizeof buf, "%.*f", decimals, number);
+    int real = (len - decimals - (decimals != 0) - (number < 0));
+    char *str = malloc((size_t)(len + (real / 3) + 1));
+
+    if (str == NULL)
+    {
+        return NULL;
+    }
+
+	char *p = buf;
+	char *q = str;
+
+    if (number < 0)
+    {
+        *q++ = *p++;
+    }
+	switch (real % 3)
+	{
+		do
+		{
+			*q++ = separator[0]; //FALLTHROUGH
+			case 0: *q++ = *p++; //FALLTHROUGH
+			case 2: *q++ = *p++; //FALLTHROUGH
+			case 1: *q++ = *p++; //FALLTHROUGH
+		} while ((*p != '\0') && (*p != '.'));
+	}
+	if (decimals != 0)
+	{
+	    *q++ = separator[1];
+        while ((*q++ = *++p));
+	}
+	else
+	{
+	    *q = '\0';
+    }
+	return str;
+}
+
 char *string_tokenize(char **str, int del)
 {
     char *res = *str, *ptr = res;

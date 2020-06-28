@@ -41,7 +41,22 @@ static void sample_strings(void)
         printf("<- 'ó' appears %zu times\n", string_count(str, "ó"));
         free(str);
     }
-    
+
+    double number = 1234567.890;
+
+    str = string_format(number, 2, ".,");
+    if (str != NULL)
+    {
+        printf("%.3f as money = %s\n", number, str);
+        free(str);
+    }
+    str = string_format(number, 0, ".");
+    if (str != NULL)
+    {
+        printf("%.3f as real = %s\n", number, str);
+        free(str);
+    }
+
     char arr[] = "one,two,three";
     char *ptr = arr;
 
