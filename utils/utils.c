@@ -394,7 +394,7 @@ char *string_rtrim(const char *str)
 
 char *string_format(double number, int decimals, char *separator)
 {
-	char buf[64];
+    char buf[64];
 
     if (decimals < 0)
     {
@@ -410,33 +410,33 @@ char *string_format(double number, int decimals, char *separator)
         return NULL;
     }
 
-	char *p = buf;
-	char *q = str;
+    char *p = buf;
+    char *q = str;
 
     if (number < 0)
     {
         *q++ = *p++;
     }
-	switch (real % 3)
-	{
-		do
-		{
-			*q++ = separator[0]; //FALLTHROUGH
-			case 0: *q++ = *p++; //FALLTHROUGH
-			case 2: *q++ = *p++; //FALLTHROUGH
-			case 1: *q++ = *p++; //FALLTHROUGH
-		} while ((*p != '\0') && (*p != '.'));
-	}
-	if (decimals != 0)
-	{
-	    *q++ = separator[1];
-        while ((*q++ = *++p));
-	}
-	else
-	{
-	    *q = '\0';
+    switch (real % 3)
+    {
+        do
+        {
+            *q++ = separator[0]; //FALLTHROUGH
+            case 0: *q++ = *p++; //FALLTHROUGH
+            case 2: *q++ = *p++; //FALLTHROUGH
+            case 1: *q++ = *p++; //FALLTHROUGH
+        } while ((*p != '\0') && (*p != '.'));
     }
-	return str;
+    if (decimals != 0)
+    {
+        *q++ = separator[1];
+        while ((*q++ = *++p));
+    }
+    else
+    {
+        *q = '\0';
+    }
+    return str;
 }
 
 char *string_tokenize(char **str, int del)
