@@ -417,16 +417,13 @@ char *string_format(double number, int decimals, char *separator)
     {
         *q++ = *p++;
     }
-    switch (real % 3)
+    switch (real % 3) do
     {
-        do
-        {
-            *q++ = separator[0]; //FALLTHROUGH
-            case 0: *q++ = *p++; //FALLTHROUGH
-            case 2: *q++ = *p++; //FALLTHROUGH
-            case 1: *q++ = *p++; //FALLTHROUGH
-        } while ((*p != '\0') && (*p != '.'));
-    }
+        *q++ = separator[0]; //FALLTHROUGH
+        case 0: *q++ = *p++; //FALLTHROUGH
+        case 2: *q++ = *p++; //FALLTHROUGH
+        case 1: *q++ = *p++; //FALLTHROUGH
+    } while ((*p != '\0') && (*p != '.'));
     if (decimals != 0)
     {
         *q++ = separator[1];
