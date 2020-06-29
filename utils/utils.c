@@ -391,7 +391,7 @@ char *string_rtrim(const char *str)
     return string_slice(str, 0, string_rskip(str, isspace));
 }
 
-size_t string_format(char *str, double value, int decimals, const char *separators)
+int string_format(char *str, double value, int decimals, const char *separators)
 {
     if (decimals < 0)
     {
@@ -427,7 +427,7 @@ size_t string_format(char *str, double value, int decimals, const char *separato
     {
         *ptr = '\0';
     }
-    return (size_t)(ptr - str);
+    return (int)(ptr - str);
 }
 
 char *string_tokenize(char **str, int del)
