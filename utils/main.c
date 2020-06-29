@@ -43,19 +43,12 @@ static void sample_strings(void)
     }
 
     double number = 1234567.890;
+    char money[64];
 
-    str = string_format(number, 2, ".,");
-    if (str != NULL)
-    {
-        printf("%.3f as money = %s\n", number, str);
-        free(str);
-    }
-    str = string_format(number, 0, ".");
-    if (str != NULL)
-    {
-        printf("%.3f as real = %s\n", number, str);
-        free(str);
-    }
+    string_format(money, number, 2, ",.");
+    printf("%.3f as money = %s\n", number, money);
+    string_format(money, number, 0, ",");
+    printf("%.3f as real = %s\n", number, money);
 
     char arr[] = "one,two,three";
     char *ptr = arr;
@@ -73,7 +66,7 @@ static void sample_files(void)
     const char *path = "test.txt";
     size_t size;
 
-    size = file_write(path, "Enter text (Press CTRL + D to stop)\n>", FILE_TRUNCATE);
+    size = file_write(path, "Enter text (Press CTRL + D to stop)\n", FILE_TRUNCATE);
     if (size == FILE_WRITE_ERROR)
     {
         perror("file_write");
@@ -108,7 +101,6 @@ static void sample_files(void)
         // Restart stdin after EOF
         clearerr(stdin);
     }
-    puts("");
 
     char buf[10];
 
@@ -122,7 +114,6 @@ static void sample_files(void)
         perror("file_read_buffer");
         fprintf(stderr, "File error #%d\n", file_error(stdin));
     }
-    puts("");
 }
 
 static void sample_dates(void)

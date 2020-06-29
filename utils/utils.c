@@ -377,9 +377,8 @@ char *string_print(const char *fmt, ...)
 
 char *string_trim(const char *str)
 {
-    return string_slice(str,
-                        string_lskip(str, isspace),
-                        string_rskip(str, isspace));
+    str += string_lskip(str, isspace);
+    return string_slice(str, 0, string_rskip(str, isspace));
 }
 
 char *string_ltrim(const char *str)
@@ -392,48 +391,43 @@ char *string_rtrim(const char *str)
     return string_slice(str, 0, string_rskip(str, isspace));
 }
 
-char *string_format(double number, int decimals, char *separator)
+size_t string_format(char *str, double value, int decimals, const char *separators)
 {
-    char buf[64];
-
     if (decimals < 0)
     {
         decimals = 0;
     }
 
-    int len = snprintf(buf, sizeof buf, "%.*f", decimals, number);
-    int real = (len - decimals - (decimals != 0) - (number < 0));
-    char *str = malloc((size_t)(len + (real / 3) + 1));
+    char buf[64];
+    int len = snprintf(buf, sizeof buf, "%.*f", decimals, value);
+    int digits = (len - decimals - (decimals != 0) - (value < 0));
+    char *ptr = str;
+    char *end = buf;
 
-    if (str == NULL)
+    if (value < 0)
     {
-        return NULL;
+        *ptr++ = *end++;
     }
-
-    char *p = buf;
-    char *q = str;
-
-    if (number < 0)
+    switch (digits % 3) do
     {
-        *q++ = *p++;
-    }
-    switch (real % 3) do
-    {
-        *q++ = separator[0]; //FALLTHROUGH
-        case 0: *q++ = *p++; //FALLTHROUGH
-        case 2: *q++ = *p++; //FALLTHROUGH
-        case 1: *q++ = *p++; //FALLTHROUGH
-    } while ((*p != '\0') && (*p != '.'));
+        *ptr++ = separators[0];  //FALLTHROUGH
+        case 0: *ptr++ = *end++; //FALLTHROUGH
+        case 2: *ptr++ = *end++; //FALLTHROUGH
+        case 1: *ptr++ = *end++; //FALLTHROUGH
+    } while ((*end != '.') && (*end != '\0'));
     if (decimals != 0)
     {
-        *q++ = separator[1];
-        while ((*q++ = *++p));
+        *ptr++ = separators[1];
+        while ((*ptr = *++end))
+        {
+            ptr++;
+        }
     }
     else
     {
-        *q = '\0';
+        *ptr = '\0';
     }
-    return str;
+    return (size_t)(ptr - str);
 }
 
 char *string_tokenize(char **str, int del)

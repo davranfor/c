@@ -33,8 +33,8 @@ char *string_print(const char *, ...);
 char *string_trim(const char *);
 char *string_ltrim(const char *);
 char *string_rtrim(const char *);
-char *string_format(double, int, char *);
 /* Functions working inplace */
+size_t string_format(char *, double, int, const char *);
 char *string_tokenize(char **, int);
 size_t string_length(const char *);
 size_t string_count(const char *, const char *);
