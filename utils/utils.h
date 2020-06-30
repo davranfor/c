@@ -10,9 +10,9 @@
 #define FILE_TRUNCATE 0
 #define FILE_APPEND 1
 
-#define FILE_WRITE_ERROR ((size_t)-1)
+#define FILE_ERROR ((size_t)-1)
 
-long file_get_size(const char *);
+size_t file_get_size(const char *);
 char *file_read(const char *);
 char *file_read_with_prefix(const char *, const char *);
 char *file_read_with_suffix(const char *, const char *);

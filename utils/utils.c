@@ -10,104 +10,82 @@
 
 #define FILE_LINE_MAX 256
 
-static long f_get_size(FILE *file)
+static size_t file_size(FILE *file)
 {
     if (fseek(file, 0L, SEEK_END) == -1)
     {
-        return -1;
+        return FILE_ERROR;
     }
 
     long size = ftell(file);
 
     if (size == -1)
     {
-        return -1;
+        return FILE_ERROR;
     }
     if (fseek(file, 0L, SEEK_SET) == -1)
     {
-        return -1;
+        return FILE_ERROR;
     }
-    return size;
+    return (size_t)size;
 }
 
-long file_get_size(const char *path)
+size_t file_get_size(const char *path)
 {
     FILE *file = fopen(path, "r");
 
     if (file == NULL)
     {
-        return -1;
+        return FILE_ERROR;
     }
     
-    long size = f_get_size(file);
+    size_t size = file_size(file);
 
     fclose(file);
     return size;
 }
 
-static char *f_get_mem(FILE *file, size_t size, size_t prefix, size_t suffix)
+static char *file_data(FILE *file, const char *prefix, const char *suffix)
 {
-    char *str = malloc(size + prefix + suffix + 1);
+    size_t size = file_size(file);
+
+    if (size == FILE_ERROR)
+    {
+        return NULL;
+    }
+
+    size_t szpre = 0;
+    size_t szsuf = 0;
+
+    if (prefix != NULL)
+    {
+        szpre = strlen(prefix); 
+    }
+    if (suffix != NULL)
+    {
+        szsuf = strlen(suffix); 
+    }
+
+    char *str = malloc(size + szpre + szsuf + 1);
 
     if (str == NULL)
     {
         return NULL;
     }
-    if (fread(str + prefix, 1, size, file) != size)
+    if (fread(str + szpre, 1, size, file) != size)
     {
         free(str);
         return NULL;
     }
-    str[size + prefix + suffix] = '\0';
-    return str;
-}
-
-static char *f_read(FILE *file)
-{
-    long size = f_get_size(file);
-
-    if (size == -1)
+    if (szpre > 0)
     {
-        return NULL;
+        memcpy(str, prefix, szpre);
     }
-    return f_get_mem(file, (size_t)size, 0, 0);
-}
-
-static char *f_read_with_prefix(FILE *file, const char *prefix)
-{
-    long size = f_get_size(file);
-
-    if (size == -1)
+    if (szsuf > 0)
     {
-        return NULL;
+        memcpy(str + size, suffix, szsuf);
     }
-
-    size_t len = strlen(prefix);
-    char *str = f_get_mem(file, (size_t)size, len, 0);
-
-    if (str != NULL)
-    {
-        memcpy(str, prefix, len);
-    }
-    return str;
-}
-
-static char *f_read_with_suffix(FILE *file, const char *suffix)
-{
-    long size = f_get_size(file);
-
-    if (size == -1)
-    {
-        return NULL;
-    }
-
-    size_t len = strlen(suffix);
-    char *str = f_get_mem(file, (size_t)size, 0, len);
-
-    if (str != NULL)
-    {
-        memcpy(str + size, suffix, len);
-    }
+    str[size + szpre + szsuf] = '\0';
     return str;
 }
 
@@ -120,7 +98,7 @@ char *file_read(const char *path)
         return NULL;
     }
 
-    char *str = f_read(file);
+    char *str = file_data(file, NULL, NULL);
 
     fclose(file);
     return str;
@@ -135,7 +113,7 @@ char *file_read_with_prefix(const char *path, const char *prefix)
         return NULL;
     }
 
-    char *str = f_read_with_prefix(file, prefix);
+    char *str = file_data(file, prefix, NULL);
 
     fclose(file);
     return str;
@@ -150,7 +128,7 @@ char *file_read_with_suffix(const char *path, const char *suffix)
         return NULL;
     }
 
-    char *str = f_read_with_suffix(file, suffix);
+    char *str = file_data(file, NULL, suffix);
 
     fclose(file);
     return str;
@@ -217,14 +195,14 @@ size_t file_write(const char *path, const char *str, int append)
 
     if (file == NULL)
     {
-        return FILE_WRITE_ERROR;
+        return FILE_ERROR;
     }
 
     size_t size = strlen(str);
 
     if (fwrite(str, 1, size, file) != size)
     {
-        size = FILE_WRITE_ERROR;
+        size = FILE_ERROR;
     }
     fclose(file);
     return size;
@@ -430,7 +408,7 @@ int string_format(char *str, double value, int decimals, const char *separators)
     return (int)(ptr - str);
 }
 
-char *string_tokenize(char **str, int del)
+char *string_tokenize(char **str, int delimiter)
 {
     char *res = *str, *ptr = res;
     
@@ -438,14 +416,14 @@ char *string_tokenize(char **str, int del)
     {
         return NULL;
     }
-    while ((*ptr != del) && (*ptr != '\0'))
+    while ((*ptr != delimiter) && (*ptr != '\0'))
     {
         ptr++;
     }
     if (*ptr != '\0')
     {
-        *ptr = '\0';
         *str = ptr + 1;
+        *ptr = '\0';
     }
     else
     {

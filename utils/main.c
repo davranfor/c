@@ -67,7 +67,7 @@ static void sample_files(void)
     size_t size;
 
     size = file_write(path, "Enter text (Press CTRL + D to stop)\n", FILE_TRUNCATE);
-    if (size == FILE_WRITE_ERROR)
+    if (size == FILE_ERROR)
     {
         perror("file_write");
         fprintf(stderr, "%s\n", path);
