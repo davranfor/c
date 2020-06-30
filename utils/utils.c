@@ -388,11 +388,11 @@ int string_format(char *str, double value, int decimals, const char *separators)
     }
     switch (digits % 3) do
     {
-        *ptr++ = separators[0];  // FALLTHROUGH
-        case 0: *ptr++ = *end++; // FALLTHROUGH
-        case 2: *ptr++ = *end++; // FALLTHROUGH
-        case 1: *ptr++ = *end++; // FALLTHROUGH
-    } while (((end - buf) < digits) && (*end != '\0'));
+        *ptr++ = separators[0];  //FALLTHROUGH
+        case 0: *ptr++ = *end++; //FALLTHROUGH
+        case 2: *ptr++ = *end++; //FALLTHROUGH
+        case 1: *ptr++ = *end++; //FALLTHROUGH
+    } while ((*end != '.') && (*end != '\0'));
     if (decimals != 0)
     {
         *ptr++ = separators[1];
