@@ -54,38 +54,38 @@ static char *file_data(FILE *file, const char *prefix, const char *suffix)
         return NULL;
     }
 
-    size_t szpre = 0;
-    size_t szsuf = 0;
+    size_t size_prefix = 0;
+    size_t size_suffix = 0;
 
     if (prefix != NULL)
     {
-        szpre = strlen(prefix); 
+        size_prefix = strlen(prefix); 
     }
     if (suffix != NULL)
     {
-        szsuf = strlen(suffix); 
+        size_suffix = strlen(suffix); 
     }
 
-    char *str = malloc(size + szpre + szsuf + 1);
+    char *str = malloc(size + size_prefix + size_suffix + 1);
 
     if (str == NULL)
     {
         return NULL;
     }
-    if (fread(str + szpre, 1, size, file) != size)
+    if (fread(str + size_prefix, 1, size, file) != size)
     {
         free(str);
         return NULL;
     }
-    if (szpre > 0)
+    if (size_prefix > 0)
     {
-        memcpy(str, prefix, szpre);
+        memcpy(str, prefix, size_prefix);
     }
-    if (szsuf > 0)
+    if (size_suffix > 0)
     {
-        memcpy(str + size, suffix, szsuf);
+        memcpy(str + size, suffix, size_suffix);
     }
-    str[size + szpre + szsuf] = '\0';
+    str[size + size_prefix + size_suffix] = '\0';
     return str;
 }
 
@@ -388,11 +388,11 @@ int string_format(char *str, double value, int decimals, const char *separators)
     }
     switch (digits % 3) do
     {
-        *ptr++ = separators[0];  //FALLTHROUGH
-        case 0: *ptr++ = *end++; //FALLTHROUGH
-        case 2: *ptr++ = *end++; //FALLTHROUGH
-        case 1: *ptr++ = *end++; //FALLTHROUGH
-    } while ((*end != '.') && (*end != '\0'));
+        *ptr++ = separators[0];  // FALLTHROUGH
+        case 0: *ptr++ = *end++; // FALLTHROUGH
+        case 2: *ptr++ = *end++; // FALLTHROUGH
+        case 1: *ptr++ = *end++; // FALLTHROUGH
+    } while (((end - buf) < digits) && (*end != '\0'));
     if (decimals != 0)
     {
         *ptr++ = separators[1];
@@ -637,15 +637,15 @@ int leap_years(int month, int year)
 
 int date_is_valid(int day, int month, int year)
 {
-    if (year < 0 || year > 9999)
+    if ((year < 0) || (year > 9999))
     {
         return 0;
     }
-    if (month < 1 || month > 12)
+    if ((month < 1) || (month > 12))
     {
         return 0;
     }
-    if (day < 1 || day > month_days(month, year))
+    if ((day < 1) || (day > month_days(month, year)))
     {
         return 0;
     }
