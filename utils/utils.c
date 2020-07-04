@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <limits.h>
+#include <math.h>
 #include <time.h>
 #include "utils.h"
 
@@ -371,46 +371,60 @@ char *string_rtrim(const char *str)
 
 int string_format(char *str, double value, int decimals, const char *separators)
 {
+    char *ptr = str;
+
+    if (value < 0)
+    {
+        value = fabs(value);
+        *ptr++ = '-';
+    }
     if (decimals < 0)
     {
         decimals = 0;
     }
 
-    char buf[64];
-    int len = snprintf(buf, sizeof buf, "%.*f", decimals, value);
-    int digits = (len - decimals - (decimals != 0) - (value < 0));
-    char *ptr = str;
-    char *end = buf;
+    double exponent = pow(10, decimals);
+    double integral, fractional;
 
-    if (value < 0)
+    value = round(value * exponent) / exponent;
+    fractional = modf(value, &integral);
+    fractional = round(fractional * exponent);
+
+    int digits = 1;
+
+    if (integral > 0)
     {
-        *ptr++ = *end++;
+        digits += (int)log10(integral);
+        digits += digits / 3;
     }
-    switch (digits % 3) do
+    ptr += digits;
+    for (int count = 1; count <= digits; count++)
     {
-        *ptr++ = separators[0];  //FALLTHROUGH
-        case 0: *ptr++ = *end++; //FALLTHROUGH
-        case 2: *ptr++ = *end++; //FALLTHROUGH
-        case 1: *ptr++ = *end++; //FALLTHROUGH
-    } while ((*end != '.') && (*end != '\0'));
-    if (decimals != 0)
+        if ((count % 4) == 0)
+        {
+            ptr[-count] = separators[0];
+            count++;
+        }
+        ptr[-count] = (char)('0' + fmod(integral, 10));
+        integral /= 10;
+    }
+    if (decimals > 0)
     {
         *ptr++ = separators[1];
-        while ((*ptr = *++end))
+        for (int count = decimals - 1; count >= 0; count--)
         {
-            ptr++;
+            ptr[count] = (char)('0' + fmod(fractional, 10));
+            fractional /= 10;
         }
+        ptr += decimals;
     }
-    else
-    {
-        *ptr = '\0';
-    }
+    *ptr = '\0';
     return (int)(ptr - str);
 }
 
 char *string_tokenize(char **str, int delimiter)
 {
-    char *res = *str, *ptr = res;
+    char *result = *str, *ptr = *str;
     
     if (ptr == NULL)
     {
@@ -429,7 +443,7 @@ char *string_tokenize(char **str, int delimiter)
     {
         *str = NULL;
     }
-    return res;
+    return result;
 }
 
 size_t string_length(const char *str)
