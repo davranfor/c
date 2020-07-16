@@ -29,9 +29,9 @@ typedef struct
 {
     gui_window window;
     gui_font font;
-} gui;
+} gui_app;
 
-void gui_main(gui *);
+void gui_main(gui_app *);
 
 #endif /* GUI_H */
 
