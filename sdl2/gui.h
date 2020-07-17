@@ -1,6 +1,8 @@
 #ifndef GUI_H
 #define GUI_H
 
+typedef void *callback_ptr(void *);
+
 typedef struct
 {
     unsigned char r;

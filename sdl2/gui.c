@@ -10,7 +10,7 @@ static SDL_Renderer *renderer = NULL;
 
 static TTF_Font *font = NULL;
 
-static void window_init(void)
+static void sdl_init(void)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0)
     {
@@ -30,9 +30,23 @@ static void window_init(void)
         fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (renderer == NULL)
+    {
+        fprintf(stderr, "SDL_CreateRenderer: %s\n", SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
+    SDL_SetRenderDrawColor(
+        renderer,
+        app->window.color.r,
+        app->window.color.g,
+        app->window.color.b,
+        app->window.color.a
+    );
+    SDL_RenderClear(renderer);
 }
 
-static void font_init(void)
+static void ttf_init(void)
 {
     if (TTF_Init() != 0)
     {
@@ -48,40 +62,16 @@ static void font_init(void)
     TTF_SizeUTF8(font, "g", &app->font.width, &app->font.height);
 }
 
-static void renderer_init(void)
-{
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-    SDL_SetRenderDrawColor(
-        renderer,
-        app->window.color.r,
-        app->window.color.g,
-        app->window.color.b,
-        app->window.color.a
-    );
-    SDL_RenderClear(renderer);
-}
-
 static void init(void)
 {
-    window_init();
-    font_init();
-    renderer_init();
+    sdl_init();
+    ttf_init();
 }
 
 static void *draw_rect(void *data)
 {
     SDL_Rect *rect = data;
 
-    if (rect->h + rect->w >= app->window.height)
-    {
-        SDL_SetRenderDrawColor(renderer, 128, 128, 128, 128);
-        SDL_RenderFillRect(renderer, rect);
-        rect->x = 0;
-        rect->y = 0;
-        rect->w = 0;
-        rect->h = 0;
-        return NULL;
-    }
     SDL_SetRenderDrawColor(
         renderer,
         app->window.color.r,
@@ -89,27 +79,46 @@ static void *draw_rect(void *data)
         app->window.color.b,
         app->window.color.a
     );
+    if (rect->x + rect->w >= app->window.width)
+    {
+        int mid = app->window.width / 2;
+
+        SDL_RenderFillRect(
+            renderer,
+            &(SDL_Rect){mid, mid, mid, mid}
+        );
+        rect->x = 0;
+        rect->y = 0;
+        rect->w = 0;
+        rect->h = 0;
+        return NULL;
+    }
     SDL_RenderFillRect(renderer, rect);
     rect->x += 5;
     rect->y += 5;
     rect->w += 5;
     rect->h += 5;
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_SetRenderDrawColor(renderer, 64, 64, 64, 0);
     SDL_RenderFillRect(renderer, rect);
+    SDL_SetRenderDrawColor(renderer, 128, 128, 128,0);
+    SDL_RenderFillRect(
+        renderer,
+        &(SDL_Rect)
+        {
+            app->window.width - rect->x,
+            app->window.height - rect->y,
+            rect->w,
+            rect->h
+        }
+    );
     SDL_RenderPresent(renderer);
     return NULL;
 }
-
-typedef void *callback_ptr(void *);
 
 static Uint32 callback(Uint32 interval, void *param)
 {
     SDL_Event event;
     SDL_UserEvent userevent;
-
-    /* In this example, our callback pushes a function
-    into the queue, and causes our callback to be called again at the
-    same interval: */
 
     userevent.type = SDL_USEREVENT;
     userevent.code = 0;
@@ -126,7 +135,7 @@ static Uint32 callback(Uint32 interval, void *param)
 static void loop(void)
 {
     SDL_Rect rect = {0, 0, 0, 0};
-    SDL_TimerID timer = SDL_AddTimer(30, callback, &rect);
+    SDL_TimerID timer = SDL_AddTimer(50, callback, &rect);
     SDL_Event event;
     int quit = 0;
 
@@ -138,8 +147,6 @@ static void loop(void)
             {
                 case SDL_USEREVENT:
                 {
-                    // and now we can call the function we wanted to call in the timer but couldn't 
-                    // because of the multithreading problems
                     callback_ptr *func = (callback_ptr *)(uintptr_t)event.user.data1;
                     func(event.user.data2);
                     break;
