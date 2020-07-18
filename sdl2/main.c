@@ -1,18 +1,18 @@
 #include <locale.h>
-#include "gui.h"
+#include "sdl.h"
 
 int main(void)
 {
     setlocale(LC_CTYPE, "");
 
-    gui_app app =
+    sdl_app app =
     {
         .window =
         {
             .title = "Demo SDL2",
             .width = 500,
             .height = 500,
-            .color = {232, 232, 232, 0}
+            .color = {232, 232, 232, 255}
         },
         .font =
         {
@@ -21,7 +21,7 @@ int main(void)
         }
     };
 
-    gui_main(&app);
+    sdl_main(&app);
     return 0;
 }
 
