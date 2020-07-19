@@ -1,9 +1,12 @@
 #include <locale.h>
+#include <stdlib.h>
+#include <time.h>
 #include "sdl.h"
 
 int main(void)
 {
     setlocale(LC_CTYPE, "");
+    srand((unsigned)time(NULL));
 
     sdl_app app =
     {
@@ -12,7 +15,7 @@ int main(void)
             .title = "Demo SDL2",
             .width = 500,
             .height = 500,
-            .color = {232, 232, 232, 255}
+            .color = {218, 218, 218, 255}
         },
         .font =
         {
