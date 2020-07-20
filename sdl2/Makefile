@@ -9,7 +9,7 @@ main.o: sdl.h
 gui.o: sdl.h
 
 sdl2: $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o sdl2 `sdl2-config --cflags --libs` -lSDL2_ttf
+	$(CC) $(CFLAGS) $(OBJECTS) -o sdl2 `sdl2-config --cflags --libs` -lSDL2_image -lSDL2_ttf
 
 clean:
 	rm -f *.o sdl2
