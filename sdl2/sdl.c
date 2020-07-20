@@ -291,6 +291,7 @@ static void sdl_close(void)
         SDL_DestroyWindow(window);
     }
     SDL_Quit();
+    IMG_Quit();
 
     if (font != NULL)
     {
