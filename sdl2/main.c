@@ -1,6 +1,7 @@
 #include <locale.h>
 #include <stdlib.h>
 #include <time.h>
+#include "game.h"
 #include "sdl.h"
 
 int main(void)
@@ -8,15 +9,12 @@ int main(void)
     setlocale(LC_CTYPE, "");
     srand((unsigned)time(NULL));
 
-    sdl_app app =
+    sdl_game game =
     {
-        .window =
-        {
-            .title = "Demo SDL2",
-            .width = 500,
-            .height = 500,
-            .color = {218, 218, 218, 255}
-        },
+        .title = "Mirlo cagón vs. Perro flauta",
+        .width = 1200,
+        .height = 650,
+        .color = {255, 255, 255, 0},
         .font =
         {
             .name = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
@@ -24,7 +22,7 @@ int main(void)
         }
     };
 
-    sdl_main(&app);
+    sdl_main(&game);
     return 0;
 }
 
