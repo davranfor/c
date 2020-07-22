@@ -1,7 +1,5 @@
 #include <locale.h>
-#include <stdlib.h>
 #include <time.h>
-#include <SDL2/SDL.h>
 #include "types.h"
 #include "game.h"
 

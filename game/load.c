@@ -1,5 +1,3 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
 #include "types.h"
 #include "load.h"
 
@@ -171,8 +169,8 @@ static void draw_players(void)
     set_color(&color3);
     draw_rect(rect.x, size - rect.y - rect.h);
     draw_rect(size - rect.x - rect.w, size - rect.y - rect.h);
-    draw_player(&player1, rect.x + 10, size - rect.y - rect.h - 10);
-    draw_player(&player2, size - rect.x - rect.w + 10, size - rect.y - rect.h - 10);
+    draw_player(&player2, rect.x + 10, size - rect.y - rect.h - 10);
+    draw_player(&player1, size - rect.x - rect.w + 10, size - rect.y - rect.h - 10);
     SDL_RenderPresent(renderer);
 }
 
