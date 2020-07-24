@@ -1,7 +1,7 @@
 #ifndef PLAY_H
 #define PLAY_H
 
-callback_t *game_play(game_t *);
+void game_play(game_t *, callback_t *task[]);
 
 #endif /* PLAY_H */
 

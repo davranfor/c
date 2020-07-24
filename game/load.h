@@ -1,7 +1,7 @@
 #ifndef LOAD_H
 #define LOAD_H
 
-callback_t *game_load(game_t *);
+void game_load(game_t *, callback_t *task[]);
 
 #endif /* LOAD_H */
 

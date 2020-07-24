@@ -5,8 +5,6 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
-typedef void *callback_t(void *);
-
 typedef struct
 {
     const char *name;
@@ -21,9 +19,9 @@ typedef struct
     const char *title;
     int width, height;
     font_t font;
-    int state;
-    void (*change_state)(void);
 } game_t;
+
+typedef int (callback_t)(game_t *);
 
 #endif /* TYPES_H */
 

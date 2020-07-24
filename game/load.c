@@ -13,7 +13,7 @@ typedef struct
 static player_t player1;
 static player_t player2;
 
-static SDL_Rect rect = {0, 0, 0, 0};
+static SDL_Rect rect;
 
 static SDL_Color color0 = {89 - 32, 130 - 32, 210 - 32, 0};
 static SDL_Color color1 = {89     , 130,      210,      0};
@@ -25,8 +25,6 @@ static const int size = 500;
 static int xoffset = 0;
 static int yoffset = 0;
 
-static int stopped = 0;
-
 static void load_player(player_t *player, const char *filename)
 {
     SDL_Surface *surface;
@@ -34,13 +32,13 @@ static void load_player(player_t *player, const char *filename)
     surface = IMG_Load(filename);
     if (surface == NULL)
     {
-        fprintf(stderr, "IMG_Load: %s\n", IMG_GetError());
+        SDL_Log("IMG_Load: %s\n", IMG_GetError());
         exit(EXIT_FAILURE);
     }
     player->texture = SDL_CreateTextureFromSurface(renderer, surface);
     if (player->texture == NULL)
     {
-        fprintf(stderr, "SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
+        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
     player->w = surface->w;
@@ -52,6 +50,15 @@ static void load_resources(void)
 {
     load_player(&player1, "img/player1.png");
     load_player(&player2, "img/player2.png");
+}
+
+static void init(game_t *game)
+{
+    renderer = game->renderer;
+    texture = game->texture;
+    xoffset = game->width / 2 - size / 2;
+    yoffset = game->height / 2 - size / 2;
+    load_resources();
 }
 
 static void set_color(const SDL_Color *color)
@@ -144,6 +151,14 @@ static void resize_rects(void)
     }
 }
 
+static void reset_rects(void)
+{
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = 0;
+    rect.h = 0;
+}
+
 static void draw_rects(void)
 {
     set_color(&color0);
@@ -176,26 +191,23 @@ static void draw_players(void)
 
 static int must_stop(void)
 {
-    return (rect.x >= size / 2) && (rect.w <= player1.w + 20);
+    return (rect.x > size / 2) && (rect.w <= player1.w + 20);
 }
 
-static void stop_state(game_t *game)
+static int start(game_t *game)
 {
-    stopped = 1;
-    SDL_Delay(5000);
-    game->change_state();
+    (void)game;
+    reset_rects();
+    return 0;
 }
 
-static void *draw(void *game)
+static int draw(game_t *game)
 {
-    if (stopped)
-    {
-        return NULL;
-    }
+    (void)game;
     if (must_stop())
     {
         draw_players();
-        stop_state(game);
+        return 1;
     }
     else
     {
@@ -203,16 +215,30 @@ static void *draw(void *game)
         resize_rects();
         draw_rects();
     }
-    return NULL;
+    return 0;
 }
 
-callback_t *game_load(game_t *game)
+static int stop(game_t *game)
 {
-    renderer = game->renderer;
-    texture = game->texture;
-    xoffset = game->width / 2 - size / 2;
-    yoffset = game->height / 2 - size / 2;
-    load_resources();
-    return draw;
+    (void)game;
+    SDL_Delay(1000);
+
+    static int counter = 0;
+
+    SDL_Log("stop loading");
+    if (++counter < 3)
+    {
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
+        return 1;
+    }
+    return 0;
+}
+
+void game_load(game_t *game, callback_t *task[])
+{
+    init(game);
+    task[0] = start;
+    task[1] = draw;
+    task[2] = stop;
 }
 

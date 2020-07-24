@@ -4,38 +4,31 @@
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *texture = NULL;
 
-static int stopped = 0;
-
-static int must_stop(void)
+static void init(game_t *game)
 {
-    return 1;
-}
-
-static void stop_state(game_t *game)
-{
-    stopped = 1;
-    game->change_state();
-}
-
-static void *draw(void *game)
-{
-    if (stopped)
-    {
-        return NULL;
-    }
-    if (must_stop())
-    {
-        puts("playing");
-        stop_state(game);
-    }
-    return NULL;
-}
-
-callback_t *game_play(game_t *game)
-{
-    (void)game;
     renderer = game->renderer;
     texture = game->texture;
-    return draw;
+}
+
+static int start(game_t *game)
+{
+    (void)game;
+    SDL_Log("start playing");
+    return 0;
+}
+
+static int stop(game_t *game)
+{
+    (void)game;
+    SDL_Log("stop playing");
+    return 0;
+}
+
+void game_play(game_t *game, callback_t *task[])
+{
+    init(game);
+    task[0] = start;
+    task[1] = NULL;
+    task[2] = stop;
 }
 
