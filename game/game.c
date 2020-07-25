@@ -1,6 +1,6 @@
 #include <assert.h>
 #include "types.h"
-#include "task.h"
+#include "handler.h"
 #include "game.h"
 
 static game_t *game = NULL;

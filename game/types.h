@@ -21,7 +21,23 @@ typedef struct
     font_t font;
 } game_t;
 
+enum game_states
+{
+    STATE_START,
+    STATE_DRAW,
+    STATE_STOP,
+    STATES
+};
+
 typedef int (callback_t)(game_t *);
+
+typedef struct
+{
+    SDL_Texture *texture;
+    int x, y, w, h;
+} bitmap_t;
+
+void bitmap_load(bitmap_t *, SDL_Renderer *renderer, const char *);
 
 #endif /* TYPES_H */
 

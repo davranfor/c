@@ -4,14 +4,9 @@
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *texture = NULL;
 
-typedef struct
-{
-    SDL_Texture *texture;
-    int w, h;
-} player_t;
-
-static player_t player1;
-static player_t player2;
+static bitmap_t player1;
+static bitmap_t player2;
+static bitmap_t title;
 
 static SDL_Rect rect;
 
@@ -25,31 +20,11 @@ static const int size = 500;
 static int xoffset = 0;
 static int yoffset = 0;
 
-static void load_player(player_t *player, const char *filename)
-{
-    SDL_Surface *surface;
-
-    surface = IMG_Load(filename);
-    if (surface == NULL)
-    {
-        SDL_Log("IMG_Load: %s\n", IMG_GetError());
-        exit(EXIT_FAILURE);
-    }
-    player->texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (player->texture == NULL)
-    {
-        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    player->w = surface->w;
-    player->h = surface->h;
-    SDL_FreeSurface(surface);
-}
-
 static void load_resources(void)
 {
-    load_player(&player1, "img/player1.png");
-    load_player(&player2, "img/player2.png");
+    bitmap_load(&player1, renderer, "img/player1.png");
+    bitmap_load(&player2, renderer, "img/player2.png");
+    bitmap_load(&title, renderer, "img/title.png");
 }
 
 static void init(game_t *game)
@@ -90,7 +65,7 @@ static void clear_rect(int x, int y)
     );
 }
 
-static void draw_rect(int x, int y)
+static void fill_rect(int x, int y)
 {
     SDL_Rect area =
     {
@@ -106,22 +81,48 @@ static void draw_rect(int x, int y)
     );
 }
 
-static void draw_player(const player_t *player, int x, int y)
+static void draw_player(const bitmap_t *bitmap, int x, int y)
 {
     SDL_Rect area =
     {
         x + xoffset,
         y + yoffset,
-        player->w,
-        player->h
+        bitmap->w,
+        bitmap->h
     };
 
     SDL_RenderCopy(
         renderer,
-        player->texture,
+        bitmap->texture,
         NULL,
         &area
     );
+}
+
+static void draw_title(const bitmap_t *bitmap)
+{
+    SDL_Rect area =
+    {
+        (size / 2 + xoffset) - (bitmap->w / 2),
+        (size / 2 + yoffset) - (bitmap->h / 2),
+        bitmap->w,
+        bitmap->h
+    };
+
+    SDL_RenderCopy(
+        renderer,
+        bitmap->texture,
+        NULL,
+        &area
+    );
+}
+
+static void reset_rects(void)
+{
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = 0;
+    rect.h = 0;
 }
 
 static void clear_rects(void)
@@ -151,41 +152,41 @@ static void resize_rects(void)
     }
 }
 
-static void reset_rects(void)
-{
-    rect.x = 0;
-    rect.y = 0;
-    rect.w = 0;
-    rect.h = 0;
-}
-
-static void draw_rects(void)
+static void fill_rects(void)
 {
     set_color(&color0);
     if (rect.x < size / 3)
     {
-        draw_rect(rect.x, rect.y);
+        fill_rect(rect.x, rect.y);
     }
-    draw_rect(size - rect.x - rect.w, size - rect.y - rect.h);
+    fill_rect(size - rect.x - rect.w, size - rect.y - rect.h);
     set_color(&color1);
-    draw_rect(rect.x, size - rect.y - rect.h);
+    fill_rect(rect.x, size - rect.y - rect.h);
     if (rect.x < size / 3)
     {
         set_color(&color2);
-        draw_rect(size / 2 - rect.w / 2, size / 2 - rect.y / 2);
+        fill_rect(size / 2 - rect.w / 2, size / 2 - rect.y / 2);
         set_color(&color1);
-        draw_rect(size - rect.x - rect.w, rect.y);
+        fill_rect(size - rect.x - rect.w, rect.y);
     }
     SDL_RenderPresent(renderer);
+}
+
+static void draw_rects(void)
+{
+    clear_rects();
+    resize_rects();
+    fill_rects();
 }
 
 static void draw_players(void)
 {
     set_color(&color3);
-    draw_rect(rect.x, size - rect.y - rect.h);
-    draw_rect(size - rect.x - rect.w, size - rect.y - rect.h);
+    fill_rect(rect.x, size - rect.y - rect.h);
+    fill_rect(size - rect.x - rect.w, size - rect.y - rect.h);
     draw_player(&player2, rect.x + 10, size - rect.y - rect.h - 10);
     draw_player(&player1, size - rect.x - rect.w + 10, size - rect.y - rect.h - 10);
+    draw_title(&title);
     SDL_RenderPresent(renderer);
 }
 
@@ -211,8 +212,6 @@ static int draw(game_t *game)
     }
     else
     {
-        clear_rects();
-        resize_rects();
         draw_rects();
     }
     return 0;
@@ -234,11 +233,28 @@ static int stop(game_t *game)
     return 0;
 }
 
-void game_load(game_t *game, callback_t *task[])
+static void clean(void)
+{
+    if (player1.texture != NULL)
+    {
+        SDL_DestroyTexture(player1.texture);
+    }
+    if (player2.texture != NULL)
+    {
+        SDL_DestroyTexture(player2.texture);
+    }
+    if (title.texture != NULL)
+    {
+        SDL_DestroyTexture(title.texture);
+    }
+}
+
+void game_load(game_t *game, callback_t *state[])
 {
     init(game);
-    task[0] = start;
-    task[1] = draw;
-    task[2] = stop;
+    atexit(clean);
+    state[STATE_START] = start;
+    state[STATE_DRAW] = draw;
+    state[STATE_STOP] = stop;
 }
 

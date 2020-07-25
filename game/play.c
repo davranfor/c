@@ -24,11 +24,11 @@ static int stop(game_t *game)
     return 0;
 }
 
-void game_play(game_t *game, callback_t *task[])
+void game_play(game_t *game, callback_t *state[])
 {
     init(game);
-    task[0] = start;
-    task[1] = NULL;
-    task[2] = stop;
+    state[STATE_START] = start;
+    state[STATE_DRAW] = NULL;
+    state[STATE_STOP] = stop;
 }
 
