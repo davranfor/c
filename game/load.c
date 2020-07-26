@@ -99,7 +99,10 @@ static void draw_frame(void)
         size + 4
     };
 
-    SDL_RenderFillRect(renderer, & area);
+    SDL_RenderFillRect(
+        renderer,
+        &area
+    );
 }
 
 static void draw_player(const bitmap_t *player, int x, int y)
