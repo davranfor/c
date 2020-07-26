@@ -1,4 +1,4 @@
-#include "types.h"
+#include "game.h"
 #include "play.h"
 
 static SDL_Renderer *renderer = NULL;

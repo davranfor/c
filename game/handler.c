@@ -1,9 +1,7 @@
-#include "types.h"
+#include "game.h"
 #include "load.h"
 #include "play.h"
 #include "handler.h"
-
-#define FPS 30
 
 enum
 {
@@ -19,15 +17,6 @@ static void init(game_t *game)
 {
     game_load(game, tasks[LOAD]);
     game_play(game, tasks[PLAY]);
-}
-
-static void quit(void)
-{
-    SDL_Event event;
-
-    event.type = SDL_QUIT;
-    SDL_PushEvent(&event);
-    return;
 }
 
 static void exec(game_t *game)
@@ -69,10 +58,10 @@ static void exec(game_t *game)
                                 // Cancel draw state 
                                 if (event.key.keysym.sym == SDLK_ESCAPE)
                                 {
-                                    exit(0);
+                                    exit(EXIT_SUCCESS);
                                 }
                             }
-                            // Skip other cases (used with break instead of exit()
+                            // Skip other cases (used with break instead of exit())
                             // while (SDL_PollEvent(&event));
                         }
                         if (tasks[task][state](game) != 0)
@@ -94,6 +83,6 @@ void game_exec(game_t *game)
 {
     init(game);
     exec(game);
-    quit();
+    game_quit();
 }
 

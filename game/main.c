@@ -1,7 +1,7 @@
 #include <locale.h>
 #include <time.h>
-#include "types.h"
 #include "game.h"
+#include "init.h"
 
 static game_t game =
 {
@@ -11,7 +11,7 @@ static game_t game =
     .font =
     {
         .name = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        .size = 13
+        .size = 40
     }
 };
 
@@ -19,7 +19,7 @@ int main(void)
 {
     setlocale(LC_CTYPE, "");
     srand((unsigned)time(NULL));
-    game_run(&game);
+    game_init(&game);
     return 0;
 }
 
