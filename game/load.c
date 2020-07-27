@@ -7,9 +7,9 @@ static SDL_Texture *texture = NULL;
 static bitmap_t mountain;
 static bitmap_t player1;
 static bitmap_t player2;
+static bitmap_t button1;
+static bitmap_t button2;
 static bitmap_t clouds;
-//static bitmap_t title;
-static bitmap_t play;
 
 static SDL_Rect rect;
 
@@ -26,9 +26,9 @@ static void load_resources(void)
     bitmap_load(&mountain, "img/mountain.png");
     bitmap_load(&player1, "img/player1.png");
     bitmap_load(&player2, "img/player2.png");
+    bitmap_load(&button1, "img/play.png");
+    bitmap_load(&button2, "img/stop.png");
     bitmap_load(&clouds, "img/clouds.png");
-    //bitmap_load(&title, "img/title.png");
-    bitmap_load(&play, "img/play.png");
 }
 
 static void init(game_t *game)
@@ -176,40 +176,43 @@ static void draw_clouds(void)
         &area
     );
 }
-/*
-static void draw_title(void)
+
+static void draw_buttons(void)
 {
-    SDL_Rect area =
+    button1.x = size / 4 + xoffset - button1.w / 2;
+    button1.y = size / 2 + size / 4 + yoffset - button1.h / 2;
+
+    SDL_Rect area1 =
     {
-        size / 2 + xoffset - title.w,
-        size / 2 + yoffset,
-        title.w,
-        title.h
+        button1.x,
+        button1.y,
+        button1.w,
+        button1.h
     };
 
     SDL_RenderCopy(
         renderer,
-        title.texture,
+        button1.texture,
         NULL,
-        &area
+        &area1
     );
-}
-*/
-static void draw_play(void)
-{
-    SDL_Rect area =
+
+    button2.x = size - size / 4 + xoffset - button2.w / 2;
+    button2.y = size / 2 + size / 4 + yoffset - button2.h / 2;
+
+    SDL_Rect area2 =
     {
-        size - size / 4 + xoffset - play.w / 2,
-        size / 2 + size / 4 + yoffset - play.h / 2,
-        play.w,
-        play.h
+        button2.x,
+        button2.y,
+        button2.w,
+        button2.h
     };
 
     SDL_RenderCopy(
         renderer,
-        play.texture,
+        button2.texture,
         NULL,
-        &area
+        &area2
     );
 }
 
@@ -264,8 +267,7 @@ static void draw_players(void)
     fill_rects();
     draw_player(&player1, /****/ size / 4 - player1.w / 2, size / 4 - player1.h / 2);
     draw_player(&player2, size - size / 4 - player2.w / 2, size / 4 - player1.h / 2);
-    draw_play();
-    //draw_title();
+    draw_buttons();
     draw_clouds();
     SDL_RenderPresent(renderer);
 }
@@ -327,15 +329,13 @@ static void clean(void)
     {
         SDL_DestroyTexture(clouds.texture);
     }
-/*
-    if (title.texture != NULL)
+    if (button1.texture != NULL)
     {
-        SDL_DestroyTexture(title.texture);
+        SDL_DestroyTexture(button1.texture);
     }
-*/
-    if (play.texture != NULL)
+    if (button2.texture != NULL)
     {
-        SDL_DestroyTexture(play.texture);
+        SDL_DestroyTexture(button2.texture);
     }
 }
 

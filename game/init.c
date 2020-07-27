@@ -75,12 +75,7 @@ static void load(void)
 
     load_resources();
 }
-
-static void exec(void)
-{
-    game_exec(game);
-}
-
+/*
 static void loop(void)
 {
     SDL_Event event;
@@ -117,7 +112,7 @@ static void loop(void)
         }
     }
 }
-
+*/
 static void clean(void)
 {
     if (game->texture != NULL)
@@ -145,7 +140,6 @@ void game_init(game_t *this)
     init();
     atexit(clean);
     load();
-    exec();
-    loop();
+    game_loop(game);
 }
 
