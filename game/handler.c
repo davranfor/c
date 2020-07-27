@@ -25,6 +25,9 @@ static void loop(game_t *game)
     {
         for (int state = 0; state < STATES; state++)
         {
+            SDL_Event event;
+
+            while (SDL_PollEvent(&event));
             if (tasks[task][state] != NULL)
             {
                 if (state == STATE_STOP)
@@ -47,7 +50,7 @@ static void loop(game_t *game)
                         {
                             SDL_Delay(timer - SDL_GetTicks());
                         }
-
+/*
                         SDL_Event event;
 
                         if (SDL_PollEvent(&event))
@@ -63,9 +66,11 @@ static void loop(game_t *game)
                             // Skip other cases (used with break instead of exit())
                             // while (SDL_PollEvent(&event));
                         }
+*/
                         timer = SDL_GetTicks() + (1000 / FPS);
                         if (tasks[task][state](game) != 0)
                         {
+
                             break;
                         }
                     }

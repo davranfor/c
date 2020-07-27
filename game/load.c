@@ -16,7 +16,7 @@ static SDL_Rect rect;
 static SDL_Color color0 = {89 - 32, 130 - 32, 210 - 32, 255};
 static SDL_Color color1 = {89     , 130,      210,      255};
 
-static int size = 500;
+static int size = 503;
 
 static int xoffset;
 static int yoffset;
@@ -105,24 +105,6 @@ static void draw_frame(void)
     );
 }
 
-static void draw_player(const bitmap_t *player, int x, int y)
-{
-    SDL_Rect area =
-    {
-        x + xoffset,
-        y + yoffset,
-        player->w,
-        player->h
-    };
-
-    SDL_RenderCopy(
-        renderer,
-        player->texture,
-        NULL,
-        &area
-    );
-}
-
 static void draw_mountain(void)
 {
     SDL_Rect area =
@@ -163,8 +145,8 @@ static void draw_clouds(void)
 {
     SDL_Rect area =
     {
-        (size / 2 + xoffset) - (clouds.w / 2),
-        (size / 2 + yoffset) - (clouds.h / 2),
+        size / 2 + xoffset - clouds.w / 2,
+        size / 2 + yoffset - clouds.h / 2,
         clouds.w,
         clouds.h
     };
@@ -174,6 +156,39 @@ static void draw_clouds(void)
         clouds.texture,
         NULL,
         &area
+    );
+}
+
+static void draw_players(void)
+{
+    SDL_Rect area1 =
+    {
+        size / 4 + xoffset - player1.w / 2,
+        size / 4 + yoffset - player1.h / 2,
+        player1.w,
+        player1.h
+    };
+
+    SDL_RenderCopy(
+        renderer,
+        player1.texture,
+        NULL,
+        &area1
+    );
+
+    SDL_Rect area2 =
+    {
+        size - size / 4 + xoffset - player2.w / 2,
+        size / 4 + yoffset - player2.h / 2,
+        player2.w,
+        player2.h
+    };
+
+    SDL_RenderCopy(
+        renderer,
+        player2.texture,
+        NULL,
+        &area2
     );
 }
 
@@ -234,10 +249,10 @@ static void reset_rects(void)
 
 static void move_rects(void)
 {
-    rect.x += 2;
-    rect.y += 2;
-    rect.w += 2;
-    rect.h += 2;
+    rect.x += 3;
+    rect.y += 3;
+    rect.w += 3;
+    rect.h += 3;
 }
 
 static void fill_rects(void)
@@ -257,19 +272,16 @@ static void draw_rects(void)
     move_rects();
     fill_rects();
     draw_clouds();
-    SDL_RenderPresent(renderer);
 }
 
-static void draw_players(void)
+static void draw_menu(void)
 {
     draw_mountain();
     draw_frame();
     fill_rects();
-    draw_player(&player1, /****/ size / 4 - player1.w / 2, size / 4 - player1.h / 2);
-    draw_player(&player2, size - size / 4 - player2.w / 2, size / 4 - player1.h / 2);
+    draw_players();
     draw_buttons();
     draw_clouds();
-    SDL_RenderPresent(renderer);
 }
 
 static int must_stop(void)
@@ -287,22 +299,21 @@ static int start(game_t *game)
 static int draw(game_t *game)
 {
     (void)game;
-
     if (must_stop())
     {
-        draw_players();
+
         return 1;
     }
-    else
-    {
-        draw_rects();
-    }
+    draw_rects();
+    SDL_RenderPresent(renderer);
     return 0;
 }
 
 static int stop(game_t *game)
 {
     (void)game;
+    draw_menu();
+    SDL_RenderPresent(renderer);
     if (game_keydown() != SDLK_ESCAPE)
     {
         SDL_RenderCopy(renderer, texture, NULL, NULL);

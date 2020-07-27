@@ -12,7 +12,6 @@ game_t *game_get(void)
     return game;
 }
 
-
 SDL_Keycode game_keydown(void)
 {
     SDL_Event event;
@@ -97,6 +96,11 @@ void bitmap_text(bitmap_t *bitmap, const char *text)
         text,
         (SDL_Color){0, 0, 0, 0}
     );
+    if (surface == NULL)
+    {
+        SDL_Log("TTF_RenderUTF8_Blended: %s\n", TTF_GetError());
+        exit(EXIT_FAILURE);
+    }
     bitmap->texture = SDL_CreateTextureFromSurface(game->renderer, surface);
     if (bitmap->texture == NULL)
     {
