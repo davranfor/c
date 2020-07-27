@@ -127,8 +127,8 @@ static void clear_clouds(void)
 {
     SDL_Rect area =
     {
-        (size / 2 + xoffset) - (clouds.w / 2),
-        (size / 2 + yoffset) - (clouds.h / 2),
+        size / 2 + xoffset - clouds.w / 2,
+        size / 2 + yoffset - clouds.h / 2,
         clouds.w,
         clouds.h
     };
