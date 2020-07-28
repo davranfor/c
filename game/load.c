@@ -16,7 +16,7 @@ static SDL_Rect rect;
 static SDL_Color color0 = {89 - 32, 130 - 32, 210 - 32, 255};
 static SDL_Color color1 = {89     , 130,      210,      255};
 
-static int size = 503;
+static const int size = 503;
 
 static int xoffset;
 static int yoffset;
@@ -55,8 +55,8 @@ static void clear_rect(int x, int y)
 {
     SDL_Rect area =
     {
-        x + xoffset,
-        y + yoffset,
+        xoffset + x,
+        yoffset + y,
         rect.w,
         rect.h
     };
@@ -73,8 +73,8 @@ static void fill_rect(int x, int y)
 {
     SDL_Rect area =
     {
-        x + xoffset,
-        y + yoffset,
+        xoffset + x,
+        yoffset + y,
         rect.w,
         rect.h
     };
@@ -110,7 +110,7 @@ static void draw_mountain(void)
     SDL_Rect area =
     {
         0,
-        (size + yoffset * 2) - mountain.h,
+        yoffset * 2 + size - mountain.h,
         mountain.w,
         mountain.h
     };
@@ -127,8 +127,8 @@ static void clear_clouds(void)
 {
     SDL_Rect area =
     {
-        size / 2 + xoffset - clouds.w / 2,
-        size / 2 + yoffset - clouds.h / 2,
+        xoffset + size / 2 - clouds.w / 2,
+        yoffset + size / 2 - clouds.h / 2,
         clouds.w,
         clouds.h
     };
@@ -145,8 +145,8 @@ static void draw_clouds(void)
 {
     SDL_Rect area =
     {
-        size / 2 + xoffset - clouds.w / 2,
-        size / 2 + yoffset - clouds.h / 2,
+        xoffset + size / 2 - clouds.w / 2,
+        yoffset + size / 2 - clouds.h / 2,
         clouds.w,
         clouds.h
     };
@@ -163,8 +163,8 @@ static void draw_players(void)
 {
     SDL_Rect area1 =
     {
-        size / 4 + xoffset - player1.w / 2,
-        size / 4 + yoffset - player1.h / 2,
+        xoffset + size / 4 - player1.w / 2,
+        yoffset + size / 4 - player1.h / 2,
         player1.w,
         player1.h
     };
@@ -178,8 +178,8 @@ static void draw_players(void)
 
     SDL_Rect area2 =
     {
-        size - size / 4 + xoffset - player2.w / 2,
-        size / 4 + yoffset - player2.h / 2,
+        xoffset + size - size / 4 - player2.w / 2,
+        yoffset + size / 4 - player2.h / 2,
         player2.w,
         player2.h
     };
@@ -194,8 +194,8 @@ static void draw_players(void)
 
 static void draw_buttons(void)
 {
-    button1.x = size / 4 + xoffset - button1.w / 2;
-    button1.y = size / 2 + size / 4 + yoffset - button1.h / 2;
+    button1.x = xoffset + size / 4 - button1.w / 2;
+    button1.y = yoffset + size / 2 + size / 4 - button1.h / 2;
 
     SDL_Rect area1 =
     {
@@ -212,8 +212,8 @@ static void draw_buttons(void)
         &area1
     );
 
-    button2.x = size - size / 4 + xoffset - button2.w / 2;
-    button2.y = size / 2 + size / 4 + yoffset - button2.h / 2;
+    button2.x = xoffset + size - size / 4 - button2.w / 2;
+    button2.y = yoffset + size / 2 + size / 4 - button2.h / 2;
 
     SDL_Rect area2 =
     {
@@ -314,7 +314,13 @@ static int stop(game_t *game)
     (void)game;
     draw_menu();
     SDL_RenderPresent(renderer);
-    if (game_keydown() != SDLK_ESCAPE)
+
+    bitmap_t *buttons[] = {&button1, &button2};
+    bitmap_t *pressed[] = {&button2, &button1};
+
+    int clicked = button_clicked(buttons, pressed, 2);
+
+    if ((clicked == 0) || (clicked == 1))
     {
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         return 1;

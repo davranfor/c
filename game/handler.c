@@ -13,12 +13,6 @@ enum
 
 static callback_t *tasks[TASKS][STATES];
 
-static void init(game_t *game)
-{
-    game_load(game, tasks[LOAD]);
-    game_play(game, tasks[PLAY]);
-}
-
 static void loop(game_t *game)
 {
     for (int task = 1; task < TASKS; task++)
@@ -70,7 +64,6 @@ static void loop(game_t *game)
                         timer = SDL_GetTicks() + (1000 / FPS);
                         if (tasks[task][state](game) != 0)
                         {
-
                             break;
                         }
                     }
@@ -86,8 +79,8 @@ static void loop(game_t *game)
 
 void game_loop(game_t *game)
 {
-    init(game);
+    game_load(game, tasks[LOAD]);
+    game_play(game, tasks[PLAY]);
     loop(game);
-    game_quit();
 }
 
