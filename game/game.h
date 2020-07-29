@@ -49,7 +49,7 @@ typedef struct
 void bitmap_load(bitmap_t *, const char *);
 void bitmap_text(bitmap_t *, const char *);
 
-int button_clicked(bitmap_t *[], bitmap_t *[], int);
+int button_clicked(bitmap_t *[], int);
 
 #endif /* GAME_H */
 

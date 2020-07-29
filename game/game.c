@@ -115,13 +115,8 @@ static int button_match(bitmap_t *button, int x, int y)
     return 0;
 }
 
-static void button_down(int index, bitmap_t *button[], bitmap_t *pressed[])
+static void button_mod(int index, bitmap_t *button[], Uint8 mod)
 {
-    if ((pressed == NULL) || (pressed[index] == NULL))
-    {
-        return;
-    }
-
     SDL_Rect area =
     {
         button[index]->x,
@@ -130,31 +125,12 @@ static void button_down(int index, bitmap_t *button[], bitmap_t *pressed[])
         button[index]->h
     };
 
-    SDL_RenderCopy(
-        game->renderer,
-        pressed[index]->texture,
-        NULL,
-        &area
+    SDL_SetTextureColorMod(
+        button[index]->texture,
+        mod,
+        mod,
+        mod
     );
-    SDL_RenderPresent(game->renderer);
-    SDL_Log("Button down | index = %d\n", index);
-}
-
-static void button_up(int index, bitmap_t *button[], bitmap_t *pressed[])
-{
-    if ((pressed == NULL) || (pressed[index] == NULL))
-    {
-        return;
-    }
-
-    SDL_Rect area =
-    {
-        button[index]->x,
-        button[index]->y,
-        button[index]->w,
-        button[index]->h
-    };
-
     SDL_RenderCopy(
         game->renderer,
         button[index]->texture,
@@ -162,10 +138,28 @@ static void button_up(int index, bitmap_t *button[], bitmap_t *pressed[])
         &area
     );
     SDL_RenderPresent(game->renderer);
-    SDL_Log("Button up   | index = %d\n", index);
 }
 
-int button_clicked(bitmap_t *button[], bitmap_t *pressed[], int buttons)
+static void button_down(int index, bitmap_t *button[], int clicked)
+{
+    if (index == clicked - 1)
+    {
+        return;
+    }
+    button_mod(index, button, 128);
+    SDL_Log("Button down | index = %d\n", index);
+}
+
+static void button_up(bitmap_t *button[], int clicked)
+{
+    if (clicked != 0)
+    {
+        button_mod(clicked - 1, button, 255);
+        SDL_Log("Button up\n");
+    }
+}
+
+int button_clicked(bitmap_t *button[], int buttons)
 {
     SDL_MouseButtonEvent *mouse;
     SDL_Event event;
@@ -181,15 +175,15 @@ int button_clicked(bitmap_t *button[], bitmap_t *pressed[], int buttons)
                     mouse = &event.button;
                     if (mouse->button == SDL_BUTTON_LEFT)
                     {
-                        for (int i = 0; i < buttons; i++)
+                        button_up(button, clicked);
+                        for (int index = 0; index < buttons; index++)
                         {
-                            if (button_match(button[i], mouse->x, mouse->y))
+                            if (button_match(button[index], mouse->x, mouse->y))
                             {
-                                button_down(i, button, pressed);
-                                clicked = i + 1;
+                                button_down(index, button, clicked);
+                                clicked = index + 1;
                                 break;
                             }
-                            clicked = 0;
                         }
                     }
                     break;
@@ -197,7 +191,7 @@ int button_clicked(bitmap_t *button[], bitmap_t *pressed[], int buttons)
                     mouse = &event.button;
                     if ((mouse->button == SDL_BUTTON_LEFT) && (clicked != 0))
                     {
-                        button_up(clicked - 1, button, pressed);
+                        button_up(button, clicked);
                         if (button_match(button[clicked - 1], mouse->x, mouse->y))
                         {
                             return clicked;
@@ -205,18 +199,46 @@ int button_clicked(bitmap_t *button[], bitmap_t *pressed[], int buttons)
                         clicked = 0;
                     }
                     break;
+/*
                 case SDL_KEYDOWN:
                     switch (event.key.keysym.sym)
                     {
                         case SDLK_KP_ENTER:
                         case SDLK_RETURN:
-                            return 0;
+                            if (buttons > 0)
+                            {
+                                //button_down(0, button);
+                            }
+                            break;
                         case SDLK_ESCAPE:
-                            return -1;
+                            if (buttons == 2)
+                            {
+                                //button_down(1, button);
+                            }
+                            break;
+                    }
+                    break;
+                case SDL_KEYUP:
+                    switch (event.key.keysym.sym)
+                    {
+                        case SDLK_KP_ENTER:
+                        case SDLK_RETURN:
+                            if (buttons > 0)
+                            {
+                                //button_up(0, button);
+                            }
+                            return 1;
+                        case SDLK_ESCAPE:
+                            if (buttons == 2)
+                            {
+                                //button_up(1, button);
+                            }
+                            return 2;
                     }
                     break;
                 case SDL_QUIT:
                     return -1;
+*/
             }
         }
     }

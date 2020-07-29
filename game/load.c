@@ -5,11 +5,11 @@ static SDL_Renderer *renderer = NULL;
 static SDL_Texture *texture = NULL;
 
 static bitmap_t mountain;
+static bitmap_t clouds;
 static bitmap_t player1;
 static bitmap_t player2;
 static bitmap_t button1;
 static bitmap_t button2;
-static bitmap_t clouds;
 
 static SDL_Rect rect;
 
@@ -316,11 +316,10 @@ static int stop(game_t *game)
     SDL_RenderPresent(renderer);
 
     bitmap_t *buttons[] = {&button1, &button2};
-    bitmap_t *pressed[] = {&button2, &button1};
 
-    int clicked = button_clicked(buttons, pressed, 2);
+    int clicked = button_clicked(buttons, 2);
 
-    if ((clicked == 0) || (clicked == 1))
+    if (clicked == 1)
     {
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         return 1;
