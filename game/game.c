@@ -115,7 +115,7 @@ static int button_match(bitmap_t *button, int x, int y)
     return 0;
 }
 
-static void button_mod(int index, bitmap_t *button[], Uint8 mod)
+static void button_color_mod(int index, bitmap_t *button[], Uint8 mod)
 {
     SDL_Rect area =
     {
@@ -140,23 +140,16 @@ static void button_mod(int index, bitmap_t *button[], Uint8 mod)
     SDL_RenderPresent(game->renderer);
 }
 
-static void button_down(int index, bitmap_t *button[], int clicked)
+static void button_down(int index, bitmap_t *button[])
 {
-    if (index == clicked - 1)
-    {
-        return;
-    }
-    button_mod(index, button, 128);
+    button_color_mod(index - 1, button, 128);
     SDL_Log("Button down | index = %d\n", index);
 }
 
-static void button_up(bitmap_t *button[], int clicked)
+static void button_up(int index, bitmap_t *button[])
 {
-    if (clicked != 0)
-    {
-        button_mod(clicked - 1, button, 255);
-        SDL_Log("Button up\n");
-    }
+    button_color_mod(index - 1, button, 255);
+    SDL_Log("Button up\n");
 }
 
 int button_clicked(bitmap_t *button[], int buttons)
@@ -164,6 +157,7 @@ int button_clicked(bitmap_t *button[], int buttons)
     SDL_MouseButtonEvent *mouse;
     SDL_Event event;
     int clicked = 0;
+    int pressed = 0;
 
     while (1)
     {
@@ -173,15 +167,14 @@ int button_clicked(bitmap_t *button[], int buttons)
             {
                 case SDL_MOUSEBUTTONDOWN:
                     mouse = &event.button;
-                    if (mouse->button == SDL_BUTTON_LEFT)
+                    if ((mouse->button == SDL_BUTTON_LEFT) && (pressed == 0))
                     {
-                        button_up(button, clicked);
                         for (int index = 0; index < buttons; index++)
                         {
                             if (button_match(button[index], mouse->x, mouse->y))
                             {
-                                button_down(index, button, clicked);
                                 clicked = index + 1;
+                                button_down(clicked, button);
                                 break;
                             }
                         }
@@ -191,7 +184,7 @@ int button_clicked(bitmap_t *button[], int buttons)
                     mouse = &event.button;
                     if ((mouse->button == SDL_BUTTON_LEFT) && (clicked != 0))
                     {
-                        button_up(button, clicked);
+                        button_up(clicked, button);
                         if (button_match(button[clicked - 1], mouse->x, mouse->y))
                         {
                             return clicked;
@@ -199,46 +192,62 @@ int button_clicked(bitmap_t *button[], int buttons)
                         clicked = 0;
                     }
                     break;
-/*
                 case SDL_KEYDOWN:
+                    if ((clicked != 0) || (pressed != 0))
+                    {
+                        break;
+                    }
                     switch (event.key.keysym.sym)
                     {
                         case SDLK_KP_ENTER:
                         case SDLK_RETURN:
+                            pressed = 1;
                             if (buttons > 0)
                             {
-                                //button_down(0, button);
+                                button_down(pressed, button);
                             }
                             break;
                         case SDLK_ESCAPE:
+                            pressed = 2;
                             if (buttons == 2)
                             {
-                                //button_down(1, button);
+                                button_down(pressed, button);
                             }
                             break;
                     }
                     break;
                 case SDL_KEYUP:
+                    if (pressed == 0)
+                    {
+                        break;
+                    }
                     switch (event.key.keysym.sym)
                     {
                         case SDLK_KP_ENTER:
-                        case SDLK_RETURN:
                             if (buttons > 0)
                             {
-                                //button_up(0, button);
+                                button_up(pressed, button);
                             }
-                            return 1;
+                            return pressed;
+                        case SDLK_RETURN:
                         case SDLK_ESCAPE:
                             if (buttons == 2)
                             {
-                                //button_up(1, button);
+                                button_up(pressed, button);
                             }
-                            return 2;
+                            return pressed;
                     }
                     break;
                 case SDL_QUIT:
+                    if (clicked != 0)
+                    {
+                        button_up(clicked, button);
+                    }
+                    else if (pressed != 0)
+                    {
+                        button_up(pressed, button);
+                    }
                     return -1;
-*/
             }
         }
     }
