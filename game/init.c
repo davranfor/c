@@ -5,8 +5,6 @@
 
 static game_t *game = NULL;
 
-static SDL_Window *window = NULL;
-
 static void init(void)
 {
     if (TTF_Init() != 0)
@@ -52,7 +50,7 @@ static void load(void)
     }
     TTF_SizeUTF8(game->font.renderer, "g", &game->font.w, &game->font.h);
 
-    window = SDL_CreateWindow(
+    game->window = SDL_CreateWindow(
         game->title,
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
@@ -60,13 +58,13 @@ static void load(void)
         game->height,
         SDL_WINDOW_SHOWN
     );
-    if (window == NULL)
+    if (game->window == NULL)
     {
         SDL_Log("SDL_CreateWindow: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 
-    game->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    game->renderer = SDL_CreateRenderer(game->window, -1, SDL_RENDERER_ACCELERATED);
     if (game->renderer == NULL)
     {
         SDL_Log("SDL_CreateRenderer: %s\n", SDL_GetError());
@@ -123,9 +121,9 @@ static void clean(void)
     {
         SDL_DestroyRenderer(game->renderer);
     }
-    if (window != NULL)
+    if (game->window != NULL)
     {
-        SDL_DestroyWindow(window);
+        SDL_DestroyWindow(game->window);
     }
     if (game->font.renderer != NULL)
     {

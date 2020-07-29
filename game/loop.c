@@ -81,6 +81,8 @@ void game_loop(game_t *game)
 {
     game_load(game, tasks[LOAD]);
     game_play(game, tasks[PLAY]);
+    SDL_RenderPresent(game->renderer);
+    SDL_Delay(100);
     loop(game);
 }
 
