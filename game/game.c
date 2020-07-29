@@ -105,10 +105,8 @@ void bitmap_text(bitmap_t *bitmap, const char *text)
 
 static int button_match(bitmap_t *button, int x, int y)
 {
-    if (
-        ((x >= button->x) && (x <= button->x + button->w)) &&
-        ((y >= button->y) && (y <= button->y + button->h))
-    )
+    if ((x >= button->x) && (x <= button->x + button->w) &&
+        (y >= button->y) && (y <= button->y + button->h))
     {
         return 1;
     }
