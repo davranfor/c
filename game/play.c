@@ -1,34 +1,74 @@
 #include "game.h"
+#include "bitmap.h"
 #include "play.h"
 
-static SDL_Renderer *renderer = NULL;
-static SDL_Texture *texture = NULL;
+static game_t *game;
 
-static void init(game_t *game)
+enum
 {
-    renderer = game->renderer;
-    texture = game->texture;
+    BITMAP_BACKGROUND,
+    BITMAPS
+};
+
+static bitmap_t *bitmaps[BITMAPS];
+
+static void load_bitmaps(void)
+{
+    const char *resources[] =
+    {
+        [BITMAP_BACKGROUND] = "img/background.png",
+    };
+
+    for (size_t index = 0; index < BITMAPS; index++)
+    {
+        bitmaps[index] = bitmap_load(resources[index]);
+    }
 }
 
-static int start(game_t *game)
+static void set_bitmaps_position(void)
 {
-    (void)game;
+    bitmap_set_position(
+        bitmaps[BITMAP_BACKGROUND],
+        0,
+        0
+    );
+}
+
+static void init(void)
+{
+    load_bitmaps();
+}
+
+static int start(void)
+{
+    set_bitmaps_position();
+    render_draw(bitmaps[BITMAP_BACKGROUND]);
+    render_present();
     SDL_Log("start playing");
     return 0;
 }
 
-static int stop(game_t *game)
+static int draw(void)
 {
-    (void)game;
+    if (game->events & EVENT_QUIT)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+static int stop(void)
+{
     SDL_Log("stop playing");
     return 0;
 }
 
-void game_play(game_t *game, callback_t *state[])
+void game_play(game_t *this, callback_t *state[])
 {
-    init(game);
+    game = this;
+    init();
     state[STATE_START] = start;
-    state[STATE_DRAW] = NULL;
+    state[STATE_DRAW] = draw;
     state[STATE_STOP] = stop;
 }
 

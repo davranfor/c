@@ -1,5 +1,5 @@
 #include "game.h"
-#include "load.h"
+#include "menu.h"
 #include "play.h"
 #include "loop.h"
 
@@ -19,14 +19,11 @@ static void loop(game_t *game)
     {
         for (int state = 0; state < STATES; state++)
         {
-            SDL_Event event;
-
-            while (SDL_PollEvent(&event));
             if (tasks[task][state] != NULL)
             {
                 if (state == STATE_STOP)
                 {
-                    int result = tasks[task][state](game);
+                    int result = tasks[task][state]();
 
                     if ((result > 0) && (result < TASKS))
                     {
@@ -37,6 +34,7 @@ static void loop(game_t *game)
                 else if (state == STATE_DRAW)
                 {
                     Uint32 timer = 0;
+                    event_t event;
 
                     while (1)
                     {
@@ -44,33 +42,35 @@ static void loop(game_t *game)
                         {
                             SDL_Delay(timer - SDL_GetTicks());
                         }
-/*
-                        SDL_Event event;
-
-                        if (SDL_PollEvent(&event))
+                        while (SDL_PollEvent(&event))
                         {
-                            if (event.type == SDL_KEYDOWN)
+                            switch (event.type)
                             {
-                                // Cancel draw state 
-                                if (event.key.keysym.sym == SDLK_ESCAPE)
-                                {
-                                    exit(EXIT_SUCCESS);
-                                }
+                                case SDL_KEYDOWN:
+                                    switch (event.key.keysym.sym)
+                                    {
+                                        case SDLK_ESCAPE:
+                                            game->events |= EVENT_QUIT;
+                                            break;
+                                    }
+                                    break;
+                                case SDL_QUIT:
+                                    game->events |= EVENT_QUIT;
+                                    break;
                             }
-                            // Skip other cases (used with break instead of exit())
-                            // while (SDL_PollEvent(&event));
                         }
-*/
+
                         timer = SDL_GetTicks() + (1000 / FPS);
-                        if (tasks[task][state](game) != 0)
+                        if (tasks[task][state]() != 0)
                         {
                             break;
                         }
+                        game->events = 0;
                     }
                 }
                 else
                 {
-                    tasks[task][state](game);
+                    tasks[task][state]();
                 }
             }
         }
@@ -79,10 +79,8 @@ static void loop(game_t *game)
 
 void game_loop(game_t *game)
 {
-    game_load(game, tasks[LOAD]);
+    game_menu(game, tasks[LOAD]);
     game_play(game, tasks[PLAY]);
-    SDL_RenderPresent(game->renderer);
-    SDL_Delay(100);
     loop(game);
 }
 

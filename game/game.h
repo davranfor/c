@@ -7,6 +7,15 @@
 
 #define FPS 60
 
+#define game_delay SDL_Delay
+
+typedef SDL_Rect rect_t;
+typedef SDL_Point point_t;
+typedef SDL_Color color_t;
+typedef SDL_Event event_t;
+
+typedef int (callback_t)(void);
+
 typedef struct
 {
     TTF_Font *renderer;
@@ -19,11 +28,21 @@ typedef struct
 {
     SDL_Window *window;
     SDL_Renderer *renderer;
-    SDL_Texture *texture;
     const char *title;
-    int width, height;
+    int w, h;
     font_t font;
+    int events;
 } game_t;
+
+enum game_events
+{
+    EVENT_NONE,
+    EVENT_KEY_UP,
+    EVENT_KEY_DOWN,
+    EVENT_KEY_LEFT,
+    EVENT_KEY_RIGHT,
+    EVENT_QUIT
+};
 
 enum game_states
 {
@@ -33,24 +52,18 @@ enum game_states
     STATES
 };
 
-typedef int (callback_t)(game_t *);
-
-void game_set(game_t *);
-game_t *game_get(void);
+void game_init(game_t *);
 SDL_Keycode game_keydown(void);
 void game_pause(void);
-void game_quit(void);
 
-typedef struct
-{
-    SDL_Texture *texture;
-    int x, y, w, h;
-} bitmap_t;
+void render_set_color(const SDL_Color *);
+void render_fill_rect(const SDL_Rect *);
+void render_draw_rect(const SDL_Rect *);
+void render_fill_area(int, int, int, int);
+void render_draw_area(int, int, int, int);
+void render_present(void);
 
-void bitmap_load(bitmap_t *, const char *);
-void bitmap_text(bitmap_t *, const char *);
-
-int button_clicked(bitmap_t *[], int);
+SDL_Texture *texture_create(const char *);
 
 #endif /* GAME_H */
 
