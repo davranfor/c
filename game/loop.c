@@ -13,65 +13,92 @@ enum
 
 static callback_t *tasks[TASKS][STATES];
 
-static void loop(game_t *game)
+static void loop(void)
 {
     for (int task = 1; task < TASKS; task++)
     {
-        for (int state = 0; state < STATES; state++)
+        if (tasks[task][STATE_START] != NULL)
         {
-            if (tasks[task][state] != NULL)
+            tasks[task][STATE_START](0);
+        }
+        if (tasks[task][STATE_DRAW] != NULL)
+        {
+            Uint32 timer = 0;
+            SDL_Event event;
+            int events = 0;
+
+            while (1)
             {
-                if (state == STATE_STOP)
+                if (SDL_TICKS_PASSED(timer, SDL_GetTicks()))
                 {
-                    int result = tasks[task][state]();
-
-                    if ((result > 0) && (result < TASKS))
-                    {
-                        task = result - 1;
-                        break;
-                    }
+                    SDL_Delay(timer - SDL_GetTicks());
                 }
-                else if (state == STATE_DRAW)
+                while (SDL_PollEvent(&event))
                 {
-                    Uint32 timer = 0;
-                    event_t event;
-
-                    while (1)
+                    switch (event.type)
                     {
-                        if (SDL_TICKS_PASSED(timer, SDL_GetTicks()))
-                        {
-                            SDL_Delay(timer - SDL_GetTicks());
-                        }
-                        while (SDL_PollEvent(&event))
-                        {
-                            switch (event.type)
+                        case SDL_KEYDOWN:
+                            if (!event.key.repeat)
                             {
-                                case SDL_KEYDOWN:
-                                    switch (event.key.keysym.sym)
-                                    {
-                                        case SDLK_ESCAPE:
-                                            game->events |= EVENT_QUIT;
-                                            break;
-                                    }
-                                    break;
-                                case SDL_QUIT:
-                                    game->events |= EVENT_QUIT;
-                                    break;
+                                if (event.key.keysym.sym == SDLK_ESCAPE)
+                                {
+                                    events = EVENT_QUIT;
+                                }
+                                if (event.key.keysym.sym == SDLK_UP)
+                                {
+                                    events |= EVENT_KEY_UP;
+                                }
+                                if (event.key.keysym.sym == SDLK_DOWN)
+                                {
+                                    events |= EVENT_KEY_DOWN;
+                                }
+                                if (event.key.keysym.sym == SDLK_LEFT)
+                                {
+                                    events |= EVENT_KEY_LEFT;
+                                }
+                                if (event.key.keysym.sym == SDLK_RIGHT)
+                                {
+                                    events |= EVENT_KEY_RIGHT;
+                                }
                             }
-                        }
-
-                        timer = SDL_GetTicks() + (1000 / FPS);
-                        if (tasks[task][state]() != 0)
-                        {
                             break;
-                        }
-                        game->events = 0;
+                        case SDL_KEYUP:
+                            if (event.key.keysym.sym == SDLK_UP)
+                            {
+                                events &= ~EVENT_KEY_UP;
+                            }
+                            if (event.key.keysym.sym == SDLK_DOWN)
+                            {
+                                events &= ~EVENT_KEY_DOWN;
+                            }
+                            if (event.key.keysym.sym == SDLK_LEFT)
+                            {
+                                events &= ~EVENT_KEY_LEFT;
+                            }
+                            if (event.key.keysym.sym == SDLK_RIGHT)
+                            {
+                                events &= ~EVENT_KEY_RIGHT;
+                            }
+                            break;
+                        case SDL_QUIT:
+                            events = EVENT_QUIT;
+                            break;
                     }
                 }
-                else
+                timer = SDL_GetTicks() + (1000 / FPS);
+                if (tasks[task][STATE_DRAW](events) != 0)
                 {
-                    tasks[task][state]();
+                    break;
                 }
+            }
+        }
+        if (tasks[task][STATE_STOP] != NULL)
+        {
+            int result = tasks[task][STATE_STOP](0);
+
+            if ((result > 0) && (result < TASKS))
+            {
+                task = result - 1;
             }
         }
     }
@@ -81,6 +108,6 @@ void game_loop(game_t *game)
 {
     game_menu(game, tasks[LOAD]);
     game_play(game, tasks[PLAY]);
-    loop(game);
+    loop();
 }
 

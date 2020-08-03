@@ -162,6 +162,30 @@ void render_clear_rect(const bitmap_t *bitmap, const SDL_Rect *rect)
     SDL_RenderCopy(renderer, bitmap->texture, rect, rect);
 }
 
+void render_mod_color(bitmap_t *bitmap, Uint8 mod)
+{
+    SDL_Rect area =
+    {
+        bitmap->x,
+        bitmap->y,
+        bitmap->w,
+        bitmap->h
+    };
+
+    SDL_SetTextureColorMod(
+        bitmap->texture,
+        mod,
+        mod,
+        mod
+    );
+    SDL_RenderCopy(
+        renderer,
+        bitmap->texture,
+        NULL,
+        &area
+    );
+}
+
 /*
 void bitmap_text(bitmap_t *bitmap, const char *text)
 {
@@ -199,39 +223,16 @@ static int button_match(button_t *button, int x, int y)
     return 0;
 }
 
-static void button_color_mod(int index, button_t *button[], Uint8 mod)
-{
-    SDL_Rect area =
-    {
-        button[index]->x,
-        button[index]->y,
-        button[index]->w,
-        button[index]->h
-    };
-
-    SDL_SetTextureColorMod(
-        button[index]->texture,
-        mod,
-        mod,
-        mod
-    );
-    SDL_RenderCopy(
-        renderer,
-        button[index]->texture,
-        NULL,
-        &area
-    );
-    SDL_RenderPresent(renderer);
-}
-
 static void button_down(int index, button_t *button[])
 {
-    button_color_mod(index - 1, button, 128);
+    render_mod_color(button[index - 1], 128);
+    SDL_RenderPresent(renderer);
 }
 
 static void button_up(int index, button_t *button[])
 {
-    button_color_mod(index - 1, button, 255);
+    render_mod_color(button[index - 1], 255);
+    SDL_RenderPresent(renderer);
 }
 
 int button_clicked(button_t *button[], int buttons)
@@ -240,8 +241,9 @@ int button_clicked(button_t *button[], int buttons)
     SDL_Event event;
     int clicked = 0;
     int pressed = 0;
+    int done = 0;
 
-    while (1)
+    while (!done)
     {
         while (SDL_PollEvent(&event))
         {
@@ -269,7 +271,8 @@ int button_clicked(button_t *button[], int buttons)
                         button_up(clicked, button);
                         if (button_match(button[clicked - 1], mouse->x, mouse->y))
                         {
-                            return clicked;
+                            done = 1;
+                            break;
                         }
                         clicked = 0;
                     }
@@ -310,14 +313,16 @@ int button_clicked(button_t *button[], int buttons)
                             {
                                 button_up(pressed, button);
                             }
-                            return pressed;
+                            done = 1;
+                            break;
                         case SDLK_RETURN:
                         case SDLK_ESCAPE:
                             if (buttons == 2)
                             {
                                 button_up(pressed, button);
                             }
-                            return pressed;
+                            done = 1;
+                            break;
                     }
                     break;
                 case SDL_QUIT:
@@ -329,10 +334,20 @@ int button_clicked(button_t *button[], int buttons)
                     {
                         button_up(pressed, button);
                     }
-                    return -1;
+                    clicked = pressed = 0;
+                    done = 1;
+                    break;
             }
         }
     }
-    return -1;
+    if (clicked != 0)
+    {
+        return clicked;
+    }
+    if (pressed != 0)
+    {
+        return pressed;
+    }
+    return 0;
 }
 

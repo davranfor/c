@@ -219,8 +219,9 @@ static int must_stop(void)
     return rect.w >= view.w / 2;
 }
 
-static int start(void)
+static int start(int events)
 {
+    (void)events;
     reset_rects();
     set_bitmaps_position();
     render_draw(bitmaps[BITMAP_GRADIENT]);
@@ -230,8 +231,9 @@ static int start(void)
     return 0;
 }
 
-static int draw(void)
+static int draw(int events)
 {
+    (void)events;
     if (must_stop())
     {
         return 1;
@@ -241,8 +243,9 @@ static int draw(void)
     return 0;
 }
 
-static int stop(void)
+static int stop(int events)
 {
+    (void)events;
     draw_menu();
     render_present();
 
@@ -257,7 +260,7 @@ static int stop(void)
     if (clicked != 1)
     {
         exit(EXIT_SUCCESS);
-        // return 1;
+        //return 1;
     }
     return 0;
 }

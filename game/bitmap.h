@@ -20,6 +20,7 @@ void render_draw(const bitmap_t *);
 void render_swap(const bitmap_t *, const bitmap_t *);
 void render_clear_area(const bitmap_t *, int, int, int, int);
 void render_clear_rect(const bitmap_t *, const SDL_Rect *);
+void render_mod_color(bitmap_t *, Uint8);
 
 typedef bitmap_t button_t;
 int button_clicked(button_t *[], int);
