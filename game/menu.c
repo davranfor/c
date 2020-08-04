@@ -99,24 +99,6 @@ static void init(void)
     set_view_coords();
 }
 
-static void draw_frame(void)
-{
-    render_set_color(&colors[2]);
-    render_fill_area(view.x - 2, view.y - 2, view.w + 4, view.h + 4);
-}
-
-static void draw_players(void)
-{
-    render_draw_bitmap(bitmaps[BITMAP_PLAYER1]);
-    render_draw_bitmap(bitmaps[BITMAP_PLAYER2]);
-}
-
-static void draw_buttons(void)
-{
-    render_draw_bitmap(bitmaps[BITMAP_PLAY]);
-    render_draw_bitmap(bitmaps[BITMAP_STOP]);
-}
-
 static void reset_rects(void)
 {
     rect.x = 0;
@@ -133,7 +115,7 @@ static void move_rects(void)
     rect.h += 3;
 }
 
-static void fill_rects(void)
+static void draw_rects(void)
 {
     render_set_color(&colors[0]);
     render_fill_area(
@@ -163,11 +145,29 @@ static void fill_rects(void)
     );
 }
 
-static void draw_rects(void)
+static void draw_frame(void)
+{
+    render_set_color(&colors[2]);
+    render_fill_area(view.x - 2, view.y - 2, view.w + 4, view.h + 4);
+}
+
+static void draw_players(void)
+{
+    render_draw_bitmap(bitmaps[BITMAP_PLAYER1]);
+    render_draw_bitmap(bitmaps[BITMAP_PLAYER2]);
+}
+
+static void draw_buttons(void)
+{
+    render_draw_bitmap(bitmaps[BITMAP_PLAY]);
+    render_draw_bitmap(bitmaps[BITMAP_STOP]);
+}
+
+static void draw_animation(void)
 {
     render_draw_bitmap(bitmaps[BITMAP_GRADIENT]);
     move_rects();
-    fill_rects();
+    draw_rects();
     render_draw_bitmap(bitmaps[BITMAP_CLOUDS]);
 }
 
@@ -175,7 +175,7 @@ static void draw_menu(void)
 {
     render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
     draw_frame();
-    fill_rects();
+    draw_rects();
     draw_players();
     draw_buttons();
     render_draw_bitmap(bitmaps[BITMAP_CLOUDS]);
@@ -208,7 +208,7 @@ static int draw(int events)
         return 1;
     }
     render_clear();
-    draw_rects();
+    draw_animation();
     render_present();
     return 0;
 }
@@ -216,6 +216,7 @@ static int draw(int events)
 static int stop(int events)
 {
     (void)events;
+    render_clear();
     draw_menu();
     render_present();
 

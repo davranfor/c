@@ -94,10 +94,6 @@ static int direction_x(int events)
 {
     int mask = EVENT_KEY_LEFT | EVENT_KEY_RIGHT;
 
-    if ((events & mask) == 0)
-    {
-        return 0;
-    }
     if ((events & mask) == mask)
     {
         return 0;
@@ -109,10 +105,6 @@ static int direction_y(int events)
 {
     int mask = EVENT_KEY_UP | EVENT_KEY_DOWN;
 
-    if ((events & mask) == 0)
-    {
-        return 0;
-    }
     if ((events & mask) == mask)
     {
         return 0;
