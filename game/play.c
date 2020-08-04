@@ -90,16 +90,6 @@ static void move_rect(int direction)
     }
 }
 
-static void fill_rect(void)
-{
-    render_fill_area(
-        rect.x,
-        rect.y,
-        rect.w,
-        rect.h
-    );
-}
-
 static int direction_x(int events)
 {
     int mask = EVENT_KEY_LEFT | EVENT_KEY_RIGHT;
@@ -138,7 +128,7 @@ static int start(int events)
     render_set_color(&colors[0]);
     render_clear();
     render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
-    fill_rect();
+    render_fill_rect(&rect);
     render_present();
     return 0;
 }
@@ -153,7 +143,7 @@ static int draw(int events)
     render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
     move_rect(direction_x(events));
     move_rect(direction_y(events));
-    fill_rect();
+    render_fill_rect(&rect);
     render_present();
     return 0;
 }
