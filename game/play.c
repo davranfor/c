@@ -40,11 +40,6 @@ static void set_bitmaps_position(void)
     );
 }
 
-static void init(void)
-{
-    load_bitmaps();
-}
-
 static void reset_rect(void)
 {
     rect.x = game->w / 2 - 20;
@@ -110,6 +105,11 @@ static int direction_y(int events)
         return 0;
     }
     return events & mask;
+}
+
+static void init(void)
+{
+    load_bitmaps();
 }
 
 static int start(int events)

@@ -93,12 +93,6 @@ static void set_view_coords(void)
     view.y = game->h / 2 - view.h / 2;
 }
 
-static void init(void)
-{
-    load_bitmaps();
-    set_view_coords();
-}
-
 static void reset_rects(void)
 {
     rect.x = 0;
@@ -184,6 +178,12 @@ static void draw_menu(void)
 static int must_stop(void)
 {
     return rect.w >= view.w / 2;
+}
+
+static void init(void)
+{
+    load_bitmaps();
+    set_view_coords();
 }
 
 static int start(int events)
