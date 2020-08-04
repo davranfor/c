@@ -29,6 +29,27 @@ SDL_Keycode game_keydown(void)
     return key;
 }
 
+SDL_Keycode game_keyup(void)
+{
+    SDL_Keycode key = 0;
+    SDL_Event event;
+    int done = 0;
+
+    while (!done)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_KEYUP)
+            {
+                key = event.key.keysym.sym;
+                done = 1;
+            }
+        }
+    }
+    return key;
+}
+
+
 void game_pause(void)
 {
     SDL_Event event;

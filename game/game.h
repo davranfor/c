@@ -53,6 +53,7 @@ enum game_states
 
 void game_init(game_t *);
 SDL_Keycode game_keydown(void);
+SDL_Keycode game_keyup(void);
 void game_pause(void);
 
 void render_set_color(const SDL_Color *);
