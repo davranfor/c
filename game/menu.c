@@ -196,7 +196,7 @@ static int start(int events)
     render_draw_bitmap(bitmaps[BITMAP_GRADIENT]);
     render_present();
     /* A delay in order to synchronize with the window manager */
-    //game_delay(100);
+    game_delay(100);
     return 0;
 }
 
@@ -230,7 +230,7 @@ static int stop(int events)
     if (clicked != 1)
     {
         exit(EXIT_SUCCESS);
-        //return 1;
+        //return TASK_MENU;
     }
     return 0;
 }

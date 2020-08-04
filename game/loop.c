@@ -6,7 +6,7 @@
 enum
 {
     NONE,
-    LOAD,
+    MENU,
     PLAY,
     TASKS,
 };
@@ -106,7 +106,7 @@ static void loop(void)
 
 void game_loop(game_t *game)
 {
-    game_menu(game, tasks[LOAD]);
+    game_menu(game, tasks[MENU]);
     game_play(game, tasks[PLAY]);
     loop();
 }

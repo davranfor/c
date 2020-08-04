@@ -11,44 +11,39 @@ void game_init(game_t *this)
 
 SDL_Keycode game_keydown(void)
 {
+    SDL_Keycode key = 0;
     SDL_Event event;
+    int done = 0;
 
-    while (1)
+    while (!done)
     {
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_KEYDOWN)
             {
-                return event.key.keysym.sym;
+                key = event.key.keysym.sym;
+                done = 1;
             }
         }
     }
-    return 0;
+    return key;
 }
 
 void game_pause(void)
 {
     SDL_Event event;
+    int done = 0;
 
-    while (1)
+    while (!done)
     {
         while (SDL_PollEvent(&event))
         {
             switch (event.type)
             {
                 case SDL_MOUSEBUTTONDOWN:
-                    return;
                 case SDL_KEYDOWN:
-                    switch (event.key.keysym.sym)
-                    {
-                        case SDLK_ESCAPE:
-                            exit(EXIT_SUCCESS);
-                            return;
-                    }
-                    return;
-                case SDL_QUIT:
-                    exit(EXIT_SUCCESS);
-                    return;
+                    done = 1;
+                    break;
             }
         }
     }
