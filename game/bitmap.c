@@ -114,55 +114,7 @@ void bitmap_set_position(bitmap_t *bitmap, int x, int y)
     bitmap->y = y;
 }
 
-void render_draw(const bitmap_t *bitmap)
-{
-    SDL_Rect area =
-    {
-        bitmap->x,
-        bitmap->y,
-        bitmap->w,
-        bitmap->h
-    };
-
-    SDL_RenderCopy(
-        renderer,
-        bitmap->texture,
-        NULL,
-        &area
-    );
-}
-
-void render_swap(const bitmap_t *bitmap, const bitmap_t *background)
-{
-    SDL_Rect area =
-    {
-        bitmap->x,
-        bitmap->y,
-        bitmap->w,
-        bitmap->h
-    };
-
-    SDL_RenderCopy(
-        renderer,
-        background->texture,
-        &area,
-        &area
-    );
-}
-
-void render_clear_area(const bitmap_t *bitmap, int x, int y, int w, int h)
-{
-    SDL_Rect area = {x, y, w, h};
-
-    SDL_RenderCopy(renderer, bitmap->texture, &area, &area);
-}
-
-void render_clear_rect(const bitmap_t *bitmap, const SDL_Rect *rect)
-{
-    SDL_RenderCopy(renderer, bitmap->texture, rect, rect);
-}
-
-void render_mod_color(bitmap_t *bitmap, Uint8 mod)
+void bitmap_mod_color(bitmap_t *bitmap, Uint8 mod)
 {
     SDL_Rect area =
     {
@@ -186,32 +138,23 @@ void render_mod_color(bitmap_t *bitmap, Uint8 mod)
     );
 }
 
-/*
-void bitmap_text(bitmap_t *bitmap, const char *text)
+void render_draw_bitmap(const bitmap_t *bitmap)
 {
-    SDL_Surface *surface;
+    SDL_Rect area =
+    {
+        bitmap->x,
+        bitmap->y,
+        bitmap->w,
+        bitmap->h
+    };
 
-    surface = TTF_RenderUTF8_Blended(
-        game->font.renderer,
-        text,
-        (SDL_Color){0, 0, 0, 0}
+    SDL_RenderCopy(
+        renderer,
+        bitmap->texture,
+        NULL,
+        &area
     );
-    if (surface == NULL)
-    {
-        SDL_Log("TTF_RenderUTF8_Blended: %s\n", TTF_GetError());
-        exit(EXIT_FAILURE);
-    }
-    bitmap->texture = SDL_CreateTextureFromSurface(game->renderer, surface);
-    if (bitmap->texture == NULL)
-    {
-        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    bitmap->w = surface->w;
-    bitmap->h = surface->h;
-    SDL_FreeSurface(surface);
 }
-*/
 
 static int button_match(button_t *button, int x, int y)
 {
@@ -225,13 +168,13 @@ static int button_match(button_t *button, int x, int y)
 
 static void button_down(int index, button_t *button[])
 {
-    render_mod_color(button[index - 1], 128);
+    bitmap_mod_color(button[index - 1], 128);
     SDL_RenderPresent(renderer);
 }
 
 static void button_up(int index, button_t *button[])
 {
-    render_mod_color(button[index - 1], 255);
+    bitmap_mod_color(button[index - 1], 255);
     SDL_RenderPresent(renderer);
 }
 

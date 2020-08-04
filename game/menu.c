@@ -6,6 +6,13 @@ static game_t *game;
 static rect_t view;
 static rect_t rect;
 
+static const color_t colors[] =
+{
+    { 57,  98, 178, 255},
+    { 89, 130, 210, 255},
+    {255, 255, 255, 255}
+};
+
 enum
 {
     BITMAP_BACKGROUND,
@@ -94,22 +101,20 @@ static void init(void)
 
 static void draw_frame(void)
 {
-    const color_t white = {255, 255, 255, 255};
-
-    render_set_color(&white);
+    render_set_color(&colors[2]);
     render_fill_area(view.x - 2, view.y - 2, view.w + 4, view.h + 4);
 }
 
 static void draw_players(void)
 {
-    render_draw(bitmaps[BITMAP_PLAYER1]);
-    render_draw(bitmaps[BITMAP_PLAYER2]);
+    render_draw_bitmap(bitmaps[BITMAP_PLAYER1]);
+    render_draw_bitmap(bitmaps[BITMAP_PLAYER2]);
 }
 
 static void draw_buttons(void)
 {
-    render_draw(bitmaps[BITMAP_PLAY]);
-    render_draw(bitmaps[BITMAP_STOP]);
+    render_draw_bitmap(bitmaps[BITMAP_PLAY]);
+    render_draw_bitmap(bitmaps[BITMAP_STOP]);
 }
 
 static void reset_rects(void)
@@ -128,43 +133,9 @@ static void move_rects(void)
     rect.h += 3;
 }
 
-static void clear_rects(void)
-{
-    render_clear_area(
-        bitmaps[BITMAP_GRADIENT],
-        view.x + rect.x,
-        view.y + view.h - rect.y - rect.h,
-        rect.w,
-        rect.h
-    );
-    render_clear_area(
-        bitmaps[BITMAP_GRADIENT],
-        view.x + rect.x,
-        view.y + rect.y,
-        rect.w,
-        rect.h
-    );
-    render_clear_area(
-        bitmaps[BITMAP_GRADIENT],
-        view.x + view.w - rect.x - rect.w,
-        view.y + rect.y,
-        rect.w,
-        rect.h
-    );
-    render_clear_area(
-        bitmaps[BITMAP_GRADIENT],
-        view.x + view.w - rect.x - rect.w,
-        view.y + view.h - rect.y - rect.h,
-        rect.w,
-        rect.h
-    );
-}
-
 static void fill_rects(void)
 {
-    const color_t color0 = {57, 98, 178, 255};
-
-    render_set_color(&color0);
+    render_set_color(&colors[0]);
     render_fill_area(
         view.x + rect.x,
         view.y + rect.y,
@@ -177,10 +148,7 @@ static void fill_rects(void)
         rect.w,
         rect.h
     );
-
-    const color_t color1 = {89, 130, 210, 255};
-
-    render_set_color(&color1);
+    render_set_color(&colors[1]);
     render_fill_area(
         view.x + rect.x,
         view.y + view.h - rect.y - rect.h,
@@ -197,21 +165,20 @@ static void fill_rects(void)
 
 static void draw_rects(void)
 {
-    clear_rects();
-    render_swap(bitmaps[BITMAP_CLOUDS], bitmaps[BITMAP_GRADIENT]);
+    render_draw_bitmap(bitmaps[BITMAP_GRADIENT]);
     move_rects();
     fill_rects();
-    render_draw(bitmaps[BITMAP_CLOUDS]);
+    render_draw_bitmap(bitmaps[BITMAP_CLOUDS]);
 }
 
 static void draw_menu(void)
 {
-    render_draw(bitmaps[BITMAP_BACKGROUND]);
+    render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
     draw_frame();
     fill_rects();
     draw_players();
     draw_buttons();
-    render_draw(bitmaps[BITMAP_CLOUDS]);
+    render_draw_bitmap(bitmaps[BITMAP_CLOUDS]);
 }
 
 static int must_stop(void)
@@ -224,10 +191,12 @@ static int start(int events)
     (void)events;
     reset_rects();
     set_bitmaps_position();
-    render_draw(bitmaps[BITMAP_GRADIENT]);
+    render_set_color(&colors[1]);
+    render_clear();
+    render_draw_bitmap(bitmaps[BITMAP_GRADIENT]);
     render_present();
     /* A delay in order to synchronize with the window manager */
-    game_delay(100);
+    //game_delay(100);
     return 0;
 }
 
@@ -238,6 +207,7 @@ static int draw(int events)
     {
         return 1;
     }
+    render_clear();
     draw_rects();
     render_present();
     return 0;

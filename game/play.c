@@ -5,6 +5,11 @@
 static game_t *game;
 static rect_t rect;
 
+static const color_t colors[] =
+{
+    { 89, 130, 210, 255},
+};
+
 enum
 {
     BITMAP_BACKGROUND,
@@ -85,17 +90,6 @@ static void move_rect(int direction)
     }
 }
 
-static void clear_rect(void)
-{
-    render_clear_area(
-        bitmaps[BITMAP_BACKGROUND],
-        rect.x,
-        rect.y,
-        rect.w,
-        rect.h
-    );
-}
-
 static void fill_rect(void)
 {
     render_fill_area(
@@ -141,7 +135,9 @@ static int start(int events)
     (void)events;
     reset_rect();
     set_bitmaps_position();
-    render_draw(bitmaps[BITMAP_BACKGROUND]);
+    render_set_color(&colors[0]);
+    render_clear();
+    render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
     fill_rect();
     render_present();
     return 0;
@@ -153,18 +149,12 @@ static int draw(int events)
     {
         return 1;
     }
-
-    int move_x = direction_x(events);
-    int move_y = direction_y(events);
-
-    if (move_x || move_y)
-    {
-        clear_rect();
-        move_rect(move_x);
-        move_rect(move_y);
-        fill_rect();
-        render_present();
-    }
+    render_clear();
+    render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
+    move_rect(direction_x(events));
+    move_rect(direction_y(events));
+    fill_rect();
+    render_present();
     return 0;
 }
 

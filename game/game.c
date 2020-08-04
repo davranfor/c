@@ -89,6 +89,11 @@ void render_draw_area(int x, int y, int w, int h)
     SDL_RenderDrawRect(game->renderer, &area);
 }
 
+void render_clear(void)
+{
+    SDL_RenderClear(game->renderer);
+}
+
 void render_present(void)
 {
     SDL_RenderPresent(game->renderer);

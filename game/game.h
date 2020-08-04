@@ -60,6 +60,7 @@ void render_fill_rect(const SDL_Rect *);
 void render_draw_rect(const SDL_Rect *);
 void render_fill_area(int, int, int, int);
 void render_draw_area(int, int, int, int);
+void render_clear(void);
 void render_present(void);
 
 SDL_Texture *texture_create(const char *);
