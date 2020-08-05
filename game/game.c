@@ -49,7 +49,6 @@ SDL_Keycode game_keyup(void)
     return key;
 }
 
-
 void game_pause(void)
 {
     SDL_Event event;

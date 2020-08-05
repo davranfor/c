@@ -85,28 +85,6 @@ static void move_rect(int direction)
     }
 }
 
-static int direction_x(int events)
-{
-    int mask = EVENT_KEY_LEFT | EVENT_KEY_RIGHT;
-
-    if ((events & mask) == mask)
-    {
-        return 0;
-    }
-    return events & mask;
-}
-
-static int direction_y(int events)
-{
-    int mask = EVENT_KEY_UP | EVENT_KEY_DOWN;
-
-    if ((events & mask) == mask)
-    {
-        return 0;
-    }
-    return events & mask;
-}
-
 static void init(void)
 {
     load_bitmaps();
@@ -133,8 +111,8 @@ static int draw(int events)
     }
     render_clear();
     render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
-    move_rect(direction_x(events));
-    move_rect(direction_y(events));
+    move_rect(events & (EVENT_KEY_LEFT | EVENT_KEY_RIGHT));
+    move_rect(events & (EVENT_KEY_UP | EVENT_KEY_DOWN));
     render_fill_rect(&rect);
     render_present();
     return 0;
