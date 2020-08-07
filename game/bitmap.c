@@ -252,13 +252,13 @@ int button_clicked(button_t *button[], int buttons)
                     switch (event.key.keysym.sym)
                     {
                         case SDLK_KP_ENTER:
+                        case SDLK_RETURN:
                             if (buttons > 0)
                             {
                                 button_up(pressed, button);
                             }
                             done = 1;
                             break;
-                        case SDLK_RETURN:
                         case SDLK_ESCAPE:
                             if (buttons == 2)
                             {
