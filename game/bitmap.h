@@ -19,7 +19,6 @@ void bitmap_mod_color(bitmap_t *, Uint8);
 
 void render_draw_bitmap(const bitmap_t *);
 
-
 typedef bitmap_t button_t;
 int button_clicked(button_t *[], int);
 

@@ -19,7 +19,7 @@ static void init(void)
     }
     atexit(IMG_Quit);
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0)
+    if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
         SDL_Log("SDL_Init: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
@@ -79,7 +79,7 @@ void game_load(game_t *this)
 {
     game = this;
     init();
-    load();
     atexit(clean);
+    load();
 }
 

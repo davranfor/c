@@ -1,6 +1,6 @@
 #include "game.h"
+#include "task.h"
 #include "bitmap.h"
-#include "menu.h"
 
 static game_t *game;
 static rect_t view;
@@ -230,8 +230,7 @@ static int stop(int events)
 
     if (clicked != 1)
     {
-        exit(EXIT_SUCCESS);
-        //return TASK_MENU;
+        return TASK_EXIT;
     }
     return 0;
 }

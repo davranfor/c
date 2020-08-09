@@ -14,8 +14,6 @@ typedef SDL_Point point_t;
 typedef SDL_Color color_t;
 typedef SDL_Event event_t;
 
-typedef int (callback_t)(int);
-
 typedef struct
 {
     TTF_Font *renderer;
@@ -41,14 +39,6 @@ enum game_events
     EVENT_KEY_LEFT = 0x04,
     EVENT_KEY_RIGHT = 0x08,
     EVENT_QUIT = 0x10
-};
-
-enum game_states
-{
-    STATE_START,
-    STATE_DRAW,
-    STATE_STOP,
-    STATES
 };
 
 void game_init(game_t *);

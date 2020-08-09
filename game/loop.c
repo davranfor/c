@@ -1,15 +1,6 @@
 #include "game.h"
-#include "menu.h"
-#include "play.h"
+#include "task.h"
 #include "loop.h"
-
-enum
-{
-    NONE,
-    MENU,
-    PLAY,
-    TASKS,
-};
 
 static callback_t *tasks[TASKS][STATES];
 
@@ -40,10 +31,6 @@ static void loop(void)
                         case SDL_KEYDOWN:
                             if (!event.key.repeat)
                             {
-                                if (event.key.keysym.sym == SDLK_ESCAPE)
-                                {
-                                    events = EVENT_QUIT;
-                                }
                                 if (event.key.keysym.sym == SDLK_UP)
                                 {
                                     events |= EVENT_KEY_UP;
@@ -59,6 +46,11 @@ static void loop(void)
                                 if (event.key.keysym.sym == SDLK_RIGHT)
                                 {
                                     events |= EVENT_KEY_RIGHT;
+                                }
+                                if (event.key.keysym.sym == SDLK_ESCAPE)
+                                {
+                                    event.type = SDL_QUIT;
+                                    SDL_PushEvent(&event);
                                 }
                             }
                             break;
@@ -81,7 +73,7 @@ static void loop(void)
                             }
                             break;
                         case SDL_QUIT:
-                            events = EVENT_QUIT;
+                            events |= EVENT_QUIT;
                             break;
                     }
                 }
@@ -106,8 +98,9 @@ static void loop(void)
 
 void game_loop(game_t *game)
 {
-    game_menu(game, tasks[MENU]);
-    game_play(game, tasks[PLAY]);
+    game_menu(game, tasks[TASK_MENU]);
+    game_play(game, tasks[TASK_PLAY]);
+    game_exit(game, tasks[TASK_EXIT]);
     loop();
 }
 
