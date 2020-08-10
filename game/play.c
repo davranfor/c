@@ -4,7 +4,7 @@
 
 static game_t *game;
 
-static rect_t rect[2];
+static bitmap_t *player[2];
 static int dir[2];
 
 static int counter;
@@ -12,14 +12,14 @@ static int ticks;
 
 static const color_t colors[] =
 {
-    {255,   0,   0, 255},
-    {  0,   0, 255, 255},
-    { 89, 130, 210, 255},
+    {89, 130, 210, 255},
 };
 
 enum
 {
     BITMAP_BACKGROUND,
+    BITMAP_PLAYER1,
+    BITMAP_PLAYER2,
     BITMAPS
 };
 
@@ -30,12 +30,16 @@ static void load_bitmaps(void)
     const char *resources[] =
     {
         [BITMAP_BACKGROUND] = "img/background.png",
+        [BITMAP_PLAYER1] = "img/player1.png",
+        [BITMAP_PLAYER2] = "img/player2.png",
     };
 
     for (size_t index = 0; index < BITMAPS; index++)
     {
         bitmaps[index] = bitmap_load(resources[index]);
     }
+    player[0] = bitmaps[BITMAP_PLAYER1];
+    player[1] = bitmaps[BITMAP_PLAYER2];
 }
 
 static void set_bitmaps_position(void)
@@ -45,22 +49,19 @@ static void set_bitmaps_position(void)
         0,
         0
     );
+    bitmap_set_position(
+        player[0],
+        game->w / 2 - player[0]->h / 2,
+        game->h / 8 - player[0]->h / 2
+    );
+    bitmap_set_position(
+        player[1],
+        game->w / 2 - player[1]->h / 2,
+        game->h / 8 * 6 - player[1]->h / 2
+    );
 }
 
-static void reset_rects(void)
-{
-    rect[0].x = game->w / 2 - 20;
-    rect[0].y = game->h / 8 - 20;
-    rect[0].w = 40;
-    rect[0].h = 40;
-
-    rect[1].x = game->w / 2 - 20;
-    rect[1].y = game->h / 8 * 7 - 20;
-    rect[1].w = 40;
-    rect[1].h = 40;
-}
-
-static void move_rect(int index)
+static void move_player(int index)
 {
     const int velocity = 5 * (index + 1);
 
@@ -77,44 +78,42 @@ static void move_rect(int index)
 
     if (dir[index] & EVENT_KEY_LEFT)
     {
-        rect[index].x -= velocity;
-        if (rect[index].x < min[index].x)
+        player[index]->x -= velocity;
+        if (player[index]->x < min[index].x)
         {
-            rect[index].x = min[index].x;
+            player[index]->x = min[index].x;
         }
     }
     if (dir[index] & EVENT_KEY_RIGHT)
     {
-        rect[index].x += velocity;
-        if (rect[index].x + rect[index].w > max[index].x)
+        player[index]->x += velocity;
+        if (player[index]->x + player[index]->w > max[index].x)
         {
-            rect[index].x = max[index].x - rect[index].w;
+            player[index]->x = max[index].x - player[index]->w;
         }
     }
     if (dir[index] & EVENT_KEY_UP)
     {
-        rect[index].y -= velocity;
-        if (rect[index].y < min[index].y)
+        player[index]->y -= velocity;
+        if (player[index]->y < min[index].y)
         {
-            rect[index].y = min[index].y;
+            player[index]->y = min[index].y;
         }
     }
     if (dir[index] & EVENT_KEY_DOWN)
     {
-        rect[index].y += velocity;
-        if (rect[index].y + rect[index].h > max[index].y)
+        player[index]->y += velocity;
+        if (player[index]->y + player[index]->h > max[index].y)
         {
-            rect[index].y = max[index].y - rect[index].h;
+            player[index]->y = max[index].y - player[index]->h;
         }
     }
 }
 
-static void draw_rects(void)
+static void draw_players(void)
 {
-    render_set_color(&colors[0]);
-    render_fill_rect(&rect[0]);
-    render_set_color(&colors[1]);
-    render_fill_rect(&rect[1]);
+    render_draw_bitmap(player[0]);
+    render_draw_bitmap(player[1]);
 }
 
 static void randomize(int events)
@@ -139,12 +138,11 @@ static void init(void)
 static int start(int events)
 {
     (void)events;
-    reset_rects();
     set_bitmaps_position();
-    render_set_color(&colors[2]);
+    render_set_color(&colors[0]);
     render_clear();
     render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
-    draw_rects();
+    draw_players();
     render_present();
     return 0;
 }
@@ -156,11 +154,11 @@ static int draw(int events)
         return 1;
     }
     randomize(events);
-    move_rect(0);
-    move_rect(1);
+    move_player(0);
+    move_player(1);
     render_clear();
     render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
-    draw_rects();
+    draw_players();
     render_present();
     return 0;
 }

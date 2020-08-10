@@ -14,16 +14,11 @@ static void loop(void)
         }
         if (tasks[task][STATE_DRAW] != NULL)
         {
-            Uint32 timer = 0;
             SDL_Event event;
             int events = 0;
 
             while (1)
             {
-                if (SDL_TICKS_PASSED(timer, SDL_GetTicks()))
-                {
-                    SDL_Delay(timer - SDL_GetTicks());
-                }
                 while (SDL_PollEvent(&event))
                 {
                     switch (event.type)
@@ -77,7 +72,6 @@ static void loop(void)
                             break;
                     }
                 }
-                timer = SDL_GetTicks() + (1000 / FPS);
                 if (tasks[task][STATE_DRAW](events) != 0)
                 {
                     break;

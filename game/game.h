@@ -5,8 +5,6 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
-#define FPS 60
-
 #define game_delay SDL_Delay
 
 typedef SDL_Rect rect_t;

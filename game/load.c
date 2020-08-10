@@ -51,7 +51,11 @@ static void load(void)
         exit(EXIT_FAILURE);
     }
 
-    game->renderer = SDL_CreateRenderer(game->window, -1, SDL_RENDERER_ACCELERATED);
+    game->renderer = SDL_CreateRenderer(
+        game->window,
+        -1,
+        SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED
+    );
     if (game->renderer == NULL)
     {
         SDL_Log("SDL_CreateRenderer: %s\n", SDL_GetError());
