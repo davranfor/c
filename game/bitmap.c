@@ -282,6 +282,7 @@ int button_clicked(button_t *button[], int buttons)
                     break;
             }
         }
+        SDL_Delay(1);
     }
     if (clicked != 0)
     {

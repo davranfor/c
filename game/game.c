@@ -25,6 +25,7 @@ SDL_Keycode game_keydown(void)
                 done = 1;
             }
         }
+        SDL_Delay(1);
     }
     return key;
 }
@@ -45,6 +46,7 @@ SDL_Keycode game_keyup(void)
                 done = 1;
             }
         }
+        SDL_Delay(1);
     }
     return key;
 }
