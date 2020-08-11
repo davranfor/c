@@ -4,11 +4,11 @@
 
 static game_t *game;
 
-static bitmap_t *player[2];
-static int dir[2];
-
+static int keys[2];
 static int counter;
-static int ticks;
+static int elapsed;
+
+static rect_t view[2];
 
 static const color_t colors[] =
 {
@@ -38,11 +38,9 @@ static void load_bitmaps(void)
     {
         bitmaps[index] = bitmap_load(resources[index]);
     }
-    player[0] = bitmaps[BITMAP_PLAYER1];
-    player[1] = bitmaps[BITMAP_PLAYER2];
 }
 
-static void set_bitmaps_position(void)
+static void set_positions(void)
 {
     bitmap_set_position(
         bitmaps[BITMAP_BACKGROUND],
@@ -50,95 +48,114 @@ static void set_bitmaps_position(void)
         0
     );
     bitmap_set_position(
-        player[0],
-        game->w / 2 - player[0]->h / 2,
-        game->h / 8 - player[0]->h / 2
+        bitmaps[BITMAP_PLAYER1],
+        view[0].x + view[0].w / 2 - bitmaps[BITMAP_PLAYER1]->w / 2,
+        view[0].y
     );
     bitmap_set_position(
-        player[1],
-        game->w / 2 - player[1]->h / 2,
-        game->h / 8 * 6 - player[1]->h / 2
+        bitmaps[BITMAP_PLAYER2],
+        view[1].x + view[1].w / 2 - bitmaps[BITMAP_PLAYER2]->w / 2,
+        view[1].y
     );
+}
+
+static void set_view(void)
+{
+    view[0].x = 10;
+    view[0].y = 10;
+    view[0].w = game->w - 20;
+    view[0].h = game->h / 2 - 10;
+
+    view[1].x = 10;
+    view[1].y = game->h / 2;
+    view[1].w = game->w - 20;
+    view[1].h = game->h / 2 - 10;
+}
+
+static void reset_keys(void)
+{
+    keys[0] = 0;
+    keys[1] = 0;
+    counter = 0;
+    elapsed = 0;
+}
+
+static void set_keys(int value)
+{
+    if (counter++ == elapsed)
+    {
+        int r = rand();
+
+        keys[0] = 0;
+        keys[0] |= r & 1 ? EVENT_KEY_LEFT : EVENT_KEY_RIGHT;
+        keys[0] |= r & 2 ? EVENT_KEY_UP : EVENT_KEY_DOWN;
+        elapsed += r % 50 + 50;
+    }
+    keys[1] = value;
 }
 
 static void move_player(int index)
 {
+    bitmap_t *player = bitmaps[BITMAP_PLAYER1 + index];
     const int velocity = 5 * (index + 1);
 
-    const point_t min[] =
+    if (keys[index] & EVENT_KEY_LEFT)
     {
-        {10, 10},
-        {10, game->h / 2}
-    };
-    const point_t max[] =
+        player->x -= velocity;
+        if (player->x < view[index].x)
+        {
+            player->x = view[index].x;
+        }
+    }
+    if (keys[index] & EVENT_KEY_RIGHT)
     {
-        {game->w - 10, game->h / 2},
-        {game->w - 10, game->h - 10}
-    };
+        player->x += velocity;
+        if (player->x + player->w > view[index].x + view[index].w)
+        {
+            player->x = view[index].x + view[index].w - player->w;
+        }
+    }
+    if (keys[index] & EVENT_KEY_UP)
+    {
+        player->y -= velocity;
+        if (player->y < view[index].y)
+        {
+            player->y = view[index].y;
+        }
+    }
+    if (keys[index] & EVENT_KEY_DOWN)
+    {
+        player->y += velocity;
+        if (player->y + player->h > view[index].y + view[index].h)
+        {
+            player->y = view[index].y + view[index].h - player->h;
+        }
+    }
+}
 
-    if (dir[index] & EVENT_KEY_LEFT)
-    {
-        player[index]->x -= velocity;
-        if (player[index]->x < min[index].x)
-        {
-            player[index]->x = min[index].x;
-        }
-    }
-    if (dir[index] & EVENT_KEY_RIGHT)
-    {
-        player[index]->x += velocity;
-        if (player[index]->x + player[index]->w > max[index].x)
-        {
-            player[index]->x = max[index].x - player[index]->w;
-        }
-    }
-    if (dir[index] & EVENT_KEY_UP)
-    {
-        player[index]->y -= velocity;
-        if (player[index]->y < min[index].y)
-        {
-            player[index]->y = min[index].y;
-        }
-    }
-    if (dir[index] & EVENT_KEY_DOWN)
-    {
-        player[index]->y += velocity;
-        if (player[index]->y + player[index]->h > max[index].y)
-        {
-            player[index]->y = max[index].y - player[index]->h;
-        }
-    }
+static void move_players(void)
+{
+    move_player(0);
+    move_player(1);
 }
 
 static void draw_players(void)
 {
-    render_draw_bitmap(player[0]);
-    render_draw_bitmap(player[1]);
-}
-
-static void randomize(int events)
-{
-    if (counter++ == ticks)
-    {
-        int r = rand();
-
-        dir[0] = 0;
-        dir[0] |= (r & 1) ? EVENT_KEY_LEFT : EVENT_KEY_RIGHT;
-        dir[0] |= (r & 2) ? EVENT_KEY_UP : EVENT_KEY_DOWN;
-        ticks += r % 50 + 50;
-    }
-    dir[1] = events;
+    render_draw_bitmap(bitmaps[BITMAP_PLAYER1]);
+    render_draw_bitmap(bitmaps[BITMAP_PLAYER2]);
 }
 
 static void init(void)
 {
     load_bitmaps();
+    set_view();
 }
 
 static int start(int events)
 {
     (void)events;
-    set_bitmaps_position();
+    reset_keys();
+    set_positions();
     render_set_color(&colors[0]);
     render_clear();
     render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
@@ -153,9 +170,8 @@ static int draw(int events)
     {
         return 1;
     }
-    randomize(events);
-    move_player(0);
-    move_player(1);
+    set_keys(events & EVENT_KEYS);
+    move_players();
     render_clear();
     render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
     draw_players();

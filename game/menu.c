@@ -3,6 +3,7 @@
 #include "bitmap.h"
 
 static game_t *game;
+
 static rect_t view;
 static rect_t rect;
 
@@ -46,7 +47,7 @@ static void load_bitmaps(void)
     }
 }
 
-static void set_bitmaps_position(void)
+static void set_positions(void)
 {
     bitmap_set_position(
         bitmaps[BITMAP_BACKGROUND],
@@ -85,7 +86,7 @@ static void set_bitmaps_position(void)
     );
 }
 
-static void set_view_coords(void)
+static void set_view(void)
 {
     view.w = 503;
     view.h = 503;
@@ -183,14 +184,14 @@ static int must_stop(void)
 static void init(void)
 {
     load_bitmaps();
-    set_view_coords();
+    set_view();
 }
 
 static int start(int events)
 {
     (void)events;
     reset_rects();
-    set_bitmaps_position();
+    set_positions();
     render_set_color(&colors[1]);
     render_clear();
     render_draw_bitmap(bitmaps[BITMAP_GRADIENT]);

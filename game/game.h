@@ -36,6 +36,7 @@ enum game_events
     EVENT_KEY_DOWN = 0x02,
     EVENT_KEY_LEFT = 0x04,
     EVENT_KEY_RIGHT = 0x08,
+    EVENT_KEYS = 0x0F,
     EVENT_QUIT = 0x10
 };
 

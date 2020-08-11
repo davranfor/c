@@ -68,6 +68,7 @@ void game_pause(void)
                     break;
             }
         }
+        SDL_Delay(1);
     }
 }
 
