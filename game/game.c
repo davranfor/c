@@ -1,4 +1,5 @@
 #include "bitmap.h"
+#include "sprite.h"
 #include "game.h"
 
 static game_t *game;
@@ -7,6 +8,7 @@ void game_init(game_t *this)
 {
     game = this;
     bitmap_init(game->renderer);
+    sprite_init(game->renderer);
 }
 
 SDL_Keycode game_keydown(void)

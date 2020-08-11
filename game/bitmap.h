@@ -14,7 +14,7 @@ typedef struct
 
 void bitmap_init(SDL_Renderer *);
 bitmap_t *bitmap_load(const char *);
-void bitmap_set_position(bitmap_t *, int , int );
+void bitmap_set_position(bitmap_t *, int , int);
 void bitmap_mod_color(bitmap_t *, Uint8);
 
 void render_draw_bitmap(const bitmap_t *);
