@@ -1,3 +1,4 @@
+#include "mapper.h"
 #include "bitmap.h"
 #include "sprite.h"
 #include "game.h"
@@ -7,6 +8,7 @@ static game_t *game;
 void game_init(game_t *this)
 {
     game = this;
+    mapper_init(game->renderer);
     bitmap_init(game->renderer);
     sprite_init(game->renderer);
 }

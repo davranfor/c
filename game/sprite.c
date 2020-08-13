@@ -1,122 +1,68 @@
-#include <assert.h>
-#include <string.h>
-#include "hashmap.h"
+#include "mapper.h"
 #include "sprite.h"
 
 static SDL_Renderer *renderer;
-static hashmap *map;
-static sprite_t *mapper;
 
-static sprite_t *new_sprite(void)
+void sprite_init(SDL_Renderer *this)
 {
-    sprite_t *sprite;
+    renderer = this;
+}
 
-    sprite = calloc(1, sizeof *sprite);
+sprite_t *sprite_create(const char *path, int cols, int rows)
+{
+    resource_t *resource = mapper_load(path);
+    sprite_t *sprite = calloc(1, sizeof *sprite);
+
     if (sprite == NULL)
     {
         perror("calloc");
         exit(EXIT_FAILURE);
     }
+    sprite->texture = resource->texture;
+    sprite->w = resource->w / cols;
+    sprite->h = resource->h / rows;
+    sprite->frames = cols * rows;
+    sprite->rows = rows;
+    sprite->cols = cols;
+    sprite->delay = 10;
     return sprite;
 }
 
-static int comp_sprite(const void *pa, const void *pb)
+void sprite_destroy(sprite_t *sprite)
 {
-    const sprite_t *a = pa;
-    const sprite_t *b = pb;
-
-    return strcmp(a->path, b->path);
-}
-
-static unsigned long hash_sprite(const void *data)
-{
-    const sprite_t *sprite = data;
-
-    return hash_str((const unsigned char *)sprite->path);
-}
-
-static void free_sprite(void *data)
-{
-    sprite_t *sprite = data;
-
-    SDL_DestroyTexture(sprite->texture);
     free(sprite);
-}
-
-static void map_create(void)
-{
-    map = hashmap_create(comp_sprite, hash_sprite, 0);
-    if (map == NULL)
-    {
-        perror("hashmap_create");
-        exit(EXIT_FAILURE);
-    }
-    mapper = new_sprite();
-}
-
-static void map_destroy(void)
-{
-    hashmap_destroy(map, free_sprite);
-    free(mapper);
-}
-
-void sprite_init(SDL_Renderer *this)
-{
-    renderer = this;
-    map_create();
-    atexit(map_destroy);
-}
-
-static void create_texture(sprite_t *sprite)
-{
-    SDL_Surface *surface = IMG_Load(sprite->path);
-
-    if (surface == NULL)
-    {
-        SDL_Log("IMG_Load: %s\n", IMG_GetError());
-        exit(EXIT_FAILURE);
-    }
-    sprite->texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (sprite->texture == NULL)
-    {
-        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    sprite->surface.w = surface->w;
-    sprite->surface.h = surface->h;
-    SDL_FreeSurface(surface);
-}
-
-sprite_t *sprite_load(const char *path, int cols, int rows)
-{
-    assert(path != NULL);
-
-    mapper->path = path;
-
-    sprite_t *sprite = hashmap_insert(map, mapper);
-
-    if (sprite == NULL)
-    {
-        perror("hashmap_insert");
-        exit(EXIT_FAILURE);
-    }
-    if (sprite == mapper)
-    {
-        mapper = new_sprite();
-        create_texture(sprite);
-        sprite->rows = rows;
-        sprite->cols = cols;
-        sprite->w = sprite->surface.w / cols;
-        sprite->h = sprite->surface.h / rows;
-        sprite->delay = 10;
-    }
-    return sprite;
 }
 
 void sprite_set_position(sprite_t *sprite, int x, int y)
 {
     sprite->x = x;
     sprite->y = y;
+}
+
+void sprite_get_position(const sprite_t *sprite, int *x, int *y)
+{
+    *x = sprite->x;
+    *y = sprite->y;
+}
+
+void sprite_set_frames(sprite_t *sprite, int frames)
+{
+    sprite->frames = frames;
+}
+
+int sprite_get_frames(const sprite_t *sprite)
+{
+    return sprite->frames;
+}
+
+void sprite_set_index(sprite_t *sprite, int index)
+{
+    sprite->index = index;
+}
+
+int sprite_get_index(const sprite_t *sprite)
+{
+    return sprite->index;
 }
 
 void sprite_set_delay(sprite_t *sprite, int delay)
@@ -129,11 +75,30 @@ int sprite_get_delay(const sprite_t *sprite)
     return sprite->delay;
 }
 
+void sprite_play(sprite_t *sprite)
+{
+    sprite->status = SPRITE_PLAYING;
+    sprite->sequence = NULL;
+    sprite->index = 0;
+}
+
+void sprite_loop(sprite_t *sprite)
+{
+    sprite->status = SPRITE_LOOPING;
+    sprite->sequence = NULL;
+    sprite->index = 0;
+}
+
+void sprite_stop(sprite_t *sprite)
+{
+    sprite->status = SPRITE_STOPPED;
+    sprite->sequence = NULL;
+    sprite->index = 0;
+}
+
 void render_draw_sprite(sprite_t *sprite)
 {
-    int frames = sprite->cols * sprite->rows;
-
-    if (sprite->index >= frames)
+    if (sprite->index >= sprite->frames)
     {
         sprite->index = 0;
     }

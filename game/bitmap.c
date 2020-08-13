@@ -1,117 +1,44 @@
-#include <assert.h>
-#include <string.h>
-#include "hashmap.h"
+#include "mapper.h"
 #include "bitmap.h"
 
 static SDL_Renderer *renderer;
-static hashmap *map;
-static bitmap_t *mapper;
 
-static bitmap_t *new_bitmap(void)
+void bitmap_init(SDL_Renderer *this)
 {
-    bitmap_t *bitmap;
+    renderer = this;
+}
 
-    bitmap = calloc(1, sizeof *bitmap);
+bitmap_t *bitmap_create(const char *path)
+{
+    resource_t *resource = mapper_load(path);
+    bitmap_t *bitmap = calloc(1, sizeof *bitmap);
+
     if (bitmap == NULL)
     {
         perror("calloc");
         exit(EXIT_FAILURE);
     }
+    bitmap->texture = resource->texture;
+    bitmap->w = resource->w;
+    bitmap->h = resource->h;
     return bitmap;
 }
 
-static int comp_bitmap(const void *pa, const void *pb)
+void bitmap_destroy(bitmap_t *bitmap)
 {
-    const bitmap_t *a = pa;
-    const bitmap_t *b = pb;
-
-    return strcmp(a->path, b->path);
-}
-
-static unsigned long hash_bitmap(const void *data)
-{
-    const bitmap_t *bitmap = data;
-
-    return hash_str((const unsigned char *)bitmap->path);
-}
-
-static void free_bitmap(void *data)
-{
-    bitmap_t *bitmap = data;
-
-    SDL_DestroyTexture(bitmap->texture);
     free(bitmap);
-}
-
-static void map_create(void)
-{
-    map = hashmap_create(comp_bitmap, hash_bitmap, 0);
-    if (map == NULL)
-    {
-        perror("hashmap_create");
-        exit(EXIT_FAILURE);
-    }
-    mapper = new_bitmap();
-}
-
-static void map_destroy(void)
-{
-    hashmap_destroy(map, free_bitmap);
-    free(mapper);
-}
-
-void bitmap_init(SDL_Renderer *this)
-{
-    renderer = this;
-    map_create();
-    atexit(map_destroy);
-}
-
-static void create_texture(bitmap_t *bitmap)
-{
-    SDL_Surface *surface = IMG_Load(bitmap->path);
-
-    if (surface == NULL)
-    {
-        SDL_Log("IMG_Load: %s\n", IMG_GetError());
-        exit(EXIT_FAILURE);
-    }
-    bitmap->texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (bitmap->texture == NULL)
-    {
-        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    bitmap->w = surface->w;
-    bitmap->h = surface->h;
-    SDL_FreeSurface(surface);
-}
-
-bitmap_t *bitmap_load(const char *path)
-{
-    assert(path != NULL);
-
-    mapper->path = path;
-
-    bitmap_t *bitmap = hashmap_insert(map, mapper);
-
-    if (bitmap == NULL)
-    {
-        perror("hashmap_insert");
-        exit(EXIT_FAILURE);
-    }
-    if (bitmap == mapper)
-    {
-        mapper = new_bitmap();
-        create_texture(bitmap);
-    }
-    return bitmap;
 }
 
 void bitmap_set_position(bitmap_t *bitmap, int x, int y)
 {
     bitmap->x = x;
     bitmap->y = y;
+}
+
+void bitmap_get_position(const bitmap_t *bitmap, int *x, int *y)
+{
+    *x = bitmap->x;
+    *y = bitmap->y;
 }
 
 void bitmap_mod_color(bitmap_t *bitmap, Uint8 mod)
@@ -156,7 +83,7 @@ void render_draw_bitmap(const bitmap_t *bitmap)
     );
 }
 
-static int button_match(button_t *button, int x, int y)
+static int button_match(const button_t *button, int x, int y)
 {
     if ((x >= button->x) && (x <= button->x + button->w) &&
         (y >= button->y) && (y <= button->y + button->h))

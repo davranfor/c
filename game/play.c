@@ -25,7 +25,7 @@ enum
 
 static bitmap_t *bitmaps[BITMAPS];
 
-static void load_bitmaps(void)
+static void create_bitmaps(void)
 {
     const char *resources[] =
     {
@@ -36,7 +36,15 @@ static void load_bitmaps(void)
 
     for (size_t index = 0; index < BITMAPS; index++)
     {
-        bitmaps[index] = bitmap_load(resources[index]);
+        bitmaps[index] = bitmap_create(resources[index]);
+    }
+}
+
+static void destroy_bitmaps(void)
+{
+    for (size_t index = 0; index < BITMAPS; index++)
+    {
+        bitmap_destroy(bitmaps[index]);
     }
 }
 
@@ -147,7 +155,8 @@ static void draw_players(void)
 
 static void init(void)
 {
-    load_bitmaps();
+    atexit(destroy_bitmaps);
+    create_bitmaps();
     set_view();
 }
 

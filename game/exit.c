@@ -25,10 +25,16 @@ enum
 static bitmap_t *bitmaps[BITMAPS];
 static sprite_t *sprites[SPRITES];
 
-static void load_resources(void)
+static void create_resources(void)
 {
-    bitmaps[BITMAP_BACKGROUND] = bitmap_load("img/background.png");
-    sprites[SPRITE_TEST] = sprite_load("img/dead.png", 10, 1);
+    bitmaps[BITMAP_BACKGROUND] = bitmap_create("img/background.png");
+    sprites[SPRITE_TEST] = sprite_create("img/dead.png", 10, 1);
+}
+
+static void destroy_resources(void)
+{
+    bitmap_destroy(bitmaps[BITMAP_BACKGROUND]);
+    sprite_destroy(sprites[SPRITE_TEST]);
 }
 
 static void set_positions(void)
@@ -47,7 +53,8 @@ static void set_positions(void)
 
 static void init(void)
 {
-    load_resources();
+    atexit(destroy_resources);
+    create_resources();
     sprite_set_delay(sprites[SPRITE_TEST], 7);
 }
 
