@@ -79,23 +79,10 @@ int sprite_get_delay(const sprite_t *sprite)
     return sprite->delay;
 }
 
-int sprite_set_sequence(sprite_t *sprite, const int *sequence)
+void sprite_set_sequence(sprite_t *sprite, const int *sequence)
 {
+    assert(*sequence > 0);
     sprite->sequence = sequence;
-    if (sequence == NULL)
-    {
-        return 0;
-    }
-    while (*sequence > 0)
-    {
-        sequence++;
-    }
-    assert(
-        (sequence != sprite->sequence) &&
-        (*sequence != LOOP) &&
-        (*sequence != STOP)
-    );
-    return *sequence == STOP ? SPRITE_PLAYING : SPRITE_LOOPING; 
 }
 
 const int *sprite_get_sequence(const sprite_t *sprite)
@@ -105,16 +92,8 @@ const int *sprite_get_sequence(const sprite_t *sprite)
 
 void sprite_play_sequence(sprite_t *sprite, const int *sequence)
 {
-    int status = sprite_set_sequence(sprite, sequence);
-
-    if (status == 0)
-    {
-        sprite->status = SPRITE_PLAYING;
-    }
-    else
-    {
-        sprite->status = status;
-    }
+    sprite_set_sequence(sprite, sequence);
+    sprite->status = SPRITE_PLAYING;
     sprite->index = 0;
 }
 
@@ -127,10 +106,7 @@ void sprite_loop_sequence(sprite_t *sprite, const int *sequence)
 
 void sprite_play(sprite_t *sprite)
 {
-    if (sprite->sequence == NULL)
-    {
-        sprite->status = SPRITE_PLAYING;
-    }
+    sprite->status = SPRITE_PLAYING;
 }
 
 void sprite_loop(sprite_t *sprite)
