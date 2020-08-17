@@ -10,12 +10,12 @@ void bitmap_init(SDL_Renderer *this)
 
 bitmap_t *bitmap_create(const char *path)
 {
-    resource_t *resource = mapper_load(path);
+    resource_t *resource = mapper_load_resource(path);
     bitmap_t *bitmap = calloc(1, sizeof *bitmap);
 
     if (bitmap == NULL)
     {
-        perror("calloc");
+        perror("bitmap_create");
         exit(EXIT_FAILURE);
     }
     bitmap->texture = resource->texture;

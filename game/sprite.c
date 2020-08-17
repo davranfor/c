@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "mapper.h"
 #include "sprite.h"
 
@@ -10,12 +11,14 @@ void sprite_init(SDL_Renderer *this)
 
 sprite_t *sprite_create(const char *path, int cols, int rows)
 {
-    resource_t *resource = mapper_load(path);
+    assert((cols > 0) && (rows > 0));
+
+    resource_t *resource = mapper_load_resource(path);
     sprite_t *sprite = calloc(1, sizeof *sprite);
 
     if (sprite == NULL)
     {
-        perror("calloc");
+        perror("sprite_create");
         exit(EXIT_FAILURE);
     }
     sprite->texture = resource->texture;
@@ -47,6 +50,7 @@ void sprite_get_position(const sprite_t *sprite, int *x, int *y)
 
 void sprite_set_frames(sprite_t *sprite, int frames)
 {
+    assert(frames > 0);
     sprite->frames = frames;
 }
 
@@ -75,25 +79,68 @@ int sprite_get_delay(const sprite_t *sprite)
     return sprite->delay;
 }
 
+int sprite_set_sequence(sprite_t *sprite, const int *sequence)
+{
+    sprite->sequence = sequence;
+    if (sequence == NULL)
+    {
+        return 0;
+    }
+    while (*sequence > 0)
+    {
+        sequence++;
+    }
+    assert(
+        (sequence != sprite->sequence) &&
+        (*sequence != LOOP) &&
+        (*sequence != STOP)
+    );
+    return *sequence == STOP ? SPRITE_PLAYING : SPRITE_LOOPING; 
+}
+
+const int *sprite_get_sequence(const sprite_t *sprite)
+{
+    return sprite->sequence;
+}
+
+void sprite_play_sequence(sprite_t *sprite, const int *sequence)
+{
+    int status = sprite_set_sequence(sprite, sequence);
+
+    if (status == 0)
+    {
+        sprite->status = SPRITE_PLAYING;
+    }
+    else
+    {
+        sprite->status = status;
+    }
+    sprite->index = 0;
+}
+
+void sprite_loop_sequence(sprite_t *sprite, const int *sequence)
+{
+    sprite_set_sequence(sprite, sequence);
+    sprite->status = SPRITE_LOOPING;
+    sprite->index = 0;
+}
+
 void sprite_play(sprite_t *sprite)
 {
-    sprite->status = SPRITE_PLAYING;
-    sprite->sequence = NULL;
-    sprite->index = 0;
+    if (sprite->sequence == NULL)
+    {
+        sprite->status = SPRITE_PLAYING;
+    }
 }
 
 void sprite_loop(sprite_t *sprite)
 {
     sprite->status = SPRITE_LOOPING;
-    sprite->sequence = NULL;
-    sprite->index = 0;
 }
 
 void sprite_stop(sprite_t *sprite)
 {
     sprite->status = SPRITE_STOPPED;
-    sprite->sequence = NULL;
-    sprite->index = 0;
 }
 
 void render_draw_sprite(sprite_t *sprite)

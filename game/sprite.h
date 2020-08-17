@@ -25,6 +25,9 @@ enum sprite_status
     SPRITE_LOOPING
 };
 
+#define LOOP -1
+#define STOP 0
+
 void sprite_init(SDL_Renderer *);
 sprite_t *sprite_create(const char *, int, int);
 void sprite_destroy(sprite_t *);
@@ -36,6 +39,10 @@ void sprite_set_index(sprite_t *, int);
 int sprite_get_index(const sprite_t *);
 void sprite_set_delay(sprite_t *, int);
 int sprite_get_delay(const sprite_t *);
+int sprite_set_sequence(sprite_t *, const int *);
+const int *sprite_get_sequence(const sprite_t *);
+void sprite_play_sequence(sprite_t *, const int *);
+void sprite_loop_sequence(sprite_t *, const int *);
 void sprite_play(sprite_t *);
 void sprite_loop(sprite_t *);
 void sprite_stop(sprite_t *);

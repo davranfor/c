@@ -28,6 +28,7 @@ static sprite_t *sprites[SPRITES];
 static void create_resources(void)
 {
     bitmaps[BITMAP_BACKGROUND] = bitmap_create("img/background.png");
+
     sprites[SPRITE_TEST] = sprite_create("img/dead.png", 10, 1);
 }
 
@@ -35,6 +36,11 @@ static void destroy_resources(void)
 {
     bitmap_destroy(bitmaps[BITMAP_BACKGROUND]);
     sprite_destroy(sprites[SPRITE_TEST]);
+}
+
+static void set_delays(void)
+{
+    sprite_set_delay(sprites[SPRITE_TEST], 7);
 }
 
 static void set_positions(void)
@@ -55,12 +61,12 @@ static void init(void)
 {
     atexit(destroy_resources);
     create_resources();
-    sprite_set_delay(sprites[SPRITE_TEST], 7);
 }
 
 static int start(int events)
 {
     (void)events;
+    set_delays();
     set_positions();
     render_set_color(&colors[0]);
     render_clear();

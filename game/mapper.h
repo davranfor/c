@@ -13,7 +13,7 @@ typedef struct
 } resource_t;
 
 void mapper_init(SDL_Renderer *);
-resource_t *mapper_load(const char *);
+resource_t *mapper_load_resource(const char *);
 
 #endif /* MAPPER_H */
 

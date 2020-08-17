@@ -1,7 +1,7 @@
 
 CC = gcc
 CFLAGS = -I../hashmap
-CFLAGS += -std=c11 -pedantic -Wall -Wextra -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wcast-qual -Wnested-externs
+CFLAGS += -std=c11 -pedantic -Wall -Wextra -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wcast-qual -Wnested-externs -O2
 LDFLAGS = `sdl2-config --cflags --libs` -lSDL2_image -lSDL2_ttf
 VPATH = ../hashmap
 OBJECTS = hashmap.o mapper.o bitmap.o sprite.o game.o load.o loop.o main.o menu.o play.o exit.o

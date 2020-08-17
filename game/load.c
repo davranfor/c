@@ -7,21 +7,21 @@ static void init(void)
 {
     if (TTF_Init() != 0)
     {
-        SDL_Log("TTF_Init: %s\n", TTF_GetError());
+        SDL_Log("TTF_Init: %s", TTF_GetError());
         exit(EXIT_FAILURE);
     }
     atexit(TTF_Quit);
 
     if (IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG)
     {
-        SDL_Log("IMG_Init: %s\n", IMG_GetError());
+        SDL_Log("IMG_Init: %s", IMG_GetError());
         exit(EXIT_FAILURE);
     }
     atexit(IMG_Quit);
 
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
-        SDL_Log("SDL_Init: %s\n", SDL_GetError());
+        SDL_Log("SDL_Init: %s", SDL_GetError());
         exit(EXIT_FAILURE);
     }
     atexit(SDL_Quit);
@@ -32,7 +32,7 @@ static void load(void)
     game->font.renderer = TTF_OpenFont(game->font.name, game->font.size);
     if (game->font.renderer == NULL)
     {
-        SDL_Log("TTF_OpenFont: %s\n", TTF_GetError());
+        SDL_Log("TTF_OpenFont: %s", TTF_GetError());
         exit(EXIT_FAILURE);
     }
     TTF_SizeUTF8(game->font.renderer, "g", &game->font.w, &game->font.h);
@@ -47,7 +47,7 @@ static void load(void)
     );
     if (game->window == NULL)
     {
-        SDL_Log("SDL_CreateWindow: %s\n", SDL_GetError());
+        SDL_Log("SDL_CreateWindow: %s", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 
@@ -58,7 +58,7 @@ static void load(void)
     );
     if (game->renderer == NULL)
     {
-        SDL_Log("SDL_CreateRenderer: %s\n", SDL_GetError());
+        SDL_Log("SDL_CreateRenderer: %s", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 }

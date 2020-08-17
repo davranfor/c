@@ -189,6 +189,17 @@ static int must_stop(void)
     return rect.w >= view.w / 2;
 }
 
+static int select_option(void)
+{
+    bitmap_t *buttons[] =
+    {
+        bitmaps[BITMAP_PLAY],
+        bitmaps[BITMAP_STOP]
+    };
+
+    return button_clicked(buttons, 2);
+}
+
 static void init(void)
 {
     atexit(destroy_bitmaps);
@@ -229,20 +240,7 @@ static int stop(int events)
     render_clear();
     draw_menu();
     render_present();
-
-    bitmap_t *buttons[] =
-    {
-        bitmaps[BITMAP_PLAY],
-        bitmaps[BITMAP_STOP]
-    };
-
-    int clicked = button_clicked(buttons, 2);
-
-    if (clicked != 1)
-    {
-        return TASK_EXIT;
-    }
-    return 0;
+    return select_option() == 1 ? 0 : TASK_EXIT;
 }
 
 void game_menu(game_t *this, callback_t *state[])

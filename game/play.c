@@ -106,37 +106,38 @@ static void move_player(int index)
 {
     bitmap_t *player = bitmaps[BITMAP_PLAYER1 + index];
     const int velocity = 5 * (index + 1);
+    const rect_t *area = &view[index];
 
     if (keys[index] & EVENT_KEY_LEFT)
     {
         player->x -= velocity;
-        if (player->x < view[index].x)
+        if (player->x < area->x)
         {
-            player->x = view[index].x;
-        }
-    }
-    if (keys[index] & EVENT_KEY_RIGHT)
-    {
-        player->x += velocity;
-        if (player->x + player->w > view[index].x + view[index].w)
-        {
-            player->x = view[index].x + view[index].w - player->w;
+            player->x = area->x;
         }
     }
     if (keys[index] & EVENT_KEY_UP)
     {
         player->y -= velocity;
-        if (player->y < view[index].y)
+        if (player->y < area->y)
         {
-            player->y = view[index].y;
+            player->y = area->y;
+        }
+    }
+    if (keys[index] & EVENT_KEY_RIGHT)
+    {
+        player->x += velocity;
+        if (player->x + player->w > area->x + area->w)
+        {
+            player->x = area->x + area->w - player->w;
         }
     }
     if (keys[index] & EVENT_KEY_DOWN)
     {
         player->y += velocity;
-        if (player->y + player->h > view[index].y + view[index].h)
+        if (player->y + player->h > area->y + area->h)
         {
-            player->y = view[index].y + view[index].h - player->h;
+            player->y = area->y + area->h - player->h;
         }
     }
 }

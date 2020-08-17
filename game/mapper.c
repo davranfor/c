@@ -1,5 +1,5 @@
-#include <assert.h>
-#include <string.h>
+#include <stddef.h>
+#include "debug.h"
 #include "hashmap.h"
 #include "mapper.h"
 
@@ -25,13 +25,13 @@ static void resource_fill(resource_t *resource)
 
     if (surface == NULL)
     {
-        SDL_Log("IMG_Load: %s\n", IMG_GetError());
+        SDL_Log("IMG_Load: %s", IMG_GetError());
         exit(EXIT_FAILURE);
     }
     resource->texture = SDL_CreateTextureFromSurface(renderer, surface);
     if (resource->texture == NULL)
     {
-        SDL_Log("SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
+        SDL_Log("SDL_CreateTextureFromSurface: %s", SDL_GetError());
         exit(EXIT_FAILURE);
     }
     resource->w = surface->w;
@@ -44,7 +44,7 @@ static int resource_comp(const void *pa, const void *pb)
     const resource_t *a = pa;
     const resource_t *b = pb;
 
-    return strcmp(a->path, b->path);
+    return SDL_strcmp(a->path, b->path);
 }
 
 static unsigned long resource_hash(const void *data)
@@ -86,7 +86,7 @@ void mapper_init(SDL_Renderer *this)
     map_create();
 }
 
-resource_t *mapper_load(const char *path)
+resource_t *mapper_load_resource(const char *path)
 {
     assert(path != NULL);
 
