@@ -43,6 +43,10 @@ void sprite_loop_sequence(sprite_t *, const int *);
 void sprite_play(sprite_t *);
 void sprite_loop(sprite_t *);
 void sprite_stop(sprite_t *);
+int sprite_is_playing(sprite_t *);
+int sprite_is_looping(sprite_t *);
+int sprite_is_stopped(sprite_t *);
+int sprite_is_animating(sprite_t *);
 
 void render_draw_sprite(sprite_t *);
 

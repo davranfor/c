@@ -167,10 +167,6 @@ static int start(int events)
     reset_keys();
     set_positions();
     render_set_color(&colors[0]);
-    render_clear();
-    render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
-    draw_players();
-    render_present();
     return 0;
 }
 
