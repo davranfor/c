@@ -21,7 +21,9 @@ enum
     SPRITE_TEST,
     SPRITES
 };
-
+/*
+static const int sequence[] = {0, 1, -1};
+*/
 static bitmap_t *bitmaps[BITMAPS];
 static sprite_t *sprites[SPRITES];
 
@@ -41,6 +43,9 @@ static void destroy_resources(void)
 static void set_delays(void)
 {
     sprite_set_delay(sprites[SPRITE_TEST], 7);
+/*
+    sprite_set_sequence(sprites[SPRITE_TEST], sequence);
+*/
 }
 
 static void set_positions(void)
@@ -69,9 +74,7 @@ static int start(int events)
     set_delays();
     set_positions();
     render_set_color(&colors[0]);
-    render_clear();
-    render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
-    render_present();
+    sprite_play(sprites[SPRITE_TEST]);
     return 0;
 }
 
@@ -83,7 +86,10 @@ static int draw(int events)
     }
     render_clear();
     render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
-    render_draw_sprite(sprites[SPRITE_TEST]);
+    if (sprite_is_animating(sprites[SPRITE_TEST]))
+    {
+        render_draw_sprite(sprites[SPRITE_TEST]);
+    }
     render_present();
     return 0;
 }

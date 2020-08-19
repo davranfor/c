@@ -12,17 +12,18 @@ typedef struct
     int x, y, w, h;
     int rows, cols;
     int frames;
-    int status;
+    int state;
     int index;
     int delay;
     int count;
 } sprite_t;
 
-enum sprite_status
+enum sprite_state
 {
     SPRITE_STOPPED,
     SPRITE_PLAYING,
-    SPRITE_LOOPING
+    SPRITE_LOOPING,
+    SPRITE_PAUSED
 };
 
 void sprite_init(SDL_Renderer *);
@@ -43,9 +44,11 @@ void sprite_loop_sequence(sprite_t *, const int *);
 void sprite_play(sprite_t *);
 void sprite_loop(sprite_t *);
 void sprite_stop(sprite_t *);
+void sprite_pause(sprite_t *);
 int sprite_is_playing(sprite_t *);
 int sprite_is_looping(sprite_t *);
 int sprite_is_stopped(sprite_t *);
+int sprite_is_paused(sprite_t *);
 int sprite_is_animating(sprite_t *);
 
 void render_draw_sprite(sprite_t *);
