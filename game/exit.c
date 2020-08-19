@@ -30,7 +30,6 @@ static sprite_t *sprites[SPRITES];
 static void create_resources(void)
 {
     bitmaps[BITMAP_BACKGROUND] = bitmap_create("img/background.png");
-
     sprites[SPRITE_TEST] = sprite_create("img/dead.png", 10, 1);
 }
 
@@ -42,7 +41,7 @@ static void destroy_resources(void)
 
 static void set_delays(void)
 {
-    sprite_set_delay(sprites[SPRITE_TEST], 7);
+    sprite_set_delay(sprites[SPRITE_TEST], 5);
 /*
     sprite_set_sequence(sprites[SPRITE_TEST], sequence);
 */
