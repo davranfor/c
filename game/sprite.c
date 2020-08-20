@@ -197,6 +197,25 @@ static int sprite_on_last_frame(const sprite_t *sprite)
     }
 }
 
+static void sprite_update_frame(sprite_t *sprite)
+{
+    if (sprite_on_last_frame(sprite))
+    {
+        if (sprite->state == SPRITE_PLAYING)
+        {
+            sprite->state = SPRITE_STOPPED;
+        }
+        else
+        {
+            sprite->frame = 0;
+        }
+    }
+    else
+    {
+        sprite->frame++;
+    }
+}
+
 void render_draw_sprite(sprite_t *sprite)
 {
     int index = sprite_get_index(sprite);
@@ -224,30 +243,17 @@ void render_draw_sprite(sprite_t *sprite)
         &rect,
         &area
     );
-    if (!sprite_is_animating(sprite))
+    if (sprite_is_animating(sprite))
     {
-        return;
-    }
-    if (sprite_on_last_tick(sprite))
-    {
-        if (sprite_on_last_frame(sprite))
+        if (sprite_on_last_tick(sprite))
         {
-            if (sprite->state == SPRITE_PLAYING)
-            {
-                sprite->state = SPRITE_STOPPED;
-                return;
-            }
-            sprite->frame = 0;
+            sprite_update_frame(sprite);
+            sprite->ticks = 0;
         }
         else
         {
-            sprite->frame++;
+            sprite->ticks++;
         }
-        sprite->ticks = 0;
-    }
-    else
-    {
-        sprite->ticks++;
     }
 }
 
