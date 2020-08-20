@@ -13,7 +13,7 @@ static resource_t *resource_create(void)
 
     if (resource == NULL)
     {
-        perror("SDL_calloc");
+        SDL_Log("SDL_calloc: %s", SDL_GetError());
         exit(EXIT_FAILURE);
     }
     return resource;

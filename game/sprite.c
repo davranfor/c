@@ -18,7 +18,7 @@ sprite_t *sprite_create(const char *path, int cols, int rows)
 
     if (sprite == NULL)
     {
-        perror("SDL_calloc");
+        SDL_Log("SDL_calloc: %s", SDL_GetError());
         exit(EXIT_FAILURE);
     }
     sprite->texture = resource->texture;

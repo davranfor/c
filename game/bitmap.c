@@ -15,7 +15,7 @@ bitmap_t *bitmap_create(const char *path)
 
     if (bitmap == NULL)
     {
-        perror("bitmap_create");
+        SDL_Log("SDL_calloc: %s", SDL_GetError());
         exit(EXIT_FAILURE);
     }
     bitmap->texture = resource->texture;
