@@ -4,6 +4,66 @@
 
 static callback_t *tasks[TASKS][STATES];
 
+static int get_events(int events)
+{
+    SDL_Event event;
+
+    while (SDL_PollEvent(&event))
+    {
+        switch (event.type)
+        {
+            case SDL_KEYDOWN:
+                if (!event.key.repeat)
+                {
+                    if (event.key.keysym.sym == SDLK_UP)
+                    {
+                        events |= EVENT_KEY_UP;
+                    }
+                    if (event.key.keysym.sym == SDLK_DOWN)
+                    {
+                        events |= EVENT_KEY_DOWN;
+                    }
+                    if (event.key.keysym.sym == SDLK_LEFT)
+                    {
+                        events |= EVENT_KEY_LEFT;
+                    }
+                    if (event.key.keysym.sym == SDLK_RIGHT)
+                    {
+                        events |= EVENT_KEY_RIGHT;
+                    }
+                    if (event.key.keysym.sym == SDLK_ESCAPE)
+                    {
+                        event.type = SDL_QUIT;
+                        SDL_PushEvent(&event);
+                    }
+                }
+                break;
+            case SDL_KEYUP:
+                if (event.key.keysym.sym == SDLK_UP)
+                {
+                    events &= ~EVENT_KEY_UP;
+                }
+                if (event.key.keysym.sym == SDLK_DOWN)
+                {
+                    events &= ~EVENT_KEY_DOWN;
+                }
+                if (event.key.keysym.sym == SDLK_LEFT)
+                {
+                    events &= ~EVENT_KEY_LEFT;
+                }
+                if (event.key.keysym.sym == SDLK_RIGHT)
+                {
+                    events &= ~EVENT_KEY_RIGHT;
+                }
+                break;
+            case SDL_QUIT:
+                events |= EVENT_QUIT;
+                break;
+        }
+    }
+    return events;
+}
+
 static void loop(void)
 {
     for (int task = 1; task < TASKS; task++)
@@ -14,69 +74,10 @@ static void loop(void)
         }
         if (tasks[task][STATE_DRAW] != NULL)
         {
-            SDL_Event event;
             int events = 0;
 
-            while (1)
-            {
-                while (SDL_PollEvent(&event))
-                {
-                    switch (event.type)
-                    {
-                        case SDL_KEYDOWN:
-                            if (!event.key.repeat)
-                            {
-                                if (event.key.keysym.sym == SDLK_UP)
-                                {
-                                    events |= EVENT_KEY_UP;
-                                }
-                                if (event.key.keysym.sym == SDLK_DOWN)
-                                {
-                                    events |= EVENT_KEY_DOWN;
-                                }
-                                if (event.key.keysym.sym == SDLK_LEFT)
-                                {
-                                    events |= EVENT_KEY_LEFT;
-                                }
-                                if (event.key.keysym.sym == SDLK_RIGHT)
-                                {
-                                    events |= EVENT_KEY_RIGHT;
-                                }
-                                if (event.key.keysym.sym == SDLK_ESCAPE)
-                                {
-                                    event.type = SDL_QUIT;
-                                    SDL_PushEvent(&event);
-                                }
-                            }
-                            break;
-                        case SDL_KEYUP:
-                            if (event.key.keysym.sym == SDLK_UP)
-                            {
-                                events &= ~EVENT_KEY_UP;
-                            }
-                            if (event.key.keysym.sym == SDLK_DOWN)
-                            {
-                                events &= ~EVENT_KEY_DOWN;
-                            }
-                            if (event.key.keysym.sym == SDLK_LEFT)
-                            {
-                                events &= ~EVENT_KEY_LEFT;
-                            }
-                            if (event.key.keysym.sym == SDLK_RIGHT)
-                            {
-                                events &= ~EVENT_KEY_RIGHT;
-                            }
-                            break;
-                        case SDL_QUIT:
-                            events |= EVENT_QUIT;
-                            break;
-                    }
-                }
-                if (tasks[task][STATE_DRAW](events) != 0)
-                {
-                    break;
-                }
-            }
+            do events = get_events(events);
+            while (!tasks[task][STATE_DRAW](events));
         }
         if (tasks[task][STATE_STOP] != NULL)
         {
