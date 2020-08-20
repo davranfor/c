@@ -18,33 +18,30 @@ enum
 
 enum
 {
-    SPRITE_TEST,
+    SPRITE_DEAD,
     SPRITES
 };
-/*
-static const int sequence[] = {0, 1, -1};
-*/
+
+static const int resurrect[] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1};
+
 static bitmap_t *bitmaps[BITMAPS];
 static sprite_t *sprites[SPRITES];
 
 static void create_resources(void)
 {
     bitmaps[BITMAP_BACKGROUND] = bitmap_create("img/background.png");
-    sprites[SPRITE_TEST] = sprite_create("img/dead.png", 10, 1);
+    sprites[SPRITE_DEAD] = sprite_create("img/dead.png", 10, 1);
 }
 
 static void destroy_resources(void)
 {
     bitmap_destroy(bitmaps[BITMAP_BACKGROUND]);
-    sprite_destroy(sprites[SPRITE_TEST]);
+    sprite_destroy(sprites[SPRITE_DEAD]);
 }
 
 static void set_delays(void)
 {
-    sprite_set_delay(sprites[SPRITE_TEST], 5);
-/*
-    sprite_set_sequence(sprites[SPRITE_TEST], sequence);
-*/
+    sprite_set_delay(sprites[SPRITE_DEAD], 5);
 }
 
 static void set_positions(void)
@@ -55,9 +52,9 @@ static void set_positions(void)
         0
     );
     sprite_set_position(
-        sprites[SPRITE_TEST],
-        game->w / 2 - sprites[SPRITE_TEST]->w / 2,
-        game->h / 2 - sprites[SPRITE_TEST]->h / 2
+        sprites[SPRITE_DEAD],
+        game->w / 2 - sprites[SPRITE_DEAD]->w / 2,
+        game->h / 2 - sprites[SPRITE_DEAD]->h / 2
     );
 }
 
@@ -73,7 +70,6 @@ static int start(int events)
     set_delays();
     set_positions();
     render_set_color(&colors[0]);
-    sprite_play(sprites[SPRITE_TEST]);
     return 0;
 }
 
@@ -85,10 +81,18 @@ static int draw(int events)
     }
     render_clear();
     render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
-    if (sprite_is_animating(sprites[SPRITE_TEST]))
+    if (!sprite_is_animating(sprites[SPRITE_DEAD]))
     {
-        render_draw_sprite(sprites[SPRITE_TEST]);
+        if (sprite_get_sequence(sprites[SPRITE_DEAD]) == NULL)
+        {
+            sprite_play_sequence(sprites[SPRITE_DEAD], resurrect);
+        }
+        else
+        {
+            sprite_play_sequence(sprites[SPRITE_DEAD], NULL);
+        }
     }
+    render_draw_sprite(sprites[SPRITE_DEAD]);
     render_present();
     return 0;
 }

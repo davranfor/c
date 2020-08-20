@@ -59,14 +59,28 @@ int sprite_get_frames(const sprite_t *sprite)
     return sprite->frames;
 }
 
-void sprite_set_index(sprite_t *sprite, int index)
+void sprite_set_frame(sprite_t *sprite, int frame)
 {
-    sprite->index = index;
+    assert(frame < sprite->frames);
+    sprite->frame = frame;
+}
+
+int sprite_get_frame(const sprite_t *sprite)
+{
+    return sprite->frame;
 }
 
 int sprite_get_index(const sprite_t *sprite)
 {
-    return sprite->index;
+    if (sprite->sequence == NULL)
+    {
+        return sprite->frame;
+    }
+    else
+    {
+        assert(sprite->sequence[sprite->frame] < sprite->frames);
+        return sprite->sequence[sprite->frame];
+    }
 }
 
 void sprite_set_delay(sprite_t *sprite, int delay)
@@ -86,8 +100,8 @@ void sprite_set_sequence(sprite_t *sprite, const int *sequence)
     if (sprite->sequence != sequence)
     {
         sprite->sequence = sequence;
-        sprite->index = 0;
-        sprite->count = 0;
+        sprite->frame = 0;
+        sprite->ticks = 0;
     }
 }
 
@@ -96,80 +110,98 @@ const int *sprite_get_sequence(const sprite_t *sprite)
     return sprite->sequence;
 }
 
+static void sprite_set_state(sprite_t *sprite, int state)
+{
+    if (sprite->state == SPRITE_STOPPED)
+    {
+        sprite->frame = 0;
+        sprite->ticks = 0;
+    }
+    sprite->state = state;
+}
+
 void sprite_play_sequence(sprite_t *sprite, const int *sequence)
 {
     sprite_set_sequence(sprite, sequence);
-    sprite_play(sprite);
+    sprite_set_state(sprite, SPRITE_PLAYING);
 }
 
 void sprite_loop_sequence(sprite_t *sprite, const int *sequence)
 {
     sprite_set_sequence(sprite, sequence);
-    sprite_loop(sprite);
+    sprite_set_state(sprite, SPRITE_LOOPING);
 }
 
 void sprite_play(sprite_t *sprite)
 {
-    if (sprite->state == SPRITE_STOPPED)
-    {
-        sprite->index = 0;
-        sprite->count = 0;
-    }
-    sprite->state = SPRITE_PLAYING;
+    sprite_set_state(sprite, SPRITE_PLAYING);
 }
 
 void sprite_loop(sprite_t *sprite)
 {
-    if (sprite->state == SPRITE_STOPPED)
-    {
-        sprite->index = 0;
-        sprite->count = 0;
-    }
-    sprite->state = SPRITE_LOOPING;
+    sprite_set_state(sprite, SPRITE_LOOPING);
+}
+
+void sprite_pause(sprite_t *sprite)
+{
+    sprite_set_state(sprite, SPRITE_PAUSED);
 }
 
 void sprite_stop(sprite_t *sprite)
 {
     sprite->state = SPRITE_STOPPED;
-    sprite->index = 0;
-    sprite->count = 0;
+    sprite->frame = 0;
+    sprite->ticks = 0;
 }
 
-void sprite_pause(sprite_t *sprite)
-{
-    sprite->state = SPRITE_PAUSED;
-}
-
-int sprite_is_playing(sprite_t *sprite)
+int sprite_is_playing(const sprite_t *sprite)
 {
     return sprite->state == SPRITE_PLAYING;
 }
 
-int sprite_is_looping(sprite_t *sprite)
+int sprite_is_looping(const sprite_t *sprite)
 {
     return sprite->state == SPRITE_LOOPING;
 }
 
-int sprite_is_stopped(sprite_t *sprite)
-{
-    return sprite->state == SPRITE_STOPPED;
-}
-
-int sprite_is_paused(sprite_t *sprite)
+int sprite_is_paused(const sprite_t *sprite)
 {
     return sprite->state == SPRITE_PAUSED;
 }
 
-int sprite_is_animating(sprite_t *sprite)
+int sprite_is_stopped(const sprite_t *sprite)
+{
+    return sprite->state == SPRITE_STOPPED;
+}
+
+int sprite_is_animating(const sprite_t *sprite)
 {
     return sprite->state == SPRITE_PLAYING
         || sprite->state == SPRITE_LOOPING;
 }
 
+static int sprite_on_last_tick(const sprite_t *sprite)
+{
+    return sprite->ticks + 1 == sprite->delay;
+}
+
+static int sprite_on_last_frame(const sprite_t *sprite)
+{
+    if (sprite->sequence == NULL)
+    {
+        return sprite->frame + 1 == sprite->frames;
+    }
+    else
+    {
+        return sprite->sequence[sprite->frame + 1] < 0;
+    }
+}
+
 void render_draw_sprite(sprite_t *sprite)
 {
-    int row = sprite->index / sprite->cols;
-    int col = sprite->index % sprite->cols;
+    int index = sprite_get_index(sprite);
+    int row = index / sprite->cols;
+    int col = index % sprite->cols;
 
     SDL_Rect rect =
     {
@@ -196,26 +228,26 @@ void render_draw_sprite(sprite_t *sprite)
     {
         return;
     }
-    if (sprite->count + 1 == sprite->delay)
+    if (sprite_on_last_tick(sprite))
     {
-        if (sprite->index + 1 == sprite->frames)
+        if (sprite_on_last_frame(sprite))
         {
             if (sprite->state == SPRITE_PLAYING)
             {
                 sprite->state = SPRITE_STOPPED;
                 return;
             }
-            sprite->index = 0;
+            sprite->frame = 0;
         }
         else
         {
-            sprite->index++;
+            sprite->frame++;
         }
-        sprite->count = 0;
+        sprite->ticks = 0;
     }
     else
     {
-        sprite->count++;
+        sprite->ticks++;
     }
 }
 
