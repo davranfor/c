@@ -240,7 +240,7 @@ static int stop(int events)
     render_clear();
     draw_menu();
     render_present();
-    return select_option() == 1 ? 0 : TASK_EXIT;
+    return select_option() == 0 ? 0 : TASK_EXIT;
 }
 
 void game_menu(game_t *this, callback_t *state[])

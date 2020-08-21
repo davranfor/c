@@ -8,7 +8,7 @@ static int keys[2];
 static int counter;
 static int elapsed;
 
-static rect_t view[2];
+static rect_t viewport[3];
 
 static const color_t colors[] =
 {
@@ -57,27 +57,35 @@ static void set_positions(void)
     );
     bitmap_set_position(
         bitmaps[BITMAP_PLAYER1],
-        view[0].x + view[0].w / 2 - bitmaps[BITMAP_PLAYER1]->w / 2,
-        view[0].y
+        viewport[1].w / 2 - bitmaps[BITMAP_PLAYER1]->w / 2,
+        0
     );
     bitmap_set_position(
         bitmaps[BITMAP_PLAYER2],
-        view[1].x + view[1].w / 2 - bitmaps[BITMAP_PLAYER2]->w / 2,
-        view[1].y
+        viewport[2].w / 2 - bitmaps[BITMAP_PLAYER2]->w / 2,
+        0
     );
 }
 
-static void set_view(void)
+static void set_viewports(void)
 {
-    view[0].x = 10;
-    view[0].y = 10;
-    view[0].w = game->w - 20;
-    view[0].h = game->h / 2 - 10;
+    // Playable area
+    viewport[0].x = 10;
+    viewport[0].y = 10;
+    viewport[0].w = game->w - 20;
+    viewport[0].h = game->h - 20;
 
-    view[1].x = 10;
-    view[1].y = game->h / 2;
-    view[1].w = game->w - 20;
-    view[1].h = game->h / 2 - 10;
+    // Player1 area
+    viewport[1].x = 10;
+    viewport[1].y = 10;
+    viewport[1].w = game->w - 20;
+    viewport[1].h = game->h / 2 - 10;
+
+    // Player2 area
+    viewport[2].x = 10;
+    viewport[2].y = game->h / 2;
+    viewport[2].w = game->w - 20;
+    viewport[2].h = game->h / 2 - 10;
 }
 
 static void reset_keys(void)
@@ -105,39 +113,39 @@ static void set_keys(int value)
 static void move_player(int index)
 {
     bitmap_t *player = bitmaps[BITMAP_PLAYER1 + index];
+    const rect_t *area = &viewport[index + 1];
     const int velocity = 5 * (index + 1);
-    const rect_t *area = &view[index];
 
     if (keys[index] & EVENT_KEY_LEFT)
     {
         player->x -= velocity;
-        if (player->x < area->x)
+        if (player->x < 0)
         {
-            player->x = area->x;
+            player->x = 0;
         }
     }
     if (keys[index] & EVENT_KEY_UP)
     {
         player->y -= velocity;
-        if (player->y < area->y)
+        if (player->y < 0)
         {
-            player->y = area->y;
+            player->y = 0;
         }
     }
     if (keys[index] & EVENT_KEY_RIGHT)
     {
         player->x += velocity;
-        if (player->x + player->w > area->x + area->w)
+        if (player->x + player->w > area->w)
         {
-            player->x = area->x + area->w - player->w;
+            player->x = area->w - player->w;
         }
     }
     if (keys[index] & EVENT_KEY_DOWN)
     {
         player->y += velocity;
-        if (player->y + player->h > area->y + area->h)
+        if (player->y + player->h > area->h)
         {
-            player->y = area->y + area->h - player->h;
+            player->y = area->h - player->h;
         }
     }
 }
@@ -150,15 +158,18 @@ static void move_players(void)
 
 static void draw_players(void)
 {
+    render_set_viewport(&viewport[1]);
     render_draw_bitmap(bitmaps[BITMAP_PLAYER1]);
+    render_set_viewport(&viewport[2]);
     render_draw_bitmap(bitmaps[BITMAP_PLAYER2]);
+    render_set_viewport(NULL);
 }
 
 static void init(void)
 {
     atexit(destroy_bitmaps);
     create_bitmaps();
-    set_view();
+    set_viewports();
 }
 
 static int start(int events)

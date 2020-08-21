@@ -3,14 +3,14 @@
 #include "sprite.h"
 #include "game.h"
 
-static game_t *game;
+static SDL_Renderer *renderer;
 
-void game_init(game_t *this)
+void game_init(game_t *game)
 {
-    game = this;
-    mapper_init(game->renderer);
-    bitmap_init(game->renderer);
-    sprite_init(game->renderer);
+    renderer = game->renderer;
+    mapper_init(renderer);
+    bitmap_init(renderer);
+    sprite_init(renderer);
 }
 
 SDL_Keycode game_keydown(void)
@@ -76,10 +76,15 @@ void game_pause(void)
     }
 }
 
+void render_set_viewport(const SDL_Rect *rect)
+{
+    SDL_RenderSetViewport(renderer, rect);
+}
+
 void render_set_color(const SDL_Color *color)
 {
     SDL_SetRenderDrawColor(
-        game->renderer,
+        renderer,
         color->r,
         color->g,
         color->b,
@@ -89,49 +94,49 @@ void render_set_color(const SDL_Color *color)
 
 void render_fill_rect(const SDL_Rect *rect)
 {
-    SDL_RenderFillRect(game->renderer, rect);
+    SDL_RenderFillRect(renderer, rect);
 }
 
 void render_draw_rect(const SDL_Rect *rect)
 {
-    SDL_RenderDrawRect(game->renderer, rect);
+    SDL_RenderDrawRect(renderer, rect);
 }
 
 void render_fill_area(int x, int y, int w, int h)
 {
     SDL_Rect area = {x, y, w, h};
 
-    SDL_RenderFillRect(game->renderer, &area);
+    SDL_RenderFillRect(renderer, &area);
 }
 
 void render_draw_area(int x, int y, int w, int h)
 {
     SDL_Rect area = {x, y, w, h};
 
-    SDL_RenderDrawRect(game->renderer, &area);
+    SDL_RenderDrawRect(renderer, &area);
 }
 
 void render_clear(void)
 {
-    SDL_RenderClear(game->renderer);
+    SDL_RenderClear(renderer);
 }
 
 void render_present(void)
 {
-    SDL_RenderPresent(game->renderer);
+    SDL_RenderPresent(renderer);
 }
 
 SDL_Texture *texture_create(const char *path)
 {
     SDL_Texture *texture;
 
-    texture = IMG_LoadTexture(game->renderer, path);
+    texture = IMG_LoadTexture(renderer, path);
     if (texture == NULL)
     {
         SDL_Log("IMG_LoadTexture: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    SDL_RenderCopy(game->renderer, texture, NULL, NULL);
+    SDL_RenderCopy(renderer, texture, NULL, NULL);
     return texture;
 }
 

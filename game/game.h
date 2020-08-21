@@ -10,7 +10,6 @@
 typedef SDL_Rect rect_t;
 typedef SDL_Point point_t;
 typedef SDL_Color color_t;
-typedef SDL_Event event_t;
 
 typedef struct
 {
@@ -45,6 +44,7 @@ SDL_Keycode game_keydown(void);
 SDL_Keycode game_keyup(void);
 void game_pause(void);
 
+void render_set_viewport(const SDL_Rect *);
 void render_set_color(const SDL_Color *);
 void render_fill_rect(const SDL_Rect *);
 void render_draw_rect(const SDL_Rect *);

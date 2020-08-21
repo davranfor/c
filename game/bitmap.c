@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "mapper.h"
 #include "bitmap.h"
 
@@ -11,11 +12,11 @@ void bitmap_init(SDL_Renderer *this)
 bitmap_t *bitmap_create(const char *path)
 {
     resource_t *resource = mapper_load_resource(path);
-    bitmap_t *bitmap = SDL_calloc(1, sizeof *bitmap);
+    bitmap_t *bitmap = calloc(1, sizeof *bitmap);
 
     if (bitmap == NULL)
     {
-        SDL_Log("SDL_calloc: %s", SDL_GetError());
+        perror("calloc");
         exit(EXIT_FAILURE);
     }
     bitmap->texture = resource->texture;
@@ -26,7 +27,7 @@ bitmap_t *bitmap_create(const char *path)
 
 void bitmap_destroy(bitmap_t *bitmap)
 {
-    SDL_free(bitmap);
+    free(bitmap);
 }
 
 void bitmap_set_position(bitmap_t *bitmap, int x, int y)
@@ -107,6 +108,8 @@ static void button_up(int index, button_t *button[])
 
 int button_clicked(button_t *button[], int buttons)
 {
+    assert(buttons > 0);
+
     SDL_MouseButtonEvent *mouse;
     SDL_Event event;
     int clicked = 0;
@@ -157,15 +160,12 @@ int button_clicked(button_t *button[], int buttons)
                         case SDLK_KP_ENTER:
                         case SDLK_RETURN:
                             pressed = 1;
-                            if (buttons > 0)
-                            {
-                                button_down(pressed, button);
-                            }
+                            button_down(pressed, button);
                             break;
                         case SDLK_ESCAPE:
-                            pressed = 2;
-                            if (buttons == 2)
+                            if (buttons <= 2)
                             {
+                                pressed = buttons;
                                 button_down(pressed, button);
                             }
                             break;
@@ -180,14 +180,11 @@ int button_clicked(button_t *button[], int buttons)
                     {
                         case SDLK_KP_ENTER:
                         case SDLK_RETURN:
-                            if (buttons > 0)
-                            {
-                                button_up(pressed, button);
-                            }
+                            button_up(pressed, button);
                             done = 1;
                             break;
                         case SDLK_ESCAPE:
-                            if (buttons == 2)
+                            if (buttons <= 2)
                             {
                                 button_up(pressed, button);
                             }
@@ -213,12 +210,12 @@ int button_clicked(button_t *button[], int buttons)
     }
     if (clicked != 0)
     {
-        return clicked;
+        return clicked - 1;
     }
     if (pressed != 0)
     {
-        return pressed;
+        return pressed - 1;
     }
-    return 0;
+    return -1;
 }
 

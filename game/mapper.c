@@ -9,11 +9,11 @@ static hashmap *map;
 
 static resource_t *resource_create(void)
 {
-    resource_t *resource = SDL_calloc(1, sizeof *resource);
+    resource_t *resource = calloc(1, sizeof *resource);
 
     if (resource == NULL)
     {
-        SDL_Log("SDL_calloc: %s", SDL_GetError());
+        perror("calloc");
         exit(EXIT_FAILURE);
     }
     return resource;
@@ -59,7 +59,7 @@ static void resource_destroy(void *data)
     resource_t *resource = data;
 
     SDL_DestroyTexture(resource->texture);
-    SDL_free(resource);
+    free(resource);
 }
 
 static void map_create(void)
@@ -76,7 +76,7 @@ static void map_create(void)
 static void map_destroy(void)
 {
     hashmap_destroy(map, resource_destroy);
-    SDL_free(mapper);
+    free(mapper);
 }
 
 void mapper_init(SDL_Renderer *this)
