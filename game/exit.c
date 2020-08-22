@@ -81,7 +81,7 @@ static int draw(int events)
     }
     render_clear();
     render_draw_bitmap(BITMAP(BACKGROUND));
-    if (!sprite_is_animating(sprites[SPRITE_DEAD]))
+    if (!sprite_is_animating(SPRITE(DEAD)))
     {
         if (sprite_get_sequence(SPRITE(DEAD)) == NULL)
         {
