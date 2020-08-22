@@ -58,39 +58,39 @@ static void destroy_bitmaps(void)
 static void set_positions(void)
 {
     bitmap_set_position(
-        bitmaps[BITMAP_BACKGROUND],
+        BITMAP(BACKGROUND),
         0,
         0
     );
     bitmap_set_position(
-        bitmaps[BITMAP_GRADIENT],
+        BITMAP(GRADIENT),
         0,
         0
     );
     bitmap_set_position(
-        bitmaps[BITMAP_CLOUDS],
-        view.x + view.w / 2 - bitmaps[BITMAP_CLOUDS]->w / 2,
-        view.y + view.h / 2 - bitmaps[BITMAP_CLOUDS]->h / 2
+        BITMAP(CLOUDS),
+        view.x + view.w / 2 - BITMAP(CLOUDS)->w / 2,
+        view.y + view.h / 2 - BITMAP(CLOUDS)->h / 2
     );
     bitmap_set_position(
-        bitmaps[BITMAP_PLAYER1],
-        view.x + view.w / 4 - bitmaps[BITMAP_PLAYER1]->w / 2,
-        view.y + view.h / 4 - bitmaps[BITMAP_PLAYER1]->h / 2
+        BITMAP(PLAYER1),
+        view.x + view.w / 4 - BITMAP(PLAYER1)->w / 2,
+        view.y + view.h / 4 - BITMAP(PLAYER1)->h / 2
     );
     bitmap_set_position(
-        bitmaps[BITMAP_PLAYER2],
-        view.x + view.w - view.w / 4 - bitmaps[BITMAP_PLAYER2]->w / 2,
-        view.y + view.h / 4 - bitmaps[BITMAP_PLAYER2]->h / 2
+        BITMAP(PLAYER2),
+        view.x + view.w - view.w / 4 - BITMAP(PLAYER2)->w / 2,
+        view.y + view.h / 4 - BITMAP(PLAYER2)->h / 2
     );
     bitmap_set_position(
-        bitmaps[BITMAP_PLAY],
-        view.x + view.w / 4 - bitmaps[BITMAP_PLAY]->w / 2,
-        view.y + view.h / 2 + view.h / 4 - bitmaps[BITMAP_PLAY]->h / 2
+        BITMAP(PLAY),
+        view.x + view.w / 4 - BITMAP(PLAY)->w / 2,
+        view.y + view.h / 2 + view.h / 4 - BITMAP(PLAY)->h / 2
     );
     bitmap_set_position(
-        bitmaps[BITMAP_STOP],
-        view.x + view.w - view.w / 4 - bitmaps[BITMAP_STOP]->w / 2,
-        view.y + view.h / 2 + view.h / 4 - bitmaps[BITMAP_STOP]->h / 2
+        BITMAP(STOP),
+        view.x + view.w - view.w / 4 - BITMAP(STOP)->w / 2,
+        view.y + view.h / 2 + view.h / 4 - BITMAP(STOP)->h / 2
     );
 }
 
@@ -156,32 +156,32 @@ static void draw_frame(void)
 
 static void draw_players(void)
 {
-    render_draw_bitmap(bitmaps[BITMAP_PLAYER1]);
-    render_draw_bitmap(bitmaps[BITMAP_PLAYER2]);
+    render_draw_bitmap(BITMAP(PLAYER1));
+    render_draw_bitmap(BITMAP(PLAYER2));
 }
 
 static void draw_buttons(void)
 {
-    render_draw_bitmap(bitmaps[BITMAP_PLAY]);
-    render_draw_bitmap(bitmaps[BITMAP_STOP]);
+    render_draw_bitmap(BITMAP(PLAY));
+    render_draw_bitmap(BITMAP(STOP));
 }
 
 static void draw_animation(void)
 {
-    render_draw_bitmap(bitmaps[BITMAP_GRADIENT]);
+    render_draw_bitmap(BITMAP(GRADIENT));
     move_rects();
     draw_rects();
-    render_draw_bitmap(bitmaps[BITMAP_CLOUDS]);
+    render_draw_bitmap(BITMAP(CLOUDS));
 }
 
 static void draw_menu(void)
 {
-    render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
+    render_draw_bitmap(BITMAP(BACKGROUND));
     draw_frame();
     draw_rects();
     draw_players();
     draw_buttons();
-    render_draw_bitmap(bitmaps[BITMAP_CLOUDS]);
+    render_draw_bitmap(BITMAP(CLOUDS));
 }
 
 static int must_stop(void)
@@ -193,8 +193,8 @@ static int select_option(void)
 {
     bitmap_t *buttons[] =
     {
-        bitmaps[BITMAP_PLAY],
-        bitmaps[BITMAP_STOP]
+        BITMAP(PLAY),
+        BITMAP(STOP)
     };
 
     return button_clicked(buttons, 2);
@@ -214,7 +214,7 @@ static int start(int events)
     set_positions();
     render_set_color(&colors[1]);
     render_clear();
-    render_draw_bitmap(bitmaps[BITMAP_GRADIENT]);
+    render_draw_bitmap(BITMAP(GRADIENT));
     render_present();
     /* A delay in order to synchronize with the window manager */
     //game_delay(100);

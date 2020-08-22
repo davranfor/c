@@ -51,18 +51,18 @@ static void destroy_bitmaps(void)
 static void set_positions(void)
 {
     bitmap_set_position(
-        bitmaps[BITMAP_BACKGROUND],
+        BITMAP(BACKGROUND),
         0,
         0
     );
     bitmap_set_position(
-        bitmaps[BITMAP_PLAYER1],
-        viewport[1].w / 2 - bitmaps[BITMAP_PLAYER1]->w / 2,
+        BITMAP(PLAYER1),
+        viewport[1].w / 2 - BITMAP(PLAYER1)->w / 2,
         0
     );
     bitmap_set_position(
-        bitmaps[BITMAP_PLAYER2],
-        viewport[2].w / 2 - bitmaps[BITMAP_PLAYER2]->w / 2,
+        BITMAP(PLAYER2),
+        viewport[2].w / 2 - BITMAP(PLAYER2)->w / 2,
         0
     );
 }
@@ -112,7 +112,7 @@ static void set_keys(int value)
 
 static void move_player(int index)
 {
-    bitmap_t *player = bitmaps[BITMAP_PLAYER1 + index];
+    bitmap_t *player = BITMAP(PLAYER1 + index);
     const rect_t *area = &viewport[index + 1];
     const int velocity = 5 * (index + 1);
 
@@ -159,9 +159,9 @@ static void move_players(void)
 static void draw_players(void)
 {
     render_set_viewport(&viewport[1]);
-    render_draw_bitmap(bitmaps[BITMAP_PLAYER1]);
+    render_draw_bitmap(BITMAP(PLAYER1));
     render_set_viewport(&viewport[2]);
-    render_draw_bitmap(bitmaps[BITMAP_PLAYER2]);
+    render_draw_bitmap(BITMAP(PLAYER2));
     render_set_viewport(NULL);
 }
 
@@ -190,7 +190,7 @@ static int draw(int events)
     set_keys(events & EVENT_KEYS);
     move_players();
     render_clear();
-    render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
+    render_draw_bitmap(BITMAP(BACKGROUND));
     draw_players();
     render_present();
     return 0;

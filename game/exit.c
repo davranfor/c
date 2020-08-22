@@ -29,32 +29,32 @@ static sprite_t *sprites[SPRITES];
 
 static void create_resources(void)
 {
-    bitmaps[BITMAP_BACKGROUND] = bitmap_create("img/background.png");
-    sprites[SPRITE_DEAD] = sprite_create("img/dead.png", 10, 1);
+    BITMAP(BACKGROUND) = bitmap_create("img/background.png");
+    SPRITE(DEAD) = sprite_create("img/dead.png", 10, 1);
 }
 
 static void destroy_resources(void)
 {
-    bitmap_destroy(bitmaps[BITMAP_BACKGROUND]);
-    sprite_destroy(sprites[SPRITE_DEAD]);
+    bitmap_destroy(BITMAP(BACKGROUND));
+    sprite_destroy(SPRITE(DEAD));
 }
 
 static void set_delays(void)
 {
-    sprite_set_delay(sprites[SPRITE_DEAD], 5);
+    sprite_set_delay(SPRITE(DEAD), 5);
 }
 
 static void set_positions(void)
 {
     bitmap_set_position(
-        bitmaps[BITMAP_BACKGROUND],
+        BITMAP(BACKGROUND),
         0,
         0
     );
     sprite_set_position(
-        sprites[SPRITE_DEAD],
-        game->w / 2 - sprites[SPRITE_DEAD]->w / 2,
-        game->h / 2 - sprites[SPRITE_DEAD]->h / 2
+        SPRITE(DEAD),
+        game->w / 2 - SPRITE(DEAD)->w / 2,
+        game->h / 2 - SPRITE(DEAD)->h / 2
     );
 }
 
@@ -80,19 +80,19 @@ static int draw(int events)
         return 1;
     }
     render_clear();
-    render_draw_bitmap(bitmaps[BITMAP_BACKGROUND]);
+    render_draw_bitmap(BITMAP(BACKGROUND));
     if (!sprite_is_animating(sprites[SPRITE_DEAD]))
     {
-        if (sprite_get_sequence(sprites[SPRITE_DEAD]) == NULL)
+        if (sprite_get_sequence(SPRITE(DEAD)) == NULL)
         {
-            sprite_play_sequence(sprites[SPRITE_DEAD], resurrect);
+            sprite_play_sequence(SPRITE(DEAD), resurrect);
         }
         else
         {
-            sprite_play_sequence(sprites[SPRITE_DEAD], NULL);
+            sprite_play_sequence(SPRITE(DEAD), NULL);
         }
     }
-    render_draw_sprite(sprites[SPRITE_DEAD]);
+    render_draw_sprite(SPRITE(DEAD));
     render_present();
     return 0;
 }
