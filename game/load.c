@@ -5,6 +5,13 @@ static game_t *game;
 
 static void init(void)
 {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0)
+    {
+        SDL_Log("SDL_Init: %s", SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
+    atexit(SDL_Quit);
+
     if (IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG)
     {
         SDL_Log("IMG_Init: %s", IMG_GetError());
@@ -12,19 +19,12 @@ static void init(void)
     }
     atexit(IMG_Quit);
 
-    if (Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024) == -1)
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
     {
         SDL_Log("Mix_OpenAudio: %s", Mix_GetError());
         exit(EXIT_FAILURE);
     }
     atexit(Mix_CloseAudio);
-
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0)
-    {
-        SDL_Log("SDL_Init: %s", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    atexit(SDL_Quit);
 }
 
 static void load(void)
@@ -56,6 +56,8 @@ static void load(void)
 
 static void clean(void)
 {
+    Mix_HaltChannel(-1);
+
     if (game->renderer != NULL)
     {
         SDL_DestroyRenderer(game->renderer);
