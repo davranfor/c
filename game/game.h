@@ -3,7 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 
 #define game_delay SDL_Delay
 
@@ -13,19 +13,10 @@ typedef SDL_Color color_t;
 
 typedef struct
 {
-    TTF_Font *renderer;
-    const char *name;
-    int size;
-    int w, h;
-} font_t;
-
-typedef struct
-{
     SDL_Window *window;
     SDL_Renderer *renderer;
     const char *title;
     int w, h;
-    font_t font;
 } game_t;
 
 enum game_events

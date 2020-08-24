@@ -4,8 +4,27 @@
 #include "mapper.h"
 
 static SDL_Renderer *renderer;
-static resource_t *mapper;
 static hashmap *map;
+
+enum
+{
+    RESOURCE_NONE,
+    RESOURCE_IMAGE,
+    RESOURCE_MIXER
+};
+
+typedef struct
+{
+    const char *path;
+    int type;
+    union
+    {
+        image_t *image;
+        mixer_t *mixer;
+    };
+} resource_t;
+
+static resource_t *mapper;
 
 static resource_t *resource_create(void)
 {
@@ -19,24 +38,51 @@ static resource_t *resource_create(void)
     return resource;
 }
 
-static void resource_fill(resource_t *resource)
+static void resource_create_image(resource_t *resource)
 {
+    image_t *image = calloc(1, sizeof *image);
+
+    if (image == NULL)
+    {
+        perror("calloc");
+        exit(EXIT_FAILURE);
+    }
+
     SDL_Surface *surface = IMG_Load(resource->path);
 
     if (surface == NULL)
     {
+        free(image);
         SDL_Log("IMG_Load: %s", IMG_GetError());
         exit(EXIT_FAILURE);
     }
-    resource->texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (resource->texture == NULL)
+    image->texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (image->texture == NULL)
     {
+        free(image);
+        SDL_FreeSurface(surface);
         SDL_Log("SDL_CreateTextureFromSurface: %s", SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    resource->w = surface->w;
-    resource->h = surface->h;
+    image->w = surface->w;
+    image->h = surface->h;
     SDL_FreeSurface(surface);
+
+    resource->type = RESOURCE_IMAGE;
+    resource->image = image;
+}
+
+static void resource_create_mixer(resource_t *resource)
+{
+    mixer_t *mixer = Mix_LoadWAV(resource->path);
+
+    if (mixer == NULL)
+    {
+        SDL_Log("Mix_LoadWAV: %s", Mix_GetError());
+        exit(EXIT_FAILURE);
+    }
+    resource->type = RESOURCE_MIXER;
+    resource->mixer = mixer;
 }
 
 static int resource_comp(const void *pa, const void *pb)
@@ -58,7 +104,16 @@ static void resource_destroy(void *data)
 {
     resource_t *resource = data;
 
-    SDL_DestroyTexture(resource->texture);
+    switch (resource->type)
+    {
+        case RESOURCE_IMAGE:
+            SDL_DestroyTexture(resource->image->texture);
+            free(resource->image);
+            break;
+        case RESOURCE_MIXER:
+            Mix_FreeChunk(resource->mixer);
+            break;
+    }
     free(resource);
 }
 
@@ -86,7 +141,7 @@ void mapper_init(SDL_Renderer *this)
     map_create();
 }
 
-resource_t *mapper_load_resource(const char *path)
+static resource_t *mapper_load_resource(const char *path)
 {
     assert(path != NULL);
 
@@ -99,11 +154,30 @@ resource_t *mapper_load_resource(const char *path)
         perror("hashmap_insert");
         exit(EXIT_FAILURE);
     }
+    return resource;
+}
+
+image_t *mapper_load_image(const char *path)
+{
+    resource_t *resource = mapper_load_resource(path);
+
     if (resource == mapper)
     {
         mapper = resource_create();
-        resource_fill(resource);
+        resource_create_image(resource);
     }
-    return resource;
+    return resource->image;
+}
+
+mixer_t *mapper_load_mixer(const char *path)
+{
+    resource_t *resource = mapper_load_resource(path);
+
+    if (resource == mapper)
+    {
+        mapper = resource_create();
+        resource_create_mixer(resource);
+    }
+    return resource->mixer;
 }
 

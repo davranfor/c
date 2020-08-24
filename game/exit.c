@@ -2,6 +2,7 @@
 #include "task.h"
 #include "bitmap.h"
 #include "sprite.h"
+#include "sound.h"
 
 static game_t *game;
 
@@ -22,26 +23,40 @@ enum
     SPRITES
 };
 
+enum
+{
+    SOUND_BELL,
+    SOUNDS
+};
+
 static const int resurrect[] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1};
 
 static bitmap_t *bitmaps[BITMAPS];
 static sprite_t *sprites[SPRITES];
+static sound_t *sounds[SOUNDS];
 
 static void create_resources(void)
 {
     BITMAP(BACKGROUND) = bitmap_create("img/background.png");
     SPRITE(DEAD) = sprite_create("img/dead.png", 10, 1);
+    SOUND(BELL) = sound_create("snd/bell.wav");
 }
 
 static void destroy_resources(void)
 {
     bitmap_destroy(BITMAP(BACKGROUND));
     sprite_destroy(SPRITE(DEAD));
+    sound_destroy(SOUND(BELL));
 }
 
 static void set_delays(void)
 {
     sprite_set_delay(SPRITE(DEAD), 5);
+}
+
+static void set_volumes(void)
+{
+    sound_set_volume(SOUND(BELL), 16);
 }
 
 static void set_positions(void)
@@ -68,6 +83,7 @@ static int start(int events)
 {
     (void)events;
     set_delays();
+    set_volumes();
     set_positions();
     render_set_color(&colors[0]);
     return 0;
@@ -89,6 +105,7 @@ static int draw(int events)
         }
         else
         {
+            sound_play(SOUND(BELL));
             sprite_play_sequence(SPRITE(DEAD), NULL);
         }
     }

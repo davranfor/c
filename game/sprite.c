@@ -13,7 +13,7 @@ sprite_t *sprite_create(const char *path, int cols, int rows)
 {
     assert((cols > 0) && (rows > 0));
 
-    resource_t *resource = mapper_load_resource(path);
+    image_t *image = mapper_load_image(path);
     sprite_t *sprite = SDL_calloc(1, sizeof *sprite);
 
     if (sprite == NULL)
@@ -21,9 +21,9 @@ sprite_t *sprite_create(const char *path, int cols, int rows)
         perror("calloc");
         exit(EXIT_FAILURE);
     }
-    sprite->texture = resource->texture;
-    sprite->w = resource->w / cols;
-    sprite->h = resource->h / rows;
+    sprite->texture = image->texture;
+    sprite->w = image->w / cols;
+    sprite->h = image->h / rows;
     sprite->frames = cols * rows;
     sprite->rows = rows;
     sprite->cols = cols;

@@ -8,12 +8,7 @@ static game_t game =
 {
     .title = "Mirlo cagón vs. Perro flauta",
     .w = 1200,
-    .h = 650,
-    .font =
-    {
-        .name = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        .size = 40
-    }
+    .h = 650
 };
 
 int main(void)

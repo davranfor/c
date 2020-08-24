@@ -3,17 +3,19 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 
 typedef struct
 {
     SDL_Texture *texture;
-    const char *path;
     int w, h;
-} resource_t;
+} image_t;
+
+typedef Mix_Chunk mixer_t;
 
 void mapper_init(SDL_Renderer *);
-resource_t *mapper_load_resource(const char *);
+image_t *mapper_load_image(const char *);
+mixer_t *mapper_load_mixer(const char *);
 
 #endif /* MAPPER_H */
 
