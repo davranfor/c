@@ -5,5 +5,5 @@ C generic data structures and utilities
 - JSON - Ligthweight JSON parser
 - List - Stacks, queues, deques, circular lists, linked lists
 - SkipList - Fast CRUD operations on a list
-- Timer - Concurrent timers and chronos
+- Timers - Chronos and delays
 - Utilities - Files, strings and date utils
