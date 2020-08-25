@@ -9,7 +9,7 @@ main.o: chrono.h
 chrono.o: chrono.h
 
 chrono: $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o chrono -lpthread
+	$(CC) $(CFLAGS) $(OBJECTS) -o chrono
 
 clean:
 	rm -f *.o chrono

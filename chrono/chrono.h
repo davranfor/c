@@ -1,5 +1,5 @@
 /*! 
- *  \brief     Timer
+ *  \brief     Chrono
  *  \author    David Ranieri <davranfor@gmail.com>
  *  \copyright GNU Public License.
  */
