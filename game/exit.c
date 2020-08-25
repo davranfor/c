@@ -117,6 +117,7 @@ static int draw(int events)
 static int stop(int events)
 {
     (void)events;
+    sound_stop_all();
     SDL_Log("Exiting");
     return 0;
 }

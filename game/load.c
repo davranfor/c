@@ -19,7 +19,7 @@ static void init(void)
     }
     atexit(IMG_Quit);
 
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1)
     {
         SDL_Log("Mix_OpenAudio: %s", Mix_GetError());
         exit(EXIT_FAILURE);
@@ -56,8 +56,6 @@ static void load(void)
 
 static void clean(void)
 {
-    Mix_HaltChannel(-1);
-
     if (game->renderer != NULL)
     {
         SDL_DestroyRenderer(game->renderer);
