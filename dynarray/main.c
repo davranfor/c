@@ -52,12 +52,12 @@ static void clean(void)
 
 int main(void)
 {
-    #define NELEMS 1000000
+    #define NELEMS 100
 
     atexit(clean);
     srand((unsigned)time(NULL));
 
-    array = dynarray_create(0);
+    array = dynarray_create();
     if (array == NULL)
     {
         perror("dynarray_create");
@@ -68,13 +68,20 @@ int main(void)
 
     for (int iter = 0; iter < NELEMS; iter++)
     {
-        data = dynarray_add(array, malloc(sizeof *data));
+        if (iter % 2)
+        {
+            data = dynarray_append(array, malloc(sizeof *data));
+        }
+        else
+        {
+            data = dynarray_insert(array, 0, malloc(sizeof *data));
+        }
         if (data == NULL)
         {
             perror("dynarray_add");
             exit(EXIT_FAILURE);
         }
-        data->key = rand() % NELEMS;
+        data->key = iter;
         data->value = keytostr(data->key);
     }
     dynarray_sort(array, comp);
@@ -84,12 +91,13 @@ int main(void)
     {
         printf("Found: %d %s\n", data->key, data->value);
     }
-    dynarray_reverse(array);
-    if (dynarray_resize(array, 10, delete) == NULL)
+    data = dynarray_delete(array, NELEMS / 2);
+    if (data != NULL)
     {
-        perror("dynarray_resize");
-        exit(EXIT_FAILURE);
+        printf("Deleting: %d %s\n", data->key, data->value);
+        delete(data);
     }
+    dynarray_reverse(array);
 
     size_t size = dynarray_size(array);
 

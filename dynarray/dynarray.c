@@ -5,69 +5,103 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "dynarray.h"
 
 struct dynarray
 {
     void **data;
-    size_t room;
     size_t size;
 };
 
-/* Compute next power of 2 for a given size */
-static size_t next_pow2(size_t size)
-{
-    size--;
-    size |= size >> 1;
-    size |= size >> 2;
-    size |= size >> 4;
-    size |= size >> 8;
-    size |= size >> 16;
-    return ++size;
-}
-
 static size_t next_size(size_t size)
 {
-    return size == 0 ? 1 : next_pow2(size);
+    if (size == 0)
+    {
+        return 1;
+    }
+    // size is a power of two?
+    else if ((size & (size - 1)) == 0)
+    {
+        return size * 2;
+    }
+    return 0;
 }
 
-dynarray *dynarray_create(size_t room)
+dynarray *dynarray_create(void)
 {
     dynarray *array = calloc(1, sizeof *array);
     
-    if (array == NULL)
-    {
-        return NULL;
-    }
-    array->room = next_size(room);
-    array->data = malloc(array->room * sizeof(void *));
-    if (array->data == NULL)
-    {
-        free(array);
-        return NULL;
-    }
     return array;
 }
 
-void *dynarray_add(dynarray *array, void *data)
+void *dynarray_append(dynarray *array, void *data)
 {
     if (data == NULL)
     {
         return NULL;
     }
-    if (array->size == array->room)
+
+    size_t size = next_size(array->size);
+
+    if (size != 0)
     {
-        size_t room = array->room * 2;
-        void *temp = realloc(array->data, room * sizeof(void *));
+        void *temp = realloc(array->data, size * sizeof(void *));
 
         if (temp == NULL)
         {
             return NULL;
         }
         array->data = temp;
-        array->room = room;
     }
     array->data[array->size++] = data;
+    return data;
+}
+
+void *dynarray_insert(dynarray *array, size_t index, void *data)
+{
+    if ((data == NULL) || (index > array->size))
+    {
+        return NULL;
+    }
+
+    size_t size = next_size(array->size);
+
+    if (size != 0)
+    {
+        void *temp = realloc(array->data, size * sizeof(void *));
+
+        if (temp == NULL)
+        {
+            return NULL;
+        }
+        array->data = temp;
+    }
+    memmove(
+        (array->data + index + 1),
+        (array->data + index),
+        (array->size - index) * sizeof(void *)
+    );
+    array->data[index] = data;
+    array->size++;
+    return data;
+}
+
+void *dynarray_delete(dynarray *array, size_t index)
+{
+    if (index >= array->size) 
+    {
+        return NULL;
+    }
+
+    void *data = array->data[index];
+
+    memmove(
+        (array->data + index),
+        (array->data + index + 1),
+        (array->size - index - 1) * sizeof(void *)
+    );
+    array->size--;
     return data;
 }
 
@@ -127,37 +161,6 @@ void dynarray_reverse(const dynarray *array)
             array->data[b] = temp;
         }
     }
-}
-
-void *dynarray_resize(dynarray *array, size_t size, void (*func)(void *))
-{
-    if (size >= array->size) 
-    {
-        return array;
-    }
-    if (func != NULL)
-    {
-        for (size_t iter = size; iter < array->size; iter++)
-        {
-            func(array->data[iter]);
-        }
-    }
-    array->size = size;
-    if (size > array->room / 2)
-    {
-        return array;
-    }
-
-    size_t room = next_size(size);
-    void *temp = realloc(array->data, room * sizeof(void *));
-
-    if (temp == NULL)
-    {
-        return NULL;
-    }
-    array->data = temp;
-    array->room = room;
-    return array;
 }
 
 void dynarray_destroy(dynarray *array, void (*func)(void *data))
