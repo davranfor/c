@@ -105,6 +105,19 @@ void *dynarray_delete(dynarray *array, size_t index)
     return data;
 }
 
+void *dynarray_set(dynarray *array, size_t index, void *data)
+{
+    if ((data == NULL) || (index > array->size))
+    {
+        return NULL;
+    }
+
+    void *temp = array->data[index];
+
+    array->data[index] = data;
+    return temp;
+}
+
 void *dynarray_get(const dynarray *array, size_t index)
 {
     if (index < array->size)
