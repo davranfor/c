@@ -16,14 +16,10 @@ struct dynarray
 
 static size_t next_size(size_t size)
 {
-    if (size == 0)
-    {
-        return 1;
-    }
     // size is a power of two?
-    else if ((size & (size - 1)) == 0)
+    if ((size & (size - 1)) == 0)
     {
-        return size * 2;
+        return size == 0 ? 1 : size << 1;
     }
     return 0;
 }
@@ -31,11 +27,11 @@ static size_t next_size(size_t size)
 dynarray *dynarray_create(void)
 {
     dynarray *array = calloc(1, sizeof *array);
-    
+
     return array;
 }
 
-void *dynarray_append(dynarray *array, void *data)
+void *dynarray_push(dynarray *array, void *data)
 {
     if (data == NULL)
     {
@@ -56,6 +52,15 @@ void *dynarray_append(dynarray *array, void *data)
     }
     array->data[array->size++] = data;
     return data;
+}
+
+void *dynarray_pop(dynarray *array)
+{
+    if (array->size == 0)
+    {
+        return NULL;
+    }
+    return array->data[--array->size];
 }
 
 void *dynarray_insert(dynarray *array, size_t index, void *data)
@@ -105,9 +110,40 @@ void *dynarray_delete(dynarray *array, size_t index)
     return data;
 }
 
+/**
+ * Realloc to the optimal size after deleting items
+ * Do not use it on each pop / delete operation
+ */
+void *dynarray_refresh(dynarray *array)
+{
+    if (array->size == 0)
+    {
+        dynarray_clear(array, NULL);
+        return array;
+    }
+
+    size_t size = next_size(array->size);
+
+    if (size != 0)
+    {
+        void *temp = realloc(array->data, size * sizeof(void *));
+
+        if (temp == NULL)
+        {
+            return NULL;
+        }
+        array->data = temp;
+    }
+    return array;
+}
+
+/**
+ * Replace an item (the index must exist)
+ * Returns the old item
+ */
 void *dynarray_set(dynarray *array, size_t index, void *data)
 {
-    if ((data == NULL) || (index > array->size))
+    if ((data == NULL) || (index >= array->size))
     {
         return NULL;
     }
@@ -176,7 +212,7 @@ void dynarray_reverse(const dynarray *array)
     }
 }
 
-void dynarray_destroy(dynarray *array, void (*func)(void *data))
+void dynarray_clear(dynarray *array, void (*func)(void *data))
 {
     if (func != NULL)
     {
@@ -186,6 +222,13 @@ void dynarray_destroy(dynarray *array, void (*func)(void *data))
         }
     }
     free(array->data);
+    array->data = NULL;
+    array->size = 0;
+}
+
+void dynarray_destroy(dynarray *array, void (*func)(void *data))
+{
+    dynarray_clear(array, func);
     free(array);
 }
 

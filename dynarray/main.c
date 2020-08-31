@@ -52,7 +52,7 @@ static void clean(void)
 
 int main(void)
 {
-    #define NELEMS 100
+    enum {N = 100};
 
     atexit(clean);
     srand((unsigned)time(NULL));
@@ -66,11 +66,11 @@ int main(void)
 
     struct data *data;
 
-    for (int iter = 0; iter < NELEMS; iter++)
+    for (int iter = 0; iter < N; iter++)
     {
         if (iter % 2)
         {
-            data = dynarray_append(array, malloc(sizeof *data));
+            data = dynarray_push(array, malloc(sizeof *data));
         }
         else
         {
@@ -78,24 +78,35 @@ int main(void)
         }
         if (data == NULL)
         {
-            perror("dynarray_add");
+            perror("dynarray_push | dynarray_insert");
             exit(EXIT_FAILURE);
         }
         data->key = iter;
         data->value = keytostr(data->key);
     }
     dynarray_sort(array, comp);
-    data = &(struct data){.key = NELEMS / 2};
+    data = &(struct data){.key = N / 2};
     data = dynarray_bsearch(array, &data, comp);
     if (data != NULL)
     {
         printf("Found: %d %s\n", data->key, data->value);
     }
-    data = dynarray_delete(array, NELEMS / 2);
+    data = dynarray_delete(array, N / 2);
     if (data != NULL)
     {
         printf("Deleting: %d %s\n", data->key, data->value);
         delete(data);
+    }
+    data = dynarray_pop(array);
+    if (data != NULL)
+    {
+        printf("Deleting: %d %s\n", data->key, data->value);
+        delete(data);
+    }
+    if (dynarray_refresh(array) == NULL)
+    {
+        perror("dynarray_refresh");
+        exit(EXIT_FAILURE);
     }
     dynarray_reverse(array);
 
