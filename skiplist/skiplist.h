@@ -4,8 +4,8 @@
  *  \copyright GNU Public License.
  */
 
-#ifndef LIST_H
-#define LIST_H
+#ifndef SKIPLIST_H
+#define SKIPLIST_H
 
 typedef struct skiplist skiplist;
 
@@ -17,5 +17,5 @@ void *skiplist_fetch(const skiplist *, const void **, const void *,
     int (*)(const void *, const void *));
 void skiplist_destroy(skiplist *, void (*)(void *));
 
-#endif /* LIST_H */
+#endif /* SKIPLIST_H */
 
