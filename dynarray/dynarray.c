@@ -141,7 +141,7 @@ void *dynarray_refresh(dynarray *array)
  * Replace an item (the index must exist)
  * Returns the old item
  */
-void *dynarray_set(dynarray *array, size_t index, void *data)
+void *dynarray_set(const dynarray *array, size_t index, void *data)
 {
     if ((data == NULL) || (index >= array->size))
     {

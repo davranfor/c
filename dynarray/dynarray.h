@@ -15,7 +15,7 @@ void *dynarray_pop(dynarray *);
 void *dynarray_insert(dynarray *, size_t, void *);
 void *dynarray_delete(dynarray *, size_t);
 void *dynarray_refresh(dynarray *);
-void *dynarray_set(dynarray *, size_t, void *);
+void *dynarray_set(const dynarray *, size_t, void *);
 void *dynarray_get(const dynarray *, size_t);
 size_t dynarray_size(const dynarray *);
 void dynarray_sort(dynarray *, int (*)(const void *, const void *));
