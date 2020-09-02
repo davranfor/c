@@ -19,9 +19,9 @@ struct chrono
 struct chrono *chrono_new(void);
 void chrono_init(struct chrono *);
 void chrono_start(struct chrono *);
-void chrono_continue(struct chrono *);
-long chrono_elapsed(const struct chrono *);
+void chrono_resume(struct chrono *);
 void chrono_stop(struct chrono *);
+long chrono_elapsed(const struct chrono *);
 void chrono_destroy(struct chrono *);
 #define chrono_reset chrono_start
 

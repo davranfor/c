@@ -78,9 +78,14 @@ void chrono_start(struct chrono *chrono)
     chrono_run(chrono, 0);
 }
 
-void chrono_continue(struct chrono *chrono)
+void chrono_resume(struct chrono *chrono)
 {
     chrono_run(chrono, 1);
+}
+
+void chrono_stop(struct chrono *chrono) 
+{
+    chrono->stop = chrono_elapsed(chrono);
 }
 
 long chrono_elapsed(const struct chrono *chrono) 
@@ -97,11 +102,6 @@ long chrono_elapsed(const struct chrono *chrono)
         exit(EXIT_FAILURE);
     }
     return timespec_diff(&now, &chrono->start);
-}
-
-void chrono_stop(struct chrono *chrono) 
-{
-    chrono->stop = chrono_elapsed(chrono);
 }
 
 void chrono_destroy(struct chrono *chrono)

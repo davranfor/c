@@ -10,7 +10,7 @@ int main(void)
     millisleep(1000);
     chrono_stop(&chrono);
     millisleep(100);
-    chrono_continue(&chrono);
+    chrono_resume(&chrono);
     millisleep(234);
     printf("chrono: %ld\n", chrono_elapsed(&chrono));
     return 0;
