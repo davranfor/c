@@ -159,7 +159,7 @@ static struct node *linklist_node(const linklist *list, size_t index)
 
 void *linklist_insert(linklist *list, size_t index, void *data)
 {
-    if (index > list->size)
+    if (index > list->size || data == NULL)
     {
         return NULL;
     }
@@ -170,10 +170,6 @@ void *linklist_insert(linklist *list, size_t index, void *data)
     if (index == list->size)
     {
         return linklist_push_tail(list, data);
-    }
-    if (data == NULL)
-    {
-        return NULL;
     }
 
     struct node *node = malloc(sizeof *node);
