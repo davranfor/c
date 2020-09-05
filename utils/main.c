@@ -156,18 +156,42 @@ static void randomize(int arr[], int size)
 
 static void sample_misc(void)
 {
-    enum {N = 5};
-    int arr[N];
+    // Randomize
+    {
+        enum {N = 5};
+        int arr[N];
 
-    for (int iter = 0; iter < N; iter++)
-    {
-        arr[iter] = iter;
+        for (int iter = 0; iter < N; iter++)
+        {
+            arr[iter] = iter;
+        }
+        randomize(arr, N);
+        printf("Random numbers between 0 and %d:\n", N);
+        for (int iter = 0; iter < N; iter++)
+        {
+            printf("%d\n", arr[iter]);
+        }
     }
-    randomize(arr, N);
-    printf("Random numbers between 0 and %d:\n", N);
-    for (int iter = 0; iter < N; iter++)
+    // Multidimensional array in linear storage (Row-major order)
     {
-        printf("%d\n", arr[iter]);
+        enum {rows = 5, cols = 3};
+        int arr[rows * cols];
+        int row, col, index;
+
+        puts("Row-major order:");
+        for (row = 0; row < rows; row++)
+        {
+            for (col = 0; col < cols; col++)
+            {
+                index = cols * row + col;
+                arr[index] = index;
+                printf("[%d][%d] = %d\n", row, col, index);
+            }
+        }
+        row = rows / 2, col = cols / 2;
+        printf("Value of row %d col %d is %d\n", row, col, arr[cols * row + col]);
+        index = rows * cols / 2;
+        printf("Position of index %d is row %d col %d\n", index, index / cols, index % cols);
     }
 }
 
