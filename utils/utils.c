@@ -115,6 +115,11 @@ char *file_read_with_suffix(const char *path, const char *suffix)
     return file_data(path, NULL, suffix);
 }
 
+char *file_read_quoted(const char *path, const char *prefix, const char *suffix)
+{
+    return file_data(path, prefix, suffix);
+}
+
 char *file_read_line(FILE *file)
 {
     char str[FILE_LINE_MAX];
