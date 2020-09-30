@@ -32,7 +32,7 @@ static size_t file_size(FILE *file)
 
 size_t file_get_size(const char *path)
 {
-    FILE *file = fopen(path, "r");
+    FILE *file = fopen(path, "rb");
 
     if (file == NULL)
     {
@@ -91,7 +91,7 @@ static char *file_data(FILE *file, const char *prefix, const char *suffix)
 
 char *file_read(const char *path)
 {
-    FILE *file = fopen(path, "r");
+    FILE *file = fopen(path, "rb");
 
     if (file == NULL)
     {
@@ -106,7 +106,7 @@ char *file_read(const char *path)
 
 char *file_read_with_prefix(const char *path, const char *prefix)
 {
-    FILE *file = fopen(path, "r");
+    FILE *file = fopen(path, "rb");
 
     if (file == NULL)
     {
@@ -121,7 +121,7 @@ char *file_read_with_prefix(const char *path, const char *prefix)
 
 char *file_read_with_suffix(const char *path, const char *suffix)
 {
-    FILE *file = fopen(path, "r");
+    FILE *file = fopen(path, "rb");
 
     if (file == NULL)
     {
