@@ -45,8 +45,15 @@ size_t file_get_size(const char *path)
     return size;
 }
 
-static char *file_data(FILE *file, const char *prefix, const char *suffix)
+static char *file_data(const char *path, const char *prefix, const char *suffix)
 {
+    FILE *file = fopen(path, "rb");
+
+    if (file == NULL)
+    {
+        return NULL;
+    }
+
     size_t size = file_size(file);
 
     if (size == FILE_ERROR)
@@ -75,63 +82,37 @@ static char *file_data(FILE *file, const char *prefix, const char *suffix)
     if (fread(str + size_prefix, 1, size, file) != size)
     {
         free(str);
-        return NULL;
+        str = NULL;
     }
-    if (size_prefix > 0)
+    else
     {
-        memcpy(str, prefix, size_prefix);
+        if (size_prefix > 0)
+        {
+            memcpy(str, prefix, size_prefix);
+        }
+        if (size_suffix > 0)
+        {
+            memcpy(str + size, suffix, size_suffix);
+        }
+        str[size + size_prefix + size_suffix] = '\0';
     }
-    if (size_suffix > 0)
-    {
-        memcpy(str + size, suffix, size_suffix);
-    }
-    str[size + size_prefix + size_suffix] = '\0';
+    fclose(file);
     return str;
 }
 
 char *file_read(const char *path)
 {
-    FILE *file = fopen(path, "rb");
-
-    if (file == NULL)
-    {
-        return NULL;
-    }
-
-    char *str = file_data(file, NULL, NULL);
-
-    fclose(file);
-    return str;
+    return file_data(path, NULL, NULL);
 }
 
 char *file_read_with_prefix(const char *path, const char *prefix)
 {
-    FILE *file = fopen(path, "rb");
-
-    if (file == NULL)
-    {
-        return NULL;
-    }
-
-    char *str = file_data(file, prefix, NULL);
-
-    fclose(file);
-    return str;
+    return file_data(path, prefix, NULL);
 }
 
 char *file_read_with_suffix(const char *path, const char *suffix)
 {
-    FILE *file = fopen(path, "rb");
-
-    if (file == NULL)
-    {
-        return NULL;
-    }
-
-    char *str = file_data(file, NULL, suffix);
-
-    fclose(file);
-    return str;
+    return file_data(path, NULL, suffix);
 }
 
 char *file_read_line(FILE *file)
