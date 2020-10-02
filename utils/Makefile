@@ -6,5 +6,5 @@ all: main.c utils.c
 	$(CC) $(CFLAGS) main.c utils.c -o utils -lm
 
 clean:
-	rm -f utils
+	rm -f utils test.txt
 

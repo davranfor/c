@@ -194,15 +194,6 @@ size_t file_write(const char *path, const char *str, int append)
     return size;
 }
 
-int file_error(FILE *file)
-{
-    if (feof(file))
-    {
-        return 0;
-    }
-    return ferror(file);
-}
-
 /* String utilities */
 
 char *string_clone(const char *str)

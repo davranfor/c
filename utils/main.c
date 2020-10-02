@@ -59,6 +59,22 @@ static void sample_strings(void)
     }
 }
 
+static int clear_eof(FILE *file)
+{
+    if (file_error(file) != 0)
+    {
+        perror("clear_eof");
+        clearerr(file);
+        return 1;
+    }
+    if (file_eof(file) != 0)
+    {
+        clearerr(file);
+        return 1;
+    }
+    return 0;
+}
+
 static void sample_files(void)
 {
     puts("Sample files:");
@@ -88,18 +104,12 @@ static void sample_files(void)
     }
     while ((str = file_read_line(stdin)))
     {
-        printf("<%s>\n>", str);
+        printf("<%s>\n", str);
         free(str);
     }
-    if (file_error(stdin) != 0)
+    if (!clear_eof(stdin))
     {
         perror("file_read_line");
-        fprintf(stderr, "File error #%d\n", file_error(stdin));
-    }
-    else
-    {
-        // Restart stdin after EOF
-        clearerr(stdin);
     }
 
     char buf[10];
@@ -107,12 +117,11 @@ static void sample_files(void)
     puts("Enter text (Press CTRL + D to stop)");
     while (file_read_buffer(stdin, buf, sizeof buf))
     {
-        printf("<%s>\n>", buf);
+        printf("<%s>\n", buf);
     }
-    if (file_error(stdin) != 0)
+    if (!clear_eof(stdin))
     {
         perror("file_read_buffer");
-        fprintf(stderr, "File error #%d\n", file_error(stdin));
     }
 }
 

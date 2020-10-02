@@ -11,6 +11,8 @@
 #define FILE_APPEND 1
 
 #define FILE_ERROR ((size_t)-1)
+#define file_error(f) ferror(f)
+#define file_eof(f) feof(f)
 
 size_t file_get_size(const char *);
 char *file_read(const char *);
@@ -20,7 +22,6 @@ char *file_read_quoted(const char *, const char *, const char *);
 char *file_read_line(FILE *);
 char *file_read_buffer(FILE *, char *, size_t);
 size_t file_write(const char *, const char *, int);
-int file_error(FILE *);
 
 /* ************************************************************************* */
 /* String utilities                                                          */
