@@ -178,27 +178,30 @@ static char *json_copy(const char *str, size_t size)
 }
 
 /* Elimina espacios y entidades y devuelve el tamaño del string */
-static size_t json_trim(const char **left, const char **right)
+static size_t json_trim(const char **pleft, const char **pright)
 {
-    /* A la izquierda */
-    while (*left < *right)
+    const char *left = *pleft;
+    const char *right = *pright;
+
+    while (left < right)
     {
-        if (!isspace(**left))
+        if (!isspace(*left))
         {
             break;
         }
-        (*left)++;
+        left++;
     }
-    /* A la derecha */
-    while (*right > *left)
+    while (right > left)
     {
-        if (!(isspace(**right) || json_istoken(**right)))
+        if (!(isspace(*right) || json_istoken(*right)))
         {
             break;
         }
-        (*right)--;
+        right--;
     }
-    return (size_t)(*right - *left + 1);
+    *pleft = left;
+    *pright = right;
+    return (size_t)(right - left + 1);
 }
 
 static char *json_set_name(json *node, const char *left, const char *right)

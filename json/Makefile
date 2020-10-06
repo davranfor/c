@@ -1,10 +1,19 @@
 
 CC = gcc
-CFLAGS = -std=c11 -pedantic -Wall -Wextra -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wcast-qual -Wnested-externs
+CFLAGS = -I../utils
+CFLAGS += -std=c11 -pedantic -Wall -Wextra -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wcast-qual -Wnested-externs
+VPATH = ../utils
+OBJECTS = main.o utils.o json.o
 
-all: main.c utils.c
-	$(CC) $(CFLAGS) main.c utils.c -o utils -lm
+all: json
+
+main.o: utils.h json.h
+utils.o: utils.h
+json.o: json.h
+
+json: $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) -o json -lm
 
 clean:
-	rm -f utils
+	rm -f *.o json
 
