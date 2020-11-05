@@ -31,10 +31,27 @@ static size_t get_size(size_t size)
     return size;
 }
 
+binmap *binmap_create(size_t size)
+{
+    binmap *map = calloc(1, sizeof *map);
+
+    if (map != NULL)
+    {
+        // The minimum size is 8 (1 byte)
+        size = size < 8 ? 8 : get_size(size);
+        map->data = calloc(size / 8, 1);
+        if (map->data == NULL)
+        {
+            free(map);
+            return NULL;
+        }
+        map->size = size;
+    }
+    return map;
+}
+
 static binmap *resize(binmap *map, size_t size)
 {
-    size = get_size(size);
-
     size_t old_bytes = map->size / 8;
     size_t new_bytes = size / 8;
     unsigned char *temp;
@@ -48,26 +65,6 @@ static binmap *resize(binmap *map, size_t size)
         return map;
     }
     return NULL;
-}
-
-binmap *binmap_create(size_t size)
-{
-    binmap *map = calloc(1, sizeof *map);
-
-    if (map != NULL)
-    {
-        // The minimum size is 8 (1 byte)
-        if (size < 8)
-        {
-            size = 8;
-        }
-        if (resize(map, size) == NULL)
-        {
-            free(map);
-            return NULL;
-        }
-    }
-    return map;
 }
 
 /**
@@ -84,7 +81,7 @@ int binmap_set(binmap *map, size_t index, int value)
             return 1;
         }
         // Resize to the next power of two
-        if (resize(map, index + 1) == NULL)
+        if (resize(map, get_size(index + 1)) == NULL)
         {
             return 0;
         }
