@@ -23,7 +23,7 @@ static size_t get_size(size_t size)
     size |= size >> 4;
     size |= size >> 8;
     size |= size >> 16;
-    if (sizeof(size) > 4)
+    if (sizeof(size_t) > 4)
     {
         size |= size >> 32;
     }
@@ -37,7 +37,7 @@ binmap *binmap_create(size_t size)
 
     if (map != NULL)
     {
-        // The minimum size is 8 (1 byte)
+        // The minimum size is 8 bits (1 byte)
         size = size < 8 ? 8 : get_size(size);
         map->data = calloc(size / 8, 1);
         if (map->data == NULL)
@@ -69,7 +69,7 @@ static binmap *resize(binmap *map, size_t size)
 
 /**
  * Set the boolean value at index
- * Returns 1 on success or 0 if it fails (allocating)
+ * Returns 1 on success or 0 if it fails (resizing)
  */
 int binmap_set(binmap *map, size_t index, int value)
 {
@@ -103,6 +103,7 @@ int binmap_set(binmap *map, size_t index, int value)
 }
 
 /**
+ * Get the boolean value at index
  * Returns the boolean value of index or 0 if index doesn't exist
  */
 int binmap_get(binmap *map, size_t index)
