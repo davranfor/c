@@ -301,6 +301,46 @@ char *string_replace(const char *str, const char *str1, const char *str2)
     return ptr - len;
 }
 
+char *string_reverse(const char *str)
+{
+    size_t len = strlen(str);
+    char *ptr = malloc(len + 1);
+
+    if (ptr == NULL)
+    {
+        return NULL;
+    }
+
+    char *new = ptr;
+
+    while (len > 0)
+    {
+        if ((str[--len] & 0xc0) == 0x80)
+        {
+            size_t mbs = 1;
+
+            while (len > 0)
+            {
+                mbs++;
+                if ((str[--len] & 0xc0) != 0x80)
+                {
+                    break;
+                }
+            }
+            for (size_t mb = 0; mb < mbs; mb++)
+            {
+                *ptr++ = str[len + mb];
+            }
+        }
+        else
+        {
+            *ptr++ = str[len];
+        }
+    }
+    *ptr = '\0';
+    return new;
+}
+
 static char *string_vprint(const char *fmt, va_list args)
 {
     va_list copy;

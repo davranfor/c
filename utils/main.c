@@ -33,12 +33,18 @@ static void sample_strings(void)
     str = "María";
     printf("\"%s\" -> length = %zu\n", str, string_length(str));
     
-    str = "El camion de Ramon";
-    str = string_replace(str, "o", "ó");
+    str = string_replace("El camion de Ramon", "o", "ó");
     if (str != NULL)
     {
         printf("%s ", str);
         printf("<- 'ó' appears %zu times\n", string_count(str, "ó"));
+        free(str);
+    }
+
+    str = string_reverse("El camión de Ramón vale 1000 €");
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
         free(str);
     }
 
