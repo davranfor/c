@@ -310,35 +310,33 @@ char *string_reverse(const char *str)
     {
         return NULL;
     }
-
-    char *new = ptr;
-
-    while (len > 0)
+    ptr += len;
+    while (*str != '\0')
     {
-        if ((str[--len] & 0xc0) == 0x80)
+        // if not ASCII
+        if ((*str & 0x80) != 0x00)
         {
             size_t mbs = 1;
 
-            while (len > 0)
+            // while not first byte
+            while ((str[mbs] & 0xc0) == 0x80)
             {
                 mbs++;
-                if ((str[--len] & 0xc0) != 0x80)
-                {
-                    break;
-                }
             }
+            ptr -= mbs;
             for (size_t mb = 0; mb < mbs; mb++)
             {
-                *ptr++ = str[len + mb];
+                ptr[mb] = str[mb];
             }
+            str += mbs;
         }
         else
         {
-            *ptr++ = str[len];
+            *--ptr = *str++;
         }
     }
-    *ptr = '\0';
-    return new;
+    ptr[len] = '\0';
+    return ptr;
 }
 
 static char *string_vprint(const char *fmt, va_list args)
