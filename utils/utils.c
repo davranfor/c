@@ -313,7 +313,7 @@ char *string_reverse(const char *str)
     ptr += len;
     while (*str != '\0')
     {
-        // if not ASCII
+        // if not ASCII (multibytes are not reversed)
         if ((*str & 0x80) != 0x00)
         {
             size_t mbs = 1;
@@ -324,9 +324,9 @@ char *string_reverse(const char *str)
                 mbs++;
             }
             ptr -= mbs;
-            for (size_t mb = 0; mb < mbs; mb++)
+            for (size_t pos = 0; pos < mbs; pos++)
             {
-                ptr[mb] = str[mb];
+                ptr[pos] = str[pos];
             }
             str += mbs;
         }
