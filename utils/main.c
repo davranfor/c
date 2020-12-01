@@ -67,18 +67,19 @@ static void sample_strings(void)
 
 static int clear_eof(FILE *file)
 {
-    if (file_error(file) != 0)
+    int res = 0;
+
+    if (file_error(file))
     {
         perror("clear_eof");
-        clearerr(file);
-        return 1;
+        res = 1;
     }
-    if (file_eof(file) != 0)
+    if (file_eof(file))
     {
         clearerr(file);
-        return 1;
+        res = 1;
     }
-    return 0;
+    return res;
 }
 
 static void sample_files(void)
