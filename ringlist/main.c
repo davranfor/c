@@ -73,8 +73,13 @@ int main(void)
 
     for (int key = 0; key < size; key++)
     {
-        data = ringlist_push(list, malloc(sizeof *data));
+        data = calloc(1, sizeof *data);
         if (data == NULL)
+        {
+            perror("calloc");
+            exit(EXIT_FAILURE);
+        }
+        if (ringlist_push(list, data) == NULL)
         {
             perror("ringlist_push");
             exit(EXIT_FAILURE);

@@ -21,16 +21,11 @@ struct ringlist
 
 ringlist *ringlist_create(void)
 {
-    return calloc(1, sizeof(struct ringlist));
+    return calloc(1, sizeof(ringlist));
 }
 
 void *ringlist_push(ringlist *list, void *data)
 {
-    if (data == NULL)
-    {
-        return NULL;
-    }
-
     struct node *node = malloc(sizeof *node);
 
     if (node == NULL)
