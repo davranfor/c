@@ -69,10 +69,10 @@ int main(void)
 
     for (int key = 0; key < size; key++)
     {
-        data = malloc(sizeof *data);
+        data = calloc(1, sizeof *data);
         if (data == NULL)
         {
-            perror("malloc");
+            perror("calloc");
             exit(EXIT_FAILURE);
         }
         if (queue_push(list, data) == NULL)

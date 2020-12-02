@@ -22,7 +22,7 @@ struct queue
 
 queue *queue_create(void)
 {
-    return calloc(1, sizeof(struct queue));
+    return calloc(1, sizeof(queue));
 }
 
 void *queue_push(queue *list, void *data)
