@@ -69,13 +69,19 @@ int main(void)
 
     for (int key = 0; key < size; key++)
     {
+        data = malloc(sizeof *data);
+        if (data == NULL)
+        {
+            perror("malloc");
+            exit(EXIT_FAILURE);
+        }
         if (key & 0x01)
         {
-            data = deque_push_head(list, malloc(sizeof *data));
+            data = deque_push_head(list, data);
         }
         else
         {
-            data = deque_push_tail(list, malloc(sizeof *data));
+            data = deque_push_tail(list, data);
         }
         if (data == NULL)
         {

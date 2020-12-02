@@ -27,11 +27,6 @@ deque *deque_create(void)
 
 void *deque_push_head(deque *list, void *data)
 {
-    if (data == NULL)
-    {
-        return NULL;
-    }
-
     struct node *node = malloc(sizeof *node);
 
     if (node == NULL)
@@ -55,11 +50,6 @@ void *deque_push_head(deque *list, void *data)
 
 void *deque_push_tail(deque *list, void *data)
 {
-    if (data == NULL)
-    {
-        return NULL;
-    }
-
     struct node *node = malloc(sizeof *node);
 
     if (node == NULL)
