@@ -120,11 +120,11 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    struct data *data = malloc(sizeof *data);
+    struct data *data = calloc(1, sizeof *data);
 
     if (data == NULL)
     {
-        perror("malloc");
+        perror("calloc");
         exit(EXIT_FAILURE);
     }
 
@@ -143,10 +143,10 @@ int main(void)
         if (data == item)
         {
             data->value = keytostr(data->key);
-            data = malloc(sizeof *data);
+            data = calloc(1, sizeof *data);
             if (data == NULL)
             {
-                perror("malloc");
+                perror("calloc");
                 exit(EXIT_FAILURE);
             }
         }
