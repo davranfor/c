@@ -26,9 +26,7 @@ static size_t next_size(size_t size)
 
 dynarray *dynarray_create(void)
 {
-    dynarray *array = calloc(1, sizeof *array);
-
-    return array;
+    return calloc(1, sizeof(dynarray));
 }
 
 void *dynarray_push(dynarray *array, void *data)
