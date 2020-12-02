@@ -77,16 +77,19 @@ int main(void)
         }
         if (key & 0x01)
         {
-            data = deque_push_head(list, data);
+            if (deque_push_head(list, data) == NULL)
+            {
+                perror("deque_push_head");
+                exit(EXIT_FAILURE);
+            }
         }
         else
         {
-            data = deque_push_tail(list, data);
-        }
-        if (data == NULL)
-        {
-            perror("deque_push");
-            exit(EXIT_FAILURE);
+            if (deque_push_tail(list, data) == NULL)
+            {
+                perror("deque_push_tail");
+                exit(EXIT_FAILURE);
+            }
         }
         data->key = key;
         data->value = keytostr(key);
