@@ -23,7 +23,7 @@ struct linklist
 
 linklist *linklist_create(void)
 {
-    return calloc(1, sizeof(struct linklist));
+    return calloc(1, sizeof(linklist));
 }
 
 void *linklist_push_head(linklist *list, void *data)

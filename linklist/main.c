@@ -77,24 +77,27 @@ int main(void)
 
     for (int key = 0; key < size; key++)
     {
-        data = malloc(sizeof *data);
+        data = calloc(1, sizeof *data);
         if (data == NULL)
         {
-            perror("malloc");
+            perror("calloc");
             exit(EXIT_FAILURE);
         }
         if (key & 0x01)
         {
-            data = linklist_push_head(list, data);
+            if (linklist_push_head(list, data) == NULL)
+            {
+                perror("linklist_push_head");
+                exit(EXIT_FAILURE);
+            }
         }
         else
         {
-            data = linklist_push_tail(list, data);
-        }
-        if (data == NULL)
-        {
-            perror("linklist_push");
-            exit(EXIT_FAILURE);
+            if (linklist_push_tail(list, data) == NULL)
+            {
+                perror("linklist_push_tail");
+                exit(EXIT_FAILURE);
+            }
         }
         data->key = key;
         data->value = keytostr(key);
