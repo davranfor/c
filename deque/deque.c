@@ -22,7 +22,7 @@ struct deque
 
 deque *deque_create(void)
 {
-    return calloc(1, sizeof(struct deque));
+    return calloc(1, sizeof(deque));
 }
 
 void *deque_push_head(deque *list, void *data)
