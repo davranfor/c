@@ -21,16 +21,11 @@ struct stack
 
 stack *stack_create(void)
 {
-    return calloc(1, sizeof(struct stack));
+    return calloc(1, sizeof(stack));
 }
 
 void *stack_push(stack *list, void *data)
 {
-    if (data == NULL)
-    {
-        return NULL;
-    }
-
     struct node *node = malloc(sizeof *node);
 
     if (node == NULL)

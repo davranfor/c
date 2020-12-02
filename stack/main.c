@@ -69,8 +69,13 @@ int main(void)
 
     for (int key = 0; key < size; key++)
     {
-        data = stack_push(list, malloc(sizeof *data));
+        data = calloc(1, sizeof *data);
         if (data == NULL)
+        {
+            perror("calloc");
+            exit(EXIT_FAILURE);
+        }
+        if (stack_push(list, data) == NULL)
         {
             perror("stack_push");
             exit(EXIT_FAILURE);
