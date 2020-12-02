@@ -28,11 +28,6 @@ linklist *linklist_create(void)
 
 void *linklist_push_head(linklist *list, void *data)
 {
-    if (data == NULL)
-    {
-        return NULL;
-    }
-
     struct node *node = malloc(sizeof *node);
 
     if (node == NULL)
@@ -58,11 +53,6 @@ void *linklist_push_head(linklist *list, void *data)
 
 void *linklist_push_tail(linklist *list, void *data)
 {
-    if (data == NULL)
-    {
-        return NULL;
-    }
-
     struct node *node = malloc(sizeof *node);
 
     if (node == NULL)
@@ -159,7 +149,7 @@ static struct node *linklist_node(const linklist *list, size_t index)
 
 void *linklist_insert(linklist *list, size_t index, void *data)
 {
-    if (index > list->size || data == NULL)
+    if (index > list->size)
     {
         return NULL;
     }
