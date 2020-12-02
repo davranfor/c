@@ -68,24 +68,27 @@ int main(void)
 
     for (int iter = 0; iter < N; iter++)
     {
-        data = malloc(sizeof *data);
+        data = calloc(1, sizeof *data);
         if (data == NULL)
         {
-            perror("malloc");
+            perror("calloc");
             exit(EXIT_FAILURE);
         }
         if (iter % 2)
         {
-            data = dynarray_push(array, data);
+            if (dynarray_push(array, data) == NULL)
+            {
+                perror("dynarray_push");
+                exit(EXIT_FAILURE);
+            }
         }
         else
         {
-            data = dynarray_insert(array, 0, data);
-        }
-        if (data == NULL)
-        {
-            perror("dynarray_push | dynarray_insert");
-            exit(EXIT_FAILURE);
+            if (dynarray_insert(array, 0, data) == NULL)
+            {
+                perror("dynarray_insert");
+                exit(EXIT_FAILURE);
+            }
         }
         data->key = iter;
         data->value = keytostr(data->key);
