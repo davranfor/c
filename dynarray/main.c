@@ -68,13 +68,19 @@ int main(void)
 
     for (int iter = 0; iter < N; iter++)
     {
+        data = malloc(sizeof *data);
+        if (data == NULL)
+        {
+            perror("malloc");
+            exit(EXIT_FAILURE);
+        }
         if (iter % 2)
         {
-            data = dynarray_push(array, malloc(sizeof *data));
+            data = dynarray_push(array, data);
         }
         else
         {
-            data = dynarray_insert(array, 0, malloc(sizeof *data));
+            data = dynarray_insert(array, 0, data);
         }
         if (data == NULL)
         {

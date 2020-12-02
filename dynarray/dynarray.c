@@ -33,11 +33,6 @@ dynarray *dynarray_create(void)
 
 void *dynarray_push(dynarray *array, void *data)
 {
-    if (data == NULL)
-    {
-        return NULL;
-    }
-
     size_t size = next_size(array->size);
 
     if (size != 0)
@@ -65,7 +60,7 @@ void *dynarray_pop(dynarray *array)
 
 void *dynarray_insert(dynarray *array, size_t index, void *data)
 {
-    if ((data == NULL) || (index > array->size))
+    if (index > array->size)
     {
         return NULL;
     }
@@ -82,11 +77,9 @@ void *dynarray_insert(dynarray *array, size_t index, void *data)
         }
         array->data = temp;
     }
-    memmove(
-        (array->data + index + 1),
-        (array->data + index),
-        (array->size - index) * sizeof(void *)
-    );
+    memmove((array->data + index + 1),
+            (array->data + index),
+            (array->size - index) * sizeof(void *));
     array->data[index] = data;
     array->size++;
     return data;
@@ -101,11 +94,9 @@ void *dynarray_delete(dynarray *array, size_t index)
 
     void *data = array->data[index];
 
-    memmove(
-        (array->data + index),
-        (array->data + index + 1),
-        (array->size - index - 1) * sizeof(void *)
-    );
+    memmove((array->data + index),
+            (array->data + index + 1),
+            (array->size - index - 1) * sizeof(void *));
     array->size--;
     return data;
 }
@@ -143,7 +134,7 @@ void *dynarray_refresh(dynarray *array)
  */
 void *dynarray_set(const dynarray *array, size_t index, void *data)
 {
-    if ((data == NULL) || (index >= array->size))
+    if (index >= array->size)
     {
         return NULL;
     }
