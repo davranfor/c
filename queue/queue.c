@@ -27,11 +27,6 @@ queue *queue_create(void)
 
 void *queue_push(queue *list, void *data)
 {
-    if (data == NULL)
-    {
-        return NULL;
-    }
-
     struct node *node = malloc(sizeof *node);
 
     if (node == NULL)

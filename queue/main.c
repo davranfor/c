@@ -69,8 +69,13 @@ int main(void)
 
     for (int key = 0; key < size; key++)
     {
-        data = queue_push(list, malloc(sizeof *data));
+        data = malloc(sizeof *data);
         if (data == NULL)
+        {
+            perror("malloc");
+            exit(EXIT_FAILURE);
+        }
+        if (queue_push(list, data) == NULL)
         {
             perror("queue_push");
             exit(EXIT_FAILURE);
