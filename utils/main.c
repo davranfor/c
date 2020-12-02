@@ -65,21 +65,16 @@ static void sample_strings(void)
     }
 }
 
-static int clear_eof(FILE *file)
+static int eof_handler(FILE *file)
 {
-    int res = 0;
+    int error = file_error(file) ? 1 : 0;
 
-    if (file_error(file))
-    {
-        perror("clear_eof");
-        res = 1;
-    }
-    if (file_eof(file))
+    if (file_eof(file) || error)
     {
         clearerr(file);
-        res = 1;
+        return error;
     }
-    return res;
+    return 2; // Unhandled error
 }
 
 static void sample_files(void)
@@ -114,7 +109,7 @@ static void sample_files(void)
         printf("<%s>\n", str);
         free(str);
     }
-    if (!clear_eof(stdin))
+    if (eof_handler(stdin) != 0)
     {
         perror("file_read_line");
     }
@@ -126,7 +121,7 @@ static void sample_files(void)
     {
         printf("<%s>\n", buf);
     }
-    if (!clear_eof(stdin))
+    if (eof_handler(stdin) != 0)
     {
         perror("file_read_buffer");
     }
@@ -170,6 +165,13 @@ static void randomize(int arr[], int size)
     }
 }
 
+#define print_array(format, array, elems) \
+do {                                      \
+    for (int ___ = 0; ___ < elems; ___++) \
+        printf(format, array[___]);       \
+    printf("\n");                         \
+} while (0)
+
 static void sample_misc(void)
 {
     // Randomize
@@ -183,10 +185,7 @@ static void sample_misc(void)
         }
         randomize(arr, N);
         printf("Random numbers between 0 and %d:\n", N);
-        for (int iter = 0; iter < N; iter++)
-        {
-            printf("%d\n", arr[iter]);
-        }
+        print_array("%d ", arr, N);
     }
     // Multidimensional array in linear storage (Row-major order)
     {
