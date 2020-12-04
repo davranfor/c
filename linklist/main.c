@@ -112,10 +112,10 @@ int main(void)
     puts("Reversed:");
     print(list);
     puts("Search item 2:");
-    data = linklist_search(list, &(struct data){2, NULL}, comp);
+    data = linklist_search(list, &(struct data){size / 2, NULL}, comp);
     if (data != NULL)
     {
-        printf("%d %s\n", data->key, data->value);
+        printf("Found %d %s\n", data->key, data->value);
     }
     printf("Delete item %zu:\n", linklist_size(list) / 2);
     data = linklist_delete(list, linklist_size(list) / 2);

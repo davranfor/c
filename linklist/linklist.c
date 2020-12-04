@@ -354,7 +354,7 @@ static struct node *sort(struct node *head, int (*comp)(const void *, const void
  * Since we need to update the tail, we use a singly linked list sort approach and
  * adjust the `prev` nodes and `list->tail` at the end
  */
-void linklist_sort(struct linklist *list, int (*comp)(const void *, const void *))
+void linklist_sort(linklist *list, int (*comp)(const void *, const void *))
 {
     if (list->size > 1)
     {
