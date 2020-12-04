@@ -82,7 +82,8 @@ int main(void)
         data->key = key;
         data->value = keytostr(key);
     }
-    if ((data = klist_search(list, &(struct data){size / 2, NULL}, comp)))
+    data = klist_search(list, &(struct data){size / 2, NULL}, comp);
+    if (data != NULL)
     {
         printf("Found: %d %s\n", data->key, data->value);
     }
