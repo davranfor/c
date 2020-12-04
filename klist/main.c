@@ -82,6 +82,10 @@ int main(void)
         data->key = key;
         data->value = keytostr(key);
     }
+    if ((data = klist_search(list, &(struct data){size / 2, NULL}, comp)))
+    {
+        printf("Found: %d %s\n", data->key, data->value);
+    }
     klist_sort(list, comp);
     klist_reverse(list);
     data = klist_head(list);

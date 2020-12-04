@@ -269,9 +269,11 @@ void *klist_search(const klist *list, const void *data, int (*comp)(const void *
 
     for (iter = list->head; iter != NULL; iter = iter->next)
     {
-        if (comp(klist_data(list, iter), data) == 0)
+        void *curr = klist_data(list, iter);
+
+        if (comp(curr, data) == 0)
         {
-            return klist_data(list, iter);
+            return curr;
         }
     }
     return NULL;
