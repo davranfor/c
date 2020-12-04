@@ -187,6 +187,131 @@ size_t klist_size(const klist *list)
     return list->size;
 }
 
+static knode *split(knode *head)
+{
+    knode *fast = head;
+    knode *slow = head;
+
+    while ((fast->next != NULL) && (fast->next->next != NULL))
+    {
+        fast = fast->next->next;
+        slow = slow->next;
+    }
+
+    knode *temp = slow->next;
+
+    slow->next = NULL;
+    return temp;
+}
+
+static knode *merge(klist *list, knode *first, knode *second, int (*comp)(const void *, const void *))
+{
+    if (first == NULL)
+    {
+        return second;
+    }
+    if (second == NULL)
+    {
+        return first;
+    }
+    if (comp(klist_data(list, first), klist_data(list, second)) < 0)
+    {
+        first->next = merge(list, first->next, second, comp);
+        return first;
+    }
+    else
+    {
+        second->next = merge(list, first, second->next, comp);
+        return second;
+    }
+}
+
+static knode *sort(klist *list, knode *head, int (*comp)(const void *, const void *))
+{
+    if ((head == NULL) || (head->next == NULL))
+    {
+        return head;
+    }
+
+    knode *second = split(head);
+
+    head = sort(list, head, comp);
+    second = sort(list, second, comp);
+    return merge(list, head, second, comp);
+}
+
+/** 
+ * Merge sort:
+ * Since we need to update the tail, we use a singly linked list sort approach and
+ * adjust the `prev` nodes and `list->tail` at the end
+ */
+void klist_sort(klist *list, int (*comp)(const void *, const void *))
+{
+    if (list->size > 1)
+    {
+        list->head = sort(list, list->head, comp);
+        list->head->prev = NULL;
+
+        knode *node = list->head;
+
+        while (node->next != NULL)
+        {
+            node->next->prev = node;
+            node = node->next;
+        }
+        list->tail = node;
+    }
+}
+
+void *klist_search(const klist *list, const void *data, int (*comp)(const void *, const void *))
+{
+    knode *iter;
+
+    for (iter = list->head; iter != NULL; iter = iter->next)
+    {
+        if (comp(klist_data(list, iter), data) == 0)
+        {
+            return klist_data(list, iter);
+        }
+    }
+    return NULL;
+}
+
+void klist_reverse(klist *list)
+{
+    knode *a = list->head;
+    knode *b = list->tail;
+
+    list->head = b;
+    list->tail = a;
+
+    size_t mid = (list->size / 2) + (list->size % 2);
+
+    for (size_t iter = 0; iter < mid; iter++)
+    {
+        knode *a_prev = a->prev;
+        knode *a_next = a->next;
+        knode *b_prev = b->prev;
+        knode *b_next = b->next;
+
+        knode **pa = &a;
+        knode **pb = &b;
+        knode *tmp;
+
+        tmp = *pa;
+        *pa = *pb;
+        *pb = tmp;
+
+        a->prev = b_next;
+        a->next = b_prev;
+        b->prev = a_next;
+        b->next = a_prev;
+
+        a = a_next;
+        b = b_prev;
+    }
+}
+
 void klist_destroy(klist *list, void (*func)(void *))
 {
     if (func != NULL)

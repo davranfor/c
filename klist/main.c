@@ -28,6 +28,14 @@ static char *keytostr(int key)
     return str;
 }
 
+static int comp(const void *pa, const void *pb)
+{
+    const struct data *a = pa;
+    const struct data *b = pb;
+
+    return a->key < b->key ? -1 : a->key > b->key;
+}
+
 static void delete(void *data)
 {
     free(((struct data *)data)->value);
@@ -74,6 +82,8 @@ int main(void)
         data->key = key;
         data->value = keytostr(key);
     }
+    klist_sort(list, comp);
+    klist_reverse(list);
     data = klist_head(list);
     while (data != NULL)
     {
