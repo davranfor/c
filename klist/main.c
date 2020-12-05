@@ -42,6 +42,17 @@ static void delete(void *data)
     free(data);
 }
 
+static void print(const klist *list)
+{
+    const struct data *data = klist_head(list);
+
+    while (data != NULL)
+    {
+        printf("%d %s\n", data->key, data->value);
+        data = klist_next(list, data);
+    }
+}
+
 static klist *list;
 
 static void clean(void)
@@ -82,20 +93,21 @@ int main(void)
         data->key = key;
         data->value = keytostr(key);
     }
+    printf("%zu elements:\n", klist_size(list));
+    puts("Unsorted:");
+    print(list);
+    klist_sort(list, comp);
+    puts("Sorted:");
+    print(list);
+    klist_reverse(list);
+    puts("Reversed:");
+    print(list);
+    printf("Search item %d:\n", size / 2);
     data = klist_search(list, &(struct data){size / 2, NULL}, comp);
     if (data != NULL)
     {
-        printf("Found: %d %s\n", data->key, data->value);
+        printf("Found %d %s\n", data->key, data->value);
     }
-    klist_sort(list, comp);
-    klist_reverse(list);
-    data = klist_head(list);
-    while (data != NULL)
-    {
-        printf("%d %s\n", data->key, data->value);
-        data = klist_next(list, data);
-    }
-    printf("%zu elements:\n", klist_size(list));
     while ((data = klist_pop_tail(list)))
     {
         printf("%d %s\n", data->key, data->value);

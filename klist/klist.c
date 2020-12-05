@@ -114,6 +114,93 @@ void *klist_pop_head(klist *list)
     return data;
 }
 
+static knode *klist_get(const klist *list, size_t index)
+{
+    knode *node;
+
+    if (list->size - index > index)
+    {
+        node = list->head;
+        for (size_t iter = 0; iter < index; iter++)
+        {
+            node = node->next;
+        }
+    }
+    else
+    {
+        node = list->tail;
+        for (size_t iter = list->size - 1; iter > index; iter--)
+        {
+            node = node->prev;
+        }
+    }
+    return node;
+}
+
+void *klist_insert(klist *list, size_t index)
+{
+    if (index > list->size)
+    {
+        return NULL;
+    }
+    if (index == 0)
+    {
+        return klist_push_head(list);
+    }
+    if (index == list->size)
+    {
+        return klist_push_tail(list);
+    }
+
+    void *data = calloc(1, list->szof + sizeof(knode));
+
+    if (data == NULL)
+    {
+        return NULL;
+    }
+
+    knode *node = klist_node(list, data); 
+    knode *curr = klist_get(list, index);
+
+    node->prev = curr->prev;
+    curr->prev = node;
+    node->next = curr;
+    list->size++;
+    return data;
+}
+
+void *klist_delete(klist *list, size_t index)
+{
+    if (index >= list->size)
+    {
+        return NULL;
+    }
+    if (index == 0)
+    {
+        return klist_pop_head(list);
+    }
+    if (index == list->size - 1)
+    {
+        return klist_pop_tail(list);
+    }
+
+    knode *node = klist_get(list, index);
+
+    node->prev->next = node->next;
+    node->next->prev = node->prev;
+    list->size--;
+    return klist_data(list, node);
+}
+
+void *klist_index(const klist *list, size_t index)
+{
+    if (index >= list->size)
+    {
+        return NULL;
+    }
+    return klist_data(list, klist_get(list, index));
+}
+
 void *klist_pop_tail(klist *list)
 {
     if (list->tail == NULL)
