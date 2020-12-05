@@ -293,7 +293,6 @@ void klist_reverse(klist *list)
     {
         knode ta = *a;
         knode tb = *b;
-
         knode *t;
 
         t = a;
