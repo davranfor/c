@@ -291,26 +291,22 @@ void klist_reverse(klist *list)
 
     for (size_t iter = 0; iter < mid; iter++)
     {
-        knode *a_prev = a->prev;
-        knode *a_next = a->next;
-        knode *b_prev = b->prev;
-        knode *b_next = b->next;
+        knode ta = *a;
+        knode tb = *b;
 
-        knode **pa = &a;
-        knode **pb = &b;
-        knode *tmp;
+        knode *t;
 
-        tmp = *pa;
-        *pa = *pb;
-        *pb = tmp;
+        t = a;
+        a = b;
+        b = t;
 
-        a->prev = b_next;
-        a->next = b_prev;
-        b->prev = a_next;
-        b->next = a_prev;
+        a->prev = tb.next;
+        a->next = tb.prev;
+        b->prev = ta.next;
+        b->next = ta.prev;
 
-        a = a_next;
-        b = b_prev;
+        a = ta.next;
+        b = tb.prev;
     }
 }
 
