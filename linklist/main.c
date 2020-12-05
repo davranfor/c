@@ -111,7 +111,7 @@ int main(void)
     linklist_reverse(list);
     puts("Reversed:");
     print(list);
-    puts("Search item 2:");
+    printf("Search item %d:\n", size / 2);
     data = linklist_search(list, &(struct data){size / 2, NULL}, comp);
     if (data != NULL)
     {
