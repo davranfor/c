@@ -58,7 +58,7 @@ void *klist_push_head(klist *list)
         list->head->prev = node;
         node->next = list->head;
     }
-    if (list->tail == NULL)
+    else
     {
         list->tail = node;
     }
@@ -83,7 +83,7 @@ void *klist_push_tail(klist *list)
         list->tail->next = node;
         node->prev = list->tail;
     }
-    if (list->head == NULL)
+    else
     {
         list->head = node;
     }
