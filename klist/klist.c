@@ -114,6 +114,28 @@ void *klist_pop_head(klist *list)
     return data;
 }
 
+void *klist_pop_tail(klist *list)
+{
+    if (list->tail == NULL)
+    {
+        return NULL;
+    }
+
+    void *data = klist_data(list, list->tail);
+
+    list->tail = list->tail->prev;
+    if (list->tail != NULL)
+    {
+        list->tail->next = NULL;
+    }
+    else
+    {
+        list->head = NULL;
+    }
+    list->size--;
+    return data;
+}
+
 static knode *klist_get(const klist *list, size_t index)
 {
     knode *node;
@@ -199,28 +221,6 @@ void *klist_index(const klist *list, size_t index)
         return NULL;
     }
     return klist_data(list, klist_get(list, index));
-}
-
-void *klist_pop_tail(klist *list)
-{
-    if (list->tail == NULL)
-    {
-        return NULL;
-    }
-
-    void *data = klist_data(list, list->tail);
-
-    list->tail = list->tail->prev;
-    if (list->tail != NULL)
-    {
-        list->tail->next = NULL;
-    }
-    else
-    {
-        list->head = NULL;
-    }
-    list->size--;
-    return data;
 }
 
 void *klist_head(const klist *list)
