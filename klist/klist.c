@@ -368,31 +368,19 @@ void *klist_search(const klist *list, const void *data, int (*comp)(const void *
 
 void klist_reverse(klist *list)
 {
-    knode *a = list->head;
-    knode *b = list->tail;
+    knode *head = list->head;
+    knode *tail = list->tail;
 
-    list->head = b;
-    list->tail = a;
-
-    size_t mid = (list->size / 2) + (list->size % 2);
-
-    for (size_t iter = 0; iter < mid; iter++)
+    list->head = tail;
+    list->tail = head;
+    while (head != NULL)
     {
-        knode ta = *a;
-        knode tb = *b;
-        knode *t;
+        knode *temp;
 
-        t = a;
-        a = b;
-        b = t;
-
-        a->prev = tb.next;
-        a->next = tb.prev;
-        b->prev = ta.next;
-        b->next = ta.prev;
-
-        a = ta.next;
-        b = tb.prev;
+        temp = head->prev;
+        head->prev = head->next;
+        head->next = temp;            
+        head = head->prev;
     }
 }
 
