@@ -58,6 +58,10 @@ void *klist_push_head(klist *list)
         list->head->prev = node;
         node->next = list->head;
     }
+    else
+    {
+        list->tail = node;
+    }
     list->head = node;
     list->size++;
     return data;
@@ -78,6 +82,10 @@ void *klist_push_tail(klist *list)
     {
         list->tail->next = node;
         node->prev = list->tail;
+    }
+    else
+    {
+        list->head = node;
     }
     list->tail = node;
     list->size++;
