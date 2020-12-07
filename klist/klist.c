@@ -32,7 +32,7 @@ klist *klist_create(size_t size)
     {
         size_t align = alignof(knode);
 
-        // Rounding size up to nearest multiple of alignof(knode)
+        // Round size up to nearest multiple of alignof(knode)
         list->szof = (size + (align - 1)) / align * align;
     }
     return list;
@@ -58,10 +58,6 @@ void *klist_push_head(klist *list)
         list->head->prev = node;
         node->next = list->head;
     }
-    else
-    {
-        list->tail = node;
-    }
     list->head = node;
     list->size++;
     return data;
@@ -82,10 +78,6 @@ void *klist_push_tail(klist *list)
     {
         list->tail->next = node;
         node->prev = list->tail;
-    }
-    else
-    {
-        list->head = node;
     }
     list->tail = node;
     list->size++;
