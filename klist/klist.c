@@ -302,7 +302,7 @@ static knode *merge(klist *list, knode *head, knode *tail, int (*comp)(const voi
     {
         return head;
     }
-    if (comp(klist_data(list, head), klist_data(list, tail)) < 0)
+    if (comp(klist_data(list, head), klist_data(list, tail)) <= 0)
     {
         head->next = merge(list, head->next, tail, comp);
         return head;
@@ -335,7 +335,7 @@ static knode *merge(klist *list, knode *head, knode *tail, int (*comp)(const voi
 
         tail = tail->next;
         prev->next = NULL;
-        if (comp(klist_data(list, prev), klist_data(list, head)) < 0)
+        if (comp(klist_data(list, head), klist_data(list, prev)) > 0)
         {
             prev->next = head;
             head = prev;
@@ -350,7 +350,7 @@ static knode *merge(klist *list, knode *head, knode *tail, int (*comp)(const voi
                 curr = curr->next;
                 break;
             }
-            else if (comp(klist_data(list, curr->next), klist_data(list, prev)) < 0)
+            else if (comp(klist_data(list, curr->next), klist_data(list, prev)) <= 0)
             {
                 curr = curr->next;
                 continue;
