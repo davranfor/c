@@ -291,26 +291,82 @@ static knode *split(knode *head)
     return temp;
 }
 
-static knode *merge(klist *list, knode *first, knode *second, int (*comp)(const void *, const void *))
+/* Recursive version causing stack overflow on large datatsets
+static knode *merge(klist *list, knode *head, knode *tail, int (*comp)(const void *, const void *))
 {
-    if (first == NULL)
+    if (head == NULL)
     {
-        return second;
+        return tail;
     }
-    if (second == NULL)
+    if (tail == NULL)
     {
-        return first;
+        return head;
     }
-    if (comp(klist_data(list, first), klist_data(list, second)) < 0)
+    if (comp(klist_data(list, head), klist_data(list, tail)) < 0)
     {
-        first->next = merge(list, first->next, second, comp);
-        return first;
+        head->next = merge(list, head->next, tail, comp);
+        return head;
     }
     else
     {
-        second->next = merge(list, first, second->next, comp);
-        return second;
+        tail->next = merge(list, head, tail->next, comp);
+        return tail;
     }
+}
+*/
+
+/* Iterative version */
+static knode *merge(klist *list, knode *head, knode *tail, int (*comp)(const void *, const void *))
+{
+    if (head == NULL)
+    {
+        return tail;
+    }
+    if (tail == NULL)
+    {
+        return head;
+    }
+
+    knode *curr = head;
+
+    while (tail != NULL)
+    {
+        knode *prev = tail;
+
+        tail = tail->next;
+        prev->next = NULL;
+        if (comp(klist_data(list, prev), klist_data(list, head)) < 0)
+        {
+            prev->next = head;
+            head = prev;
+            curr = head;
+            continue;
+        }
+        while (1)
+        {
+            if (curr->next == NULL)
+            {
+                curr->next = prev;
+                curr = curr->next;
+                break;
+            }
+            else if (comp(klist_data(list, curr->next), klist_data(list, prev)) < 0)
+            {
+                curr = curr->next;
+                continue;
+            }
+            else
+            {
+                knode *temp;
+
+                temp = curr->next;
+                curr->next = prev;
+                prev->next = temp;
+                break;
+            }
+        }
+    }
+    return head;
 }
 
 static knode *sort(klist *list, knode *head, int (*comp)(const void *, const void *))
@@ -320,11 +376,11 @@ static knode *sort(klist *list, knode *head, int (*comp)(const void *, const voi
         return head;
     }
 
-    knode *second = split(head);
+    knode *tail = split(head);
 
     head = sort(list, head, comp);
-    second = sort(list, second, comp);
-    return merge(list, head, second, comp);
+    tail = sort(list, tail, comp);
+    return merge(list, head, tail, comp);
 }
 
 /** 
