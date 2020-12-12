@@ -323,7 +323,7 @@ static struct node *merge(struct node *first, struct node *second, int (*comp)(c
     {
         return first;
     }
-    if (comp(first->data, second->data) < 0)
+    if (comp(first->data, second->data) <= 0)
     {
         first->next = merge(first->next, second, comp);
         return first;
