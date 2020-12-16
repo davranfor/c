@@ -171,6 +171,7 @@ void *linklist_insert(linklist *list, size_t index, void *data)
         
     struct node *curr = linklist_node(list, index);
 
+    curr->prev->next = node;
     node->prev = curr->prev;
     curr->prev = node;
     node->next = curr;
