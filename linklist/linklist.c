@@ -314,26 +314,82 @@ static struct node *split(struct node *head)
     return temp;
 }
 
-static struct node *merge(struct node *first, struct node *second, int (*comp)(const void *, const void *))
+/* Recursive version causing stack overflow on large datatsets
+static struct node *merge(struct node *head, struct node *tail, int (*comp)(const void *, const void *))
 {
-    if (first == NULL)
+    if (head == NULL)
     {
-        return second;
+        return tail;
     }
-    if (second == NULL)
+    if (tail == NULL)
     {
-        return first;
+        return head;
     }
-    if (comp(first->data, second->data) <= 0)
+    if (comp(head->data, tail->data) <= 0)
     {
-        first->next = merge(first->next, second, comp);
-        return first;
+        head->next = merge(head->next, tail, comp);
+        return head;
     }
     else
     {
-        second->next = merge(first, second->next, comp);
-        return second;
+        tail->next = merge(head, tail->next, comp);
+        return tail;
     }
+}
+*/
+
+/* Iterative version */
+static struct node *merge(struct node *head, struct node *tail, int (*comp)(const void *, const void *))
+{
+    if (head == NULL)
+    {
+        return tail;
+    }
+    if (tail == NULL)
+    {
+        return head;
+    }
+
+    struct node *curr = head;
+
+    while (tail != NULL)
+    {
+        struct node *prev = tail;
+
+        tail = tail->next;
+        prev->next = NULL;
+        if (comp(head->data, prev->data) > 0)
+        {
+            prev->next = head;
+            head = prev;
+            curr = head;
+            continue;
+        }
+        while (1)
+        {
+            if (curr->next == NULL)
+            {
+                curr->next = prev;
+                curr = curr->next;
+                break;
+            }
+            else if (comp(curr->next->data, prev->data) <= 0)
+            {
+                curr = curr->next;
+                continue;
+            }
+            else
+            {
+                struct node *temp;
+
+                temp = curr->next;
+                curr->next = prev;
+                prev->next = temp;
+                break;
+            }
+        }
+    }
+    return head;
 }
 
 static struct node *sort(struct node *head, int (*comp)(const void *, const void *))
@@ -343,11 +399,11 @@ static struct node *sort(struct node *head, int (*comp)(const void *, const void
         return head;
     }
 
-    struct node *second = split(head);
+    struct node *tail = split(head);
 
     head = sort(head, comp);
-    second = sort(second, comp);
-    return merge(head, second, comp);
+    tail = sort(tail, comp);
+    return merge(head, tail, comp);
 }
 
 /** 
@@ -404,7 +460,7 @@ void linklist_reverse(const linklist *list)
     }
 }
 
-void linklist_destroy(linklist *list, void (*func)(void *))
+void linklist_clear(linklist *list, void (*func)(void *))
 {
     struct node *node = list->head;
 
@@ -420,6 +476,14 @@ void linklist_destroy(linklist *list, void (*func)(void *))
         free(node);
         node = temp;
     }
+    list->head = NULL;
+    list->tail = NULL;
+    list->size = 0;
+}
+
+void linklist_destroy(linklist *list, void (*func)(void *))
+{
+    linklist_clear(list, func);
     free(list);
 }
 

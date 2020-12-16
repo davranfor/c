@@ -25,6 +25,7 @@ size_t linklist_size(const linklist *);
 void linklist_sort(linklist *, int (*)(const void *, const void *));
 void *linklist_search(const linklist *, const void *, int (*)(const void *, const void *));
 void linklist_reverse(const linklist *);
+void linklist_clear(linklist *, void (*)(void *));
 void linklist_destroy(linklist *, void (*)(void *));
 
 #endif /* LINKLIST_H */
