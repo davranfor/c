@@ -40,7 +40,7 @@ klist *klist_create(size_t size)
 
 #define klist_const_node(list, data) ((const knode *)((const char *)data + list->szof))
 #define klist_node(list, data) ((knode *)((char *)data + list->szof))
-#define klist_data(list, node) ((void  *)((char *)node - list->szof))
+#define klist_data(list, node) ((char *)node - list->szof)
 
 void *klist_push_head(klist *list)
 {
@@ -161,15 +161,11 @@ static knode *klist_get(const klist *list, size_t index)
 
 void *klist_insert(klist *list, size_t index)
 {
-    if (index > list->size)
-    {
-        return NULL;
-    }
     if (index == 0)
     {
         return klist_push_head(list);
     }
-    if (index == list->size)
+    if (index >= list->size)
     {
         return klist_push_tail(list);
     }
@@ -184,6 +180,7 @@ void *klist_insert(klist *list, size_t index)
     knode *node = klist_node(list, data); 
     knode *curr = klist_get(list, index);
 
+    curr->prev->next = node;
     node->prev = curr->prev;
     curr->prev = node;
     node->next = curr;
@@ -207,11 +204,12 @@ void *klist_delete(klist *list, size_t index)
     }
 
     knode *node = klist_get(list, index);
+    void *data = klist_data(list, node);
 
     node->prev->next = node->next;
     node->next->prev = node->prev;
     list->size--;
-    return klist_data(list, node);
+    return data;
 }
 
 void *klist_index(const klist *list, size_t index)
