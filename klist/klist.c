@@ -438,7 +438,7 @@ void klist_reverse(klist *list)
     }
 }
 
-void klist_destroy(klist *list, void (*func)(void *))
+void klist_clear(klist *list, void (*func)(void *))
 {
     if (func != NULL)
     {
@@ -452,6 +452,14 @@ void klist_destroy(klist *list, void (*func)(void *))
             node = next;
         }
     }
+    list->head = NULL;
+    list->tail = NULL;
+    list->size = 0;
+}
+
+void klist_destroy(klist *list, void (*func)(void *))
+{
+    klist_clear(list, func);
     free(list);
 }
 

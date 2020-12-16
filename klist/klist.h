@@ -25,6 +25,7 @@ size_t klist_size(const klist *);
 void klist_sort(klist *, int (*)(const void *, const void *));
 void *klist_search(const klist *, const void *, int (*)(const void *, const void *));
 void klist_reverse(klist *);
+void klist_clear(klist *, void (*)(void *));
 void klist_destroy(klist *, void (*)(void *));
 
 #endif /* KLIST_H */
