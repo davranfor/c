@@ -715,13 +715,13 @@ size_t json_items(const json *node)
 }
 
 /* Manda cada nodo al callback "func" */
-void json_foreach(const json *node, void (*func)(const json *))
+void json_foreach(const json *node, void *data, void (*func)(const json *, void *))
 {
     if (node != NULL)
     {
-        func(node);
-        json_foreach(node->left, func);
-        json_foreach(node->right, func);
+        func(node, data);
+        json_foreach(node->left, data, func);
+        json_foreach(node->right, data, func);
     }
 }
 

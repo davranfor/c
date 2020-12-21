@@ -45,7 +45,7 @@ json *json_child(const json *, const char *);
 json *json_next(const json *);
 json *json_item(const json *, size_t);
 size_t json_items(const json *);
-void json_foreach(const json *, void (*)(const json *));
+void json_foreach(const json *, void *, void (*)(const json *, void *));
 void json_print(const json *);
 void json_free(json *);
 
