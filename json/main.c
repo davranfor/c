@@ -24,7 +24,6 @@ static json *parse(const char *path)
     return node;
 }
 
-
 int main(void)
 {
     json *node = parse("test.json");

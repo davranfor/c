@@ -714,6 +714,17 @@ size_t json_items(const json *node)
     return count;
 }
 
+/* Manda cada nodo al callback "func" */
+void json_foreach(const json *node, void (*func)(const json *))
+{
+    if (node != NULL)
+    {
+        func(node);
+        json_foreach(node->left, func);
+        json_foreach(node->right, func);
+    }
+}
+
 /*
  * Imprime el árbol de forma recursiva
  * Los nodos izquierdos son los que marcan el cambio de nivel
