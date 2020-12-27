@@ -234,7 +234,7 @@ void *dynarray_lsearch(const dynarray *array, const void *key, int (*comp)(const
 {
     for (size_t iter = 0; iter < array->size; iter++)
     {
-        if (comp(array->data[iter], key) == 0)
+        if (comp(key, array->data[iter]) == 0)
         {
             return array->data[iter];
         }
