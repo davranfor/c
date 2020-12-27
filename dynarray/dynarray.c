@@ -157,19 +157,74 @@ size_t dynarray_size(const dynarray *array)
     return array->size;
 }
 
+static void swap(void *a[], void *b[])
+{
+    void *tm;
+
+    tm = *a;
+    *a = *b;
+    *b = tm;
+}
+
+static int partition(void *array[], int head, int tail, int (*comp)(const void *, const void *))
+{
+    int part = head - 1;
+
+    for (int iter = head; iter <= tail - 1; iter++)
+    {
+        if (comp(array[iter], array[tail]) <= 0)
+        {
+            swap(&array[++part], &array[iter]);
+        }
+    }
+    swap(&array[part + 1], &array[tail]);
+    return part + 1;
+}
+
+static void sort(void *array[], int head, int tail, int (*comp)(const void *, const void *))
+{
+    if (head < tail)
+    {
+        int part = partition(array, head, tail, comp);
+
+        sort(array, head, part - 1, comp);
+        sort(array, part + 1, tail, comp);
+    }
+}
+
 void dynarray_sort(dynarray *array, int (*comp)(const void *, const void *))
 {
-    qsort(array->data, array->size, sizeof(void *), comp);
+    if (array->size > 1)
+    {
+        sort(array->data, 0, (int)(array->size - 1), comp);
+    }
 }
 
 /* Binary search */
 void *dynarray_bsearch(const dynarray *array, const void *key, int (*comp)(const void *, const void *))
 {
-    void **data = bsearch(key, array->data, array->size, sizeof(void *), comp);
-    
-    if (data != NULL)
+    if (array->size > 0)
     {
-        return *data;
+        int head = 0;
+        int tail = (int)(array->size - 1);
+
+        while (head <= tail)
+        {
+            int mid = (head + tail) / 2;
+
+            if (comp(key, array->data[mid]) == 0)
+            {
+                return array->data[mid];
+            }
+            else if (comp(key, array->data[mid]) < 0)
+            {
+                tail = mid - 1;
+            }
+            else
+            {
+                head = mid + 1;
+            }
+        }
     }
     return NULL;
 }
@@ -179,7 +234,7 @@ void *dynarray_lsearch(const dynarray *array, const void *key, int (*comp)(const
 {
     for (size_t iter = 0; iter < array->size; iter++)
     {
-        if (comp(&array->data[iter], key) == 0)
+        if (comp(array->data[iter], key) == 0)
         {
             return array->data[iter];
         }

@@ -30,8 +30,8 @@ static char *keytostr(int key)
 
 static int comp(const void *pa, const void *pb)
 {
-    const struct data *a = *(const struct data * const *)pa;
-    const struct data *b = *(const struct data * const *)pb;
+    const struct data *a = pa;
+    const struct data *b = pb;
 
     return a->key < b->key ? -1 : a->key > b->key;
 }
@@ -95,7 +95,7 @@ int main(void)
     }
     dynarray_sort(array, comp);
     data = &(struct data){.key = N / 2};
-    data = dynarray_bsearch(array, &data, comp);
+    data = dynarray_bsearch(array, data, comp);
     if (data != NULL)
     {
         printf("Found: %d %s\n", data->key, data->value);
