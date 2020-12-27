@@ -194,36 +194,30 @@ static void sort(void *array[], int head, int tail, int (*comp)(const void *, co
 
 void dynarray_sort(dynarray *array, int (*comp)(const void *, const void *))
 {
-    if (array->size > 1)
-    {
-        sort(array->data, 0, (int)(array->size - 1), comp);
-    }
+    sort(array->data, 0, (int)array->size - 1, comp);
 }
 
 /* Binary search */
 void *dynarray_bsearch(const dynarray *array, const void *key, int (*comp)(const void *, const void *))
 {
-    if (array->size > 0)
+    int head = 0;
+    int tail = (int)array->size - 1;
+
+    while (head <= tail)
     {
-        int head = 0;
-        int tail = (int)(array->size - 1);
+        int mid = (head + tail) / 2;
 
-        while (head <= tail)
+        if (comp(key, array->data[mid]) == 0)
         {
-            int mid = (head + tail) / 2;
-
-            if (comp(key, array->data[mid]) == 0)
-            {
-                return array->data[mid];
-            }
-            else if (comp(key, array->data[mid]) < 0)
-            {
-                tail = mid - 1;
-            }
-            else
-            {
-                head = mid + 1;
-            }
+            return array->data[mid];
+        }
+        else if (comp(key, array->data[mid]) < 0)
+        {
+            tail = mid - 1;
+        }
+        else
+        {
+            head = mid + 1;
         }
     }
     return NULL;
