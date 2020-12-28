@@ -206,18 +206,19 @@ void *dynarray_bsearch(const dynarray *array, const void *key, int (*comp)(const
     while (head <= tail)
     {
         int mid = (head + tail) / 2;
+        int cmp = comp(key, array->data[mid]);
 
-        if (comp(key, array->data[mid]) == 0)
-        {
-            return array->data[mid];
-        }
-        else if (comp(key, array->data[mid]) < 0)
+        if (cmp < 0)
         {
             tail = mid - 1;
         }
-        else
+        else if (cmp > 0)
         {
             head = mid + 1;
+        }
+        else
+        {
+            return array->data[mid];
         }
     }
     return NULL;
