@@ -444,17 +444,20 @@ void klist_reverse(klist *list)
 
 void klist_clear(klist *list, void (*func)(void *))
 {
-    if (func != NULL)
+
+    struct node *node = list->head;
+
+    while (node != NULL)
     {
-        struct node *node = list->head;
+        struct node *next = node->next;
 
-        while (node != NULL)
+        node->prev = NULL;
+        node->next = NULL;
+        if (func != NULL)
         {
-            struct node *next = node->next;
-
             func(klist_data(list, node));
-            node = next;
         }
+        node = next;
     }
     list->head = NULL;
     list->tail = NULL;
