@@ -87,7 +87,13 @@ int main(void)
     }
     printf("%zu elements:\n", knode_size(list));
     print(list);
-    puts("Deleting ...");
+    printf("Select index %d:\n", size / 2);
+    data = knode_index(list, (size_t)(size / 2));
+    if (data != NULL)
+    {
+        printf("Found %d %s\n", data->key, data->value);
+    }
+    puts("Deleting from tail ...");
     while ((data = knode_pop_tail(list)))
     {
         printf("%d %s\n", data->key, data->value);

@@ -17,6 +17,7 @@ void *knode_pop_tail(knode *);
 void *knode_head(const knode *);
 void *knode_tail(const knode *);
 void *knode_fetch(const knode *, const void **, const void *);
+void *knode_index(const knode *, size_t);
 size_t knode_size(const knode *);
 void knode_clear(knode *, void (*)(void *));
 void knode_destroy(knode *, void (*)(void *));

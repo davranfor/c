@@ -160,6 +160,34 @@ void *knode_fetch(const knode *list, const void **iter, const void *data)
     }
 }
 
+void *knode_index(const knode *list, size_t index)
+{
+    if (index >= list->size)
+    {
+        return NULL;
+    }
+
+    void *node, *prev = NULL;
+
+    if (list->size - index > index)
+    {
+        node = list->head;
+    }
+    else
+    {
+        index = list->size - index - 1;
+        node = list->tail;
+    }
+    for (size_t iter = 0; iter < index; iter++)
+    {
+        void *temp = node;
+
+        node = (void *)(*knode_addr(node, list->szof) ^ (addr)prev);
+        prev = temp;
+    }
+    return node;
+}
+
 size_t knode_size(const knode *list)
 {
     return list->size;
