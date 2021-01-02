@@ -5,7 +5,6 @@
  */
 
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdalign.h>
 #include "knode.h"
 
@@ -44,7 +43,6 @@ void *knode_push_head(knode *list)
     {
         return NULL;
     }
-
     if (list->head != NULL)
     {
         *knode_addr(list->head, list->szof) ^= (addr)data;
@@ -67,7 +65,6 @@ void *knode_push_tail(knode *list)
     {
         return NULL;
     }
-
     if (list->tail != NULL)
     {
         *knode_addr(list->tail, list->szof) ^= (addr)data;
@@ -144,20 +141,23 @@ void *knode_tail(const knode *list)
     return list->tail;
 }
 
-void *knode_fetch(const knode *list, const void **iter, const void *data)
+void *knode_fetch(const knode *list, kiter *iter, const void *data)
 {
-    if (*iter == list)
+    if (*iter == KNODE_HEAD)
     {
-        *iter = NULL;
+        *iter = 0;
         return list->head;
     }
-    else
+    if (*iter == KNODE_TAIL)
     {
-        addr node = *knode_const_addr(data, list->szof) ^ (addr)*iter;
-
-        *iter = data;
-        return (void *)node;
+        *iter = 0;
+        return list->tail;
     }
+    
+    addr next = *knode_const_addr(data, list->szof) ^ *iter;
+
+    *iter = (kiter)data;
+    return (void *)next;
 }
 
 void *knode_index(const knode *list, size_t index)

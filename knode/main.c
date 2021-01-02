@@ -36,7 +36,7 @@ static void delete(void *data)
 
 static void print(const knode *list)
 {
-    const void *iter = list;
+    kiter iter = KNODE_HEAD;
     const struct data *data;
 
     while ((data = knode_fetch(list, &iter, data)))
@@ -85,7 +85,7 @@ int main(void)
         data->key = key;
         data->value = keytostr(key);
     }
-    printf("%zu elements:\n", knode_size(list));
+    printf("Elements: %zu\n", knode_size(list));
     print(list);
     printf("Select index %d:\n", size / 2);
     data = knode_index(list, (size_t)(size / 2));
@@ -93,7 +93,7 @@ int main(void)
     {
         printf("Found %d %s\n", data->key, data->value);
     }
-    puts("Deleting from tail ...");
+    puts("Deleting ...");
     while ((data = knode_pop_tail(list)))
     {
         printf("%d %s\n", data->key, data->value);
