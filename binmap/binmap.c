@@ -23,7 +23,7 @@ static size_t get_size(size_t size)
     size |= size >> 4;
     size |= size >> 8;
     size |= size >> 16;
-    if (sizeof(size_t) > 4)
+    if (sizeof(size) >= 8)
     {
         size |= size >> 32;
     }
