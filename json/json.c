@@ -31,6 +31,8 @@ static const char *json_type_name[] =
     "Null"
 };
 
+#define json_isspace(c) isspace((unsigned char)c)
+
 /* Devuelve true or false dependiendo de si el carácter a examinar es una entidad de JSON */
 static int json_istoken(int c)
 {
@@ -97,13 +99,13 @@ static const char *json_scan(const char **text)
                 break;
             }
             /* Si es un texto entre strings p.ej: <"abc" 123 "def"> */
-            if ((quotes > 0) && !isspace(*str))
+            if ((quotes > 0) && !json_isspace(*str))
             {
                 return NULL;
             }
         }
         /* Si es el primer caracter que no es un espacio */
-        if ((*text == NULL) && !isspace(*str))
+        if ((*text == NULL) && !json_isspace(*str))
         {
             *text = str;
         }
@@ -185,7 +187,7 @@ static size_t json_trim(const char **pleft, const char **pright)
 
     while (left < right)
     {
-        if (!isspace(*left))
+        if (!json_isspace(*left))
         {
             break;
         }
@@ -193,7 +195,7 @@ static size_t json_trim(const char **pleft, const char **pright)
     }
     while (right > left)
     {
-        if (!(isspace(*right) || json_istoken(*right)))
+        if (!(json_isspace(*right) || json_istoken(*right)))
         {
             break;
         }
