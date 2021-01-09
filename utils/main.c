@@ -165,11 +165,14 @@ static void randomize(int arr[], int size)
     }
 }
 
-#define print_array(format, array, elems) \
-do {                                      \
-    for (int ___ = 0; ___ < elems; ___++) \
-        printf(format, array[___]);       \
-    printf("\n");                         \
+#define print_array(format, array, elems)   \
+do                                          \
+{                                           \
+    for (int ___ = 0; ___ < elems; ___++)   \
+    {                                       \
+        printf(format, array[___]);         \
+    }                                       \
+    printf("\n");                           \
 } while (0)
 
 static void sample_misc(void)

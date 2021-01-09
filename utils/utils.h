@@ -27,6 +27,8 @@ size_t file_write(const char *, const char *, int);
 /* String utilities                                                          */
 /* ************************************************************************* */
 
+#define string_isempty(str) (*(str) == '\0')
+
 /* Functions returning a new string */
 char *string_clone(const char *);
 char *string_slice(const char *, size_t, size_t);
@@ -58,16 +60,17 @@ int day_of_year(int, int, int);
 int week_of_month(int, int, int);
 int week_of_year(int, int, int);
 int month_days(int, int);
-int year_is_leap(int);
 int leap_years(int, int);
-int date_is_valid(int, int, int);
+int year_isleap(int);
+int date_isvalid(int, int, int);
 
 /* ************************************************************************* */
 /* Misc utilities                                                            */
 /* ************************************************************************* */
 
-int rrand(int);
+#define ISNULL(ptr) ((ptr) == NULL)
 
+int rrand(int);
 
 #endif /* UTILS_H */
 

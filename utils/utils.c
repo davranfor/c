@@ -621,7 +621,7 @@ int day_of_year(int day, int month, int year)
         {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
         {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
     };
-    int leap = year_is_leap(year);
+    int leap = year_isleap(year);
 
     return days[leap][month - 1] + day;
 }
@@ -643,14 +643,9 @@ int month_days(int month, int year)
         {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
         {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
     };
-    int leap = year_is_leap(year);
+    int leap = year_isleap(year);
 
     return days[leap][month - 1];
-}
-
-int year_is_leap(int year)
-{
-    return (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
 }
 
 int leap_years(int month, int year)
@@ -664,7 +659,12 @@ int leap_years(int month, int year)
     return (years / 4) - (years / 100) + (years / 400);
 }
 
-int date_is_valid(int day, int month, int year)
+int year_isleap(int year)
+{
+    return (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
+}
+
+int date_isvalid(int day, int month, int year)
 {
     if ((year < 0) || (year > 9999))
     {
