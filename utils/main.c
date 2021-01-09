@@ -48,6 +48,13 @@ static void sample_strings(void)
         free(str);
     }
 
+    str = string_repeat("€", 5);
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
+        free(str);
+    }
+
     double number = 1234567.890;
     char money[64];
 

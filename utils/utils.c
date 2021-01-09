@@ -339,6 +339,33 @@ char *string_reverse(const char *str)
     return ptr;
 }
 
+char *string_repeat(const char *str, size_t count)
+{
+    size_t len = strlen(str);
+    char *ptr = malloc(len * count + 1);
+
+    if (ptr == NULL)
+    {
+        return NULL;
+    }
+    if (len == 1)
+    {
+        for (size_t iter = 0; iter < count; iter++)
+        {
+            ptr[iter] = str[0];
+        }
+    }
+    else
+    {
+        for (size_t iter = 0; iter < count; iter++)
+        {
+            memcpy(ptr + (iter * len), str, len);
+        }
+    }
+    ptr[count * len] = '\0';
+    return ptr;
+}
+
 static char *string_vprint(const char *fmt, va_list args)
 {
     va_list copy;
