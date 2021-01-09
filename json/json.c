@@ -185,20 +185,16 @@ static size_t json_trim(const char **pleft, const char **pright)
     const char *left = *pleft;
     const char *right = *pright;
 
-    while (left < right)
+    if (json_istoken(*right))
     {
-        if (!json_isspace(*left))
-        {
-            break;
-        }
+        right--;
+    }
+    while ((left < right) && json_isspace(*left))
+    {
         left++;
     }
-    while (right > left)
+    while ((right > left) && json_isspace(*right))
     {
-        if (!(json_isspace(*right) || json_istoken(*right)))
-        {
-            break;
-        }
         right--;
     }
     *pleft = left;
