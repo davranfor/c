@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <locale.h>
 #include <time.h>
 #include "utils.h"
@@ -24,11 +23,24 @@ static void sample_strings(void)
         free(str);
     }
 
-    str = string_trim(" \t En un lugar de la mancha ... \n ");
+    str = string_trim(" \t En un lugar de la Mancha ... \n ");
     if (str != NULL)
     {
         printf("<%s>\n", str);
-        printf("<%s>\n", string_convert(str, toupper));
+        free(str);
+    }
+
+    str = string_convert("En un lugar de la Mancha ...", toupper);
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
+        free(str);
+    }
+
+    str = string_wconvert("El camión de María vale 1000 €", towupper);
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
         free(str);
     }
 

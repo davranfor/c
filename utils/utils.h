@@ -1,6 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <ctype.h>
+#include <wchar.h>
+#include <wctype.h>
+
 /* ************************************************************************* */
 /* File utilities                                                            */
 /* ************************************************************************* */
@@ -32,13 +36,14 @@ char *string_clone(const char *);
 char *string_slice(const char *, size_t, size_t);
 char *string_replace(const char *, const char *, const char *);
 char *string_reverse(const char *);
+char *string_convert(const char *, int (*)(int));
+char *string_wconvert(const char *, wint_t (*)(wint_t));
 char *string_repeat(const char *, size_t);
 char *string_print(const char *, ...);
 char *string_trim(const char *);
 char *string_ltrim(const char *);
 char *string_rtrim(const char *);
 /* Functions working inplace */
-char *string_convert(char *, int(*)(int));
 int string_format(char *, double, int, const char *);
 char *string_tokenize(char **, int);
 size_t string_length(const char *);
