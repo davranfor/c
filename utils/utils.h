@@ -75,6 +75,9 @@ int date_isvalid(int, int, int);
 
 #define ISNULL(ptr) ((ptr) == NULL)
 
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
 int rrand(int);
 
 #endif /* UTILS_H */
