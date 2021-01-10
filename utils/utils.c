@@ -342,31 +342,33 @@ char *string_reverse(const char *str)
 char *string_convert(const char *str, int (*func)(int))
 {
     size_t len = strlen(str);
-    char *res = malloc(len + 1);
+    char *ptr = malloc(len + 1);
 
-    if (res == NULL)
+    if (ptr == NULL)
     {
         return NULL;
     }
-
-    const unsigned char *ptr = (const unsigned char *)str;
-
-    while (*ptr)
+    while (*str)
     {
-        *res++ = (char)func(*ptr);
-        ptr++;
+        *ptr++ = (char)func((unsigned char)*str);
+        str++;
     }
-    *res = '\0';
-    return res - len;
+    *ptr = '\0';
+    return ptr - len;
 }
 
 char *string_wconvert(const char *str, wint_t (*func)(wint_t))
 {
+    if (mbtowc(NULL, 0, 0) == -1)
+    {
+        return NULL;
+    }
+
     size_t len = strlen(str);
-    char *res = malloc(len + 1);
+    char *ptr = malloc(len + 1);
     const char *end = str + len;
 
-    if (res == NULL)
+    if (ptr == NULL)
     {
         return NULL;
     }
@@ -374,7 +376,6 @@ char *string_wconvert(const char *str, wint_t (*func)(wint_t))
     wchar_t wc;
     int size;
 
-    mbtowc(NULL, 0, 0);
     while ((size = mbtowc(&wc, str, (size_t)(end - str))) > 0)
     {
         char mb[MB_CUR_MAX];
@@ -383,15 +384,15 @@ char *string_wconvert(const char *str, wint_t (*func)(wint_t))
         size = wctomb(mb, wc);
         if (size == -1)
         {
-            free(res);
+            free(ptr);
             return NULL;
         }
-        memcpy(res, mb, (size_t)size);
+        memcpy(ptr, mb, (size_t)size);
+        ptr += size;
         str += size;
-        res += size;
     }
-    *res = '\0';
-    return res - len;
+    *ptr = '\0';
+    return ptr - len;
 }
 
 char *string_repeat(const char *str, size_t count)
