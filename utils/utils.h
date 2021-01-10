@@ -1,8 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <ctype.h>
-
 /* ************************************************************************* */
 /* File utilities                                                            */
 /* ************************************************************************* */
@@ -40,6 +38,7 @@ char *string_trim(const char *);
 char *string_ltrim(const char *);
 char *string_rtrim(const char *);
 /* Functions working inplace */
+char *string_convert(char *, int(*)(int));
 int string_format(char *, double, int, const char *);
 char *string_tokenize(char **, int);
 size_t string_length(const char *);

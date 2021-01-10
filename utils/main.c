@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <locale.h>
 #include <time.h>
 #include "utils.h"
@@ -27,6 +28,7 @@ static void sample_strings(void)
     if (str != NULL)
     {
         printf("<%s>\n", str);
+        printf("<%s>\n", string_convert(str, toupper));
         free(str);
     }
 

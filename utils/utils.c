@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include <math.h>
 #include <time.h>
 #include "utils.h"
@@ -409,6 +410,18 @@ char *string_ltrim(const char *str)
 char *string_rtrim(const char *str)
 {
     return string_slice(str, 0, string_rskip(str, isspace));
+}
+
+char *string_convert(char *str, int (*func)(int))
+{
+    unsigned char *ptr = (unsigned char *)str;
+
+    while (*ptr)
+    {
+        *ptr = (unsigned char)func(*ptr);
+        ptr++;
+    }
+    return str;
 }
 
 int string_format(char *str, double value, int decimals, const char *separators)
