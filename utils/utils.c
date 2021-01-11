@@ -386,23 +386,25 @@ char *string_rtrim(const char *str)
 
 char *string_convert(char *ptr, const char *str, int (*func)(int))
 {
-    size_t len = strlen(str);
-
     if (ptr == NULL)
     {
-        ptr = malloc(len + 1);
+        ptr = malloc(strlen(str) + 1);
         if (ptr == NULL)
         {
             return NULL;
         }
     }
+
+    char *temp = ptr;
+
     while (*str != '\0')
     {
-        *ptr++ = (char)func((unsigned char)*str);
+        *ptr = (char)func((unsigned char)*str);
+        ptr++;
         str++;
     }
     *ptr = '\0';
-    return ptr - len;
+    return temp;
 }
 
 char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
