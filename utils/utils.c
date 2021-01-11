@@ -424,7 +424,6 @@ char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
         }
     }
 
-    char *result = ptr;
     wchar_t wc;
     int size;
 
@@ -438,8 +437,12 @@ char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
         ptr += size;
         str += size;
     }
+    if (str != end)
+    {
+        return NULL;
+    }
     *ptr = '\0';
-    return result;
+    return ptr - len;
 }
 
 char *string_repeat(char *ptr, const char *str, size_t count)
