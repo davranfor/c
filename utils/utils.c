@@ -424,6 +424,7 @@ char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
         }
     }
 
+    char *result = ptr;
     wchar_t wc;
     int size;
 
@@ -433,16 +434,12 @@ char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
 
         wc = (wchar_t)func((wint_t)wc);
         size = wctomb(mb, wc);
-        if (size == -1)
-        {
-            return NULL;
-        }
         memcpy(ptr, mb, (size_t)size);
         ptr += size;
         str += size;
     }
     *ptr = '\0';
-    return ptr - len;
+    return result;
 }
 
 char *string_repeat(char *ptr, const char *str, size_t count)
