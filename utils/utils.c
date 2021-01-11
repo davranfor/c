@@ -396,7 +396,7 @@ char *string_convert(char *ptr, const char *str, int (*func)(int))
             return NULL;
         }
     }
-    while (*str)
+    while (*str != '\0')
     {
         *ptr++ = (char)func((unsigned char)*str);
         str++;
@@ -424,6 +424,7 @@ char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
         }
     }
 
+    char *temp = ptr;
     wchar_t wc;
     int size;
 
@@ -437,12 +438,8 @@ char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
         ptr += size;
         str += size;
     }
-    if (str != end)
-    {
-        return NULL;
-    }
     *ptr = '\0';
-    return ptr - len;
+    return temp;
 }
 
 char *string_repeat(char *ptr, const char *str, size_t count)
@@ -530,7 +527,7 @@ int string_format(char *str, double value, int decimals, const char *separators)
 
 char *string_tokenize(char **str, int delimiter)
 {
-    char *result = *str, *ptr = *str;
+    char *temp = *str, *ptr = *str;
     
     if (ptr == NULL)
     {
@@ -549,7 +546,7 @@ char *string_tokenize(char **str, int delimiter)
     {
         *str = NULL;
     }
-    return result;
+    return temp;
 }
 
 size_t string_length(const char *str)
