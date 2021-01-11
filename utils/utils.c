@@ -435,7 +435,6 @@ char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
         size = wctomb(mb, wc);
         if (size == -1)
         {
-            free(ptr);
             return NULL;
         }
         memcpy(ptr, mb, (size_t)size);
