@@ -339,89 +339,6 @@ char *string_reverse(const char *str)
     return ptr;
 }
 
-char *string_convert(const char *str, int (*func)(int))
-{
-    size_t len = strlen(str);
-    char *ptr = malloc(len + 1);
-
-    if (ptr == NULL)
-    {
-        return NULL;
-    }
-    while (*str)
-    {
-        *ptr++ = (char)func((unsigned char)*str);
-        str++;
-    }
-    *ptr = '\0';
-    return ptr - len;
-}
-
-char *string_wconvert(const char *str, wint_t (*func)(wint_t))
-{
-    if (mbtowc(NULL, 0, 0) == -1)
-    {
-        return NULL;
-    }
-
-    size_t len = strlen(str);
-    char *ptr = malloc(len + 1);
-    const char *end = str + len;
-
-    if (ptr == NULL)
-    {
-        return NULL;
-    }
-
-    wchar_t wc;
-    int size;
-
-    while ((size = mbtowc(&wc, str, (size_t)(end - str))) > 0)
-    {
-        char mb[MB_CUR_MAX];
-
-        wc = (wchar_t)func((wint_t)wc);
-        size = wctomb(mb, wc);
-        if (size == -1)
-        {
-            free(ptr);
-            return NULL;
-        }
-        memcpy(ptr, mb, (size_t)size);
-        ptr += size;
-        str += size;
-    }
-    *ptr = '\0';
-    return ptr - len;
-}
-
-char *string_repeat(const char *str, size_t count)
-{
-    size_t len = strlen(str);
-    char *ptr = malloc(len * count + 1);
-
-    if (ptr == NULL)
-    {
-        return NULL;
-    }
-    if (len == 1)
-    {
-        for (size_t iter = 0; iter < count; iter++)
-        {
-            ptr[iter] = str[0];
-        }
-    }
-    else
-    {
-        for (size_t iter = 0; iter < count; iter++)
-        {
-            memcpy(ptr + (iter * len), str, len);
-        }
-    }
-    ptr[count * len] = '\0';
-    return ptr;
-}
-
 static char *string_vprint(const char *fmt, va_list args)
 {
     va_list copy;
@@ -465,6 +382,98 @@ char *string_ltrim(const char *str)
 char *string_rtrim(const char *str)
 {
     return string_slice(str, 0, string_rskip(str, isspace));
+}
+
+char *string_convert(char *ptr, const char *str, int (*func)(int))
+{
+    size_t len = strlen(str);
+
+    if (ptr == NULL)
+    {
+        ptr = malloc(len + 1);
+        if (ptr == NULL)
+        {
+            return NULL;
+        }
+    }
+    while (*str)
+    {
+        *ptr++ = (char)func((unsigned char)*str);
+        str++;
+    }
+    *ptr = '\0';
+    return ptr - len;
+}
+
+char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
+{
+    if (mbtowc(NULL, 0, 0) == -1)
+    {
+        return NULL;
+    }
+
+    size_t len = strlen(str);
+    const char *end = str + len;
+
+    if (ptr == NULL)
+    {
+        ptr = malloc(len + 1);
+        if (ptr == NULL)
+        {
+            return NULL;
+        }
+    }
+
+    wchar_t wc;
+    int size;
+
+    while ((size = mbtowc(&wc, str, (size_t)(end - str))) > 0)
+    {
+        char mb[MB_CUR_MAX];
+
+        wc = (wchar_t)func((wint_t)wc);
+        size = wctomb(mb, wc);
+        if (size == -1)
+        {
+            free(ptr);
+            return NULL;
+        }
+        memcpy(ptr, mb, (size_t)size);
+        ptr += size;
+        str += size;
+    }
+    *ptr = '\0';
+    return ptr - len;
+}
+
+char *string_repeat(char *ptr, const char *str, size_t count)
+{
+    size_t len = strlen(str);
+
+    if (ptr == NULL)
+    {
+        ptr = malloc(count * len + 1);
+        if (ptr == NULL)
+        {
+            return NULL;
+        }
+    }
+    if (len == 1)
+    {
+        for (size_t iter = 0; iter < count; iter++)
+        {
+            ptr[iter] = str[0];
+        }
+    }
+    else
+    {
+        for (size_t iter = 0; iter < count; iter++)
+        {
+            memcpy(ptr + (iter * len), str, len);
+        }
+    }
+    ptr[count * len] = '\0';
+    return ptr;
 }
 
 int string_format(char *str, double value, int decimals, const char *separators)

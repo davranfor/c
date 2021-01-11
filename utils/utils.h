@@ -30,19 +30,21 @@ size_t file_write(const char *, const char *, int);
 /* ************************************************************************* */
 
 #define string_isempty(str) (*(str) == '\0')
+#define string_isequal(str1, str2) (!strcmp((str1), (str2)))
 
 /* Functions returning a new string */
 char *string_clone(const char *);
 char *string_slice(const char *, size_t, size_t);
 char *string_replace(const char *, const char *, const char *);
 char *string_reverse(const char *);
-char *string_convert(const char *, int (*)(int));
-char *string_wconvert(const char *, wint_t (*)(wint_t));
-char *string_repeat(const char *, size_t);
 char *string_print(const char *, ...);
 char *string_trim(const char *);
 char *string_ltrim(const char *);
 char *string_rtrim(const char *);
+/* Functions working on the 1st param or returning a new string if it's NULL */
+char *string_convert(char *, const char *, int (*)(int));
+char *string_wconvert(char *, const char *, wint_t (*)(wint_t));
+char *string_repeat(char *, const char *, size_t);
 /* Functions working inplace */
 int string_format(char *, double, int, const char *);
 char *string_tokenize(char **, int);

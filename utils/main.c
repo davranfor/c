@@ -27,20 +27,22 @@ static void sample_strings(void)
     if (str != NULL)
     {
         printf("<%s>\n", str);
+        printf("<%s>\n", string_convert(str, str, toupper));
         free(str);
     }
 
-    str = string_convert("En un lugar de la Mancha ...", toupper);
+    str = string_convert(NULL, "En un lugar de la Mancha ...", tolower);
     if (str != NULL)
     {
         printf("<%s>\n", str);
         free(str);
     }
 
-    str = string_wconvert("El camión de María vale 1000 €", towupper);
+    str = string_wconvert(NULL, "El camión de María vale 1000 €", towupper);
     if (str != NULL)
     {
         printf("<%s>\n", str);
+        printf("<%s>\n", string_wconvert(str, str, towlower));
         free(str);
     }
 
@@ -62,7 +64,7 @@ static void sample_strings(void)
         free(str);
     }
 
-    str = string_repeat("€", 5);
+    str = string_repeat(NULL, "€", 5);
     if (str != NULL)
     {
         printf("<%s>\n", str);
