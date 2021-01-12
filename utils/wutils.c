@@ -1,6 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
+#include <iconv.h>
 #include "wutils.h"
+
+/* Test on terminal
+echo cañón | iconv -f utf-8 -t ascii//TRANSLIT
+*/
 
 static iconv_t codification = (iconv_t)0;
 

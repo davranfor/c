@@ -3,7 +3,6 @@
 
 #include <wchar.h>
 #include <wctype.h>
-#include <iconv.h>
 
 /* ************************************************************************* */
 /* String utilities                                                          */
