@@ -2,6 +2,64 @@
 #include <string.h>
 #include "wutils.h"
 
+static iconv_t codification = (iconv_t)0;
+
+static void close_codification(void)
+{
+    iconv_close(codification);
+}
+
+static int open_codification(void)
+{
+    codification = iconv_open("ASCII//TRANSLIT", "UTF-8");
+    if (codification == (iconv_t)-1)
+    {
+        return 0;
+    }
+    atexit(close_codification);
+    return 1;
+}
+
+char *string_normalize(char *ptr, char *str)
+{
+    if (codification == (iconv_t)-1)
+    {
+        return NULL;
+    }
+    if (codification == (iconv_t)0)
+    {
+        if (!open_codification())
+        {
+            return NULL;
+        }
+    }
+
+    size_t len1 = strlen(str);
+    size_t len2 = len1;
+    char *new = NULL;
+
+    if (ptr == NULL)
+    {
+        ptr = new = calloc(len2 + 1, 1);
+        if (ptr == NULL)
+        {
+            return NULL;
+        }
+    }
+
+    char *temp = ptr;
+
+    if (iconv(codification, &str, &len1, &ptr, &len2) == (size_t)-1)
+    {
+        if (new != NULL)
+        {
+            free(new);
+        }
+        return NULL;
+    }
+    return temp;
+}
+
 char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
 {
     if (mbtowc(NULL, 0, 0) == -1)
@@ -11,16 +69,15 @@ char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
 
     size_t len = strlen(str);
     const char *end = str + len;
-    int new = 0;
+    char *new = NULL;
 
     if (ptr == NULL)
     {
-        ptr = malloc(len + 1);
+        ptr = new = malloc(len + 1);
         if (ptr == NULL)
         {
             return NULL;
         }
-        new = 1;
     }
 
     char *temp = ptr;
@@ -40,11 +97,11 @@ char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
     *ptr = '\0';
     if (str != end)
     {
-        if (new == 1)
+        if (new != NULL)
         {
-            free(temp);
+            free(new);
         }
-        temp = NULL;
+        return NULL;
     }
     return temp;
 }

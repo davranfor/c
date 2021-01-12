@@ -65,13 +65,6 @@ static void sample_strings(void)
         free(str);
     }
 
-    str = string_repeat(NULL, "€", 5);
-    if (str != NULL)
-    {
-        printf("<%s>\n", str);
-        free(str);
-    }
-
     if (string_casecmp("aBcDe", "AbCdE") != 0)
     {
         puts("Strings are different");
@@ -79,7 +72,21 @@ static void sample_strings(void)
 
     if (string_wcasecmp("El camión de María", "eL camión de marÍa") != 0)
     {
-        puts("WStrings are different");
+        puts("Strings are different");
+    }
+
+    str = string_normalize(NULL, "El cañón de Ramón");
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
+        free(str);
+    }
+
+    str = string_repeat(NULL, "€", 5);
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
+        free(str);
     }
 
     double number = 1234567.890;

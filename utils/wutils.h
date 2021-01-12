@@ -3,12 +3,14 @@
 
 #include <wchar.h>
 #include <wctype.h>
+#include <iconv.h>
 
 /* ************************************************************************* */
 /* String utilities                                                          */
 /* ************************************************************************* */
 
 /* Functions working on the 1st param or returning a new string if it's NULL */
+char *string_normalize(char *, char *);
 char *string_wconvert(char *, const char *, wint_t (*)(wint_t));
 /* Functions working inplace */
 int string_wcasecmp(const char *, const char *);
