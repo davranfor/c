@@ -399,46 +399,7 @@ char *string_convert(char *ptr, const char *str, int (*func)(int))
 
     while (*str != '\0')
     {
-        *ptr = (char)func((unsigned char)*str);
-        ptr++;
-        str++;
-    }
-    *ptr = '\0';
-    return temp;
-}
-
-char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
-{
-    if (mbtowc(NULL, 0, 0) == -1)
-    {
-        return NULL;
-    }
-
-    size_t len = strlen(str);
-    const char *end = str + len;
-
-    if (ptr == NULL)
-    {
-        ptr = malloc(len + 1);
-        if (ptr == NULL)
-        {
-            return NULL;
-        }
-    }
-
-    char *temp = ptr;
-    wchar_t wc;
-    int size;
-
-    while ((size = mbtowc(&wc, str, (size_t)(end - str))) > 0)
-    {
-        char mb[MB_CUR_MAX];
-
-        wc = (wchar_t)func((wint_t)wc);
-        size = wctomb(mb, wc);
-        memcpy(ptr, mb, (size_t)size);
-        ptr += size;
-        str += size;
+        *ptr++ = (char)func((unsigned char)*str++);
     }
     *ptr = '\0';
     return temp;
@@ -629,6 +590,24 @@ size_t string_rskip(const char *str, int func(int))
         pos--;
     }
     return pos;
+}
+
+int string_casecmp(const char *str1, const char *str2)
+{
+    for (;;)
+    {
+        int a = tolower((unsigned char)*str1++);
+        int b = tolower((unsigned char)*str2++);
+
+        if (a != b)
+        {
+            return a < b ? -1 : 1;
+        }
+        if (a == '\0')
+        {
+            return 0;
+        }
+    }
 }
 
 /* Date utilities */

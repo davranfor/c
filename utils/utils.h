@@ -2,8 +2,6 @@
 #define UTILS_H
 
 #include <ctype.h>
-#include <wchar.h>
-#include <wctype.h>
 
 /* ************************************************************************* */
 /* File utilities                                                            */
@@ -43,7 +41,6 @@ char *string_ltrim(const char *);
 char *string_rtrim(const char *);
 /* Functions working on the 1st param or returning a new string if it's NULL */
 char *string_convert(char *, const char *, int (*)(int));
-char *string_wconvert(char *, const char *, wint_t (*)(wint_t));
 char *string_repeat(char *, const char *, size_t);
 /* Functions working inplace */
 int string_format(char *, double, int, const char *);
@@ -52,6 +49,7 @@ size_t string_length(const char *);
 size_t string_count(const char *, const char *);
 size_t string_lskip(const char *, int(*)(int));
 size_t string_rskip(const char *, int(*)(int));
+int string_casecmp(const char *, const char *);
 
 /* ************************************************************************* */
 /* Date utilities                                                            */

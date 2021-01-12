@@ -3,6 +3,7 @@
 #include <locale.h>
 #include <time.h>
 #include "utils.h"
+#include "wutils.h"
 
 static void sample_strings(void)
 {
@@ -69,6 +70,16 @@ static void sample_strings(void)
     {
         printf("<%s>\n", str);
         free(str);
+    }
+
+    if (string_casecmp("aBcDe", "AbCdE") != 0)
+    {
+        puts("Strings are different");
+    }
+
+    if (string_wcasecmp("El camión de María", "eL camión de marÍa") != 0)
+    {
+        puts("WStrings are different");
     }
 
     double number = 1234567.890;
