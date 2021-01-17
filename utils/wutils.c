@@ -1,69 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <iconv.h>
 #include "wutils.h"
-
-/* Test on terminal
-echo cañón | iconv -f utf-8 -t ascii//TRANSLIT
-*/
-
-static iconv_t codification = (iconv_t)0;
-
-static void close_codification(void)
-{
-    iconv_close(codification);
-}
-
-static int open_codification(void)
-{
-    codification = iconv_open("ASCII//TRANSLIT", "UTF-8");
-    if (codification == (iconv_t)-1)
-    {
-        return 0;
-    }
-    atexit(close_codification);
-    return 1;
-}
-
-char *string_normalize(char *ptr, char *str)
-{
-    if (codification == (iconv_t)-1)
-    {
-        return NULL;
-    }
-    if (codification == (iconv_t)0)
-    {
-        if (!open_codification())
-        {
-            return NULL;
-        }
-    }
-
-    size_t len1 = strlen(str);
-    size_t len2 = len1;
-    char *new = NULL;
-
-    if (ptr == NULL)
-    {
-        ptr = new = calloc(len2 + 1, 1);
-        if (ptr == NULL)
-        {
-            return NULL;
-        }
-    }
-
-    char *temp = ptr;
-
-    if (iconv(codification, &str, &len1, &ptr, &len2) == (size_t)-1)
-    {
-        if (new != NULL)
-        {
-            free(new);
-        }
-        return NULL;
-    }
-    return temp;
-}
 
 char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
 {
@@ -86,21 +23,20 @@ char *string_wconvert(char *ptr, const char *str, wint_t (*func)(wint_t))
     }
 
     char *temp = ptr;
+    char mb[4];
     wchar_t wc;
     int size;
 
     while ((size = mbtowc(&wc, str, (size_t)(end - str))) > 0)
     {
-        char mb[MB_CUR_MAX];
-
+        str += size;
         wc = (wchar_t)func((wint_t)wc);
         size = wctomb(mb, wc);
         memcpy(ptr, mb, (size_t)size);
         ptr += size;
-        str += size;
     }
     *ptr = '\0';
-    if (str != end)
+    if (size == -1)
     {
         if (new != NULL)
         {
@@ -126,13 +62,13 @@ int string_wcasecmp(const char *str1, const char *str2)
 
         if (size1 != size2)
         {
-            return size1 < size2 ? -1 : 1;
+            return size1 < size2 ? -1 : +1;
         }
         wc1 = (wchar_t)towlower((wint_t)wc1);
         wc2 = (wchar_t)towlower((wint_t)wc2);
         if (wc1 != wc2)
         {
-            return wc1 < wc2 ? -1 : 1;
+            return wc1 < wc2 ? -1 : +1;
         }
         if (wc1 == 0)
         {

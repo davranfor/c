@@ -24,6 +24,13 @@ static void sample_strings(void)
         free(str);
     }
 
+    str = string_repeat(NULL, "€", 5);
+    if (str != NULL)
+    {
+        printf("<%s>\n", str);
+        free(str);
+    }
+
     str = string_trim(" \t En un lugar de la Mancha ... \n ");
     if (str != NULL)
     {
@@ -73,20 +80,6 @@ static void sample_strings(void)
     if (string_wcasecmp("El camión de María", "eL camión de marÍa") != 0)
     {
         puts("Strings are different");
-    }
-
-    str = string_normalize(NULL, "El cañón de Ramón");
-    if (str != NULL)
-    {
-        printf("<%s>\n", str);
-        free(str);
-    }
-
-    str = string_repeat(NULL, "€", 5);
-    if (str != NULL)
-    {
-        printf("<%s>\n", str);
-        free(str);
     }
 
     double number = 1234567.890;
