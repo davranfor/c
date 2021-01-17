@@ -6,4 +6,4 @@ all: main.c utils.c wutils.c
 	$(CC) $(CFLAGS) main.c utils.c wutils.c -o utils $(LDLIBS)
 
 clean:
-	rm -f *.o utils test.txt
+	rm -f utils test.txt
