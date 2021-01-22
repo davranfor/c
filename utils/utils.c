@@ -383,7 +383,7 @@ char *string_reverse(char *ptr, const char *str)
     buf[len] = '\0';
     if (ptr != NULL)
     {
-        memcpy(ptr, buf, len);
+        memcpy(ptr, buf, len + 1);
         free(buf);
         return ptr;
     }
