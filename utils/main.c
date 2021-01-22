@@ -65,7 +65,7 @@ static void sample_strings(void)
         free(str);
     }
 
-    str = string_reverse("El camión de Ramón vale 1000 €");
+    str = string_reverse(NULL, "El camión de Ramón vale 1000 €");
     if (str != NULL)
     {
         printf("<%s>\n", str);

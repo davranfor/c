@@ -34,12 +34,12 @@ size_t file_write(const char *, const char *, int);
 char *string_clone(const char *);
 char *string_slice(const char *, size_t, size_t);
 char *string_replace(const char *, const char *, const char *);
-char *string_reverse(const char *);
 char *string_print(const char *, ...);
 char *string_trim(const char *);
 char *string_ltrim(const char *);
 char *string_rtrim(const char *);
 /* Functions working on the 1st param or returning a new string if it's NULL */
+char *string_reverse(char *, const char *);
 char *string_convert(char *, const char *, int (*)(int));
 char *string_repeat(char *, const char *, size_t);
 /* Functions working inplace */
