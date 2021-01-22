@@ -38,7 +38,7 @@ char *string_print(const char *, ...);
 char *string_trim(const char *);
 char *string_ltrim(const char *);
 char *string_rtrim(const char *);
-/* Functions working on the 1st param or returning a new string if it's NULL */
+/* Functions working inplace or returning a new string if 1st param is NULL */
 char *string_reverse(char *, const char *);
 char *string_convert(char *, const char *, int (*)(int));
 char *string_repeat(char *, const char *, size_t);
