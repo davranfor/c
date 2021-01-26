@@ -10,8 +10,8 @@
 
 struct node
 {
-    struct node *next;
     struct node *prev;
+    struct node *next;
 };
 
 struct klist
