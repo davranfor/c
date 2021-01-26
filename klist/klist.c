@@ -444,7 +444,6 @@ void klist_reverse(klist *list)
 
 void klist_clear(klist *list, void (*func)(void *))
 {
-
     struct node *node = list->head;
 
     while (node != NULL)
