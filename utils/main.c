@@ -1,6 +1,7 @@
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <locale.h>
+#include <string.h>
 #include <time.h>
 #include "utils.h"
 #include "wutils.h"
@@ -186,6 +187,16 @@ static void sample_dates(void)
         days_diff(1, 2, 2000, 1, 2, 2004));
 }
 
+#define print_array(format, array, elems)       \
+do                                              \
+{                                               \
+    for (size_t ___ = 0; ___ < elems; ___++)    \
+    {                                           \
+        printf(format, array[___]);             \
+    }                                           \
+    printf("\n");                               \
+} while (0)
+
 /* Knuth shuffle algorithm */
 static void randomize(int arr[], int size)
 {
@@ -199,20 +210,30 @@ static void randomize(int arr[], int size)
     }
 }
 
-#define print_array(format, array, elems)   \
-do                                          \
-{                                           \
-    for (int ___ = 0; ___ < elems; ___++)   \
-    {                                       \
-        printf(format, array[___]);         \
-    }                                       \
-    printf("\n");                           \
-} while (0)
+static size_t deletion(int arr[], size_t size, int elem)
+{
+    for (size_t i = 0; i < size;)
+    {
+        if (arr[i] == elem)
+        {
+            if (i < --size)
+            {
+                memmove(&arr[i], &arr[i + 1], (size - i) * sizeof(*arr));
+            }
+        }
+        else
+        {
+            i++;
+        }
+    }
+    return size;
+}
 
 static void sample_misc(void)
 {
-    // Randomize
+    // Randomize and deletion
     {
+        /* Randomize */
         enum {N = 5};
         int arr[N];
 
@@ -223,6 +244,13 @@ static void sample_misc(void)
         randomize(arr, N);
         printf("Random numbers between 0 and %d:\n", N);
         print_array("%d ", arr, N);
+
+        /* Deletion */
+        int r = rrand(N);
+        size_t size = deletion(arr, N, r);
+
+        printf("Deleting %d:\n", r);
+        print_array("%d ", arr, size);
     }
     // Multidimensional array in linear storage (Row-major order)
     {
