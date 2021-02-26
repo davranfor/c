@@ -63,11 +63,12 @@ static enum json_type json_token(int token)
 }
 
 /* Devuelve un puntero al próximo elemento (entidad) o NULL si es una cadena mal formada */
-static const char *json_scan(const char **text)
+static const char *json_scan(const char **left, const char **right)
 {
-    const char *str = *text;
+    const char *str = *left;
 
-    *text = NULL;
+    *left = NULL;
+    *right = NULL;
 
     int quotes = 0;
 
@@ -105,9 +106,13 @@ static const char *json_scan(const char **text)
             }
         }
         /* Si es el primer caracter que no es un espacio */
-        if ((*text == NULL) && !json_isspace(*str))
+        if (!json_isspace(*str))
         {
-            *text = str;
+            if (*left == NULL)
+            {
+                *left = str;
+            }
+            *right = str;
         }
         str++;
     }
@@ -117,9 +122,10 @@ static const char *json_scan(const char **text)
         return NULL;
     }
     /* Si no hay contenido delante del token */
-    if (*text == NULL)
+    if (*left == NULL)
     {
-        *text = str;
+        *left = str;
+        *right = str;
     }
     return str;
 }
@@ -179,32 +185,9 @@ static char *json_copy(const char *str, size_t size)
     return new;
 }
 
-/* Elimina espacios y entidades y devuelve el tamaño del string */
-static size_t json_trim(const char **pleft, const char **pright)
-{
-    const char *left = *pleft;
-    const char *right = *pright;
-
-    if (json_istoken(*right))
-    {
-        right--;
-    }
-    while ((left < right) && json_isspace(*left))
-    {
-        left++;
-    }
-    while ((right > left) && json_isspace(*right))
-    {
-        right--;
-    }
-    *pleft = left;
-    *pright = right;
-    return (size_t)(right - left + 1);
-}
-
 static char *json_set_name(json *node, const char *left, const char *right)
 {
-    size_t size = json_trim(&left, &right);
+    size_t size = (size_t)(right - left + 1);
 
     /* Si no empieza y acaba con comillas */
     if ((*left != '"') || (*right != '"'))
@@ -218,7 +201,7 @@ static char *json_set_name(json *node, const char *left, const char *right)
 
 static char *json_set_value(json *node, const char *left, const char *right)
 {
-    size_t size = json_trim(&left, &right);
+    size_t size = (size_t)(right - left + 1);
 
     /* Asigna el tipo */
     if ((*left == '"') && (*right == '"'))
@@ -260,13 +243,14 @@ static json *json_create(void)
 }
 
 /* Recorre el texto y rellena los nodos */
-static json *json_build(json *node, const char *text)
+static json *json_build(json *node, const char *left)
 {
+    const char *right;
     const char *token;
 
     while (node != NULL)
     {
-        token = json_scan(&text);
+        token = json_scan(&left, &right);
         if (token == NULL)
         {
             return NULL;
@@ -277,7 +261,7 @@ static json *json_build(json *node, const char *text)
             case '{':
             case '[':
                 /* No puede haber nada entre los dos puntos (:) o la coma (,) y el token */
-                if (text != token)
+                if (left != token)
                 {
                     return NULL;
                 }
@@ -302,7 +286,7 @@ static json *json_build(json *node, const char *text)
                 {
                     return NULL;
                 }
-                if (json_set_name(node, text, token) == NULL)
+                if (json_set_name(node, left, right) == NULL)
                 {
                     return NULL;
                 }
@@ -316,16 +300,16 @@ static json *json_build(json *node, const char *text)
                 }
                 if (node->type == JSON_EMPTY)
                 {
-                    if (text == token)
+                    if (left == token)
                     {
                         return NULL;
                     }
-                    if (json_set_value(node, text, token) == NULL)
+                    if (json_set_value(node, left, right) == NULL)
                     {
                         return NULL;
                     }
                 }
-                else if (text != token)
+                else if (left != token)
                 {
                     return NULL;
                 }
@@ -350,7 +334,7 @@ static json *json_build(json *node, const char *text)
                 }
                 if (node->type == JSON_EMPTY)
                 {
-                    if (text == token)
+                    if (left == token)
                     {
                         /* Puede ser un grupo vacío: {} o [] */
                         if (node->parent->left != node)
@@ -365,13 +349,13 @@ static json *json_build(json *node, const char *text)
                         {
                             return NULL;
                         }
-                        if (json_set_value(node, text, token) == NULL)
+                        if (json_set_value(node, left, right) == NULL)
                         {
                             return NULL;
                         }
                     }
                 }
-                else if (text != token)
+                else if (left != token)
                 {
                     return NULL;
                 }
@@ -379,14 +363,14 @@ static json *json_build(json *node, const char *text)
                 break;
             /* Si hemos llegado al final */
             default:
-                if (text != token)
+                if (left != token)
                 {
                     /* Puede consistir en un solo elemento, p.ej: "Texto" ó 123 */ 
                     if (node->type != JSON_EMPTY)
                     {
                         return NULL;
                     }
-                    if (json_set_value(node, text, text + strlen(text) - 1) == NULL)
+                    if (json_set_value(node, left, left) == NULL)
                     {
                         return NULL;
                     }
@@ -405,7 +389,7 @@ static json *json_build(json *node, const char *text)
                 return node;
         }
         /* Seguimos avanzando */
-        text = token + 1;
+        left = token + 1;
     }
     return NULL;
 }
