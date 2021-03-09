@@ -140,6 +140,7 @@ static char *json_copy(const char *str, size_t size)
         return NULL;
     }
 
+    int quotes = 0;
     size_t n = 0;
 
     for (size_t i = 0; i < size; i++)
@@ -175,10 +176,18 @@ static char *json_copy(const char *str, size_t size)
                     break;
             }
         }
-        /* Si es una comilla '"', la salta */
-        else if (str[i] != '"')
+        else
         {
-            new[n++] = str[i];
+            /* Si es una comilla '"', la salta */
+            if (str[i] == '"')
+            {
+                quotes++;
+            }
+            /* Si es un espacio entre comillas, lo salta */
+            else if ((quotes == 0) || (quotes & 1))
+            {
+                new[n++] = str[i];
+            }
         }
     }
     new[n] = '\0';
