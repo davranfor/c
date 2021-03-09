@@ -370,7 +370,7 @@ static json *json_build(json *node, const char *left)
                     {
                         return NULL;
                     }
-                    if (json_set_value(node, left, left) == NULL)
+                    if (json_set_value(node, left, right) == NULL)
                     {
                         return NULL;
                     }
