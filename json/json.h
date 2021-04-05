@@ -38,7 +38,7 @@ int json_is_real(const json *);
 int json_is_boolean(const json *);
 int json_is_null(const json *);
 int json_streq(const json *, const char *);
-json *json_parse(const char *);
+json *json_parse(const char *, const char **);
 json *json_parent(const json *);
 json *json_node(const json *, const char *);
 json *json_child(const json *, const char *);
@@ -47,6 +47,7 @@ json *json_item(const json *, size_t);
 size_t json_items(const json *);
 void json_foreach(const json *, void *, void (*)(const json *, void *));
 void json_print(const json *);
+void json_print_error(const char *, const char *);
 void json_free(json *);
 
 size_t json_encode(char *, const char *);
