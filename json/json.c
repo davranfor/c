@@ -67,8 +67,7 @@ static const char *json_scan(const char **left, const char **right)
 {
     const char *str = *left;
 
-    *left = NULL;
-    *right = NULL;
+    *left = *right = NULL;
 
     int quotes = 0;
 
