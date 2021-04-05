@@ -265,7 +265,7 @@ static json *json_build(json *node, const char *left, const char **error)
         }
         if (error != NULL)
         {
-            *error = left;
+            *error = token;
         }
         switch (*token)
         {
