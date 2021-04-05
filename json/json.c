@@ -250,8 +250,8 @@ static json *json_create(void)
     return calloc(1, sizeof(struct json));
 }
 
-/* Recorre el texto y rellena los nodos (error = última secuéncia válida) */
-static json *json_build(json *node, const char *left, const char **error)
+/* Recorre el texto y rellena los nodos */
+static json *json_build(json *node, const char *left)
 {
     const char *right;
     const char *token;
@@ -262,10 +262,6 @@ static json *json_build(json *node, const char *left, const char **error)
         if (token == NULL)
         {
             return NULL;
-        }
-        if (error != NULL)
-        {
-            *error = token;
         }
         switch (*token)
         {
@@ -398,10 +394,6 @@ static json *json_build(json *node, const char *left, const char **error)
                     return NULL;
                 }
                 /* El documento es correcto */
-                if (error != NULL)
-                {
-                    *error = NULL;
-                }
                 return node;
         }
         /* Seguimos avanzando */
@@ -604,18 +596,13 @@ int json_streq(const json *node, const char *str)
 }
 
 /* Crea el nodo root y lo pasa al parseador junto con un puntero al texto */
-json *json_parse(const char *text, const char **error)
+json *json_parse(const char *text)
 {
-    if (error != NULL)
-    {
-        *error = NULL;
-    }
-
     json *node = json_create();
 
     if (node != NULL)
     {
-        if (json_build(node, text, error) == NULL)
+        if (json_build(node, text) == NULL)
         {
             json_free(node);
             return NULL;
@@ -752,32 +739,6 @@ static void print(const json *node, int level)
 void json_print(const json *node)
 {
     print(node, 0);
-}
-
-void json_print_error(const char *text, const char *error)
-{
-    if ((text == NULL) || (error == NULL))
-    {
-        fprintf(stderr, "json_parse: Unknown error\n");
-        return;
-    }
-
-    size_t line = 0, col = 0;
-
-    while (text < error)
-    {
-        if (*text == '\n')
-        {
-            col = 0;
-            line++;
-        }
-        else
-        {
-            col++;
-        }
-        text++;
-    }
-    fprintf(stderr, "json_parse: Error at line %zu col %zu\n", line + 1, col + 1);
 }
 
 /* Libera toda la memoria reservada para el árbol */

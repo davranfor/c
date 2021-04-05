@@ -13,12 +13,10 @@ static json *parse(const char *path)
         exit(EXIT_FAILURE);
     }
 
-    const char *error = NULL;
-    json *node = json_parse(text, &error);
+    json *node = json_parse(text);
 
     if (node == NULL)
     {
-        json_print_error(text, error);
         fprintf(stderr, "Can't parse %s\n", path);
         free(text);
         exit(EXIT_FAILURE);
