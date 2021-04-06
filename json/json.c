@@ -46,6 +46,23 @@ static int json_isescape(int c)
            (c == 'b')  || (c == 'f') || (c == 'n') || (c == 'r') || (c == 't');
 }
 
+/* Devuelve true or false dependiendo de si el carácter a examinar es "\" o de control */
+static int json_iscontrol(int c)
+{
+    return (c == '\\') || iscntrl((unsigned char)c);
+}
+
+/* Devuelve true or false dependiendo de si el carácter a examinar es un UCN "\uxxxx" */
+static int json_isucn(const char *str)
+{
+    return (*str++ == 'u')
+        && isxdigit((unsigned char)*str++)
+        && isxdigit((unsigned char)*str++)
+        && isxdigit((unsigned char)*str++)
+        && isxdigit((unsigned char)*str++);
+}
+
+
 /* Convierte entidad en tipo */
 static enum json_type json_token(int token)
 {
@@ -76,33 +93,54 @@ static const char *json_scan(const char **left, const char **right)
         /* Si es un código de escape */
         if (*str == '\\')
         {
-            /*
-             * Si no está entre comillas es una cadena mal formada
-             * Si no es un código de escape válido es una cadena mal formada
-             */
-            if (!(quotes & 1) || !json_isescape(*(++str)))
+            // Si estamos dentro de una cadena */
+            if (quotes == 1)
+            {
+                str++;
+                /* Si es un código de escape válido "\?" */
+                if (json_isescape(*str))
+                {
+                    str += 1;
+                    continue;
+                }
+                /* Si es un UCN (Universal Character Name) "\uxxxx" */
+                if (json_isucn(str))
+                {
+                    str += 5;
+                    continue;
+                }
+            }
+            return NULL;
+        }
+        /* Si es una comilla */
+        else if (*str == '"')
+        {
+            /* Si hay más de una cadena, p.ej <"abc" "def"> */
+            if (quotes > 1)
             {
                 return NULL;
             }
-        }
-        /* Si es una comilla, cambiamos el estado */
-        else if (*str == '"')
-        {
+            /* Cambiamos el estado */
             quotes++;
         }
-        /* Si estamos fuera de un string */
-        else if (!(quotes & 1))
+        /* Si estamos fuera de una cadena */
+        else if (quotes != 1)
         {
             /* Si es una entidad JSON */
             if (json_istoken(*str))
             {
                 break;
             }
-            /* Si es un texto entre strings p.ej: <"abc" 123 "def"> */
-            if ((quotes > 0) && !json_isspace(*str))
+            /* Si es un texto detrás de una cadena, p.ej: <"abc" 123> */
+            if ((quotes > 1) && !json_isspace(*str))
             {
                 return NULL;
             }
+        }
+        /* Si estamos dentro de una cadena y es un carácter de control */
+        else if (json_iscontrol(*str))
+        {
+            return NULL;
         }
         if (!json_isspace(*str))
         {
@@ -116,7 +154,7 @@ static const char *json_scan(const char **left, const char **right)
         str++;
     }
     /* Si no se han cerrado comillas */
-    if (quotes & 1)
+    if (quotes == 1)
     {
         return NULL;
     }
@@ -138,7 +176,6 @@ static char *json_copy(const char *str, size_t size)
         return NULL;
     }
 
-    int quotes = 0;
     size_t n = 0;
 
     for (size_t i = 0; i < size; i++)
@@ -169,23 +206,19 @@ static char *json_copy(const char *str, size_t size)
                 case 't':
                     new[n++] = '\t';
                     break;
+                case 'u':
+                    // TODO - Guardar el UCN
+                    i += 4;
+                    break;
                 /* No debería llegar aquí */
                 default:
                     break;
             }
         }
-        else
+        /* Si es una comilla '"', la salta */
+        else if (str[i] != '"')
         {
-            /* Si es una comilla '"', la salta */
-            if (str[i] == '"')
-            {
-                quotes++;
-            }
-            /* Si es un espacio entre comillas, lo salta */
-            else if ((quotes == 0) || (quotes & 1))
-            {
-                new[n++] = str[i];
-            }
+            new[n++] = str[i];
         }
     }
     new[n] = '\0';
