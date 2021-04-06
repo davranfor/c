@@ -62,7 +62,6 @@ static int json_isucn(const char *str)
         && isxdigit((unsigned char)*str++);
 }
 
-
 /* Convierte entidad en tipo */
 static enum json_type json_token(int token)
 {
