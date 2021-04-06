@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <locale.h>
 #include "utils.h"
 #include "json.h"
 
@@ -30,6 +31,8 @@ static json *parse(const char *path)
 
 int main(void)
 {
+    setlocale(LC_CTYPE, "");
+
     json *node = parse("test.json");
 
     json_print(node);

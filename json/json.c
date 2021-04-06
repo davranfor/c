@@ -78,6 +78,23 @@ static enum json_type json_token(int token)
     }
 }
 
+/* Rellena cadena a partir de UCN, devuelve el número de bytes */
+static size_t json_ucn(const char *str, char *new)
+{
+    unsigned code;
+
+    if (sscanf(str, "u%04x", &code) == 1)
+    {
+        int len = wctomb(new, (wchar_t)code);
+
+        if (len != -1)
+        {
+            return (size_t)len;
+        }
+    }
+    return 0;
+}
+
 /* Devuelve un puntero al próximo elemento (entidad) o NULL si es una cadena mal formada */
 static const char *json_scan(const char **left, const char **right)
 {
@@ -206,7 +223,7 @@ static char *json_copy(const char *str, size_t size)
                     new[n++] = '\t';
                     break;
                 case 'u':
-                    // TODO - Guardar el UCN
+                    n += json_ucn(str + i, new + n);
                     i += 4;
                     break;
                 /* No debería llegar aquí */
