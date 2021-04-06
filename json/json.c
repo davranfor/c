@@ -59,7 +59,7 @@ static int json_isucn(const char *str)
         && isxdigit((unsigned char)*str++)
         && isxdigit((unsigned char)*str++)
         && isxdigit((unsigned char)*str++)
-        && isxdigit((unsigned char)*str++);
+        && isxdigit((unsigned char)*str);
 }
 
 /* Convierte entidad en tipo */
