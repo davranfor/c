@@ -79,13 +79,13 @@ static enum json_type json_token(int token)
 }
 
 /* Rellena cadena a partir de UCN, devuelve el número de bytes */
-static size_t json_unicode(const char *str, char *new)
+static size_t json_unicode(const char *str, char *buf)
 {
     unsigned code;
 
     if (sscanf(str, "u%04x", &code) == 1)
     {
-        int len = wctomb(new, (wchar_t)code);
+        int len = wctomb(buf, (wchar_t)code);
 
         if (len != -1)
         {
