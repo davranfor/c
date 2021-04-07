@@ -53,7 +53,7 @@ static int json_iscontrol(int c)
 }
 
 /* Devuelve true or false dependiendo de si el carácter a examinar es un UCN "\uxxxx" */
-static int json_isucn(const char *str)
+static int json_isunicode(const char *str)
 {
     return (*str++ == 'u')
         && isxdigit((unsigned char)*str++)
@@ -79,7 +79,7 @@ static enum json_type json_token(int token)
 }
 
 /* Rellena cadena a partir de UCN, devuelve el número de bytes */
-static size_t json_ucn(const char *str, char *new)
+static size_t json_unicode(const char *str, char *new)
 {
     unsigned code;
 
@@ -120,7 +120,7 @@ static const char *json_scan(const char **left, const char **right)
                     continue;
                 }
                 /* Si es un UCN (Universal Character Name) "\uxxxx" */
-                if (json_isucn(str))
+                if (json_isunicode(str))
                 {
                     str += 5;
                     continue;
@@ -220,7 +220,7 @@ static char *json_copy(const char *str, size_t size)
                     new[n++] = '\t';
                     break;
                 case 'u':
-                    n += json_ucn(str + i, new + n);
+                    n += json_unicode(str + i, new + n);
                     i += 4;
                     break;
                 /* No debería llegar aquí */
