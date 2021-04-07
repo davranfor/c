@@ -109,7 +109,7 @@ static const char *json_scan(const char **left, const char **right)
         /* Si es un código de escape */
         if (*str == '\\')
         {
-            // Si estamos dentro de una cadena */
+            /* Si estamos dentro de una cadena */
             if (quotes == 1)
             {
                 str++;
@@ -147,24 +147,21 @@ static const char *json_scan(const char **left, const char **right)
             {
                 break;
             }
-            /* Si es un texto detrás de una cadena, p.ej: <"abc" 123> */
-            if ((quotes > 1) && !json_isspace(*str))
-            {
-                return NULL;
-            }
         }
         /* Si estamos dentro de una cadena y es un carácter de control */
         else if (json_iscontrol(*str))
         {
             return NULL;
         }
+        /* Si es un espacio */
         if (!json_isspace(*str))
         {
-            /* Si es el primer caracter que no es un espacio */
+            /* Si es el principio del token */
             if (*left == NULL)
             {
                 *left = str;
             }
+            /* El final del token siempre está actualizado */
             *right = str;
         }
         str++;
