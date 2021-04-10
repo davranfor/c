@@ -39,7 +39,7 @@ klist *klist_create(size_t size)
 
 #define klist_const_node(list, data) ((const struct node *)((uintptr_t)data + list->szof))
 #define klist_node(list, data) ((struct node *)((uintptr_t)data + list->szof))
-#define klist_data(list, node) (void *)((uintptr_t)node - list->szof)
+#define klist_data(list, node) ((void *)((uintptr_t)node - list->szof))
 
 void *klist_push_head(klist *list)
 {
