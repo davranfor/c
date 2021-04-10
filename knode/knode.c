@@ -32,8 +32,8 @@ knode *knode_create(size_t size)
     return list;
 }
 
-#define knode_const_addr(data, szof) ((const uintptr_t *)((const char *)data + szof))
-#define knode_addr(data, szof) ((uintptr_t *)((char *)data + szof))
+#define knode_const_addr(data, szof) ((const uintptr_t *)((uintptr_t)data + szof))
+#define knode_addr(data, szof) ((uintptr_t *)((uintptr_t)data + szof))
 
 void *knode_push_head(knode *list)
 {
