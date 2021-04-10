@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdalign.h>
 #include "klist.h"
 
@@ -36,9 +37,9 @@ klist *klist_create(size_t size)
     return list;
 }
 
-#define klist_const_node(list, data) ((const struct node *)((const char *)data + list->szof))
-#define klist_node(list, data) ((struct node *)((char *)data + list->szof))
-#define klist_data(list, node) ((char *)node - list->szof)
+#define klist_const_node(list, data) ((const struct node *)((uintptr_t)data + list->szof))
+#define klist_node(list, data) ((struct node *)((uintptr_t)data + list->szof))
+#define klist_data(list, node) (void *)((uintptr_t)node - list->szof)
 
 void *klist_push_head(klist *list)
 {
@@ -294,7 +295,7 @@ static struct node *split(struct node *head)
 }
 
 /* Recursive version causing stack overflow on large datatsets
-static struct node *merge(klist *list, struct node *head, struct node *tail, int (*comp)(const void *, const void *))
+static struct node *merge(const klist *list, struct node *head, struct node *tail, int (*comp)(const void *, const void *))
 {
     if (head == NULL)
     {
@@ -318,7 +319,7 @@ static struct node *merge(klist *list, struct node *head, struct node *tail, int
 */
 
 /* Iterative version */
-static struct node *merge(klist *list, struct node *head, struct node *tail, int (*comp)(const void *, const void *))
+static struct node *merge(const klist *list, struct node *head, struct node *tail, int (*comp)(const void *, const void *))
 {
     if (head == NULL)
     {
