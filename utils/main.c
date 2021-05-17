@@ -210,20 +210,14 @@ static void randomize(int arr[], int size)
     }
 }
 
-static size_t deletion(int arr[], size_t size, int elem)
+static size_t deletion(int arr[], size_t size, size_t elem)
 {
-    for (size_t i = 0; i < size;)
+    if (elem < size)
     {
-        if (arr[i] == elem)
+        size--;
+        if (elem < size)
         {
-            if (i < --size)
-            {
-                memmove(&arr[i], &arr[i + 1], (size - i) * sizeof(*arr));
-            }
-        }
-        else
-        {
-            i++;
+            memmove(&arr[elem], &arr[elem + 1], (size - elem) * sizeof *arr);
         }
     }
     return size;
@@ -246,10 +240,10 @@ static void sample_misc(void)
         print_array("%d ", arr, N);
 
         /* Deletion */
-        int r = rrand(N);
+        size_t r = (size_t)rrand(N);
         size_t size = deletion(arr, N, r);
 
-        printf("Deleting %d:\n", r);
+        printf("Deleting %zu:\n", r);
         print_array("%d ", arr, size);
     }
     // Multidimensional array in linear storage (Row-major order)
