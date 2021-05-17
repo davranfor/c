@@ -214,10 +214,7 @@ static size_t deletion(int arr[], size_t size, size_t elem)
 {
     if (elem < size)
     {
-        if (elem < --size)
-        {
-            memmove(&arr[elem], &arr[elem + 1], (size - elem) * sizeof *arr);
-        }
+        memmove(&arr[elem], &arr[elem + 1], (--size - elem) * sizeof *arr);
     }
     return size;
 }
