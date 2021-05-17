@@ -210,11 +210,11 @@ static void randomize(int arr[], int size)
     }
 }
 
-static size_t deletion(int arr[], size_t size, size_t elem)
+static size_t deletion(int arr[], size_t size, size_t item)
 {
-    if (elem < size)
+    if (item < size)
     {
-        memmove(&arr[elem], &arr[elem + 1], (--size - elem) * sizeof *arr);
+        memmove(&arr[item], &arr[item + 1], (--size - item) * sizeof *arr);
     }
     return size;
 }
@@ -236,32 +236,32 @@ static void sample_misc(void)
         print_array("%d ", arr, N);
 
         /* Deletion */
-        size_t r = (size_t)rrand(N);
-        size_t size = deletion(arr, N, r);
+        size_t item = (size_t)rrand(N);
+        size_t size = deletion(arr, N, item);
 
-        printf("Deleting %zu:\n", r);
+        printf("Deleting %zu:\n", item);
         print_array("%d ", arr, size);
     }
     // Multidimensional array in linear storage (Row-major order)
     {
         enum {rows = 5, cols = 3};
         int arr[rows * cols];
-        int row, col, index;
+        int row, col, item;
 
         puts("Row-major order:");
         for (row = 0; row < rows; row++)
         {
             for (col = 0; col < cols; col++)
             {
-                index = cols * row + col;
-                arr[index] = index;
-                printf("[%d][%d] = %d\n", row, col, index);
+                item = cols * row + col;
+                arr[item] = item;
+                printf("[%d][%d] = %d\n", row, col, item);
             }
         }
         row = rows / 2, col = cols / 2;
         printf("Value of row %d col %d is %d\n", row, col, arr[cols * row + col]);
-        index = rows * cols / 2;
-        printf("Position of index %d is row %d col %d\n", index, index / cols, index % cols);
+        item = rows * cols / 2;
+        printf("Position of item %d is row %d col %d\n", item, item / cols, item % cols);
     }
 }
 
