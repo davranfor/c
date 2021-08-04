@@ -233,6 +233,11 @@ void *skiplist_fetch(const skiplist *list, const void **cursor, const void *data
 
 void skiplist_destroy(skiplist *list, void (*func)(void *))
 {
+    if (list == NULL)
+    {
+        return;
+    }
+
     struct node *node;
 
     node = list->head->next[0];
