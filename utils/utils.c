@@ -58,6 +58,7 @@ static char *file_data(const char *path, const char *prefix, const char *suffix)
 
     if (size == FILE_ERROR)
     {
+        fclose(file);
         return NULL;
     }
 
@@ -77,11 +78,13 @@ static char *file_data(const char *path, const char *prefix, const char *suffix)
 
     if (str == NULL)
     {
+        fclose(file);
         return NULL;
     }
     if (fread(str + size_prefix, 1, size, file) != size)
     {
         free(str);
+        fclose(file);
         str = NULL;
     }
     else
@@ -310,11 +313,11 @@ static char *string_vprint(const char *fmt, va_list args)
     size_t len = (size_t)vsnprintf(NULL, 0, fmt, args);
     char *str = malloc(len + 1);
 
-    if (str == NULL)
+    if (str != NULL)
     {
-        return NULL;
+        vsprintf(str, fmt, copy);
     }
-    vsprintf(str, fmt, copy);
+    va_end(copy);
     return str;
 }
 
