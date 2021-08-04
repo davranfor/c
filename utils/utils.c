@@ -84,7 +84,6 @@ static char *file_data(const char *path, const char *prefix, const char *suffix)
     if (fread(str + size_prefix, 1, size, file) != size)
     {
         free(str);
-        fclose(file);
         str = NULL;
     }
     else
