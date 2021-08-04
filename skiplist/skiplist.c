@@ -51,6 +51,7 @@ skiplist *skiplist_create(int (*comp)(const void *, const void *))
         list->head = skiplist_create_node(SKIPLIST_MAX_LEVEL);
         if (list->head == NULL)
         {
+            free(list);
             return NULL;
         }
         for (int level = 0; level < SKIPLIST_MAX_LEVEL; level++)
