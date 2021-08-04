@@ -57,6 +57,7 @@ hashmap *hashmap_create(
         map->list = calloc(size, sizeof(struct node));
         if (map->list == NULL)
         {
+            free(map);
             return NULL;
         }
         map->comp = comp;
