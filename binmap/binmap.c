@@ -116,7 +116,7 @@ int binmap_get(binmap *map, size_t index)
     unsigned char *data = map->data + (index / 8);
     unsigned int byte = *data;
 
-    return byte & (1u << (index % 8)) ? 1 : 0;
+    return (byte & (1u << (index % 8))) ? 1 : 0;
 }
 
 void binmap_destroy(binmap *map)
