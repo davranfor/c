@@ -8,14 +8,6 @@
 #include <string.h>
 #include "vector.h"
 
-struct vector
-{
-    void * data;            // The contents of the array
-    size_t size;            // Number of elements of the array
-    size_t szof;            // sizeof each element of the array
-    void (*fdel)(void *);   // Pointer to callback to delete function
-};
-
 #define VECTOR_ITEM(v, i) ((unsigned char *)((v)->data) + (v)->szof * (i))
 
 vector *vector_create(size_t szof, void (*fdel)(void *))
