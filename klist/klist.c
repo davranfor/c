@@ -470,7 +470,10 @@ void klist_clear(klist *list, void (*func)(void *))
 
 void klist_destroy(klist *list, void (*func)(void *))
 {
-    klist_clear(list, func);
-    free(list);
+    if (list != NULL)
+    {
+        klist_clear(list, func);
+        free(list);
+    }
 }
 
