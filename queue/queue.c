@@ -121,20 +121,23 @@ size_t queue_size(const queue *list)
 
 void queue_destroy(queue *list, void (*func)(void *))
 {
-    struct node *node = list->head;
-
-    while (node != NULL)
+    if (list != NULL)
     {
-        if (func != NULL)
+        struct node *node = list->head;
+
+        while (node != NULL)
         {
-            func(node->data);
+            if (func != NULL)
+            {
+                func(node->data);
+            }
+
+            struct node *temp = node->next;
+
+            free(node);
+            node = temp;
         }
-
-        struct node *temp = node->next;
-
-        free(node);
-        node = temp;
+        free(list);
     }
-    free(list);
 }
 
