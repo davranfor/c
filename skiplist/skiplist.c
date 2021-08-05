@@ -233,27 +233,25 @@ void *skiplist_fetch(const skiplist *list, const void **cursor, const void *data
 
 void skiplist_destroy(skiplist *list, void (*func)(void *))
 {
-    if (list == NULL)
+    if (list != NULL)
     {
-        return;
-    }
+        struct node *node;
 
-    struct node *node;
-
-    node = list->head->next[0];
-    while (node != list->head)
-    {
-        struct node *temp;
-
-        if (func != NULL)
+        node = list->head->next[0];
+        while (node != list->head)
         {
-            func(node->data);
+            struct node *temp;
+
+            if (func != NULL)
+            {
+                func(node->data);
+            }
+            temp = node;
+            node = node->next[0];
+            free(temp);
         }
-        temp = node;
-        node = node->next[0];
-        free(temp);
+        free(list->head);
+        free(list);
     }
-    free(list->head);
-    free(list);
 }
 
