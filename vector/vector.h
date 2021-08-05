@@ -7,13 +7,7 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-typedef struct
-{
-    void * data;            // The contents of the array
-    size_t size;            // Number of elements of the array
-    size_t szof;            // sizeof each element of the array
-    void (*fdel)(void *);   // Pointer to callback to delete function
-} vector;
+typedef struct vector vector;
 
 vector *vector_create(size_t, void (*)(void *));
 void *vector_resize(vector *, int);
