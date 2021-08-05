@@ -483,7 +483,10 @@ void linklist_clear(linklist *list, void (*func)(void *))
 
 void linklist_destroy(linklist *list, void (*func)(void *))
 {
-    linklist_clear(list, func);
-    free(list);
+    if (list != NULL)
+    {
+        linklist_clear(list, func);
+        free(list);
+    }
 }
 
