@@ -121,7 +121,10 @@ int binmap_get(binmap *map, size_t index)
 
 void binmap_destroy(binmap *map)
 {
-    free(map->data);
-    free(map);
+    if (map != NULL)
+    {
+        free(map->data);
+        free(map);
+    }
 }
 
