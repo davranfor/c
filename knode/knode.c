@@ -220,7 +220,10 @@ void knode_clear(knode *list, void (*func)(void *))
 
 void knode_destroy(knode *list, void (*func)(void *))
 {
-    knode_clear(list, func);
-    free(list);
+    if (list != NULL)
+    {
+        knode_clear(list, func);
+        free(list);
+    }
 }
 
