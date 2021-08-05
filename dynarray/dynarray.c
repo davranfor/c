@@ -251,7 +251,7 @@ void dynarray_reverse(const dynarray *array)
     }
 }
 
-void dynarray_clear(dynarray *array, void (*func)(void *data))
+void dynarray_clear(dynarray *array, void (*func)(void *))
 {
     if (func != NULL)
     {
@@ -265,9 +265,12 @@ void dynarray_clear(dynarray *array, void (*func)(void *data))
     array->size = 0;
 }
 
-void dynarray_destroy(dynarray *array, void (*func)(void *data))
+void dynarray_destroy(dynarray *array, void (*func)(void *))
 {
-    dynarray_clear(array, func);
-    free(array);
+    if (array != NULL)
+    {
+        dynarray_clear(array, func);
+        free(array);
+    }
 }
 
