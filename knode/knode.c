@@ -32,8 +32,8 @@ knode *knode_create(size_t size)
     return list;
 }
 
-#define knode_const_addr(data, szof) ((const uintptr_t *)((uintptr_t)data + szof))
-#define knode_addr(data, szof) ((uintptr_t *)((uintptr_t)data + szof))
+#define knode_const_addr(list, data) ((const uintptr_t *)((uintptr_t)data + list->szof))
+#define knode_addr(list, data) ((uintptr_t *)((uintptr_t)data + list->szof))
 
 void *knode_push_head(knode *list)
 {
@@ -45,8 +45,8 @@ void *knode_push_head(knode *list)
     }
     if (list->head != NULL)
     {
-        *knode_addr(list->head, list->szof) ^= (addr)data;
-        *knode_addr(data, list->szof) = (addr)list->head;
+        *knode_addr(list, list->head) ^= (addr)data;
+        *knode_addr(list, data) = (addr)list->head;
     }
     else
     {
@@ -67,8 +67,8 @@ void *knode_push_tail(knode *list)
     }
     if (list->tail != NULL)
     {
-        *knode_addr(list->tail, list->szof) ^= (addr)data;
-        *knode_addr(data, list->szof) = (addr)list->tail;
+        *knode_addr(list, list->tail) ^= (addr)data;
+        *knode_addr(list, data) = (addr)list->tail;
     }
     else
     {
@@ -88,12 +88,12 @@ void *knode_pop_head(knode *list)
         return NULL;
     }
 
-    addr *head = knode_addr(data, list->szof);
+    addr *head = knode_addr(list, data);
     void *next = (void *)*head;
 
     if (next != NULL)
     {
-        *knode_addr(next, list->szof) ^= (addr)data;
+        *knode_addr(list, next) ^= (addr)data;
         *head = 0;
     }
     else
@@ -114,12 +114,12 @@ void *knode_pop_tail(knode *list)
         return NULL;
     }
 
-    addr *tail = knode_addr(data, list->szof);
+    addr *tail = knode_addr(list, data);
     void *prev = (void *)*tail;
 
     if (prev != NULL)
     {
-        *knode_addr(prev, list->szof) ^= (addr)data;
+        *knode_addr(list, prev) ^= (addr)data;
         *tail = 0;
     }
     else
@@ -154,7 +154,7 @@ void *knode_fetch(const knode *list, kiter *iter, const void *data)
         return list->tail;
     }
     
-    addr next = *knode_const_addr(data, list->szof) ^ *iter;
+    addr next = *knode_const_addr(list, data) ^ *iter;
 
     *iter = (kiter)data;
     return (void *)next;
@@ -182,7 +182,7 @@ void *knode_index(const knode *list, size_t index)
     {
         void *temp = node;
 
-        node = (void *)(*knode_addr(node, list->szof) ^ (addr)prev);
+        node = (void *)(*knode_addr(list, node) ^ (addr)prev);
         prev = temp;
     }
     return node;
@@ -199,12 +199,12 @@ void knode_clear(knode *list, void (*func)(void *))
 
     while (node != NULL)
     {
-        addr *head = knode_addr(node, list->szof);
+        addr *head = knode_addr(list, node);
         void *next = (void *)*head;
 
         if (next != NULL)
         {
-            *knode_addr(next, list->szof) ^= (addr)node;
+            *knode_addr(list, next) ^= (addr)node;
             *head = 0;
         }
         if (func != NULL)
