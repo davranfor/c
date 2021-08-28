@@ -34,14 +34,14 @@ static const size_t primes[] =
     805306457, 1610612741, 3221225473, 4294967291
 };
 
-#define HASHMAP_NPRIMES (sizeof primes / sizeof *primes)
-
 hashmap *hashmap_create(
     int (*comp)(const void *, const void *),
     unsigned long (*hash)(const void *),
     size_t size)
 {
-    for (size_t iter = 0; iter < HASHMAP_NPRIMES; iter++)
+    enum {NPRIMES = sizeof primes / sizeof *primes};
+
+    for (size_t iter = 0; iter < NPRIMES; iter++)
     {
         if (size < primes[iter])
         {
