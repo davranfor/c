@@ -70,7 +70,7 @@ int year_isleap(int);
 int date_isvalid(int, int, int);
 
 /* ************************************************************************* */
-/* Misc utilities                                                            */
+/* Math utilities                                                            */
 /* ************************************************************************* */
 
 #define ISNULL(ptr) ((ptr) == NULL)
@@ -96,6 +96,7 @@ int date_isvalid(int, int, int);
 #endif
 
 int rrand(int);
+size_t multipleof(size_t, size_t);
 
 #endif /* UTILS_H */
 

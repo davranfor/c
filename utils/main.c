@@ -219,7 +219,7 @@ static size_t deletion(int arr[], size_t size, size_t item)
     return size;
 }
 
-static void sample_misc(void)
+static void sample_maths(void)
 {
     // Randomize and deletion
     {
@@ -263,6 +263,17 @@ static void sample_misc(void)
         item = rows * cols / 2;
         printf("Position of item %d is row %d col %d\n", item, item / cols, item % cols);
     }
+    // Multiples of power of 2 numbers
+    for (int iter = 0; iter < 10; iter++)
+    {
+        size_t multiple = 1U << (rand() % 16); // Power of 2
+        size_t number = (size_t)(rand() / 2048);
+
+        printf(
+            "number = %zu | multiple = %zu | result = %zu\n",
+            number, multiple, multipleof(multiple, number)
+        );
+    }
 }
 
 int main(void)
@@ -272,7 +283,7 @@ int main(void)
     sample_strings();
     sample_files();
     sample_dates();
-    sample_misc();
+    sample_maths();
     return 0;
 }
 

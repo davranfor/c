@@ -767,3 +767,12 @@ int rrand(int range)
     return (int)((double)range * (rand() / (RAND_MAX + 1.0)));
 }
 
+/**
+ * Returns a value divisible by multiple given a number
+ * multiple must be a power of 2
+ */
+size_t multipleof(size_t multiple, size_t number)
+{
+    return (number + (multiple - 1)) & ~(multiple - 1);
+}
+
