@@ -5,6 +5,7 @@
 #include <time.h>
 #include "utils.h"
 #include "wutils.h"
+#include "safe_maths.h"
 
 static void sample_strings(void)
 {
@@ -274,6 +275,8 @@ static void sample_maths(void)
             number, multiple, multipleof(multiple, number)
         );
     }
+    // Detect and die on signed overflow-underflow
+    // printf("%d\n", safe_int_add(INT_MAX, +42));
 }
 
 int main(void)
