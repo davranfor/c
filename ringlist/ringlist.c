@@ -127,7 +127,7 @@ size_t ringlist_size(const ringlist *list)
 
 void ringlist_destroy(ringlist *list, void (*func)(void *))
 {
-    if (list->size > 0)
+    if ((list != NULL) && (list->size > 0))
     {
         struct node *node = list->tail->next;
 
