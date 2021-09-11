@@ -17,20 +17,20 @@
 
 /* Prototypes */
 #define X(title, type, min, max, umax)          \
-type safe_##title##_add(long long, long long);  \
-type safe_##title##_sub(long long, long long);  \
-type safe_##title##_mul(long long, long long);  \
-type safe_##title##_div(long long, long long);  \
+type safe_##title##_add(intmax_t, intmax_t);    \
+type safe_##title##_sub(intmax_t, intmax_t);    \
+type safe_##title##_mul(intmax_t, intmax_t);    \
+type safe_##title##_div(intmax_t, intmax_t);    \
                                                 \
-type range_##title##_add(long long, long long); \
-type range_##title##_sub(long long, long long); \
-type range_##title##_mul(long long, long long); \
-type range_##title##_div(long long, long long); \
+type range_##title##_add(intmax_t, intmax_t);   \
+type range_##title##_sub(intmax_t, intmax_t);   \
+type range_##title##_mul(intmax_t, intmax_t);   \
+type range_##title##_div(intmax_t, intmax_t);   \
                                                 \
-type wrap_##title##_add(long long, long long);  \
-type wrap_##title##_sub(long long, long long);  \
-type wrap_##title##_mul(long long, long long);  \
-type wrap_##title##_div(long long, long long);
+type wrap_##title##_add(intmax_t, intmax_t);    \
+type wrap_##title##_sub(intmax_t, intmax_t);    \
+type wrap_##title##_mul(intmax_t, intmax_t);    \
+type wrap_##title##_div(intmax_t, intmax_t);
 SIGNED_MATHS
 #undef X
 
