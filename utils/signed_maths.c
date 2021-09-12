@@ -238,7 +238,7 @@ type name##_wrap_div(intmax_t a, intmax_t b)                        \
                                                                     \
     if ((min > result) || (max < result))                           \
     {                                                               \
-        return (type)(((uintmax_t)a / (uintmax_t)b) & umax);        \
+        return (type)((uintmax_t)result & umax);                    \
     }                                                               \
     return (type)result;                                            \
 }                                                                   \
@@ -257,7 +257,7 @@ type name##_wrap_mod(intmax_t a, intmax_t b)                        \
                                                                     \
     if ((min > result) || (max < result))                           \
     {                                                               \
-        return (type)(((uintmax_t)a / (uintmax_t)b) & umax);        \
+        return (type)((uintmax_t)result & umax);                    \
     }                                                               \
     return (type)result;                                            \
 }
