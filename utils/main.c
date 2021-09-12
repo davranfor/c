@@ -276,9 +276,9 @@ static void sample_maths(void)
         );
     }
     // Safe signed overflow-underflow
-    printf("Wrap-around protected %d + 42 = %d\n", INT_MAX, wrap_int_add(INT_MAX, 42));
-    printf("      Range protected %d + 42 = %d\n", INT_MAX, range_int_add(INT_MAX, 42));
-    // printf("   Abort protected %d + 42 = %d\n", INT_MAX, safe_int_add(INT_MAX, 42));
+    printf("Wrap-around protected %d + 42 = %d\n", INT_MAX, int_wrap_add(INT_MAX, 42));
+    printf("      Range protected %d + 42 = %d\n", INT_MAX, int_range_mod(INT_MAX, 42));
+    // printf("   Abort protected %d + 42 = %d\n", INT_MAX, int_safe_add(INT_MAX, 42));
 }
 
 int main(void)

@@ -8,8 +8,8 @@
             __func__, a, b, error);                                     \
     exit(EXIT_FAILURE)
 
-#define X(title, type, min, max, umax)                              \
-type safe_##title##_add(intmax_t a, intmax_t b)                     \
+#define X(name, type, min, max, umax)                               \
+type name##_safe_add(intmax_t a, intmax_t b)                        \
 {                                                                   \
     if ((a < 0) && (b < min - a))                                   \
     {                                                               \
@@ -21,7 +21,7 @@ type safe_##title##_add(intmax_t a, intmax_t b)                     \
     }                                                               \
     return (type)(a + b);                                           \
 }                                                                   \
-type safe_##title##_sub(intmax_t a, intmax_t b)                     \
+type name##_safe_sub(intmax_t a, intmax_t b)                        \
 {                                                                   \
     if ((a < 0) && (b > max + a))                                   \
     {                                                               \
@@ -33,9 +33,9 @@ type safe_##title##_sub(intmax_t a, intmax_t b)                     \
     }                                                               \
     return (type)(a - b);                                           \
 }                                                                   \
-type safe_##title##_mul(intmax_t a, intmax_t b)                     \
+type name##_safe_mul(intmax_t a, intmax_t b)                        \
 {                                                                   \
-    if ((a == 0) || (b == 0))                                       \
+    if (b == 0)                                                     \
     {                                                               \
         return 0;                                                   \
     }                                                               \
@@ -53,12 +53,8 @@ type safe_##title##_mul(intmax_t a, intmax_t b)                     \
     }                                                               \
     return (type)(a * b);                                           \
 }                                                                   \
-type safe_##title##_div(intmax_t a, intmax_t b)                     \
+type name##_safe_div(intmax_t a, intmax_t b)                        \
 {                                                                   \
-    if (a == 0)                                                     \
-    {                                                               \
-        return 0;                                                   \
-    }                                                               \
     if (b == 0)                                                     \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "division by 0");                  \
@@ -67,18 +63,44 @@ type safe_##title##_div(intmax_t a, intmax_t b)                     \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "overflow");                       \
     }                                                               \
-    if (min > a / b)                                                \
+                                                                    \
+    intmax_t result = a / b;                                        \
+                                                                    \
+    if (min > result)                                               \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "underflow");                      \
     }                                                               \
-    if (max < a / b)                                                \
+    if (max < result)                                               \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "overflow");                       \
     }                                                               \
-    return (type)(a / b);                                           \
+    return (type)result;                                            \
+}                                                                   \
+type name##_safe_mod(intmax_t a, intmax_t b)                        \
+{                                                                   \
+    if (b == 0)                                                     \
+    {                                                               \
+        SIGNED_MATHS_ABORT(a, b, "division by 0");                  \
+    }                                                               \
+    if (b == -1)                                                    \
+    {                                                               \
+        return 0;                                                   \
+    }                                                               \
+                                                                    \
+    intmax_t result = a % b;                                        \
+                                                                    \
+    if (min > result)                                               \
+    {                                                               \
+        SIGNED_MATHS_ABORT(a, b, "underflow");                      \
+    }                                                               \
+    if (max < result)                                               \
+    {                                                               \
+        SIGNED_MATHS_ABORT(a, b, "overflow");                       \
+    }                                                               \
+    return (type)result;                                            \
 }                                                                   \
                                                                     \
-type range_##title##_add(intmax_t a, intmax_t b)                    \
+type name##_range_add(intmax_t a, intmax_t b)                       \
 {                                                                   \
     if ((a < 0) && (b < min - a))                                   \
     {                                                               \
@@ -90,7 +112,7 @@ type range_##title##_add(intmax_t a, intmax_t b)                    \
     }                                                               \
     return (type)(a + b);                                           \
 }                                                                   \
-type range_##title##_sub(intmax_t a, intmax_t b)                    \
+type name##_range_sub(intmax_t a, intmax_t b)                       \
 {                                                                   \
     if ((a < 0) && (b > max + a))                                   \
     {                                                               \
@@ -102,9 +124,9 @@ type range_##title##_sub(intmax_t a, intmax_t b)                    \
     }                                                               \
     return (type)(a - b);                                           \
 }                                                                   \
-type range_##title##_mul(intmax_t a, intmax_t b)                    \
+type name##_range_mul(intmax_t a, intmax_t b)                       \
 {                                                                   \
-    if ((a == 0) || (b == 0))                                       \
+    if (b == 0)                                                     \
     {                                                               \
         return 0;                                                   \
     }                                                               \
@@ -122,12 +144,8 @@ type range_##title##_mul(intmax_t a, intmax_t b)                    \
     }                                                               \
     return (type)(a * b);                                           \
 }                                                                   \
-type range_##title##_div(intmax_t a, intmax_t b)                    \
+type name##_range_div(intmax_t a, intmax_t b)                       \
 {                                                                   \
-    if (a == 0)                                                     \
-    {                                                               \
-        return 0;                                                   \
-    }                                                               \
     if (b == 0)                                                     \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "division by 0");                  \
@@ -136,18 +154,44 @@ type range_##title##_div(intmax_t a, intmax_t b)                    \
     {                                                               \
         return max;                                                 \
     }                                                               \
-    if (min > a / b)                                                \
+                                                                    \
+    intmax_t result = a / b;                                        \
+                                                                    \
+    if (min > result)                                               \
     {                                                               \
         return min;                                                 \
     }                                                               \
-    if (max < a / b)                                                \
+    if (max < result)                                               \
     {                                                               \
         return max;                                                 \
     }                                                               \
-    return (type)(a / b);                                           \
+    return (type)result;                                            \
+}                                                                   \
+type name##_range_mod(intmax_t a, intmax_t b)                       \
+{                                                                   \
+    if (b == 0)                                                     \
+    {                                                               \
+        SIGNED_MATHS_ABORT(a, b, "division by 0");                  \
+    }                                                               \
+    if (b == -1)                                                    \
+    {                                                               \
+        return 0;                                                   \
+    }                                                               \
+                                                                    \
+    intmax_t result = a % b;                                        \
+                                                                    \
+    if (min > result)                                               \
+    {                                                               \
+        return min;                                                 \
+    }                                                               \
+    if (max < result)                                               \
+    {                                                               \
+        return max;                                                 \
+    }                                                               \
+    return (type)result;                                            \
 }                                                                   \
                                                                     \
-type wrap_##title##_add(intmax_t a, intmax_t b)                     \
+type name##_wrap_add(intmax_t a, intmax_t b)                        \
 {                                                                   \
     if (((a < 0) && (b < min - a)) || ((a > 0) && (b > max - a)))   \
     {                                                               \
@@ -155,7 +199,7 @@ type wrap_##title##_add(intmax_t a, intmax_t b)                     \
     }                                                               \
     return (type)(a + b);                                           \
 }                                                                   \
-type wrap_##title##_sub(intmax_t a, intmax_t b)                     \
+type name##_wrap_sub(intmax_t a, intmax_t b)                        \
 {                                                                   \
     if (((a < 0) && (b > max + a)) || ((a > 0) && (b < min + a)))   \
     {                                                               \
@@ -163,9 +207,9 @@ type wrap_##title##_sub(intmax_t a, intmax_t b)                     \
     }                                                               \
     return (type)(a - b);                                           \
 }                                                                   \
-type wrap_##title##_mul(intmax_t a, intmax_t b)                     \
+type name##_wrap_mul(intmax_t a, intmax_t b)                        \
 {                                                                   \
-    if ((a == 0) || (b == 0))                                       \
+    if (b == 0)                                                     \
     {                                                               \
         return 0;                                                   \
     }                                                               \
@@ -179,12 +223,8 @@ type wrap_##title##_mul(intmax_t a, intmax_t b)                     \
     }                                                               \
     return (type)(a * b);                                           \
 }                                                                   \
-type wrap_##title##_div(intmax_t a, intmax_t b)                     \
+type name##_wrap_div(intmax_t a, intmax_t b)                        \
 {                                                                   \
-    if (a == 0)                                                     \
-    {                                                               \
-        return 0;                                                   \
-    }                                                               \
     if (b == 0)                                                     \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "division by 0");                  \
@@ -193,11 +233,33 @@ type wrap_##title##_div(intmax_t a, intmax_t b)                     \
     {                                                               \
         return min;                                                 \
     }                                                               \
-    if ((min > a / b) || (max < a / b))                             \
+                                                                    \
+    intmax_t result = a / b;                                        \
+                                                                    \
+    if ((min > result) || (max < result))                           \
     {                                                               \
         return (type)(((uintmax_t)a / (uintmax_t)b) & umax);        \
     }                                                               \
-    return (type)(a / b);                                           \
+    return (type)result;                                            \
+}                                                                   \
+type name##_wrap_mod(intmax_t a, intmax_t b)                        \
+{                                                                   \
+    if (b == 0)                                                     \
+    {                                                               \
+        SIGNED_MATHS_ABORT(a, b, "division by 0");                  \
+    }                                                               \
+    if (b == -1)                                                    \
+    {                                                               \
+        return 0;                                                   \
+    }                                                               \
+                                                                    \
+    intmax_t result = a % b;                                        \
+                                                                    \
+    if ((min > result) || (max < result))                           \
+    {                                                               \
+        return (type)(((uintmax_t)a / (uintmax_t)b) & umax);        \
+    }                                                               \
+    return (type)result;                                            \
 }
 SIGNED_MATHS
 #undef X

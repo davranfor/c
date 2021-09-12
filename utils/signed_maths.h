@@ -16,21 +16,24 @@
     X(int64, int64_t, INT64_MIN, INT64_MAX, UINT64_MAX)
 
 /* Prototypes */
-#define X(title, type, min, max, umax)          \
-type safe_##title##_add(intmax_t, intmax_t);    \
-type safe_##title##_sub(intmax_t, intmax_t);    \
-type safe_##title##_mul(intmax_t, intmax_t);    \
-type safe_##title##_div(intmax_t, intmax_t);    \
-                                                \
-type range_##title##_add(intmax_t, intmax_t);   \
-type range_##title##_sub(intmax_t, intmax_t);   \
-type range_##title##_mul(intmax_t, intmax_t);   \
-type range_##title##_div(intmax_t, intmax_t);   \
-                                                \
-type wrap_##title##_add(intmax_t, intmax_t);    \
-type wrap_##title##_sub(intmax_t, intmax_t);    \
-type wrap_##title##_mul(intmax_t, intmax_t);    \
-type wrap_##title##_div(intmax_t, intmax_t);
+#define X(name, type, min, max, umax)       \
+type name##_safe_add(intmax_t, intmax_t);   \
+type name##_safe_sub(intmax_t, intmax_t);   \
+type name##_safe_mul(intmax_t, intmax_t);   \
+type name##_safe_div(intmax_t, intmax_t);   \
+type name##_safe_mod(intmax_t, intmax_t);   \
+                                            \
+type name##_range_add(intmax_t, intmax_t);  \
+type name##_range_sub(intmax_t, intmax_t);  \
+type name##_range_mul(intmax_t, intmax_t);  \
+type name##_range_div(intmax_t, intmax_t);  \
+type name##_range_mod(intmax_t, intmax_t);  \
+                                            \
+type name##_wrap_add(intmax_t, intmax_t);   \
+type name##_wrap_sub(intmax_t, intmax_t);   \
+type name##_wrap_mul(intmax_t, intmax_t);   \
+type name##_wrap_div(intmax_t, intmax_t);   \
+type name##_wrap_mod(intmax_t, intmax_t);
 SIGNED_MATHS
 #undef X
 
