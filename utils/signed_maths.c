@@ -193,35 +193,15 @@ type name##_range_mod(intmax_t a, intmax_t b)                       \
                                                                     \
 type name##_wrap_add(intmax_t a, intmax_t b)                        \
 {                                                                   \
-    if (((a < 0) && (b < min - a)) || ((a > 0) && (b > max - a)))   \
-    {                                                               \
-        return (type)(((uintmax_t)a + (uintmax_t)b) & umax);        \
-    }                                                               \
-    return (type)(a + b);                                           \
+    return (type)(((uintmax_t)a + (uintmax_t)b) & umax);            \
 }                                                                   \
 type name##_wrap_sub(intmax_t a, intmax_t b)                        \
 {                                                                   \
-    if (((a < 0) && (b > max + a)) || ((a > 0) && (b < min + a)))   \
-    {                                                               \
-        return (type)(((uintmax_t)a - (uintmax_t)b) & umax);        \
-    }                                                               \
-    return (type)(a - b);                                           \
+    return (type)(((uintmax_t)a - (uintmax_t)b) & umax);            \
 }                                                                   \
 type name##_wrap_mul(intmax_t a, intmax_t b)                        \
 {                                                                   \
-    if (b == 0)                                                     \
-    {                                                               \
-        return 0;                                                   \
-    }                                                               \
-    if (((a == -1) && (b == min)) || ((b == -1) && (a == min)))     \
-    {                                                               \
-        return min;                                                 \
-    }                                                               \
-    if ((a < min / b) || (a > max / b))                             \
-    {                                                               \
-        return (type)(((uintmax_t)a * (uintmax_t)b) & umax);        \
-    }                                                               \
-    return (type)(a * b);                                           \
+    return (type)(((uintmax_t)a * (uintmax_t)b) & umax);            \
 }                                                                   \
 type name##_wrap_div(intmax_t a, intmax_t b)                        \
 {                                                                   \
@@ -233,14 +213,7 @@ type name##_wrap_div(intmax_t a, intmax_t b)                        \
     {                                                               \
         return min;                                                 \
     }                                                               \
-                                                                    \
-    intmax_t result = a / b;                                        \
-                                                                    \
-    if ((min > result) || (max < result))                           \
-    {                                                               \
-        return (type)((uintmax_t)result & umax);                    \
-    }                                                               \
-    return (type)result;                                            \
+    return (type)((uintmax_t)(a / b) & umax);                       \
 }                                                                   \
 type name##_wrap_mod(intmax_t a, intmax_t b)                        \
 {                                                                   \
@@ -252,16 +225,8 @@ type name##_wrap_mod(intmax_t a, intmax_t b)                        \
     {                                                               \
         return 0;                                                   \
     }                                                               \
-                                                                    \
-    intmax_t result = a % b;                                        \
-                                                                    \
-    if ((min > result) || (max < result))                           \
-    {                                                               \
-        return (type)((uintmax_t)result & umax);                    \
-    }                                                               \
-    return (type)result;                                            \
+    return (type)((uintmax_t)(a % b) & umax);                       \
 }
 SIGNED_MATHS
 #undef X
-
 
