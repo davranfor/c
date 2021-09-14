@@ -39,7 +39,7 @@ type name##_safe_mul(intmax_t a, intmax_t b)                        \
     {                                                               \
         return 0;                                                   \
     }                                                               \
-    if (((a == -1) && (b == min)) || ((b == -1) && (a == min)))     \
+    if (((a == min) && (b == -1)) || ((b == min) && (a == -1)))     \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "overflow");                       \
     }                                                               \
@@ -59,7 +59,7 @@ type name##_safe_div(intmax_t a, intmax_t b)                        \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "division by 0");                  \
     }                                                               \
-    if (((a == -1) && (b == min)) || ((b == -1) && (a == min)))     \
+    if ((a == min) && (b == -1))                                    \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "overflow");                       \
     }                                                               \
@@ -130,7 +130,7 @@ type name##_range_mul(intmax_t a, intmax_t b)                       \
     {                                                               \
         return 0;                                                   \
     }                                                               \
-    if (((a == -1) && (b == min)) || ((b == -1) && (a == min)))     \
+    if (((a == min) && (b == -1)) || ((b == min) && (a == -1)))     \
     {                                                               \
         return max;                                                 \
     }                                                               \
@@ -150,7 +150,7 @@ type name##_range_div(intmax_t a, intmax_t b)                       \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "division by 0");                  \
     }                                                               \
-    if (((a == -1) && (b == min)) || ((b == -1) && (a == min)))     \
+    if ((a == min) && (b == -1))                                    \
     {                                                               \
         return max;                                                 \
     }                                                               \
@@ -209,7 +209,7 @@ type name##_wrap_div(intmax_t a, intmax_t b)                        \
     {                                                               \
         SIGNED_MATHS_ABORT(a, b, "division by 0");                  \
     }                                                               \
-    if (((a == -1) && (b == min)) || ((b == -1) && (a == min)))     \
+    if ((a == min) && (b == -1))                                    \
     {                                                               \
         return min;                                                 \
     }                                                               \
