@@ -6,11 +6,12 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "binmap.h"
 
 struct binmap
 {
-    unsigned char *data;
+    uint8_t *data;
     size_t size;
 };
 
@@ -37,7 +38,7 @@ binmap *binmap_create(size_t size)
 
     if (map != NULL)
     {
-        // The minimum size is 8 bits (1 byte)
+        // The minimum size is 8 (bits)
         size = size < 8 ? 8 : get_size(size);
         map->data = calloc(size / 8, 1);
         if (map->data == NULL)
@@ -54,7 +55,7 @@ static binmap *resize(binmap *map, size_t size)
 {
     size_t old_bytes = map->size / 8;
     size_t new_bytes = size / 8;
-    unsigned char *temp;
+    uint8_t *temp;
 
     temp = realloc(map->data, new_bytes);
     if (temp != NULL)
@@ -87,18 +88,16 @@ int binmap_set(binmap *map, size_t index, int value)
         }
     }
 
-    unsigned char *data = map->data + (index / 8);
-    unsigned int byte = *data;
+    uint8_t *byte = map->data + (index / 8);
 
     if (value != 0)
     {
-        byte |= 1u << (index % 8);
+        *byte |= (uint8_t)(1u << (index % 8));
     }
     else
     {
-        byte &= ~(1u << (index % 8));
+        *byte &= (uint8_t)~(1u << (index % 8));
     }
-    *data = (unsigned char)byte;
     return 1;
 }
 
@@ -113,8 +112,7 @@ int binmap_get(binmap *map, size_t index)
         return 0;
     }
 
-    unsigned char *data = map->data + (index / 8);
-    unsigned int byte = *data;
+    uint8_t byte = map->data[index / 8];
 
     return (byte & (1u << (index % 8))) ? 1 : 0;
 }
