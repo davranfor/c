@@ -11,7 +11,7 @@ typedef struct binmap binmap;
 
 binmap *binmap_create(size_t);
 int binmap_set(binmap *, size_t, int);
-int binmap_get(binmap *, size_t);
+int binmap_get(const binmap *, size_t);
 void binmap_destroy(binmap *);
 
 #endif /* BINMAP_H */

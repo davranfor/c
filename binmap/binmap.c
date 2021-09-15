@@ -105,7 +105,7 @@ int binmap_set(binmap *map, size_t index, int value)
  * Get the boolean value at index
  * Returns the boolean value of index or 0 if index doesn't exist
  */
-int binmap_get(binmap *map, size_t index)
+int binmap_get(const binmap *map, size_t index)
 {
     if (index >= map->size)
     {
