@@ -153,7 +153,7 @@ static const char *json_scan(const char **left, const char **right)
         {
             return NULL;
         }
-        /* Si es un espacio */
+        /* Si no es un espacio */
         if (!json_isspace(*str))
         {
             /* Si es el principio del token */
@@ -180,18 +180,18 @@ static const char *json_scan(const char **left, const char **right)
 }
 
 /* Devuelve un nuevo nombre o valor alojado en memoria fresca escapando caracteres especiales */
-static char *json_copy(const char *str, size_t size)
+static char *json_copy(const char *str, size_t len)
 {
-    char *new = malloc(size + 1);
+    char *ptr = malloc(len + 1);
 
-    if (new == NULL)
+    if (ptr == NULL)
     {
         return NULL;
     }
 
     size_t n = 0;
 
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < len; i++)
     {
         /* Si el carácter es un escape '\' */
         if (str[i] == '\\')
@@ -202,25 +202,25 @@ static char *json_copy(const char *str, size_t size)
                 case '\\':
                 case '/':
                 case '"':
-                    new[n++] = str[i];
+                    ptr[n++] = str[i];
                     break;
                 case 'b':
-                    new[n++] = '\b';
+                    ptr[n++] = '\b';
                     break;
                 case 'f':
-                    new[n++] = '\f';
+                    ptr[n++] = '\f';
                     break;
                 case 'n':
-                    new[n++] = '\n';
+                    ptr[n++] = '\n';
                     break;
                 case 'r':
-                    new[n++] = '\r';
+                    ptr[n++] = '\r';
                     break;
                 case 't':
-                    new[n++] = '\t';
+                    ptr[n++] = '\t';
                     break;
                 case 'u':
-                    n += json_unicode(str + i, new + n);
+                    n += json_unicode(str + i, ptr + n);
                     i += 4;
                     break;
                 /* No debería llegar aquí */
@@ -231,16 +231,16 @@ static char *json_copy(const char *str, size_t size)
         /* Si es una comilla '"', la salta */
         else if (str[i] != '"')
         {
-            new[n++] = str[i];
+            ptr[n++] = str[i];
         }
     }
-    new[n] = '\0';
-    return new;
+    ptr[n] = '\0';
+    return ptr;
 }
 
 static char *json_set_name(json *node, const char *left, const char *right)
 {
-    size_t size = (size_t)(right - left + 1);
+    size_t len = (size_t)(right - left + 1);
 
     /* Si no empieza y acaba con comillas */
     if ((*left != '"') || (*right != '"'))
@@ -248,28 +248,28 @@ static char *json_set_name(json *node, const char *left, const char *right)
         return NULL;
     }
     /* Asigna el nombre */
-    node->name = json_copy(left, size);
+    node->name = json_copy(left, len);
     return node->name;
 }
 
 static char *json_set_value(json *node, const char *left, const char *right)
 {
-    size_t size = (size_t)(right - left + 1);
+    size_t len = (size_t)(right - left + 1);
 
     /* Asigna el tipo */
     if ((*left == '"') && (*right == '"'))
     {
         node->type = JSON_STRING;
     }
-    else if ((size == 4) && (strncmp(left, "null", size) == 0))
+    else if ((len == 4) && (strncmp(left, "null", len) == 0))
     {
         node->type = JSON_NULL;
     }
-    else if ((size == 4) && (strncmp(left, "true", size) == 0))
+    else if ((len == 4) && (strncmp(left, "true", len) == 0))
     {
         node->type = JSON_BOOLEAN;
     }
-    else if ((size == 5) && (strncmp(left, "false", size) == 0))
+    else if ((len == 5) && (strncmp(left, "false", len) == 0))
     {
         node->type = JSON_BOOLEAN;
     }
@@ -285,7 +285,7 @@ static char *json_set_value(json *node, const char *left, const char *right)
         node->type = JSON_NUMBER;
     }
     /* Asigna el valor */
-    node->value = json_copy(left, size);
+    node->value = json_copy(left, len);
     return node->value;
 }
 
