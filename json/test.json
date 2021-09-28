@@ -267,6 +267,8 @@
       }
     ],
     "greeting": "Hello, Hunt Cash! You have 4 unread messages.",
-    "favoriteFruit": "strawberry"
+    "favoriteFruit": "strawberry",
+    "UCN example": "ñ = [\u00f1]"
   }
 ]
+

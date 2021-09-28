@@ -182,46 +182,47 @@ static const char *json_scan(const char **left, const char **right)
 /* Devuelve un nuevo nombre o valor alojado en memoria fresca escapando caracteres especiales */
 static char *json_copy(const char *str, size_t len)
 {
-    char *ptr = malloc(len + 1);
+    char *buf = malloc(len + 1);
 
-    if (ptr == NULL)
+    if (buf == NULL)
     {
         return NULL;
     }
 
-    size_t n = 0;
+    const char *end = str + len;
+    char *ptr = buf;
 
-    for (size_t i = 0; i < len; i++)
+    while (str < end)
     {
         /* Si el carácter es un escape '\' */
-        if (str[i] == '\\')
+        if (*str == '\\')
         {
-            switch (str[++i])
+            switch (*++str)
             {
                 /* Si es un código de escape válido lo transforma */
                 case '\\':
                 case '/':
                 case '"':
-                    ptr[n++] = str[i];
+                    *ptr++ = *str;
                     break;
                 case 'b':
-                    ptr[n++] = '\b';
+                    *ptr++ = '\b';
                     break;
                 case 'f':
-                    ptr[n++] = '\f';
+                    *ptr++ = '\f';
                     break;
                 case 'n':
-                    ptr[n++] = '\n';
+                    *ptr++ = '\n';
                     break;
                 case 'r':
-                    ptr[n++] = '\r';
+                    *ptr++ = '\r';
                     break;
                 case 't':
-                    ptr[n++] = '\t';
+                    *ptr++ = '\t';
                     break;
                 case 'u':
-                    n += json_unicode(str + i, ptr + n);
-                    i += 4;
+                    ptr += json_unicode(str, ptr);
+                    str += 4;
                     break;
                 /* No debería llegar aquí */
                 default:
@@ -229,13 +230,14 @@ static char *json_copy(const char *str, size_t len)
             }
         }
         /* Si es una comilla '"', la salta */
-        else if (str[i] != '"')
+        else if (*str != '"')
         {
-            ptr[n++] = str[i];
+            *ptr++ = *str;
         }
+        str++;
     }
-    ptr[n] = '\0';
-    return ptr;
+    *ptr = '\0';
+    return buf;
 }
 
 static char *json_set_name(json *node, const char *left, const char *right)
@@ -831,17 +833,17 @@ void json_free(json *node)
  * Convierte una cadena en una cadena json entrecomillada escapando carácteres especiales
  * Devuelve el tamaño de la cadena final en bytes
  */
-size_t json_encode(char *dst, const char *src)
+size_t json_encode(char *buf, const char *str)
 {
     #define JSON_CONCAT(c) *(ptr++) = c
     #define JSON_ENCODE(c) JSON_CONCAT('\\'); JSON_CONCAT(c)
 
-    char *ptr = dst;
+    char *ptr = buf;
 
     JSON_CONCAT('"');
-    while (*src != '\0')
+    while (*str != '\0')
     {
-        switch (*src)
+        switch (*str)
         {
             case '\\':
                 JSON_ENCODE('\\');
@@ -868,13 +870,13 @@ size_t json_encode(char *dst, const char *src)
                 JSON_ENCODE('t');
                 break;
             default:
-                JSON_CONCAT(*src);
+                JSON_CONCAT(*str);
                 break;
         }
-        src++;
+        str++;
     }
     JSON_CONCAT('"');
     *ptr = '\0';
-    return (size_t)(ptr - dst);
+    return (size_t)(ptr - buf);
 }
 
