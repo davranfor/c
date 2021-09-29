@@ -348,51 +348,50 @@ char *string_rtrim(const char *str)
     return string_slice(str, 0, string_rskip(str, isspace));
 }
 
-char *string_reverse(char *ptr, const char *str)
+char *string_reverse(char *buf, const char *str)
 {
     size_t len = strlen(str);
-    char *buf = malloc(len + 1);
 
     if (buf == NULL)
     {
-        return NULL;
+        buf = malloc(len + 1);
+        if (buf == NULL)
+        {
+            return NULL;
+        }
     }
-    buf += len;
-    while (*str != '\0')
+
+    // First pass. Reverse all bytes
+    for (size_t head = 0, tail = len; head < tail; head++)
     {
-        // if not ASCII (multibytes are not reversed)
-        if ((*str & 0x80) != 0x00)
+        char temp = str[--tail];
+
+        buf[tail] = str[head];
+        buf[head] = temp;
+    }
+    buf[len] = '\0';
+
+    // Second pass. Reverse multibytes
+    for (char *ptr = buf; *ptr != '\0'; ptr++)
+    {
+        if ((*ptr & 0x80) != 0x00)
         {
             size_t mbs = 1;
 
-            // while not first byte
-            while ((str[mbs] & 0xc0) == 0x80)
+            while ((ptr[mbs] & 0xc0) == 0x80)
             {
                 mbs++;
             }
-            buf -= mbs;
-            for (size_t pos = 0; pos < mbs; pos++)
+            for (char *end = ptr + mbs; ptr <= end;)
             {
-                buf[pos] = str[pos];
+                char temp = *end;
+
+                *end-- = *ptr;
+                *ptr++ = temp;
             }
-            str += mbs;
-        }
-        else
-        {
-            *--buf = *str++;
         }
     }
-    buf[len] = '\0';
-    if (ptr != NULL)
-    {
-        memcpy(ptr, buf, len + 1);
-        free(buf);
-        return ptr;
-    }
-    else
-    {
-        return buf;
-    }
+    return buf;
 }
 
 char *string_convert(char *ptr, const char *str, int (*func)(int))
