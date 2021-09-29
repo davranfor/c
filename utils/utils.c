@@ -438,7 +438,7 @@ char *string_repeat(char *ptr, const char *str, size_t count)
     {
         for (size_t iter = 0; iter < count; iter++)
         {
-            memcpy(ptr + (iter * len), str, len);
+            memmove(ptr + (iter * len), str, len);
         }
     }
     ptr[count * len] = '\0';
@@ -536,45 +536,36 @@ size_t string_length(const char *str)
     return len;
 }
 
-static size_t string_count_char(const char *str, char chr)
-{
-    size_t count = 0;
-
-    while (*str != '\0')
-    {
-        if (*str++ == chr)
-        {
-            count++;
-        }
-    }
-    return count;
-}
-
 size_t string_count(const char *str, const char *substr)
 {
     size_t len = strlen(substr);
-
-    if (len == 0)
-    {
-        return 0;
-    }
-    if (len == 1)
-    {
-        return string_count_char(str, substr[0]);
-    }
-
     size_t count = 0;
 
-    while (*str != '\0')
+    if (len == 1)
     {
-        if ((*str == *substr) && (memcmp(str, substr, len) == 0))
+        char chr = substr[0];
+
+        while (*str != '\0')
         {
-            str += len;
-            count++;
+            if (*str++ == chr)
+            {
+                count++;
+            }
         }
-        else
+    }
+    else
+    {
+        while (*str != '\0')
         {
-            str++;
+            if ((*str == *substr) && (memcmp(str, substr, len) == 0))
+            {
+                str += len;
+                count++;
+            }
+            else
+            {
+                str++;
+            }
         }
     }
     return count;
