@@ -528,10 +528,11 @@ size_t string_length(const char *str)
 
     while (*str != 0)
     {
-        if ((*str++ & 0xc0) != 0x80)
+        if ((*str & 0xc0) != 0x80)
         {
             len++;
         }
+        str++;
     }
     return len;
 }
@@ -547,10 +548,11 @@ size_t string_count(const char *str, const char *substr)
 
         while (*str != '\0')
         {
-            if (*str++ == chr)
+            if (*str == chr)
             {
                 count++;
             }
+            str++;
         }
     }
     else
