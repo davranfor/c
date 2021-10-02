@@ -37,9 +37,8 @@ klist *klist_create(size_t size)
     return list;
 }
 
-#define klist_const_node(list, data) ((const void *)((uintptr_t)data + list->szof))
-#define klist_node(list, data) ((void *)((uintptr_t)data + list->szof))
-#define klist_data(list, node) ((void *)((uintptr_t)node - list->szof))
+#define klist_node(list, data) ((void *)((uintptr_t)(const void *)data + list->szof))
+#define klist_data(list, node) ((void *)((uintptr_t)(const void *)node - list->szof))
 
 void *klist_push_head(klist *list)
 {
@@ -239,7 +238,7 @@ void *klist_prev(const klist *list, const void *data)
 {
     if (data != NULL)
     {
-        const struct node *node = klist_const_node(list, data);
+        const struct node *node = klist_node(list, data);
 
         if (node->prev != NULL)
         {
@@ -253,7 +252,7 @@ void *klist_next(const klist *list, const void *data)
 {
     if (data != NULL)
     {
-        const struct node *node = klist_const_node(list, data);
+        const struct node *node = klist_node(list, data);
 
         if (node->next != NULL)
         {
