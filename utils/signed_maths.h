@@ -4,16 +4,16 @@
 #include <stdint.h>
 #include <limits.h>
 
-#define SIGNED_MATHS                                        \
-    X(char, signed char, SCHAR_MIN, SCHAR_MAX, UCHAR_MAX)   \
-    X(short, short, SHRT_MIN, SHRT_MAX, USHRT_MAX)          \
-    X(int, int, INT_MIN, INT_MAX, UINT_MAX)                 \
-    X(long, long, LONG_MIN, LONG_MAX, ULONG_MAX)            \
-    X(llong, long long, LLONG_MIN, LLONG_MAX, ULLONG_MAX)   \
-    X(int8, int8_t, INT8_MIN, INT8_MAX, UINT8_MAX)          \
-    X(int16, int16_t, INT16_MIN, INT16_MAX, UINT16_MAX)     \
-    X(int32, int32_t, INT32_MIN, INT32_MAX, UINT32_MAX)     \
-    X(int64, int64_t, INT64_MIN, INT64_MAX, UINT64_MAX)
+#define SIGNED_MATHS                                                \
+    X(char, signed char, unsigned char, SCHAR_MIN, SCHAR_MAX)       \
+    X(short, short, unsigned short, SHRT_MIN, SHRT_MAX)             \
+    X(int, int, unsigned int, INT_MIN, INT_MAX )                    \
+    X(long, long, unsigned long, LONG_MIN, LONG_MAX)                \
+    X(llong, long long, unsigned long long, LLONG_MIN, LLONG_MAX)   \
+    X(int8, int8_t, uint8_t, INT8_MIN, INT8_MAX)                    \
+    X(int16, int16_t, uint16_t, INT16_MIN, INT16_MAX)               \
+    X(int32, int32_t, uint32_t, INT32_MIN, INT32_MAX)               \
+    X(int64, int64_t, uint64_t, INT64_MIN, INT64_MAX)
 
 /* Prototypes */
 #define X(name, type, min, max, umax)       \
