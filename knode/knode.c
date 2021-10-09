@@ -12,7 +12,7 @@ struct knode
 {
     void *head;
     void *tail;
-    size_t szof;
+    size_t offset;
     size_t size;
 };
 
@@ -25,16 +25,16 @@ knode *knode_create(size_t size)
         size_t align = alignof(uintptr_t);
 
         // Round size up to nearest multiple of alignof(uintptr_t)
-        list->szof = (size + (align - 1)) / align * align;
+        list->offset = (size + (align - 1)) / align * align;
     }
     return list;
 }
 
-#define knode_addr(list, data) ((uintptr_t *)((uintptr_t)data + list->szof))
+#define knode_addr(list, data) ((uintptr_t *)((uintptr_t)data + list->offset))
 
 void *knode_push_head(knode *list)
 {
-    void *data = calloc(1, list->szof + sizeof(uintptr_t));
+    void *data = calloc(1, list->offset + sizeof(uintptr_t));
 
     if (data == NULL)
     {
@@ -56,7 +56,7 @@ void *knode_push_head(knode *list)
 
 void *knode_push_tail(knode *list)
 {
-    void *data = calloc(1, list->szof + sizeof(uintptr_t));
+    void *data = calloc(1, list->offset + sizeof(uintptr_t));
 
     if (data == NULL)
     {
