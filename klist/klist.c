@@ -19,7 +19,7 @@ struct klist
 {
     struct node *head;
     struct node *tail;
-    size_t szof;
+    size_t offset;
     size_t size;
 };
 
@@ -32,17 +32,17 @@ klist *klist_create(size_t size)
         size_t align = alignof(struct node);
 
         // Round size up to nearest multiple of alignof(struct node)
-        list->szof = (size + (align - 1)) / align * align;
+        list->offset = (size + (align - 1)) / align * align;
     }
     return list;
 }
 
-#define klist_node(list, data) ((void *)((uintptr_t)(const void *)data + list->szof))
-#define klist_data(list, node) ((void *)((uintptr_t)(const void *)node - list->szof))
+#define klist_node(list, data) ((void *)((uintptr_t)(const void *)data + list->offset))
+#define klist_data(list, node) ((void *)((uintptr_t)(const void *)node - list->offset))
 
 void *klist_push_head(klist *list)
 {
-    void *data = calloc(1, list->szof + sizeof(struct node));
+    void *data = calloc(1, list->offset + sizeof(struct node));
 
     if (data == NULL)
     {
@@ -67,7 +67,7 @@ void *klist_push_head(klist *list)
 
 void *klist_push_tail(klist *list)
 {
-    void *data = calloc(1, list->szof + sizeof(struct node));
+    void *data = calloc(1, list->offset + sizeof(struct node));
 
     if (data == NULL)
     {
@@ -174,7 +174,7 @@ void *klist_insert(klist *list, size_t index)
         return klist_push_tail(list);
     }
 
-    void *data = calloc(1, list->szof + sizeof(struct node));
+    void *data = calloc(1, list->offset + sizeof(struct node));
 
     if (data == NULL)
     {
