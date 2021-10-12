@@ -86,6 +86,9 @@ void *klist_pop_head(klist *list)
     {
         return NULL;
     }
+
+    void *data = node->data;
+
     list->head = node->next;
     if (node->next != NULL)
     {
@@ -97,7 +100,7 @@ void *klist_pop_head(klist *list)
         list->tail = NULL;
     }
     list->size--;
-    return node->data;
+    return data;
 }
 
 void *klist_pop_tail(klist *list)
@@ -108,6 +111,9 @@ void *klist_pop_tail(klist *list)
     {
         return NULL;
     }
+
+    void *data = node->data;
+
     list->tail = node->prev;
     if (node->prev != NULL)
     {
@@ -119,7 +125,7 @@ void *klist_pop_tail(klist *list)
         list->head = NULL;
     }
     list->size--;
-    return node->data;
+    return data;
 }
 
 static struct node *klist_get(const klist *list, size_t index)
@@ -258,11 +264,6 @@ size_t klist_size(const klist *list)
     return list->size;
 }
 
-void klist_free(void *data)
-{
-    free((char *)data - offsetof(struct node, data));
-}
-
 static struct node *split(struct node *head)
 {
     struct node *fast = head;
@@ -280,32 +281,6 @@ static struct node *split(struct node *head)
     return temp;
 }
 
-/* Recursive version causing stack overflow on large datatsets
-static struct node *merge(const klist *list, struct node *head, struct node *tail,
-                          int (*comp)(const void *, const void *))
-{
-    if (head == NULL)
-    {
-        return tail;
-    }
-    if (tail == NULL)
-    {
-        return head;
-    }
-    if (comp(klist_data(list, head), klist_data(list, tail)) <= 0)
-    {
-        head->next = merge(list, head->next, tail, comp);
-        return head;
-    }
-    else
-    {
-        tail->next = merge(list, head, tail->next, comp);
-        return tail;
-    }
-}
-*/
-
-/* Iterative version */
 static struct node *merge(struct node *head, struct node *tail,
                           int (*comp)(const void *, const void *))
 {
@@ -428,6 +403,14 @@ void klist_reverse(klist *list)
         head->prev = head->next;
         head->next = temp;            
         head = head->prev;
+    }
+}
+
+void klist_free(void *data)
+{
+    if (data != NULL)
+    {
+        free((char *)data - offsetof(struct node, data));
     }
 }
 
