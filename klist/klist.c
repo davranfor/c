@@ -86,9 +86,6 @@ void *klist_pop_head(klist *list)
     {
         return NULL;
     }
-
-    void *data = node->data;
-
     list->head = node->next;
     if (node->next != NULL)
     {
@@ -100,7 +97,7 @@ void *klist_pop_head(klist *list)
         list->tail = NULL;
     }
     list->size--;
-    return data;
+    return node->data;
 }
 
 void *klist_pop_tail(klist *list)
@@ -111,9 +108,6 @@ void *klist_pop_tail(klist *list)
     {
         return NULL;
     }
-
-    void *data = node->data;
-
     list->tail = node->prev;
     if (node->prev != NULL)
     {
@@ -125,7 +119,7 @@ void *klist_pop_tail(klist *list)
         list->head = NULL;
     }
     list->size--;
-    return data;
+    return node->data;
 }
 
 static struct node *klist_get(const klist *list, size_t index)
