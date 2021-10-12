@@ -39,7 +39,7 @@ static int comp(const void *pa, const void *pb)
 static void delete(void *data)
 {
     free(((struct data *)data)->value);
-    free(data);
+    klist_free(data);
 }
 
 static void print(const klist *list)
@@ -49,7 +49,7 @@ static void print(const klist *list)
     while (data != NULL)
     {
         printf("%d %s\n", data->key, data->value);
-        data = klist_next(list, data);
+        data = klist_next(data);
     }
 }
 

@@ -5,52 +5,43 @@
  */
 
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdalign.h>
+#include <stddef.h>
 #include "klist.h"
 
 struct node
 {
     struct node *prev;
     struct node *next;
+    max_align_t data[];
 };
 
 struct klist
 {
     struct node *head;
     struct node *tail;
-    size_t offset;
+    size_t room;
     size_t size;
 };
 
-klist *klist_create(size_t size)
+klist *klist_create(size_t room)
 {
     klist *list = calloc(1, sizeof *list);
 
     if (list != NULL)
     {
-        size_t align = alignof(struct node);
-
-        // Round size up to nearest multiple of alignof(struct node)
-        list->offset = (size + (align - 1)) / align * align;
+        list->room = room;
     }
     return list;
 }
 
-#define klist_node(list, data) ((void *)((uintptr_t)(const void *)data + list->offset))
-#define klist_data(list, node) ((void *)((uintptr_t)(const void *)node - list->offset))
-
 void *klist_push_head(klist *list)
 {
-    void *data = calloc(1, list->offset + sizeof(struct node));
+    struct node *node = calloc(1, sizeof(struct node) + list->room);
 
-    if (data == NULL)
+    if (node == NULL)
     {
         return NULL;
     }
-
-    struct node *node = klist_node(list, data);
-
     if (list->head != NULL)
     {
         list->head->prev = node;
@@ -62,20 +53,17 @@ void *klist_push_head(klist *list)
     }
     list->head = node;
     list->size++;
-    return data;
+    return node->data;
 }
 
 void *klist_push_tail(klist *list)
 {
-    void *data = calloc(1, list->offset + sizeof(struct node));
+    struct node *node = calloc(1, sizeof(struct node) + list->room);
 
-    if (data == NULL)
+    if (node == NULL)
     {
         return NULL;
     }
-
-    struct node *node = klist_node(list, data);
-
     if (list->tail != NULL)
     {
         list->tail->next = node;
@@ -87,7 +75,7 @@ void *klist_push_tail(klist *list)
     }
     list->tail = node;
     list->size++;
-    return data;
+    return node->data;
 }
 
 void *klist_pop_head(klist *list)
@@ -99,7 +87,7 @@ void *klist_pop_head(klist *list)
         return NULL;
     }
 
-    void *data = klist_data(list, node);
+    void *data = node->data;
 
     list->head = node->next;
     if (node->next != NULL)
@@ -124,7 +112,7 @@ void *klist_pop_tail(klist *list)
         return NULL;
     }
 
-    void *data = klist_data(list, node);
+    void *data = node->data;
 
     list->tail = node->prev;
     if (node->prev != NULL)
@@ -174,14 +162,13 @@ void *klist_insert(klist *list, size_t index)
         return klist_push_tail(list);
     }
 
-    void *data = calloc(1, list->offset + sizeof(struct node));
+    struct node *node = calloc(1, sizeof(struct node) + list->room);
 
-    if (data == NULL)
+    if (node == NULL)
     {
         return NULL;
     }
 
-    struct node *node = klist_node(list, data); 
     struct node *curr = klist_get(list, index);
 
     curr->prev->next = node;
@@ -189,7 +176,7 @@ void *klist_insert(klist *list, size_t index)
     curr->prev = node;
     node->next = curr;
     list->size++;
-    return data;
+    return node->data;
 }
 
 void *klist_delete(klist *list, size_t index)
@@ -208,12 +195,11 @@ void *klist_delete(klist *list, size_t index)
     }
 
     struct node *node = klist_get(list, index);
-    void *data = klist_data(list, node);
 
     node->prev->next = node->next;
     node->next->prev = node->prev;
     list->size--;
-    return data;
+    return node->data;
 }
 
 void *klist_index(const klist *list, size_t index)
@@ -222,41 +208,43 @@ void *klist_index(const klist *list, size_t index)
     {
         return NULL;
     }
-    return klist_data(list, klist_get(list, index));
+    return klist_get(list, index)->data;
 }
 
 void *klist_head(const klist *list)
 {
     if (list->head != NULL)
     {
-        return klist_data(list, list->head);
+        return list->head->data;
     }
     return NULL;
 }
 
-void *klist_prev(const klist *list, const void *data)
+void *klist_prev(const void *data)
 {
     if (data != NULL)
     {
-        const struct node *node = klist_node(list, data);
+        const struct node *node = (const struct node *)
+            ((const char *)data - offsetof(struct node, data));
 
-        if (node->prev != NULL)
+        if (node->next != NULL)
         {
-            return klist_data(list, node->prev);
+            return node->prev->data;
         }
     }
     return NULL;
 }
 
-void *klist_next(const klist *list, const void *data)
+void *klist_next(const void *data)
 {
     if (data != NULL)
     {
-        const struct node *node = klist_node(list, data);
+        const struct node *node = (const struct node *)
+            ((const char *)data - offsetof(struct node, data));
 
         if (node->next != NULL)
         {
-            return klist_data(list, node->next);
+            return node->next->data;
         }
     }
     return NULL;
@@ -266,7 +254,7 @@ void *klist_tail(const klist *list)
 {
     if (list->tail != NULL)
     {
-        return klist_data(list, list->tail);
+        return list->tail->data;
     }
     return NULL;
 }
@@ -274,6 +262,11 @@ void *klist_tail(const klist *list)
 size_t klist_size(const klist *list)
 {
     return list->size;
+}
+
+void klist_free(void *data)
+{
+    free((char *)data - offsetof(struct node, data));
 }
 
 static struct node *split(struct node *head)
@@ -319,7 +312,7 @@ static struct node *merge(const klist *list, struct node *head, struct node *tai
 */
 
 /* Iterative version */
-static struct node *merge(const klist *list, struct node *head, struct node *tail,
+static struct node *merge(struct node *head, struct node *tail,
                           int (*comp)(const void *, const void *))
 {
     if (head == NULL)
@@ -339,7 +332,7 @@ static struct node *merge(const klist *list, struct node *head, struct node *tai
 
         tail = tail->next;
         prev->next = NULL;
-        if (comp(klist_data(list, head), klist_data(list, prev)) > 0)
+        if (comp(head->data, prev->data) > 0)
         {
             prev->next = head;
             head = prev;
@@ -354,7 +347,7 @@ static struct node *merge(const klist *list, struct node *head, struct node *tai
                 curr = curr->next;
                 break;
             }
-            else if (comp(klist_data(list, curr->next), klist_data(list, prev)) <= 0)
+            else if (comp(curr->next->data, prev->data) <= 0)
             {
                 curr = curr->next;
                 continue;
@@ -373,7 +366,7 @@ static struct node *merge(const klist *list, struct node *head, struct node *tai
     return head;
 }
 
-static struct node *sort(klist *list, struct node *head,
+static struct node *sort(struct node *head,
                          int (*comp)(const void *, const void *))
 {
     if ((head == NULL) || (head->next == NULL))
@@ -383,9 +376,9 @@ static struct node *sort(klist *list, struct node *head,
 
     struct node *tail = split(head);
 
-    head = sort(list, head, comp);
-    tail = sort(list, tail, comp);
-    return merge(list, head, tail, comp);
+    head = sort(head, comp);
+    tail = sort(tail, comp);
+    return merge(head, tail, comp);
 }
 
 /** 
@@ -397,7 +390,7 @@ void klist_sort(klist *list, int (*comp)(const void *, const void *))
 {
     if (list->size > 1)
     {
-        list->head = sort(list, list->head, comp);
+        list->head = sort(list->head, comp);
         list->head->prev = NULL;
 
         struct node *node = list->head;
@@ -418,11 +411,9 @@ void *klist_search(const klist *list, const void *data,
 
     for (iter = list->head; iter != NULL; iter = iter->next)
     {
-        void *curr = klist_data(list, iter);
-
-        if (comp(curr, data) == 0)
+        if (comp(iter->data, data) == 0)
         {
-            return curr;
+            return iter->data;
         }
     }
     return NULL;
@@ -458,7 +449,7 @@ void klist_clear(klist *list, void (*func)(void *))
         node->next = NULL;
         if (func != NULL)
         {
-            func(klist_data(list, node));
+            func(node->data);
         }
         node = next;
     }
