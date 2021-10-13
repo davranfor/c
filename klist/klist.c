@@ -276,7 +276,7 @@ static struct node *split(struct node *head)
 }
 
 static struct node *merge(struct node *head, struct node *tail,
-                          int (*comp)(const void *, const void *))
+    int (*comp)(const void *, const void *))
 {
     if (head == NULL)
     {
@@ -330,7 +330,7 @@ static struct node *merge(struct node *head, struct node *tail,
 }
 
 static struct node *sort(struct node *head,
-                         int (*comp)(const void *, const void *))
+    int (*comp)(const void *, const void *))
 {
     if ((head == NULL) || (head->next == NULL))
     {
@@ -346,8 +346,8 @@ static struct node *sort(struct node *head,
 
 /** 
  * Merge sort:
- * Since we need to update the tail, we use a singly linked list sort approach and
- * adjust the `prev` nodes and `list->tail` at the end
+ * Since we need to update the tail, we use a singly linked list sort
+ * approach and adjust the `prev` nodes and `list->tail` at the end
  */
 void klist_sort(klist *list, int (*comp)(const void *, const void *))
 {
@@ -368,7 +368,7 @@ void klist_sort(klist *list, int (*comp)(const void *, const void *))
 }
 
 void *klist_search(const klist *list, const void *data,
-                   int (*comp)(const void *, const void *))
+    int (*comp)(const void *, const void *))
 {
     struct node *iter;
 
