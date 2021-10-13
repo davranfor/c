@@ -28,10 +28,12 @@ static char *keytostr(int key)
     return str;
 }
 
-static void delete(void *data)
+static int comp(const void *pa, const void *pb)
 {
-    free(((struct data *)data)->value);
-    free(data);
+    const struct data *a = pa;
+    const struct data *b = pb;
+
+    return a->key < b->key ? -1 : a->key > b->key;
 }
 
 static void print(const deque *list)
@@ -39,10 +41,16 @@ static void print(const deque *list)
     const void *iter = list;
     const struct data *data;
 
-    while ((data = deque_fetch(list, &iter)))
+    while ((data = deque_next(list, &iter)))
     {
         printf("%d %s\n", data->key, data->value);
     }
+}
+
+static void delete(void *data)
+{
+    free(((struct data *)data)->value);
+    free(data);
 }
 
 static deque *list;
@@ -60,7 +68,7 @@ int main(void)
     list = deque_create();
     if (list == NULL)
     {
-        perror("deque_create");
+        perror("list_create");
         exit(EXIT_FAILURE);
     }
 
@@ -94,13 +102,30 @@ int main(void)
         data->key = key;
         data->value = keytostr(key);
     }
-    print(list);
     printf("%zu elements:\n", deque_size(list));
-    while ((data = deque_pop(list)))
+    puts("Unsorted:");
+    print(list);
+    deque_sort(list, comp);
+    puts("Sorted:");
+    print(list);
+    deque_reverse(list);
+    puts("Reversed:");
+    print(list);
+    printf("Search item %d:\n", size / 2);
+    data = deque_search(list, &(struct data){size / 2, NULL}, comp);
+    if (data != NULL)
+    {
+        printf("Found %d %s\n", data->key, data->value);
+    }
+    printf("Delete item %zu:\n", deque_size(list) / 2);
+    data = deque_delete(list, deque_size(list) / 2);
+    if (data != NULL)
     {
         printf("%d %s\n", data->key, data->value);
         delete(data);
     }
+    puts("Final:");
+    print(list);
     return 0;
 }
 
