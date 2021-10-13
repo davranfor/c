@@ -385,8 +385,8 @@ static struct node *sort(struct node *head,
 
 /** 
  * Merge sort:
- * Since we need to update the tail, we use a singly linked list sort approach and
- * adjust the `prev` nodes and `list->tail` at the end
+ * Since we need to update the tail, we use a singly linked list sort
+ * approach and adjust the `prev` nodes and `list->tail` at the end
  */
 void deque_sort(deque *list, int (*comp)(const void *, const void *))
 {
