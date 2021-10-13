@@ -23,7 +23,8 @@ void *deque_next(const deque *, const void **);
 void *deque_tail(const deque *);
 size_t deque_size(const deque *);
 void deque_sort(deque *, int (*)(const void *, const void *));
-void *deque_search(const deque *, const void *, int (*)(const void *, const void *));
+void *deque_search(const deque *, const void *,
+    int (*)(const void *, const void *));
 void deque_reverse(const deque *);
 void deque_clear(deque *, void (*)(void *));
 void deque_destroy(deque *, void (*)(void *));
