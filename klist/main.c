@@ -36,12 +36,6 @@ static int comp(const void *pa, const void *pb)
     return a->key < b->key ? -1 : a->key > b->key;
 }
 
-static void delete(void *data)
-{
-    free(((struct data *)data)->value);
-    klist_free(data);
-}
-
 static void print(const klist *list)
 {
     const struct data *data = klist_head(list);
@@ -51,6 +45,12 @@ static void print(const klist *list)
         printf("%d %s\n", data->key, data->value);
         data = klist_next(data);
     }
+}
+
+static void delete(void *data)
+{
+    free(((struct data *)data)->value);
+    klist_free(data);
 }
 
 static klist *list;
