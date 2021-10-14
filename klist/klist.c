@@ -192,6 +192,8 @@ void *klist_delete(klist *list, size_t index)
 
     node->prev->next = node->next;
     node->next->prev = node->prev;
+    node->prev = NULL;
+    node->next = NULL;
     list->size--;
     return node->data;
 }
