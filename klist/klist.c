@@ -372,13 +372,13 @@ void klist_sort(klist *list, int (*comp)(const void *, const void *))
 void *klist_search(const klist *list, const void *data,
     int (*comp)(const void *, const void *))
 {
-    struct node *iter;
+    struct node *node;
 
-    for (iter = list->head; iter != NULL; iter = iter->next)
+    for (node = list->head; node != NULL; node = node->next)
     {
-        if (comp(iter->data, data) == 0)
+        if (comp(node->data, data) == 0)
         {
-            return iter->data;
+            return node->data;
         }
     }
     return NULL;
