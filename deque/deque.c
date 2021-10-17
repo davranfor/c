@@ -409,13 +409,13 @@ void deque_sort(deque *list, int (*comp)(const void *, const void *))
 void *deque_search(const deque *list, const void *data,
     int (*comp)(const void *, const void *))
 {
-    const struct node *iter;
+    const struct node *node;
 
-    for (iter = list->head; iter != NULL; iter = iter->next)
+    for (node = list->head; node != NULL; node = node->next)
     {
-        if (comp(iter->data, data) == 0)
+        if (comp(node->data, data) == 0)
         {
-            return iter->data;
+            return node->data;
         }
     }
     return NULL;
