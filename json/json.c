@@ -658,11 +658,11 @@ json *json_parse(const char *text)
 /* Devuelve el nodo padre */
 json *json_parent(const json *node)
 {
-    if (node != NULL)
+    if (node == NULL)
     {
-        return node->parent;
+        return NULL;
     }
-    return NULL;
+    return node->parent;
 }
 
 /* Localiza un nodo por clave recorriendo los nodos derechos del nodo pasado */
@@ -704,11 +704,11 @@ json *json_child(const json *node, const char *name)
 /* Devuelve el nodo hermano */
 json *json_next(const json *node)
 {
-    if (node != NULL)
+    if (node == NULL)
     {
-        return node->right;
+        return NULL;
     }
-    return NULL;
+    return node->right;
 }
 
 /* Localiza un nodo por offset recorriendo los nodos derechos del nodo pasado */
