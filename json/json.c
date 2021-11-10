@@ -452,14 +452,11 @@ static json *json_build(json *node, const char *left)
 /* Devuelve el tipo de un nodo */
 enum json_type json_type(const json *node)
 {
-    if (node != NULL)
-    {
-        return node->type;
-    }
-    else
+    if (node == NULL)
     {
         return JSON_NONE;
     }
+    return node->type;
 }
 
 /* Devuelve el label de un nodo */
