@@ -3,6 +3,24 @@
 #include <locale.h>
 #include "json.h"
 
+static char *read(FILE *file, size_t size)
+{
+    char *str = malloc(size + 1);
+
+    if (str != NULL)
+    {
+        if (fread(str, 1, size, file) == size)
+        {
+            str[size] = '\0';
+        }
+        else
+        {
+            free(str);
+        }
+    }
+    return str;
+}
+
 static char *read_file(const char *path)
 {
     FILE *file = fopen(path, "rb");
@@ -14,53 +32,32 @@ static char *read_file(const char *path)
 
     char *str = NULL;
 
-    do
+    if (fseek(file, 0L, SEEK_END) != -1)
     {
-        if (fseek(file, 0L, SEEK_END) == -1)
+        long size = ftell(file);
+
+        if ((size != -1) && (fseek(file, 0L, SEEK_SET) != -1))
         {
-            break;
-        }
-
-        long tell = ftell(file);
-
-        if ((tell == -1) || (fseek(file, 0L, SEEK_SET) == -1))
-        {
-            break;
-        }
-
-        size_t size = (size_t)tell;
-
-        str = malloc(size + 1);
-        if (str != NULL)
-        {
-            if (fread(str, 1, size, file) == size)
-            {
-                str[size] = '\0';
-            }
-            else
-            {
-                free(str);
-            }
+            str = read(file, (size_t)size);
         }
     }
-    while (0);
     fclose(file);
     return str;
 }
 
 static json *read_json(const char *path)
 {
-    char *text = read_file(path);
+    char *str = read_file(path);
 
-    if (text == NULL)
+    if (str == NULL)
     {
         perror("read_json");
         exit(EXIT_FAILURE);
     }
 
-    json *node = json_parse(text);
+    json *node = json_parse(str);
 
-    free(text);
+    free(str);
     return node;
 }
 
@@ -68,8 +65,7 @@ int main(void)
 {
     setlocale(LC_CTYPE, "");
 
-    const char *path = "test.json";
-    json *node = read_json(path);
+    json *node = read_json("test.json");
 
     if (node == NULL)
     {
