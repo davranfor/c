@@ -43,7 +43,6 @@ char *string_reverse(char *, const char *);
 char *string_convert(char *, const char *, int (*)(int));
 char *string_repeat(char *, const char *, size_t);
 /* Functions working inplace */
-int string_format(char *, double, int, const char *);
 char *string_tokenize(char **, int);
 size_t string_length(const char *);
 size_t string_count(const char *, const char *);
@@ -52,28 +51,8 @@ size_t string_rskip(const char *, int(*)(int));
 int string_casecmp(const char *, const char *);
 
 /* ************************************************************************* */
-/* Date utilities                                                            */
-/* ************************************************************************* */
-
-void today(int *, int *, int *);
-void now(int *, int *, int *);
-void day_add(int *, int *, int *, int);
-int days_diff(int, int, int, int, int, int);
-int day_of_week(int, int, int);
-int ISO_day_of_week(int, int, int);
-int day_of_year(int, int, int);
-int week_of_month(int, int, int);
-int week_of_year(int, int, int);
-int month_days(int, int);
-int leap_years(int, int);
-int year_isleap(int);
-int date_isvalid(int, int, int);
-
-/* ************************************************************************* */
 /* Math utilities                                                            */
 /* ************************************************************************* */
-
-#define ISNULL(ptr) ((ptr) == NULL)
 
 #ifdef __GNUC__
 #define MIN(a, b) __extension__ \
@@ -95,6 +74,33 @@ int date_isvalid(int, int, int);
 
 int rrand(int);
 size_t multipleof(size_t, size_t);
+size_t integer_length(long);
+char *integer_format(char *, long, char);
+char *number_format(char *, double, size_t, char, char);
+
+/* ************************************************************************* */
+/* Date utilities                                                            */
+/* ************************************************************************* */
+
+void today(int *, int *, int *);
+void now(int *, int *, int *);
+void day_add(int *, int *, int *, int);
+int days_diff(int, int, int, int, int, int);
+int day_of_week(int, int, int);
+int ISO_day_of_week(int, int, int);
+int day_of_year(int, int, int);
+int week_of_month(int, int, int);
+int week_of_year(int, int, int);
+int month_days(int, int);
+int leap_years(int, int);
+int year_isleap(int);
+int date_isvalid(int, int, int);
+
+/* ************************************************************************* */
+/* Misc utilities                                                            */
+/* ************************************************************************* */
+
+#define ISNULL(ptr) ((ptr) == NULL)
 
 #endif /* UTILS_H */
 

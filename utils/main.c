@@ -84,14 +84,6 @@ static void sample_strings(void)
         puts("Strings are different");
     }
 
-    double number = 1234567.890;
-    char money[64];
-
-    string_format(money, number, 2, ",.");
-    printf("%.3f as money = %s\n", number, money);
-    string_format(money, number, 0, ",");
-    printf("%.3f as real = %s\n", number, money);
-
     char arr[] = "one,two,three";
     char *ptr = arr;
 
@@ -163,31 +155,6 @@ static void sample_files(void)
     }
 }
 
-static void sample_dates(void)
-{
-    puts("Sample dates:");
-
-    int day, month, year;
-    int hour, minutes, seconds;
-
-    today(&day, &month, &year);
-    now(&hour, &minutes, &seconds);
-    printf("Date (dd/mm/yyyy hh:mm:ss): %02d/%02d/%d %02d:%02d:%02d\n",
-        day, month, year, hour, minutes, seconds);
-    printf("Day of week: %d\n", day_of_week(day, month, year));
-    printf("Day of week (ISO 8601): %d\n", ISO_day_of_week(day, month, year));
-    printf("Day of year: %d\n", day_of_year(day, month, year));
-    printf("Week of month: %d\n", week_of_month(day, month, year));
-    printf("Week of year: %d\n", week_of_year(day, month, year));
-    printf("Days in this month: %d\n", month_days(month, year));
-    day_add(&day, &month, &year, -1);
-    printf("Yesterday: %02d/%02d/%d\n", day, month, year);
-    day_add(&day, &month, &year, +2);
-    printf("Tomorrow: %02d/%02d/%d\n", day, month, year);
-    printf("Days between 01/02/2000 and 01/02/2004: %d\n",
-        days_diff(1, 2, 2000, 1, 2, 2004));
-}
-
 #define print_array(format, array, elems)       \
 do                                              \
 {                                               \
@@ -222,6 +189,13 @@ static size_t deletion(int arr[], size_t size, size_t item)
 
 static void sample_maths(void)
 {
+    char str[64];
+
+    number_format(str, 1234567.890, 2, '.', ',');
+    printf("Number format: %s\n", str);
+    integer_format(str, 123456789, '.');
+    printf("Integer format: %s\n", str);
+
     // Randomize and deletion
     {
         /* Randomize */
@@ -281,14 +255,39 @@ static void sample_maths(void)
     // printf("   Abort protected %d + 42 = %d\n", INT_MAX, int_safe_add(INT_MAX, 42));
 }
 
+static void sample_dates(void)
+{
+    puts("Sample dates:");
+
+    int day, month, year;
+    int hour, minutes, seconds;
+
+    today(&day, &month, &year);
+    now(&hour, &minutes, &seconds);
+    printf("Date (dd/mm/yyyy hh:mm:ss): %02d/%02d/%d %02d:%02d:%02d\n",
+        day, month, year, hour, minutes, seconds);
+    printf("Day of week: %d\n", day_of_week(day, month, year));
+    printf("Day of week (ISO 8601): %d\n", ISO_day_of_week(day, month, year));
+    printf("Day of year: %d\n", day_of_year(day, month, year));
+    printf("Week of month: %d\n", week_of_month(day, month, year));
+    printf("Week of year: %d\n", week_of_year(day, month, year));
+    printf("Days in this month: %d\n", month_days(month, year));
+    day_add(&day, &month, &year, -1);
+    printf("Yesterday: %02d/%02d/%d\n", day, month, year);
+    day_add(&day, &month, &year, +2);
+    printf("Tomorrow: %02d/%02d/%d\n", day, month, year);
+    printf("Days between 01/02/2000 and 01/02/2004: %d\n",
+        days_diff(1, 2, 2000, 1, 2, 2004));
+}
+
 int main(void)
 {
     srand((unsigned)time(NULL));
     setlocale(LC_CTYPE, "");
     sample_strings();
     sample_files();
-    sample_dates();
     sample_maths();
+    sample_dates();
     return 0;
 }
 

@@ -445,59 +445,6 @@ char *string_repeat(char *ptr, const char *str, size_t count)
     return ptr;
 }
 
-int string_format(char *str, double value, int decimals, const char *separators)
-{
-    char *ptr = str;
-
-    if (value < 0)
-    {
-        value = fabs(value);
-        *ptr++ = '-';
-    }
-    if (decimals < 0)
-    {
-        decimals = 0;
-    }
-
-    double exponent = pow(10, decimals);
-    double integral, fractional;
-
-    value = round(value * exponent) / exponent;
-    fractional = modf(value, &integral);
-    fractional = round(fractional * exponent);
-
-    int digits = 1;
-
-    if (integral > 0)
-    {
-        digits += (int)log10(integral);
-        digits += digits / 3;
-    }
-    ptr += digits;
-    for (int count = 1; count <= digits; count++)
-    {
-        if ((count % 4) == 0)
-        {
-            ptr[-count] = separators[0];
-            count++;
-        }
-        ptr[-count] = (char)('0' + fmod(integral, 10));
-        integral /= 10;
-    }
-    if (decimals > 0)
-    {
-        *ptr++ = separators[1];
-        for (int count = decimals - 1; count >= 0; count--)
-        {
-            ptr[count] = (char)('0' + fmod(fractional, 10));
-            fractional /= 10;
-        }
-        ptr += decimals;
-    }
-    *ptr = '\0';
-    return (int)(ptr - str);
-}
-
 char *string_tokenize(char **str, int delimiter)
 {
     char *temp = *str, *ptr = *str;
@@ -611,6 +558,126 @@ int string_casecmp(const char *str1, const char *str2)
             return 0;
         }
     }
+}
+
+/* Math utilities */
+
+/* Random value between 0 and range - 1 */
+int rrand(int range)
+{
+    return (int)((double)range * (rand() / (RAND_MAX + 1.0)));
+}
+
+/**
+ * Returns a value divisible by multiple given a number
+ * multiple must be a power of 2
+ */
+size_t multipleof(size_t multiple, size_t number)
+{
+    return (number + (multiple - 1)) & ~(multiple - 1);
+}
+
+size_t integer_length(long integer)
+{
+    if (integer == 0)
+    {
+        return 1;
+    }
+
+    size_t length = 0;
+
+    while (integer != 0)
+    {
+        integer /= 10;
+        length++;
+    }
+    return length;
+}
+
+char *integer_format(char *str, long integer, char thousands_sep)
+{
+    int sign = 0;
+
+    if (integer < 0)
+    {
+        integer = -integer;
+        *str++ = '-';
+        sign = 1;
+    }
+    if (thousands_sep == 0)
+    {
+        thousands_sep = ',';
+    }
+
+    size_t len = integer_length(integer);
+    char *ptr = str + len + (len - 1) / 3;
+    char *end = ptr;
+
+    while (ptr > str)
+    {
+        if (((end - ptr) % 4) == 3)
+        {
+            *--ptr = thousands_sep;
+        }
+        *--ptr = (char)('0' + integer % 10);
+        integer /= 10;
+    }
+    *end = '\0';
+    return str - sign;
+}
+
+char *number_format(char *str, double number, size_t decimals,
+    char thousands_sep, char decimal_sep)
+{
+    int sign = 0;
+
+    if (number < 0)
+    {
+        number = -number;
+        sign = 1;
+    }
+
+    long integral, fractional = 0;
+
+    if (decimals)
+    {
+        double exponent = 1.0;
+
+        for (size_t count = 0; count < decimals; count++)
+        {
+            exponent *= 10;
+        }
+        integral = (long)number;
+        fractional = (long)round((1.0 + fmod(number, 1.0)) * exponent);
+        sign &= (integral || (fractional > exponent));
+    }
+    else
+    {
+        integral = (long)round(number);
+        sign &= (integral > 0);
+    }
+    if (sign)
+    {
+        *str++ = '-';
+    }
+    str = integer_format(str, integral, thousands_sep);
+    if (decimals)
+    {
+        char *end = strchr(str, '\0');
+
+        if (decimal_sep == 0)
+        {
+            decimal_sep = '.';
+        }
+        *end++ = decimal_sep;
+        end[decimals] = '\0';
+        while (decimals)
+        {
+            end[--decimals] = (char)('0' + fractional % 10);
+            fractional /= 10;
+        }
+    }
+    return str - sign;
 }
 
 /* Date utilities */
@@ -751,20 +818,5 @@ int date_isvalid(int day, int month, int year)
         return 0;
     }
     return 1;
-}
-
-/* Random value between 0 and range - 1 */
-int rrand(int range)
-{
-    return (int)((double)range * (rand() / (RAND_MAX + 1.0)));
-}
-
-/**
- * Returns a value divisible by multiple given a number
- * multiple must be a power of 2
- */
-size_t multipleof(size_t multiple, size_t number)
-{
-    return (number + (multiple - 1)) & ~(multiple - 1);
 }
 
