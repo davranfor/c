@@ -584,14 +584,14 @@ size_t integer_length(long integer)
         return 1;
     }
 
-    size_t length = 0;
+    size_t len = 0;
 
     while (integer != 0)
     {
         integer /= 10;
-        length++;
+        len++;
     }
-    return length;
+    return len;
 }
 
 char *integer_format(char *str, long integer, char thousands_sep)
@@ -637,7 +637,7 @@ char *number_format(char *str, double number, size_t decimals,
         sign = 1;
     }
 
-    long integral, fractional = 0;
+    long integer, decimal = 0;
 
     if (decimals)
     {
@@ -647,34 +647,34 @@ char *number_format(char *str, double number, size_t decimals,
         {
             exponent *= 10;
         }
-        integral = (long)number;
-        fractional = (long)round((1.0 + fmod(number, 1.0)) * exponent);
-        sign &= (integral || (fractional > exponent));
+        integer = (long)number;
+        decimal = (long)round((1.0 + fmod(number, 1.0)) * exponent);
+        sign &= (integer || (decimal > exponent));
     }
     else
     {
-        integral = (long)round(number);
-        sign &= (integral > 0);
+        integer = (long)round(number);
+        sign &= (integer > 0);
     }
     if (sign)
     {
         *str++ = '-';
     }
-    str = integer_format(str, integral, thousands_sep);
+    str = integer_format(str, integer, thousands_sep);
     if (decimals)
     {
-        char *end = strchr(str, '\0');
+        char *ptr = strchr(str, '\0');
 
         if (decimal_sep == 0)
         {
             decimal_sep = '.';
         }
-        *end++ = decimal_sep;
-        end[decimals] = '\0';
-        while (decimals)
+        *ptr++ = decimal_sep;
+        ptr[decimals] = '\0';
+        while (decimals--)
         {
-            end[--decimals] = (char)('0' + fractional % 10);
-            fractional /= 10;
+            ptr[decimals] = (char)('0' + decimal % 10);
+            decimal /= 10;
         }
     }
     return str - sign;

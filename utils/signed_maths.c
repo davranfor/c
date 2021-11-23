@@ -8,7 +8,7 @@
             __func__, a, b, error);                                     \
     exit(EXIT_FAILURE)
 
-#define X(name, type, min, max, umax)                               \
+#define X(name, type, utype, min, max)                              \
 type name##_safe_add(intmax_t a, intmax_t b)                        \
 {                                                                   \
     if ((a < 0) && (b < min - a))                                   \
@@ -193,15 +193,27 @@ type name##_range_mod(intmax_t a, intmax_t b)                       \
                                                                     \
 type name##_wrap_add(intmax_t a, intmax_t b)                        \
 {                                                                   \
-    return (type)(((uintmax_t)a + (uintmax_t)b) & umax);            \
+    return                                                          \
+    (                                                               \
+        (union { type s; utype u; })                                \
+        {.u = (utype)((uintmax_t)a + (uintmax_t)b)}                 \
+    ).s;                                                            \
 }                                                                   \
 type name##_wrap_sub(intmax_t a, intmax_t b)                        \
 {                                                                   \
-    return (type)(((uintmax_t)a - (uintmax_t)b) & umax);            \
+    return                                                          \
+    (                                                               \
+        (union { type s; utype u; })                                \
+        {.u = (utype)((uintmax_t)a - (uintmax_t)b)}                 \
+    ).s;                                                            \
 }                                                                   \
 type name##_wrap_mul(intmax_t a, intmax_t b)                        \
 {                                                                   \
-    return (type)(((uintmax_t)a * (uintmax_t)b) & umax);            \
+    return                                                          \
+    (                                                               \
+        (union { type s; utype u; })                                \
+        {.u = (utype)((uintmax_t)a * (uintmax_t)b)}                 \
+    ).s;                                                            \
 }                                                                   \
 type name##_wrap_div(intmax_t a, intmax_t b)                        \
 {                                                                   \
@@ -213,7 +225,11 @@ type name##_wrap_div(intmax_t a, intmax_t b)                        \
     {                                                               \
         return min;                                                 \
     }                                                               \
-    return (type)((uintmax_t)(a / b) & umax);                       \
+    return                                                          \
+    (                                                               \
+        (union { type s; utype u; })                                \
+        {.u = (utype)(a / b)}                                       \
+    ).s;                                                            \
 }                                                                   \
 type name##_wrap_mod(intmax_t a, intmax_t b)                        \
 {                                                                   \
@@ -225,7 +241,11 @@ type name##_wrap_mod(intmax_t a, intmax_t b)                        \
     {                                                               \
         return 0;                                                   \
     }                                                               \
-    return (type)((uintmax_t)(a % b) & umax);                       \
+    return                                                          \
+    (                                                               \
+        (union { type s; utype u; })                                \
+        {.u = (utype)(a % b)}                                       \
+    ).s;                                                            \
 }
 SIGNED_MATHS
 #undef X
