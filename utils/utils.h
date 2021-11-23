@@ -7,21 +7,15 @@
 /* File utilities                                                            */
 /* ************************************************************************* */
 
-#define FILE_TRUNCATE 0
-#define FILE_APPEND 1
-
-#define FILE_ERROR ((size_t)-1)
-#define file_error(f) ferror(f)
-#define file_eof(f) feof(f)
-
-size_t file_get_size(const char *);
+long file_get_size(const char *);
+long file_write(const char *, const char *);
+long file_append(const char *, const char *);
 char *file_read(const char *);
 char *file_read_with_prefix(const char *, const char *);
 char *file_read_with_suffix(const char *, const char *);
 char *file_read_quoted(const char *, const char *, const char *);
 char *file_read_line(FILE *);
 char *file_read_buffer(FILE *, char *, size_t);
-size_t file_write(const char *, const char *, int);
 
 /* ************************************************************************* */
 /* String utilities                                                          */
@@ -93,8 +87,8 @@ int week_of_month(int, int, int);
 int week_of_year(int, int, int);
 int month_days(int, int);
 int leap_years(int, int);
-int year_isleap(int);
-int date_isvalid(int, int, int);
+int year_is_leap(int);
+int date_is_valid(int, int, int);
 
 /* ************************************************************************* */
 /* Misc utilities                                                            */

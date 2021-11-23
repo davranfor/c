@@ -10,42 +10,68 @@
 
 #define FILE_LINE_MAX 256
 
-static size_t file_size(FILE *file)
+static long file_size(FILE *file)
 {
     if (fseek(file, 0L, SEEK_END) == -1)
     {
-        return FILE_ERROR;
+        return -1;
     }
 
     long size = ftell(file);
 
-    if (size == -1)
+    if ((size != -1) && (fseek(file, 0L, SEEK_SET) == -1))
     {
-        return FILE_ERROR;
+        return -1;
     }
-    if (fseek(file, 0L, SEEK_SET) == -1)
-    {
-        return FILE_ERROR;
-    }
-    return (size_t)size;
+    return size;
 }
 
-size_t file_get_size(const char *path)
+long file_get_size(const char *path)
 {
     FILE *file = fopen(path, "rb");
 
     if (file == NULL)
     {
-        return FILE_ERROR;
+        return -1;
     }
     
-    size_t size = file_size(file);
+    long size = file_size(file);
 
     fclose(file);
     return size;
 }
 
-static char *file_data(const char *path, const char *prefix, const char *suffix)
+static long write(const char *path, const char *str, const char *mode)
+{
+    FILE *file = fopen(path, mode);
+
+    if (file == NULL)
+    {
+        return -1;
+    }
+
+    size_t size = strlen(str);
+    long result = -1;
+
+    if (fwrite(str, 1, size, file) == size)
+    {
+        result = (long)size;
+    }
+    fclose(file);
+    return result;
+}
+
+long file_write(const char *path, const char *str)
+{
+    return write(path, str, "w");
+}
+
+long file_append(const char *path, const char *str)
+{
+    return write(path, str, "a");
+}
+
+static char *read(const char *path, const char *prefix, const char *suffix)
 {
     FILE *file = fopen(path, "rb");
 
@@ -54,49 +80,44 @@ static char *file_data(const char *path, const char *prefix, const char *suffix)
         return NULL;
     }
 
-    size_t size = file_size(file);
+    char *str = NULL;
+    long size = file_size(file);
 
-    if (size == FILE_ERROR)
+    if (size != -1)
     {
-        fclose(file);
-        return NULL;
-    }
+        size_t len = (size_t)size;
+        size_t len_prefix = 0;
+        size_t len_suffix = 0;
 
-    size_t size_prefix = 0;
-    size_t size_suffix = 0;
-
-    if (prefix != NULL)
-    {
-        size_prefix = strlen(prefix); 
-    }
-    if (suffix != NULL)
-    {
-        size_suffix = strlen(suffix); 
-    }
-
-    char *str = malloc(size + size_prefix + size_suffix + 1);
-
-    if (str == NULL)
-    {
-        fclose(file);
-        return NULL;
-    }
-    if (fread(str + size_prefix, 1, size, file) != size)
-    {
-        free(str);
-        str = NULL;
-    }
-    else
-    {
-        if (size_prefix > 0)
+        if (prefix != NULL)
         {
-            memcpy(str, prefix, size_prefix);
+            len_prefix = strlen(prefix); 
         }
-        if (size_suffix > 0)
+        if (suffix != NULL)
         {
-            memcpy(str + size, suffix, size_suffix);
+            len_suffix = strlen(suffix); 
         }
-        str[size + size_prefix + size_suffix] = '\0';
+        str = malloc(len + len_prefix + len_suffix + 1);
+        if (str != NULL)
+        {
+            if (fread(str + len_prefix, 1, len, file) == len)
+            {
+                if (len_prefix > 0)
+                {
+                    memcpy(str, prefix, len_prefix);
+                }
+                if (len_suffix > 0)
+                {
+                    memcpy(str + len + len_prefix, suffix, len_suffix);
+                }
+                str[len + len_prefix + len_suffix] = '\0';
+            }
+            else
+            {
+                free(str);
+                str = NULL;
+            }
+        }
     }
     fclose(file);
     return str;
@@ -104,22 +125,22 @@ static char *file_data(const char *path, const char *prefix, const char *suffix)
 
 char *file_read(const char *path)
 {
-    return file_data(path, NULL, NULL);
+    return read(path, NULL, NULL);
 }
 
 char *file_read_with_prefix(const char *path, const char *prefix)
 {
-    return file_data(path, prefix, NULL);
+    return read(path, prefix, NULL);
 }
 
 char *file_read_with_suffix(const char *path, const char *suffix)
 {
-    return file_data(path, NULL, suffix);
+    return read(path, NULL, suffix);
 }
 
 char *file_read_quoted(const char *path, const char *prefix, const char *suffix)
 {
-    return file_data(path, prefix, suffix);
+    return read(path, prefix, suffix);
 }
 
 char *file_read_line(FILE *file)
@@ -175,25 +196,6 @@ char *file_read_buffer(FILE *file, char *str, size_t size)
         return str;
     }
     return NULL;
-}
-
-size_t file_write(const char *path, const char *str, int append)
-{
-    FILE *file = fopen(path, append ? "a" : "w");
-
-    if (file == NULL)
-    {
-        return FILE_ERROR;
-    }
-
-    size_t size = strlen(str);
-
-    if (fwrite(str, 1, size, file) != size)
-    {
-        size = FILE_ERROR;
-    }
-    fclose(file);
-    return size;
 }
 
 /* String utilities */
@@ -354,8 +356,7 @@ char *string_reverse(char *buf, const char *str)
 
     if (buf == NULL)
     {
-        buf = malloc(len + 1);
-        if (buf == NULL)
+        if ((buf = malloc(len + 1)) == NULL)
         {
             return NULL;
         }
@@ -760,7 +761,7 @@ int day_of_year(int day, int month, int year)
         {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
         {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
     };
-    int leap = year_isleap(year);
+    int leap = year_is_leap(year);
 
     return days[leap][month - 1] + day;
 }
@@ -782,7 +783,7 @@ int month_days(int month, int year)
         {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
         {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
     };
-    int leap = year_isleap(year);
+    int leap = year_is_leap(year);
 
     return days[leap][month - 1];
 }
@@ -798,12 +799,12 @@ int leap_years(int month, int year)
     return (years / 4) - (years / 100) + (years / 400);
 }
 
-int year_isleap(int year)
+int year_is_leap(int year)
 {
     return (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
 }
 
-int date_isvalid(int day, int month, int year)
+int date_is_valid(int day, int month, int year)
 {
     if ((year < 0) || (year > 9999))
     {

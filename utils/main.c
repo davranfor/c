@@ -95,14 +95,14 @@ static void sample_strings(void)
 
 static int eof_handler(FILE *file)
 {
-    int error = file_error(file) ? 1 : 0;
+    int error = ferror(file) ? 1 : 0;
 
-    if (file_eof(file) || error)
+    if (feof(file) || error)
     {
         clearerr(file);
         return error;
     }
-    return 2; // Unhandled error
+    return -1; // Unhandled error
 }
 
 static void sample_files(void)
@@ -110,10 +110,8 @@ static void sample_files(void)
     puts("Sample files:");
 
     const char *path = "test.txt";
-    size_t size;
 
-    size = file_write(path, "Enter text (Press CTRL + D to stop)\n", FILE_TRUNCATE);
-    if (size == FILE_ERROR)
+    if (file_write(path, "Enter text (Press CTRL + D to stop)\n") == -1)
     {
         perror("file_write");
         fprintf(stderr, "%s\n", path);
