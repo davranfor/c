@@ -97,8 +97,7 @@ static char *read(const char *path, const char *prefix, const char *suffix)
         {
             len_suffix = strlen(suffix); 
         }
-        str = malloc(len + len_prefix + len_suffix + 1);
-        if (str != NULL)
+        if ((str = malloc(len + len_prefix + len_suffix + 1)))
         {
             if (fread(str + len_prefix, 1, len, file) == len)
             {
@@ -354,12 +353,9 @@ char *string_reverse(char *buf, const char *str)
 {
     size_t len = strlen(str);
 
-    if (buf == NULL)
+    if ((buf == NULL) && ((buf = malloc(len + 1)) == NULL))
     {
-        if ((buf = malloc(len + 1)) == NULL)
-        {
-            return NULL;
-        }
+        return NULL;
     }
 
     // First pass. Reverse all bytes
@@ -397,13 +393,9 @@ char *string_reverse(char *buf, const char *str)
 
 char *string_convert(char *ptr, const char *str, int (*func)(int))
 {
-    if (ptr == NULL)
+    if ((ptr == NULL) && ((ptr = malloc(strlen(str) + 1)) == NULL))
     {
-        ptr = malloc(strlen(str) + 1);
-        if (ptr == NULL)
-        {
-            return NULL;
-        }
+        return NULL;
     }
 
     char *temp = ptr;
@@ -420,13 +412,9 @@ char *string_repeat(char *ptr, const char *str, size_t count)
 {
     size_t len = strlen(str);
 
-    if (ptr == NULL)
+    if ((ptr == NULL) && ((ptr = malloc(count * len + 1)) == NULL))
     {
-        ptr = malloc(count * len + 1);
-        if (ptr == NULL)
-        {
-            return NULL;
-        }
+        return NULL;
     }
     if (len == 1)
     {
