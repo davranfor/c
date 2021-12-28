@@ -7,7 +7,7 @@
 /* File utilities                                                            */
 /* ************************************************************************* */
 
-long file_get_size(const char *);
+long file_size(const char *);
 long file_write(const char *, const char *);
 long file_append(const char *, const char *);
 char *file_read(const char *);
@@ -38,6 +38,7 @@ char *string_convert(char *, const char *, int (*)(int));
 char *string_repeat(char *, const char *, size_t);
 /* Functions working inplace */
 char *string_tokenize(char **, int);
+char *string_split(char **);
 size_t string_length(const char *);
 size_t string_count(const char *, const char *);
 size_t string_lskip(const char *, int(*)(int));

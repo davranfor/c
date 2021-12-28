@@ -84,12 +84,24 @@ static void sample_strings(void)
         puts("Strings are different");
     }
 
-    char arr[] = "one,two,three";
-    char *ptr = arr;
-
-    while ((str = string_tokenize(&ptr, ',')))
     {
-        printf("%s\n", str);
+        char arr[] = "one,two,three";
+        char *ptr = arr;
+
+        while ((str = string_tokenize(&ptr, ',')))
+        {
+            printf("%s\n", str);
+        }
+    }
+    {
+        char arr[] = " one   two \t three \n \"four and five\" six ";
+        char *ptr;
+
+        str = arr;
+        while ((ptr = string_split(&str)))
+        {
+            printf("<%s>\n", ptr);
+        }
     }
 }
 

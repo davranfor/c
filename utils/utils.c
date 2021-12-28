@@ -8,9 +8,7 @@
 
 /* File utilities */
 
-#define FILE_LINE_MAX 256
-
-static long file_size(FILE *file)
+static long fsize(FILE *file)
 {
     if (fseek(file, 0L, SEEK_END) == -1)
     {
@@ -26,7 +24,7 @@ static long file_size(FILE *file)
     return size;
 }
 
-long file_get_size(const char *path)
+long file_size(const char *path)
 {
     FILE *file = fopen(path, "rb");
 
@@ -35,7 +33,7 @@ long file_get_size(const char *path)
         return -1;
     }
     
-    long size = file_size(file);
+    long size = fsize(file);
 
     fclose(file);
     return size;
@@ -81,7 +79,7 @@ static char *read(const char *path, const char *prefix, const char *suffix)
     }
 
     char *str = NULL;
-    long size = file_size(file);
+    long size = fsize(file);
 
     if (size != -1)
     {
@@ -142,6 +140,8 @@ char *file_read_quoted(const char *path, const char *prefix, const char *suffix)
     return read(path, prefix, suffix);
 }
 
+#define FILE_LINE_MAX 256
+
 char *file_read_line(FILE *file)
 {
     char str[FILE_LINE_MAX];
@@ -176,21 +176,26 @@ char *file_read_line(FILE *file)
     return NULL;
 }
 
+static void flush(FILE *file)
+{
+    int c;
+
+    while (((c = fgetc(file)) != '\n') && (c != EOF));
+}
+
 char *file_read_buffer(FILE *file, char *str, size_t size)
 {
     if (fgets(str, (int)size, file) != NULL)
     {
         char *ptr = strchr(str, '\n');
 
-        if (ptr != NULL)
+        if (ptr == NULL)
         {
-            *ptr = '\0';
+            flush(file);
         }
         else
         {
-            int c;
-
-            while (((c = fgetc(file)) != '\n') && (c != EOF));
+            *ptr = '\0';
         }
         return str;
     }
@@ -225,7 +230,7 @@ char *string_slice(const char *str, size_t start, size_t end)
     return ptr;
 }
 
-static char *string_replace_char(const char *str, char chr1, char chr2)
+static char *char_replace(const char *str, char chr1, char chr2)
 {
     size_t len = strlen(str);
     char *ptr = malloc(len + 1);
@@ -257,7 +262,7 @@ char *string_replace(const char *str, const char *str1, const char *str2)
     {
         if (len1 == 1)
         {
-            return string_replace_char(str, str1[0], str2[0]);
+            return char_replace(str, str1[0], str2[0]);
         }
         len = strlen(str);
     }
@@ -359,9 +364,9 @@ char *string_reverse(char *buf, const char *str)
     }
 
     // First pass. Reverse all bytes
-    for (size_t head = 0, tail = len; head < tail; head++)
+    for (size_t head = 0, tail = len; head < tail--; head++)
     {
-        char temp = str[--tail];
+        char temp = str[tail];
 
         buf[tail] = str[head];
         buf[head] = temp;
@@ -458,6 +463,51 @@ char *string_tokenize(char **str, int delimiter)
     return temp;
 }
 
+char *string_split(char **str)
+{
+    char *ptr = *str;
+
+    while (isspace((unsigned char)*ptr))
+    {
+        ptr++;
+    }
+    if (*ptr == '\0')
+    {
+        return NULL;
+    }
+
+    char *end = ptr;
+
+    if (*end == '"')
+    {
+        ptr++;
+        end++;
+        while ((*end != '"') && (*end != '\0'))
+        {
+            if ((end[0] == '\\') && (end[1] == '"'))
+            {
+                memmove(ptr + 1, ptr, (size_t)(end - ptr));
+                ptr++;
+                end++;
+            }
+            end++;
+        }
+    }
+    else
+    {
+        while (!isspace((unsigned char)*end) && (*end != '\0'))
+        {
+            end++;
+        }
+    }
+    if (*end != '\0')
+    {
+        *end++ = '\0';
+    }
+    *str = end;
+    return ptr;
+}
+
 size_t string_length(const char *str)
 {
     size_t len = 0;
@@ -540,7 +590,7 @@ int string_casecmp(const char *str1, const char *str2)
 
         if (a != b)
         {
-            return a < b ? -1 : 1;
+            return a - b;
         }
         if (a == '\0')
         {
