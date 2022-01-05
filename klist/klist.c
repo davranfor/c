@@ -19,24 +19,24 @@ struct klist
 {
     struct node *head;
     struct node *tail;
-    size_t room;
+    size_t szof;
     size_t size;
 };
 
-klist *klist_create(size_t room)
+klist *klist_create(size_t szof)
 {
     klist *list = calloc(1, sizeof *list);
 
     if (list != NULL)
     {
-        list->room = room;
+        list->szof = szof;
     }
     return list;
 }
 
 void *klist_push_head(klist *list)
 {
-    struct node *node = calloc(1, sizeof(struct node) + list->room);
+    struct node *node = calloc(1, sizeof(struct node) + list->szof);
 
     if (node == NULL)
     {
@@ -58,7 +58,7 @@ void *klist_push_head(klist *list)
 
 void *klist_push_tail(klist *list)
 {
-    struct node *node = calloc(1, sizeof(struct node) + list->room);
+    struct node *node = calloc(1, sizeof(struct node) + list->szof);
 
     if (node == NULL)
     {
@@ -156,7 +156,7 @@ void *klist_insert(klist *list, size_t index)
         return klist_push_tail(list);
     }
 
-    struct node *node = calloc(1, sizeof(struct node) + list->room);
+    struct node *node = calloc(1, sizeof(struct node) + list->szof);
 
     if (node == NULL)
     {
