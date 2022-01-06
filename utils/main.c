@@ -7,11 +7,60 @@
 #include "wutils.h"
 #include "signed_maths.h"
 
-static void sample_strings(void)
+static void sample_files(void)
 {
+    puts("Sample files:");
+
+    const char *path = "test.txt";
+
+    if (file_write(path, "Enter text (Press CTRL + D to stop)\n") == -1)
+    {
+        perror("file_write");
+        fprintf(stderr, "%s\n", path);
+    }
+
     char *str;
 
+    str = file_read(path);
+    if (str == NULL)
+    {
+        perror("file_read");
+        fprintf(stderr, "%s\n", path);
+    }
+    else
+    {
+        printf("%s", str);
+        free(str);
+    }
+    while ((str = file_read_line(stdin)))
+    {
+        printf("<%s>\n", str);
+        free(str);
+    }
+    if (file_clearerr(stdin) != 0)
+    {
+        perror("file_read_line");
+    }
+
+    char buf[10];
+
+    puts("Enter text (Press CTRL + D to stop)");
+    while (file_read_buffer(stdin, buf, sizeof buf))
+    {
+        printf("<%s>\n", buf);
+    }
+    if (file_clearerr(stdin) != 0)
+    {
+        perror("file_read_buffer");
+    }
+}
+
+static void sample_strings(void)
+{
     puts("Sample strings:");
+
+    char *str;
+
     str = string_clone("Hello World!");
     if (str != NULL)
     {
@@ -95,73 +144,12 @@ static void sample_strings(void)
     }
     {
         char arr[] = " one   two \t three \n \"four and five\" six ";
-        char *ptr;
+        char *ptr = arr;
 
-        str = arr;
-        while ((ptr = string_split(&str)))
+        while ((str = string_split(&ptr)))
         {
-            printf("<%s>\n", ptr);
+            printf("<%s>\n", str);
         }
-    }
-}
-
-static int eof_handler(FILE *file)
-{
-    int error = ferror(file) ? 1 : 0;
-
-    if (feof(file) || error)
-    {
-        clearerr(file);
-        return error;
-    }
-    return -1; // Unhandled error
-}
-
-static void sample_files(void)
-{
-    puts("Sample files:");
-
-    const char *path = "test.txt";
-
-    if (file_write(path, "Enter text (Press CTRL + D to stop)\n") == -1)
-    {
-        perror("file_write");
-        fprintf(stderr, "%s\n", path);
-    }
-
-    char *str;
-
-    str = file_read(path);
-    if (str == NULL)
-    {
-        perror("file_read");
-        fprintf(stderr, "%s\n", path);
-    }
-    else
-    {
-        printf("%s", str);
-        free(str);
-    }
-    while ((str = file_read_line(stdin)))
-    {
-        printf("<%s>\n", str);
-        free(str);
-    }
-    if (eof_handler(stdin) != 0)
-    {
-        perror("file_read_line");
-    }
-
-    char buf[10];
-
-    puts("Enter text (Press CTRL + D to stop)");
-    while (file_read_buffer(stdin, buf, sizeof buf))
-    {
-        printf("<%s>\n", buf);
-    }
-    if (eof_handler(stdin) != 0)
-    {
-        perror("file_read_buffer");
     }
 }
 
@@ -199,6 +187,8 @@ static size_t deletion(int arr[], size_t size, size_t item)
 
 static void sample_maths(void)
 {
+    puts("Sample Maths:");
+
     char str[64];
 
     number_format(str, 1234567.890, 2, '.', ',');
@@ -294,8 +284,8 @@ int main(void)
 {
     srand((unsigned)time(NULL));
     setlocale(LC_CTYPE, "");
-    sample_strings();
     sample_files();
+    sample_strings();
     sample_maths();
     sample_dates();
     return 0;

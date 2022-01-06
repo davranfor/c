@@ -202,6 +202,17 @@ char *file_read_buffer(FILE *file, char *str, size_t size)
     return NULL;
 }
 
+int file_clearerr(FILE *file)
+{
+    int error = ferror(file) ? 1 : 0;
+
+    if (feof(file) || error)
+    {
+        clearerr(file);
+    }
+    return error;
+}
+
 /* String utilities */
 
 char *string_clone(const char *str)
