@@ -202,15 +202,21 @@ char *file_read_buffer(FILE *file, char *str, size_t size)
     return NULL;
 }
 
-int file_clearerr(FILE *file)
+int file_clear_eof(FILE *file)
 {
-    int error = ferror(file) != 0;
+    int error = ferror(file);
 
-    if (error || feof(file))
+    if (error)
     {
         clearerr(file);
+        return error;
     }
-    return error;
+    if (feof(file))
+    {
+        clearerr(file);
+        return 0;
+    }
+    return -1;
 }
 
 /* String utilities */

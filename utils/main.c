@@ -37,7 +37,7 @@ static void sample_files(void)
         printf("<%s>\n", str);
         free(str);
     }
-    if (file_clearerr(stdin) != 0)
+    if (file_clear_eof(stdin) != 0)
     {
         perror("file_read_line");
     }
@@ -49,7 +49,7 @@ static void sample_files(void)
     {
         printf("<%s>\n", buf);
     }
-    if (file_clearerr(stdin) != 0)
+    if (file_clear_eof(stdin) != 0)
     {
         perror("file_read_buffer");
     }
