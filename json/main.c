@@ -16,6 +16,7 @@ static char *read(FILE *file, size_t size)
         else
         {
             free(str);
+            str = NULL;
         }
     }
     return str;
@@ -51,7 +52,7 @@ static json *read_json(const char *path)
 
     if (str == NULL)
     {
-        perror("read_json");
+        perror("read_file");
         exit(EXIT_FAILURE);
     }
 
