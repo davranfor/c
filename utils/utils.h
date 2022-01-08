@@ -98,5 +98,7 @@ int date_is_valid(int, int, int);
 
 #define ISNULL(ptr) ((ptr) == NULL)
 
+void *array_resize(void *, size_t, size_t *);
+
 #endif /* UTILS_H */
 
