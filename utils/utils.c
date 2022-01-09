@@ -876,32 +876,3 @@ int date_is_valid(int day, int month, int year)
     return 1;
 }
 
-/* Misc utilities */
-
-static size_t resize(size_t size)
-{
-    if ((size & (size - 1)) == 0)
-    {
-        return size == 0 ? 1 : size << 1;
-    }
-    return size;
-}
-
-void *array_resize(void *array, size_t szof, size_t *size)
-{
-    size_t capacity = resize(*size);
- 
-    if (*size != capacity)
-    {
-        void *data = realloc(array, szof * capacity);
-
-        if (data == NULL)
-        {
-            return NULL;
-        }
-        array = data;
-    }
-    (*size)++;
-    return array;
-}
-

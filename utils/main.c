@@ -280,28 +280,6 @@ static void sample_dates(void)
         days_diff(1, 2, 2000, 1, 2, 2004));
 }
 
-static void sample_misc(void)
-{
-    puts("Sample misc:");
-
-    int *data = NULL;
-    size_t size = 0;
-
-    for (int iter = 0; iter < 16; iter++)
-    {
-        data = array_resize(data, sizeof *data, &size);
-        if (data != NULL)
-        {
-            data[iter] = iter;
-        }
-    }
-    for (size_t iter = 0; iter < size; iter++)
-    {
-        printf("data[%zu] = %d\n", iter, data[iter]);
-    }
-    free(data);
-}
-
 int main(void)
 {
     srand((unsigned)time(NULL));
@@ -310,7 +288,6 @@ int main(void)
     sample_strings();
     sample_maths();
     sample_dates();
-    sample_misc();
     return 0;
 }
 
