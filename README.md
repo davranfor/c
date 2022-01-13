@@ -5,6 +5,7 @@ C generic data structures and utilities
 - HashMap - Optimized hash table
 - JSON - Ligthweight JSON parser
 - List - Stacks, queues, deques, circular lists
+- RBTree - Red-Black tree
 - SkipList - Fast CRUD operations on a list
 - Utilities - Files, strings and date utils
 - Vector - Dynamic growable array
