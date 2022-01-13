@@ -285,7 +285,9 @@ static struct node *successor(rbtree *tree, struct node *node)
         {
             succ = succ->left;
         }
-    } else {
+    }
+    else
+    {
         /* No right child, move up until we find it or hit the root */
         for (succ = node->parent; node == succ->right; succ = succ->parent)
         {
