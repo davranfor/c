@@ -24,14 +24,14 @@ struct skiplist
 
 static int skiplist_level(void)
 {
-    unsigned long bits = (unsigned long)rand();
-    unsigned long level = 0;
+    unsigned bits = (unsigned)rand();
+    int level = 0;
 
-    while ((level < SKIPLIST_MAX_LEVEL - 1) && (bits & (1UL << level)))
+    while (bits & (1U << level))
     {
         level++;
     }
-    return (int)level;
+    return level;
 }
 
 static struct node *skiplist_create_node(int levels)
