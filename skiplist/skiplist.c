@@ -22,10 +22,10 @@ struct skiplist
     int levels;
 };
 
-static int skiplist_level(void)
+static unsigned random_level(void)
 {
     unsigned bits = (unsigned)rand();
-    int level = 0;
+    unsigned level = 0;
 
     while (bits & (1U << level))
     {
@@ -34,7 +34,7 @@ static int skiplist_level(void)
     return level;
 }
 
-static struct node *skiplist_create_node(int levels)
+static struct node *create_nodes(int levels)
 {
     struct node *node;
 
@@ -48,7 +48,7 @@ skiplist *skiplist_create(int (*comp)(const void *, const void *))
 
     if (list != NULL)
     {
-        list->head = skiplist_create_node(SKIPLIST_MAX_LEVEL);
+        list->head = create_nodes(SKIPLIST_MAX_LEVEL);
         if (list->head == NULL)
         {
             free(list);
@@ -91,8 +91,8 @@ void *skiplist_insert(skiplist *list, void *data)
         }
         nodes[level] = node;
     }
-    level = skiplist_level();
-    node = skiplist_create_node(level + 1);
+    level = (int)random_level();
+    node = create_nodes(level + 1);
     if (node == NULL)
     {
         return NULL;
@@ -140,7 +140,8 @@ void *skiplist_delete(skiplist *list, const void *data)
     }
     if (item != NULL)
     {
-        while ((list->levels > 0) && (list->head->next[list->levels] == list->head))
+        while ((list->levels > 0)
+            && (list->head->next[list->levels] == list->head))
         {
             list->levels--;
         }
@@ -199,8 +200,8 @@ static struct node *fetch(const skiplist *list, const void *data,
     return node;
 }
 
-void *skiplist_fetch(const skiplist *list, const void **cursor, const void *data,
-    int (*comp)(const void *, const void *))
+void *skiplist_fetch(const skiplist *list, const void **cursor,
+    const void *data, int (*comp)(const void *, const void *))
 {
     const struct node *node;
 
