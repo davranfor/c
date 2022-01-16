@@ -7,5 +7,6 @@ C generic data structures and utilities
 - List - Stacks, queues, deques, circular lists
 - RBTree - Red-Black tree
 - SkipList - Fast CRUD operations on a list
-- Utilities - Files, strings and date utils
+- SplayTree - Fast CRUD operations on a tree
+- Utilities - Files, strings and date utilies
 - Vector - Dynamic growable array
