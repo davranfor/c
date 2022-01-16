@@ -167,9 +167,9 @@ void *rbtree_insert(rbtree *tree, void *data)
     {
         parent = node;
 
-        int comp;
+        int comp = tree->comp(data, node->data);
 
-        if ((comp = tree->comp(data, node->data)) == 0)
+        if (comp == 0)
         {
             return node->data;
         }
@@ -387,9 +387,9 @@ void *rbtree_delete(rbtree *tree, const void *data)
 
     while (z != rbnil(tree))
     {
-        int comp;
+        int comp = tree->comp(data, z->data);
 
-        if ((comp = tree->comp(data, z->data)) == 0)
+        if (comp == 0)
         {
             break;
         }
@@ -457,15 +457,15 @@ void *rbtree_delete(rbtree *tree, const void *data)
  * Look for a node matching key in tree.
  * Returns a pointer to the node if found, else NULL.
  */
-void *rbtree_search(rbtree *tree, const void *data)
+void *rbtree_search(const rbtree *tree, const void *data)
 {
     struct node *node = rbfirst(tree);
 
     while (node != rbnil(tree))
     {
-        int comp;
+        int comp = tree->comp(data, node->data);
 
-        if ((comp = tree->comp(data, node->data)) == 0)
+        if (comp == 0)
         {
             return node->data;
         }
@@ -479,7 +479,7 @@ void *rbtree_search(rbtree *tree, const void *data)
  * If func() returns non-zero for a node, the traversal stops and the
  * error value is returned.  Returns 0 on successful traversal.
  */
-static void *walk(rbtree *tree, struct node *node,
+static void *walk(const rbtree *tree, struct node *node,
     void *(*func)(void *, void *), void *cookie)
 {
     if (node != rbnil(tree))
@@ -502,7 +502,8 @@ static void *walk(rbtree *tree, struct node *node,
     return NULL;
 }
 
-void *rbtree_walk(rbtree *tree, void *(*func)(void *, void *), void *cookie)
+void *rbtree_walk(const rbtree *tree,
+    void *(*func)(void *, void *), void *cookie)
 {
     return walk(tree, rbfirst(tree), func, cookie);
 }
