@@ -62,7 +62,7 @@ static json *read_json(const char *path)
     free(str);
     if (node == NULL)
     {
-        fprintf(stderr, "read_json: Error at line %d, column %d\n",
+        fprintf(stderr, "json_parse: Error at line %d, column %d\n",
                 error.line, error.column
         );
         exit(EXIT_FAILURE);
