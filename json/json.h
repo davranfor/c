@@ -21,6 +21,11 @@ enum json_type
     JSON_NONE,      /* Puntero nulo */
 };
 
+typedef struct
+{
+    int line, column;
+} json_error;
+
 enum json_type json_type(const json *);
 char *json_name(const json *);
 char *json_string(const json *);
@@ -38,7 +43,7 @@ int json_is_real(const json *);
 int json_is_boolean(const json *);
 int json_is_null(const json *);
 int json_streq(const json *, const char *);
-json *json_parse(const char *);
+json *json_parse(const char *, json_error *);
 json *json_parent(const json *);
 json *json_node(const json *, const char *);
 json *json_child(const json *, const char *);

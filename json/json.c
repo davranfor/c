@@ -298,8 +298,10 @@ static json *json_create(void)
 }
 
 /* Recorre el texto y rellena los nodos */
-static json *json_build(json *node, const char *left)
+static json *json_build(json *node, const char *left, const char **error)
 {
+    #define JSON_ERROR (*error = left, NULL)
+
     const char *right;
     const char *token;
 
@@ -308,7 +310,7 @@ static json *json_build(json *node, const char *left)
         token = json_scan(&left, &right);
         if (token == NULL)
         {
-            return NULL;
+            return JSON_ERROR;
         }
         switch (*token)
         {
@@ -318,18 +320,18 @@ static json *json_build(json *node, const char *left)
                 /* No puede haber nada entre los dos puntos (:) o la coma (,) y el token */
                 if (left != token)
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 /* Los elementos de un objeto deben tener nombre */
                 if ((node->parent != NULL) && (node->parent->type == JSON_OBJECT) && (node->name == NULL))
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 node->type = json_token(*token);
                 node->left = json_create();
                 if (node->left == NULL)
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 node->left->parent = node;
                 node = node->left;
@@ -339,11 +341,11 @@ static json *json_build(json *node, const char *left)
                 /* Solo los elementos de un objeto pueden tener nombre */
                 if ((node->parent == NULL) || (node->parent->type != JSON_OBJECT) || (node->name != NULL))
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 if (json_set_name(node, left, right) == NULL)
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 break;
             /* Crea un nodo a la derecha (hermano) */
@@ -351,27 +353,27 @@ static json *json_build(json *node, const char *left)
                 /* Los elementos de un objeto deben tener nombre */
                 if ((node->parent == NULL) || ((node->parent->type == JSON_OBJECT) && (node->name == NULL)))
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 if (node->type == JSON_EMPTY)
                 {
                     if (left == token)
                     {
-                        return NULL;
+                        return JSON_ERROR;
                     }
                     if (json_set_value(node, left, right) == NULL)
                     {
-                        return NULL;
+                        return JSON_ERROR;
                     }
                 }
                 else if (left != token)
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 node->right = json_create();
                 if (node->right == NULL)
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 node->right->parent = node->parent;
                 node = node->right;
@@ -385,7 +387,7 @@ static json *json_build(json *node, const char *left)
                 /* Por cada cierre debe haber una apertura del mismo tipo */
                 if ((node->parent == NULL) || (node->parent->type != json_token(*token)))
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 if (node->type == JSON_EMPTY)
                 {
@@ -394,7 +396,7 @@ static json *json_build(json *node, const char *left)
                         /* Puede ser un grupo vacío: {} o [] */
                         if (node->parent->left != node)
                         {
-                            return NULL;
+                            return JSON_ERROR;
                         }
                     }
                     else
@@ -402,17 +404,17 @@ static json *json_build(json *node, const char *left)
                         /* Los elementos de un objeto deben tener nombre */
                         if ((node->parent->type == JSON_OBJECT) && (node->name == NULL))
                         {
-                            return NULL;
+                            return JSON_ERROR;
                         }
                         if (json_set_value(node, left, right) == NULL)
                         {
-                            return NULL;
+                            return JSON_ERROR;
                         }
                     }
                 }
                 else if (left != token)
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 node = node->parent;
                 break;
@@ -423,22 +425,22 @@ static json *json_build(json *node, const char *left)
                     /* Puede consistir en un solo elemento, p.ej: "Texto" ó 123 */ 
                     if (node->type != JSON_EMPTY)
                     {
-                        return NULL;
+                        return JSON_ERROR;
                     }
                     if (json_set_value(node, left, right) == NULL)
                     {
-                        return NULL;
+                        return JSON_ERROR;
                     }
                 }
                 /* No puede estar vacío */
                 if (node->type == JSON_EMPTY)
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 /* Si no está bien cerrado */
                 if (node->parent != NULL)
                 {
-                    return NULL;
+                    return JSON_ERROR;
                 }
                 /* El documento es correcto */
                 return node;
@@ -446,7 +448,27 @@ static json *json_build(json *node, const char *left)
         /* Seguimos avanzando */
         left = token + 1;
     }
-    return NULL;
+    return JSON_ERROR;
+}
+
+static void json_set_error(const char *str, const char *end, json_error *error)
+{
+    error->line = 1;
+    error->column = 1;
+    while ((str < end) && (*str != '\0'))
+    {
+        if (*str == '\n')
+        {
+            error->line++;
+            error->column = 1;
+        }
+        // If ASCII character or first byte of a multi-byte character
+        if ((*str & 0xc0) != 0x80)
+        {
+            error->column++;
+        }
+        str++;
+    }
 }
 
 /* Devuelve el tipo de un nodo */
@@ -639,15 +661,30 @@ int json_streq(const json *node, const char *str)
     return !strcmp(node->value, str);
 }
 
-/* Crea el nodo root y lo pasa al parseador junto con un puntero al texto */
-json *json_parse(const char *text)
+/*
+ * Crea el nodo root y lo pasa al parseador junto con un puntero al texto
+ * Asigna la línea y columna de error si se ha pasado un puntero a error
+ */
+json *json_parse(const char *text, json_error *error)
 {
+    if (error)
+    {
+        error->line = 0;
+        error->column = 0;
+    }
+
     json *node = json_create();
 
     if (node != NULL)
     {
-        if (json_build(node, text) == NULL)
+        const char *end = text;
+
+        if (json_build(node, text, &end) == NULL)
         {
+            if (error)
+            {
+                json_set_error(text, end, error);
+            }
             json_free(node);
             return NULL;
         }

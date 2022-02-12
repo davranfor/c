@@ -56,9 +56,17 @@ static json *read_json(const char *path)
         exit(EXIT_FAILURE);
     }
 
-    json *node = json_parse(str);
+    json_error error;
+    json *node = json_parse(str, &error); // Pass error as NULL to skip errors
 
     free(str);
+    if (node == NULL)
+    {
+        fprintf(stderr, "read_json: Error at line %d, column %d\n",
+                error.line, error.column
+        );
+        exit(EXIT_FAILURE);
+    }
     return node;
 }
 
@@ -68,11 +76,6 @@ int main(void)
 
     json *node = read_json("test.json");
 
-    if (node == NULL)
-    {
-        perror("read_json");
-        exit(EXIT_FAILURE);
-    }
     json_print(node);
     json_free(node);
     return 0;
