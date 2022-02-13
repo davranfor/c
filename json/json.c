@@ -451,6 +451,7 @@ static json *json_build(json *node, const char *left, const char **error)
     return JSON_ERROR;
 }
 
+/* Asigna la posición del error de parseo */
 static void json_set_error(const char *str, const char *end, json_error *error)
 {
     error->line = 1;
@@ -462,8 +463,8 @@ static void json_set_error(const char *str, const char *end, json_error *error)
             error->line++;
             error->column = 1;
         }
-        // If ASCII character or first byte of a multi-byte character
-        if ((*str & 0xc0) != 0x80)
+        /* Si es un caracter ASCII o el primer caracer de un multibyte */
+        else if ((*str & 0xc0) != 0x80)
         {
             error->column++;
         }
