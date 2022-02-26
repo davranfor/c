@@ -2,82 +2,61 @@
 #include <stdlib.h>
 #include <locale.h>
 #include "json.h"
+#include "json_schema.h"
+#include "json_utils.h"
 
-static char *read(FILE *file, size_t size)
+static json *parse(const char *path)
 {
-    char *str = malloc(size + 1);
+    json_error error; // Error handle is optional
+    json *node = json_parse_file(path, &error);
 
-    if (str != NULL)
-    {
-        if (fread(str, 1, size, file) == size)
-        {
-            str[size] = '\0';
-        }
-        else
-        {
-            free(str);
-            str = NULL;
-        }
-    }
-    return str;
-}
-
-static char *read_file(const char *path)
-{
-    FILE *file = fopen(path, "rb");
-
-    if (file == NULL)
-    {
-        return NULL;
-    }
-
-    char *str = NULL;
-
-    if (fseek(file, 0L, SEEK_END) != -1)
-    {
-        long size = ftell(file);
-
-        if ((size != -1) && (fseek(file, 0L, SEEK_SET) != -1))
-        {
-            str = read(file, (size_t)size);
-        }
-    }
-    fclose(file);
-    return str;
-}
-
-static json *read_json(const char *path)
-{
-    char *str = read_file(path);
-
-    if (str == NULL)
-    {
-        perror("read_file");
-        exit(EXIT_FAILURE);
-    }
-
-    json_error error;
-    json *node = json_parse(str, &error); // Pass error as NULL to skip errors
-
-    free(str);
     if (node == NULL)
     {
-        fprintf(stderr, "json_parse: Error at line %d, column %d\n",
-                error.line, error.column
-        );
+        json_raise_error(&error, path);
         exit(EXIT_FAILURE);
     }
     return node;
 }
 
+static int validate(const json *node, const char *path)
+{
+    json *schema = parse(path);
+
+    puts("\nschema:");
+    json_print(schema);
+    puts("\nValidated schema:");
+
+    int valid = json_schema_validate(node, schema);
+
+    if (!valid)
+    {
+        fprintf(stderr, "json_validate: %s\n", path);
+    }
+    json_free(schema);
+    return valid;
+}
+
+static void print(const json *node)
+{
+    json_print(node);
+}
+
+static json *root = NULL;
+
+static void clean(void)
+{
+    json_free(root);
+}
+
 int main(void)
 {
     setlocale(LC_CTYPE, "");
+    atexit(clean);
 
-    json *node = read_json("test.json");
-
-    json_print(node);
-    json_free(node);
+    root = parse("test.json");
+    puts("\njson:");
+    print(root);
+    validate(root, "test.schema.json");
     return 0;
 }
 

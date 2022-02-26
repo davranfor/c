@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 #include "json.h"
 
 struct json
@@ -20,9 +21,9 @@ struct json
     json *parent;
 };
 
-static const char *json_type_name[] =
+static const char *type_name[] =
 {
-    "Empty",
+    "Undefined",
     "Object",
     "Array",
     "String",
@@ -31,29 +32,23 @@ static const char *json_type_name[] =
     "Null"
 };
 
-#define json_isspace(c) isspace((unsigned char)c)
+#define is_space(c) isspace((unsigned char)c)
 
-/* Devuelve true or false dependiendo de si el carácter a examinar es una entidad de JSON */
-static int json_istoken(int c)
-{
-    return (c == '{') || (c == '[') || (c == ':') || (c == ',') || (c == ']') || (c == '}');
-}
-
-/* Devuelve true or false dependiendo de si el carácter a examinar es un codigo de escape */
-static int json_isescape(int c)
+/* Check wether a character is an escape character */
+static int is_escape(int c)
 {
     return (c == '\\') || (c == '/') || (c == '"') ||
            (c == 'b')  || (c == 'f') || (c == 'n') || (c == 'r') || (c == 't');
 }
 
-/* Devuelve true or false dependiendo de si el carácter a examinar es "\" o de control */
-static int json_iscontrol(int c)
+/* Check wether a character is a control character */
+static int is_control(int c)
 {
     return (c == '\\') || iscntrl((unsigned char)c);
 }
 
-/* Devuelve true or false dependiendo de si el carácter a examinar es un UCN "\uxxxx" */
-static int json_isunicode(const char *str)
+/* Check wether a character is an UCN (Universal character name) "\uxxxx" */
+static int is_ucn(const char *str)
 {
     return (*str++ == 'u')
         && isxdigit((unsigned char)*str++)
@@ -62,24 +57,11 @@ static int json_isunicode(const char *str)
         && isxdigit((unsigned char)*str);
 }
 
-/* Convierte entidad en tipo */
-static enum json_type json_token(int token)
-{
-    switch (token)
-    {
-        case '{':
-        case '}':
-            return JSON_OBJECT;
-        case '[':
-        case ']':
-            return JSON_ARRAY;
-        default:
-            return JSON_EMPTY;
-    }
-}
-
-/* Rellena cadena a partir de UCN, devuelve el número de bytes */
-static size_t json_unicode(const char *str, char *buf)
+/*
+ * Converts UCN to multibyte
+ * Returns the length of the multibyte in bytes
+ */
+static size_t ucn_to_multibyte(const char *str, char *buf)
 {
     unsigned code;
 
@@ -95,8 +77,32 @@ static size_t json_unicode(const char *str, char *buf)
     return 0;
 }
 
-/* Devuelve un puntero al próximo elemento (entidad) o NULL si es una cadena mal formada */
-static const char *json_scan(const char **left, const char **right)
+/* Check wether a character is a json token */
+static int is_token(int c)
+{
+    return (c == '{') || (c == '}')
+        || (c == '[') || (c == ']')
+        || (c == ':') || (c == ',');
+}
+
+/* Returns the type of a token group character */
+static enum json_type token_type(int token)
+{
+    switch (token)
+    {
+        case '{':
+        case '}':
+            return JSON_OBJECT;
+        case '[':
+        case ']':
+            return JSON_ARRAY;
+        default:
+            return JSON_UNDEFINED;
+    }
+}
+
+/* Returns a pointer to the next element or NULL on fail */
+static const char *scan(const char **left, const char **right)
 {
     const char *str = *left;
 
@@ -106,21 +112,17 @@ static const char *json_scan(const char **left, const char **right)
 
     while (*str != '\0')
     {
-        /* Si es un código de escape */
         if (*str == '\\')
         {
-            /* Si estamos dentro de una cadena */
             if (quotes == 1)
             {
                 str++;
-                /* Si es un código de escape válido "\?" */
-                if (json_isescape(*str))
+                if (is_escape(*str))
                 {
                     str += 1;
                     continue;
                 }
-                /* Si es un UCN (Universal Character Name) "\uxxxx" */
-                if (json_isunicode(str))
+                if (is_ucn(str))
                 {
                     str += 5;
                     continue;
@@ -128,50 +130,47 @@ static const char *json_scan(const char **left, const char **right)
             }
             return NULL;
         }
-        /* Si es una comilla */
         else if (*str == '"')
         {
-            /* Si hay más de una cadena, p.ej <"abc" "def"> */
+            /* Multiple string are not allowed: <"abc" "def"> */
             if (quotes > 1)
             {
                 return NULL;
             }
-            /* Cambiamos el estado */
+            /* Change state */
             quotes++;
         }
-        /* Si estamos fuera de una cadena */
+        /* Breaks on the first occurrence of a token outside a string */
         else if (quotes != 1)
         {
-            /* Si es una entidad JSON */
-            if (json_istoken(*str))
+            if (is_token(*str))
             {
                 break;
             }
         }
-        /* Si estamos dentro de una cadena y es un carácter de control */
-        else if (json_iscontrol(*str))
+        /* Control characters are not allowed outside a string */
+        else if (is_control(*str))
         {
             return NULL;
         }
-        /* Si no es un espacio */
-        if (!json_isspace(*str))
+        if (!is_space(*str))
         {
-            /* Si es el principio del token */
+            /* Update left pointer  */
             if (*left == NULL)
             {
                 *left = str;
             }
-            /* El final del token siempre está actualizado */
+            /* Right pointer is always updated */
             *right = str;
         }
         str++;
     }
-    /* Si no se han cerrado comillas */
+    /* Quotes are not closed */
     if (quotes == 1)
     {
         return NULL;
     }
-    /* Si no hay contenido delante del token */
+    /* There are no contents in front of the token */
     if (*left == NULL)
     {
         *left = *right = str;
@@ -179,8 +178,8 @@ static const char *json_scan(const char **left, const char **right)
     return str;
 }
 
-/* Devuelve un nuevo nombre o valor alojado en memoria fresca escapando caracteres especiales */
-static char *json_copy(const char *str, size_t len)
+/* Allocates space for a 'name' or a 'value' escaping special characters */
+static char *copy(const char *str, size_t len)
 {
     char *buf = malloc(len + 1);
 
@@ -194,12 +193,10 @@ static char *json_copy(const char *str, size_t len)
 
     while (str < end)
     {
-        /* Si el carácter es un escape '\' */
         if (*str == '\\')
         {
             switch (*++str)
             {
-                /* Si es un código de escape válido lo transforma */
                 case '\\':
                 case '/':
                 case '"':
@@ -221,15 +218,14 @@ static char *json_copy(const char *str, size_t len)
                     *ptr++ = '\t';
                     break;
                 case 'u':
-                    ptr += json_unicode(str, ptr);
+                    ptr += ucn_to_multibyte(str, ptr);
                     str += 4;
                     break;
-                /* No debería llegar aquí */
                 default:
                     break;
             }
         }
-        /* Si es una comilla '"', la salta */
+        /* Skip quotes */
         else if (*str != '"')
         {
             *ptr++ = *str;
@@ -240,25 +236,23 @@ static char *json_copy(const char *str, size_t len)
     return buf;
 }
 
-static char *json_set_name(json *node, const char *left, const char *right)
+static char *set_name(json *node, const char *left, const char *right)
 {
     size_t len = (size_t)(right - left + 1);
 
-    /* Si no empieza y acaba con comillas */
+    /* Must start and end with quotes */
     if ((*left != '"') || (*right != '"'))
     {
         return NULL;
     }
-    /* Asigna el nombre */
-    node->name = json_copy(left, len);
+    node->name = copy(left, len);
     return node->name;
 }
 
-static char *json_set_value(json *node, const char *left, const char *right)
+static char *set_value(json *node, const char *left, const char *right)
 {
     size_t len = (size_t)(right - left + 1);
 
-    /* Asigna el tipo */
     if ((*left == '"') && (*right == '"'))
     {
         node->type = JSON_STRING;
@@ -286,173 +280,179 @@ static char *json_set_value(json *node, const char *left, const char *right)
         }
         node->type = JSON_NUMBER;
     }
-    /* Asigna el valor */
-    node->value = json_copy(left, len);
+    node->value = copy(left, len);
     return node->value;
 }
 
-/* Devuelve un nodo nuevo */
-static json *json_create(void)
+static json *create_node(void)
 {
     return calloc(1, sizeof(struct json));
 }
 
-/* Recorre el texto y rellena los nodos */
-static json *json_build(json *node, const char *left, const char **error)
+static json *parse(json *node, const char *left, const char **error)
 {
-    #define JSON_ERROR (*error = left, NULL)
+    #define ERROR (*error = left, NULL)
 
     const char *right;
     const char *token;
 
     while (node != NULL)
     {
-        token = json_scan(&left, &right);
+        token = scan(&left, &right);
         if (token == NULL)
         {
-            return JSON_ERROR;
+            return ERROR;
         }
         switch (*token)
         {
-            /* Crea un nodo a la izquierda (hijo) */
             case '{':
             case '[':
-                /* No puede haber nada entre los dos puntos (:) o la coma (,) y el token */
+                /* if there is text before the token: abc { */
                 if (left != token)
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
-                /* Los elementos de un objeto deben tener nombre */
-                if ((node->parent != NULL) && (node->parent->type == JSON_OBJECT) && (node->name == NULL))
+                /* Object properties must have a name */
+                if ((node->parent != NULL) &&
+                    (node->parent->type == JSON_OBJECT) &&
+                    (node->name == NULL))
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
-                node->type = json_token(*token);
-                node->left = json_create();
+                node->type = token_type(*token);
+                /* Creates a left node (child) */
+                node->left = create_node();
                 if (node->left == NULL)
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
                 node->left->parent = node;
                 node = node->left;
                 break;
-            /* Nombre del nodo */
             case ':':
-                /* Solo los elementos de un objeto pueden tener nombre */
-                if ((node->parent == NULL) || (node->parent->type != JSON_OBJECT) || (node->name != NULL))
+                /* Only object properties can have a name */
+                if ((node->parent == NULL) ||
+                    (node->parent->type != JSON_OBJECT) ||
+                    (node->name != NULL))
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
-                if (json_set_name(node, left, right) == NULL)
+                if (set_name(node, left, right) == NULL)
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
                 break;
-            /* Crea un nodo a la derecha (hermano) */
             case ',':
-                /* Los elementos de un objeto deben tener nombre */
-                if ((node->parent == NULL) || ((node->parent->type == JSON_OBJECT) && (node->name == NULL)))
+                /* Object properties must have a name */
+                if ((node->parent == NULL) ||
+                   ((node->parent->type == JSON_OBJECT) && (node->name == NULL)))
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
-                if (node->type == JSON_EMPTY)
+                if (node->type == JSON_UNDEFINED)
                 {
                     if (left == token)
                     {
-                        return JSON_ERROR;
+                        return ERROR;
                     }
-                    if (json_set_value(node, left, right) == NULL)
+                    if (set_value(node, left, right) == NULL)
                     {
-                        return JSON_ERROR;
+                        return ERROR;
                     }
                 }
                 else if (left != token)
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
-                node->right = json_create();
+                /* Creates a right node (sibling) */
+                node->right = create_node();
                 if (node->right == NULL)
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
                 node->right->parent = node->parent;
                 node = node->right;
                 break;
-            /*
-             * Si el nodo está sin utilizar es un valor, si no es el fin de una matriz
-             * y toca emparejarlo con el padre
-             */
             case ']':
             case '}':
-                /* Por cada cierre debe haber una apertura del mismo tipo */
-                if ((node->parent == NULL) || (node->parent->type != json_token(*token)))
+                /* For every close there must be an open of the same type */
+                if ((node->parent == NULL) ||
+                    (node->parent->type != token_type(*token)))
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
-                if (node->type == JSON_EMPTY)
+                if (node->type == JSON_UNDEFINED)
                 {
                     if (left == token)
                     {
-                        /* Puede ser un grupo vacío: {} o [] */
+                        /* Can be an empty group {} or [] */
                         if (node->parent->left != node)
                         {
-                            return JSON_ERROR;
+                            return ERROR;
                         }
                     }
                     else
                     {
-                        /* Los elementos de un objeto deben tener nombre */
-                        if ((node->parent->type == JSON_OBJECT) && (node->name == NULL))
+                        /* Object properties must have a name */
+                        if ((node->parent->type == JSON_OBJECT) &&
+                            (node->name == NULL))
                         {
-                            return JSON_ERROR;
+                            return ERROR;
                         }
-                        if (json_set_value(node, left, right) == NULL)
+                        if (set_value(node, left, right) == NULL)
                         {
-                            return JSON_ERROR;
+                            return ERROR;
                         }
                     }
                 }
                 else if (left != token)
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
                 node = node->parent;
+                /* Removes empty group nodes: {} or [] */
+                if (node->left->type == JSON_UNDEFINED)
+                {
+                    free(node->left);
+                    node->left = NULL;
+                }
                 break;
-            /* Si hemos llegado al final */
+            /* We have reached the end */
             default:
                 if (left != token)
                 {
-                    /* Puede consistir en un solo elemento, p.ej: "Texto" ó 123 */ 
-                    if (node->type != JSON_EMPTY)
+                    /* A json document can consist of a single value
+                     * e.g.: "Text" or 123
+                     */
+                    if (node->type != JSON_UNDEFINED)
                     {
-                        return JSON_ERROR;
+                        return ERROR;
                     }
-                    if (json_set_value(node, left, right) == NULL)
+                    if (set_value(node, left, right) == NULL)
                     {
-                        return JSON_ERROR;
+                        return ERROR;
                     }
                 }
-                /* No puede estar vacío */
-                if (node->type == JSON_EMPTY)
+                /* A json document can't be empty */
+                if (node->type == JSON_UNDEFINED)
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
-                /* Si no está bien cerrado */
+                /* Bad closed document */
                 if (node->parent != NULL)
                 {
-                    return JSON_ERROR;
+                    return ERROR;
                 }
-                /* El documento es correcto */
+                /* Correct document */
                 return node;
         }
-        /* Seguimos avanzando */
+        /* Keep going ... */
         left = token + 1;
     }
-    return JSON_ERROR;
+    return ERROR;
 }
 
-/* Asigna la posición del error de parseo */
-static void json_set_error(const char *str, const char *end, json_error *error)
+static void set_error(const char *str, const char *end, json_error *error)
 {
     error->line = 1;
     error->column = 1;
@@ -463,7 +463,7 @@ static void json_set_error(const char *str, const char *end, json_error *error)
             error->line++;
             error->column = 1;
         }
-        /* Si es un caracter ASCII o el primer caracer de un multibyte */
+        /* ASCII character or the first byte of a multibyte character */
         else if ((*str & 0xc0) != 0x80)
         {
             error->column++;
@@ -472,17 +472,24 @@ static void json_set_error(const char *str, const char *end, json_error *error)
     }
 }
 
-/* Devuelve el tipo de un nodo */
 enum json_type json_type(const json *node)
 {
     if (node == NULL)
     {
-        return JSON_NONE;
+        return JSON_UNDEFINED;
     }
     return node->type;
 }
 
-/* Devuelve el label de un nodo */
+const char *json_type_name(const json *node)
+{
+    if (node == NULL)
+    {
+        return NULL;
+    }
+    return type_name[node->type];
+}
+
 char *json_name(const json *node)
 {
     if (node == NULL)
@@ -491,8 +498,6 @@ char *json_name(const json *node)
     }
     return node->name;
 }
-
-/* Conversiones a diferentes tipos */
 
 char *json_string(const json *node)
 {
@@ -547,15 +552,6 @@ int json_boolean(const json *node)
     return 0;
 }
 
-int json_is_empty(const json *node)
-{
-    if (node == NULL)
-    {
-        return 0;
-    }
-    return node->type == JSON_EMPTY;
-}
-
 int json_is_object(const json *node)
 {
     if (node == NULL)
@@ -572,6 +568,15 @@ int json_is_array(const json *node)
         return 0;
     }
     return node->type == JSON_ARRAY;
+}
+
+int json_is_property(const json *node)
+{
+    if (node == NULL)
+    {
+        return 0;
+    }
+    return node->name != NULL;
 }
 
 int json_is_string(const json *node)
@@ -648,7 +653,6 @@ int json_is_null(const json *node)
     return node->type == JSON_NULL;
 }
 
-/* Devuelve 0 o 1 dependiendo de si la cadena pasada coincide con el valor del nodo */
 int json_streq(const json *node, const char *str)
 {
     if (node == NULL)
@@ -662,29 +666,26 @@ int json_streq(const json *node, const char *str)
     return !strcmp(node->value, str);
 }
 
-/*
- * Crea el nodo root y lo pasa al parseador junto con un puntero al texto
- * Asigna la línea y columna de error si se ha pasado un puntero a error
- */
 json *json_parse(const char *text, json_error *error)
 {
     if (error)
     {
+        error->file = 0;
         error->line = 0;
         error->column = 0;
     }
 
-    json *node = json_create();
+    json *node = create_node();
 
     if (node != NULL)
     {
         const char *end = text;
 
-        if (json_build(node, text, &end) == NULL)
+        if (parse(node, text, &end) == NULL)
         {
             if (error)
             {
-                json_set_error(text, end, error);
+                set_error(text, end, error);
             }
             json_free(node);
             return NULL;
@@ -693,7 +694,6 @@ json *json_parse(const char *text, json_error *error)
     return node;
 }
 
-/* Devuelve el nodo padre */
 json *json_parent(const json *node)
 {
     if (node == NULL)
@@ -703,7 +703,25 @@ json *json_parent(const json *node)
     return node->parent;
 }
 
-/* Localiza un nodo por clave recorriendo los nodos derechos del nodo pasado */
+json *json_next(const json *node)
+{
+    if (node == NULL)
+    {
+        return NULL;
+    }
+    return node->right;
+}
+
+json *json_child(const json *node)
+{
+    if (node == NULL)
+    {
+        return NULL;
+    }
+    return node->left;
+}
+
+/* Locates a child node by name */
 json *json_node(const json *root, const char *name)
 {
     json *node;
@@ -722,34 +740,7 @@ json *json_node(const json *root, const char *name)
     return NULL;
 }
 
-/* Localiza un nodo por clave recorriendo los nodos derechos del nodo pasado y devuelve el hijo */
-json *json_child(const json *node, const char *name)
-{
-    if ((node != NULL) && (node = node->left))
-    {
-        while (node != NULL)
-        {
-            if ((node->name != NULL) && (strcmp(node->name, name) == 0))
-            {
-                return node->left;
-            }
-            node = node->right;
-        }
-    }
-    return NULL;
-}
-
-/* Devuelve el nodo hermano */
-json *json_next(const json *node)
-{
-    if (node == NULL)
-    {
-        return NULL;
-    }
-    return node->right;
-}
-
-/* Localiza un nodo por offset recorriendo los nodos derechos del nodo pasado */
+/* Locates an item by offset */
 json *json_item(const json *root, size_t item)
 {
     json *node;
@@ -770,7 +761,6 @@ json *json_item(const json *root, size_t item)
     return NULL;
 }
 
-/* Cuenta el número de nodos derechos del nodo pasado */
 size_t json_items(const json *node)
 {
     size_t count = 0;
@@ -786,8 +776,9 @@ size_t json_items(const json *node)
     return count;
 }
 
-/* Manda cada nodo al callback "func" */
-void json_foreach(const json *node, void *data, void (*func)(const json *, void *))
+/* Sends all nodes to a callback */
+void json_foreach(const json *node, void *data,
+    void (*func)(const json *, void *))
 {
     if (node != NULL)
     {
@@ -797,23 +788,107 @@ void json_foreach(const json *node, void *data, void (*func)(const json *, void 
     }
 }
 
+/* Sends all childs to a callback */
+void json_foreach_child(const json *node, void *data,
+    void (*func)(const json *, void *))
+{
+    if ((node != NULL) && (node = node->left))
+    {
+        while (node != NULL)
+        {
+            func(node, data);
+            node = node->right;
+        }
+    }
+}
+
+static void print_node_begin(const json *node, int level)
+{
+    while (level--)
+    {
+        printf("  ");
+    }
+    if (node->name != NULL)
+    {
+        printf("\"%s\": ", node->name);
+    }
+    switch (node->type)
+    {
+        case JSON_OBJECT:
+            printf("{");
+            break;
+        case JSON_ARRAY:
+            printf("[");
+            break;
+        case JSON_STRING:
+            printf("\"%s\"", node->value);
+            break;
+        default:
+            printf("%s", node->value);
+            break;
+    }
+    if (node->left == NULL)
+    {
+        /* Prints an empty "object" or an empty "array" {} [] */
+        switch (node->type)
+        {
+            case JSON_OBJECT:
+                printf("}");
+                break;
+            case JSON_ARRAY:
+                printf("]");
+                break;
+            default:
+                break;
+        }
+        if (node->right != NULL)
+        {
+            printf(",");
+        }
+    }
+    printf("\n");
+}
+
+/* Prints the close group character for each change of level */
+static void print_node_end(const json *node, int level)
+{
+    /* if "array" or "object" */
+    if (node->left != NULL)
+    {
+        while (level--)
+        {
+            printf("  ");
+        }
+        switch (node->type)
+        {
+            case JSON_OBJECT:
+                printf("}");
+                break;
+            case JSON_ARRAY:
+                printf("]");
+                break;
+            default:
+                break;
+        }
+        if (node->right != NULL)
+        {
+            printf(",");
+        }
+        printf("\n");
+    }
+}
+
 /*
- * Imprime el árbol de forma recursiva
- * Los nodos izquierdos son los que marcan el cambio de nivel
- */ 
+ * Prints a tree recursively
+ * "level" is incremented when a left branch is taken
+ */
 static void print(const json *node, int level)
 {
     if (node != NULL)
     {
-        /* Imprime una tabulación por cada cambio de nivel */
-        for (int i = 0; i < level; i++)
-        {
-            putchar('\t');
-        }
-        /* Imprime el nodo */
-        printf("(%s) <%s> = <%s>\n", json_type_name[node->type], node->name, node->value);
-        /* Por cada nodo izquierdo visita los nodos derechos */
+        print_node_begin(node, level);
         print(node->left, level + 1);
+        print_node_end(node, level);
         print(node->right, level);
     }
 }
@@ -823,7 +898,27 @@ void json_print(const json *node)
     print(node, 0);
 }
 
-/* Libera toda la memoria reservada para el árbol */
+void json_raise_error(const json_error *error, const char *path)
+{
+    if (error)
+    {
+        if (error->file)
+        {
+            fprintf(stderr, "json:\t%s\n\t%s\n",
+                    path ? path : "", strerror(errno));
+        }
+        else
+        {
+            fprintf(stderr, "json:\t%s\n\tError at line %d, column %d\n",
+                    path ? path : "", error->line, error->column);
+        }
+    }
+    else
+    {
+        fprintf(stderr, "json: %s\n", path ? path : "Unhandled error");
+    }
+}
+
 void json_free(json *node)
 {
     json *next;
@@ -850,7 +945,7 @@ void json_free(json *node)
     }
 }
 
-/* Libera toda la memoria reservada para el árbol de forma recursiva
+/* Free recursive version
 void json_free(json *node)
 {
     if (node != NULL)
@@ -865,52 +960,52 @@ void json_free(json *node)
 */
 
 /*
- * Convierte una cadena en una cadena json entrecomillada escapando carácteres especiales
- * Devuelve el tamaño de la cadena final en bytes
+ * Quotes a string escaping special characters 
+ * Returns the length of the string in bytes
  */
 size_t json_encode(char *buf, const char *str)
 {
-    #define JSON_CONCAT(c) *(ptr++) = c
-    #define JSON_ENCODE(c) JSON_CONCAT('\\'); JSON_CONCAT(c)
+    #define CONCAT(c) *(ptr++) = c
+    #define ENCODE(c) CONCAT('\\'); CONCAT(c)
 
     char *ptr = buf;
 
-    JSON_CONCAT('"');
+    CONCAT('"');
     while (*str != '\0')
     {
         switch (*str)
         {
             case '\\':
-                JSON_ENCODE('\\');
+                ENCODE('\\');
                 break;
             case '/':
-                JSON_ENCODE('/');
+                ENCODE('/');
                 break;
             case '"':
-                JSON_ENCODE('"');
+                ENCODE('"');
                 break;
             case '\b':
-                JSON_ENCODE('b');
+                ENCODE('b');
                 break;
             case '\f':
-                JSON_ENCODE('f');
+                ENCODE('f');
                 break;
             case '\n':
-                JSON_ENCODE('n');
+                ENCODE('n');
                 break;
             case '\r':
-                JSON_ENCODE('r');
+                ENCODE('r');
                 break;
             case '\t':
-                JSON_ENCODE('t');
+                ENCODE('t');
                 break;
             default:
-                JSON_CONCAT(*str);
+                CONCAT(*str);
                 break;
         }
         str++;
     }
-    JSON_CONCAT('"');
+    CONCAT('"');
     *ptr = '\0';
     return (size_t)(ptr - buf);
 }
