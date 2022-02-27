@@ -9,6 +9,7 @@
 #include <string.h>
 #include <math.h>
 #include "json.h"
+#include "json_format.h"
 #include "json_schema.h"
 
 #define number(str) strtod(str, NULL)
@@ -27,9 +28,9 @@ typedef struct
     const char *min_properties, *max_properties;
     const char *min_items, *max_items;
     const char *min_length, *max_length;
-    const char *minimum, *maximum;
-    const char *multiple_of;
+    const char *minimum, *maximum, *multiple_of;
     const char *pattern;
+    schema_format format;
     unsigned type, flags;
 } schema;
 
@@ -291,6 +292,25 @@ static int set_multiple_of(const json *node, schema *data)
     return 0;
 }
 
+static int set_format(const json *node, schema *data)
+{
+    if (json_is_string(node))
+    {
+        const char *format = json_string(node);
+
+        data->format =
+            equal(format, "date") ? test_is_date :
+            equal(format, "email") ? test_is_email : NULL;
+
+        if (data->format == NULL)
+        {
+            data->pattern = format;
+        }
+        return 1;
+    }
+    return 0;
+}
+
 static int set_pattern(const json *node, schema *data)
 {
     if (json_is_string(node))
@@ -442,6 +462,17 @@ static int test_number(schema *data)
     return 1;
 }
 
+static int test_format(schema *data)
+{
+    int result = data->format(json_string(data->node));
+
+    if (!result)
+    {
+        fprintf(stderr, "Error testing 'format'\n");
+    }
+    return result;
+}
+
 static int test_data(schema *data)
 {
     unsigned type = json_type(data->node);
@@ -475,7 +506,19 @@ static int test_data(schema *data)
             }
             break;
         default:
-            return 0;
+            break;
+    }
+    switch (type)
+    {
+        case JSON_OBJECT:
+        case JSON_ARRAY:
+            break;
+        default:
+            if (data->format && !test_format(data))
+            {
+                return 0;
+            }
+            break;
     }
     return 1;
 }
@@ -504,6 +547,7 @@ static schema_setter get_setter(const json *node, const char *name)
             equal(name, "exclusiveMinimum") ? set_exclusive_minimum :
             equal(name, "exclusiveMaximum") ? set_exclusive_maximum :
             equal(name, "multipleOf") ? set_multiple_of :
+            equal(name, "format") ? set_format :
             equal(name, "pattern") ? set_pattern :
             equal(name, "readOnly") ? test_is_boolean :
             equal(name, "writeOnly") ? test_is_boolean :

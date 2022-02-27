@@ -61,7 +61,7 @@ static int is_ucn(const char *str)
  * Converts UCN to multibyte
  * Returns the length of the multibyte in bytes
  */
-static size_t ucn_to_multibyte(const char *str, char *buf)
+static size_t ucn_to_mb(const char *str, char *buf)
 {
     unsigned code;
 
@@ -132,7 +132,7 @@ static const char *scan(const char **left, const char **right)
         }
         else if (*str == '"')
         {
-            /* Multiple string are not allowed: <"abc" "def"> */
+            /* Multiple strings are not allowed: <"abc" "def"> */
             if (quotes > 1)
             {
                 return NULL;
@@ -218,7 +218,7 @@ static char *copy(const char *str, size_t len)
                     *ptr++ = '\t';
                     break;
                 case 'u':
-                    ptr += ucn_to_multibyte(str, ptr);
+                    ptr += ucn_to_mb(str, ptr);
                     str += 4;
                     break;
                 default:
@@ -307,7 +307,10 @@ static json *parse(json *node, const char *left, const char **error)
         {
             case '{':
             case '[':
-                /* if there is text before the token: abc { */
+                /*
+                 * if there is text before the token
+                 * e.g.: "abc"{ or 123[
+                 */
                 if (left != token)
                 {
                     return ERROR;
@@ -421,7 +424,8 @@ static json *parse(json *node, const char *left, const char **error)
             default:
                 if (left != token)
                 {
-                    /* A json document can consist of a single value
+                    /*
+                     * A json document can consist of a single value
                      * e.g.: "Text" or 123
                      */
                     if (node->type != JSON_UNDEFINED)
