@@ -79,10 +79,9 @@ int test_is_time(const char *str)
 
     if (valid)
     {
-        return
-            (strtol(&str[0], NULL, 10) < 24) &&
-            (strtol(&str[3], NULL, 10) < 60) &&
-            (strtol(&str[6], NULL, 10) < 60);
+        return (strtol(&str[0], NULL, 10) < 24)
+            && (strtol(&str[3], NULL, 10) < 60)
+            && (strtol(&str[6], NULL, 10) < 60);
     }
     return 0;
 }
@@ -121,11 +120,7 @@ int test_is_email(const char *str)
         }
         str++;
     }
-    if ((at == 0) || (dot == 0) || (pos == dot))
-    {
-        return 0;
-    }
-    return 1;
+    return (dot > 0) && (pos > dot);
 }
 
 int test_is_ip_address(const char *str)
@@ -137,12 +132,12 @@ int test_is_ip_address(const char *str)
         if (*str == '.')
         {
             dots++;
-            if ((pos == 0) || (dots > 3) || (num > 255))
+            if ((dots > 3) || (pos == 0) || (num > 255))
             {
                 return 0;
             }
-            pos = 0;
             num = 0;
+            pos = 0;
         }
         else if ((pos < 3) && isdigit((unsigned char)*str))
         {
@@ -155,6 +150,6 @@ int test_is_ip_address(const char *str)
         }
         str++;
     }
-    return (pos > 0) && (pos <= 3) && (dots == 3) && (num < 256);
+    return (dots == 3) && (pos > 0) && (num < 256);
 }
 
