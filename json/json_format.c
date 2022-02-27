@@ -130,51 +130,31 @@ int test_is_email(const char *str)
 
 int test_is_ip_address(const char *str)
 {
-    int dot = 0, dots = 0, pos = 0;
-    const char *ptr = str;
+    int dots = 0, pos = 0, num = 0;
 
-    while (*ptr != '\0')
+    while (*str != '\0')
     {
-        if (*ptr == '.')
+        if (*str == '.')
         {
             dots++;
-            if ((pos == 0) || (pos > 3) || (dots > 3) || (dot == pos -1))
+            if ((pos == 0) || (dots > 3) || (num > 255))
             {
                 return 0;
             }
-            dot = pos;
             pos = 0;
+            num = 0;
         }
-        else if (isdigit((unsigned char)*ptr))
+        else if ((pos < 3) && isdigit((unsigned char)*str))
         {
-            /* TODO: Can have leading zeroes i.e. 192.168.10.1 ??? */
+            num = num * 10 + (*str - '0');
             pos++;
         }
         else
         {
             return 0;
         }
-        ptr++;
-    }
-    if ((pos == 0) || (pos > 3) || (dots != 3))
-    {
-        return 0;
-    }
-    for(;;)
-    {
-        long number = strtol(str, NULL, 10);
-
-        if (number > 255)
-        {
-            return 0;
-        }
-        str = strchr(str, '.');
-        if (str == NULL)
-        {
-            break;
-        }
         str++;
     }
-    return 1;
+    return (pos > 0) && (pos <= 3) && (dots == 3) && (num < 256);
 }
 
