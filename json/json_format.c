@@ -93,26 +93,25 @@ int test_is_email(const char *str)
         return 0;
     }
 
-    int at = 0, dot = 0, pos = 0;
+    int at = 0, dot = 0;
 
     while (*str != '\0')
     {
-        pos++;
         if (*str == '@')
         {
-            if ((at != 0) || (dot != 0))
+            if (at == 1)
             {
                 return 0;
             }
-            at = pos;
+            at = 1;
         }
         else if (*str == '.')
         {
-            if ((at == 0) || (dot != 0) || (at == pos -1))
+            if ((at == 0) || (dot == 1) || (str[-1] == '@'))
             {
                 return 0;
             }
-            dot = pos;
+            dot = 1;
         }
         else if (!isalnum((unsigned char)*str))
         {
@@ -120,7 +119,7 @@ int test_is_email(const char *str)
         }
         str++;
     }
-    return (dot > 0) && (pos > dot);
+    return (dot == 1) && (str[-1] != '.');
 }
 
 int test_is_ip_address(const char *str)
@@ -131,8 +130,7 @@ int test_is_ip_address(const char *str)
     {
         if (*str == '.')
         {
-            dots++;
-            if ((dots > 3) || (pos == 0) || (num > 255))
+            if ((++dots > 3) || (pos == 0) || (num > 255))
             {
                 return 0;
             }
