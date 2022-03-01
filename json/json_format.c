@@ -42,14 +42,16 @@ static int is_date(long year, long month, long day)
 
 static int test_mask(const char *mask, const char *str)
 {
-    // 0 isdigit (required)
-    // 9 isdigit (optional)
-    // A isalpha (required)
-    // a isalpha (optional)
-    // T isalnum (required)
-    // t isalnum (optional)
-    // + repeat while function matches
-    // * end (valid)
+    /*
+     * 0 isdigit (required)
+     * 9 isdigit (optional)
+     * A isalpha (required)
+     * a isalpha (optional)
+     * T isalnum (required)
+     * t isalnum (optional)
+     * + repeat while function matches
+     * * end (valid)
+     */
 
     int repeat = 0;
 
@@ -100,22 +102,19 @@ static int test_mask(const char *mask, const char *str)
         if (match)
         {
             str++;
-        }
-        else if (required)
-        {
-            return 0;
-        }
-        if (repeat)
-        {
-            if (func && match)
+            if (repeat && func)
             {
                 while (func((unsigned char)*str))
                 {
                     str++;
                 }
             }
-            repeat = 0;
         }
+        else if (required)
+        {
+            return 0;
+        }
+        repeat = 0;
         mask++;
     }
     return *mask == *str;

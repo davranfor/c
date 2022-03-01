@@ -47,14 +47,54 @@ static int is_control(int c)
     return (c == '\\') || iscntrl((unsigned char)c);
 }
 
+static wchar_t ucn_code(const char *str, int *error)
+{
+    if (error != NULL)
+    {
+        *error = 0;
+    }
+
+    wchar_t code = 0;
+
+    for (int len = 0; len < 4; len++)
+    {
+        int c = *(++str);
+
+        code *= 16;
+        switch (*str)
+        {
+            case '0': case '1': case '2': case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+                code += c - '0';
+                break;
+            case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+                code += 10 + c - 'A';
+                break;
+            case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+                code += 10 + c - 'a';
+                break;
+            default:
+                if (error != NULL)
+                {
+                    *error = 1;
+                }
+                return 0;
+        }
+    }
+    return code;
+}
+
 /* Check wether a character is an UCN (Universal character name) "\uxxxx" */
 static int is_ucn(const char *str)
 {
-    return (*str++ == 'u')
-        && isxdigit((unsigned char)*str++)
-        && isxdigit((unsigned char)*str++)
-        && isxdigit((unsigned char)*str++)
-        && isxdigit((unsigned char)*str);
+    if (*str == 'u')
+    {
+        int error;
+
+        ucn_code(str, &error);
+        return !error;
+    }
+    return 0;
 }
 
 /*
@@ -63,11 +103,12 @@ static int is_ucn(const char *str)
  */
 static size_t ucn_to_mb(const char *str, char *buf)
 {
-    unsigned code;
+    int error;
+    wchar_t code = ucn_code(str, &error);
 
-    if (sscanf(str, "u%04x", &code) == 1)
+    if (!error)
     {
-        int len = wctomb(buf, (wchar_t)code);
+        int len = wctomb(buf, code);
 
         if (len != -1)
         {
