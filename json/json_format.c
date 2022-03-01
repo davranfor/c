@@ -40,21 +40,92 @@ static int is_date(long year, long month, long day)
     return 1;
 }
 
+static int test_mask(const char *mask, const char *str)
+{
+    // 0 isdigit (required)
+    // 9 isdigit (optional)
+    // A isalpha (required)
+    // a isalpha (optional)
+    // T isalnum (required)
+    // t isalnum (optional)
+    // + repeat while function matches
+    // * end (valid)
+
+    int repeat = 0;
+
+    while (*mask)
+    {
+        int (*func)(int) = NULL;
+        int required = 1;
+
+        switch (*mask)
+        {
+            case '0':
+                func = isdigit;
+                break;
+            case '9':
+                func = isdigit;
+                required = 0;
+                break;
+            case 'A':
+                func = isalpha;
+                break;
+            case 'a':
+                func = isalpha;
+                required = 0;
+                break;
+            case 'T':
+                func = isalnum;
+                break;
+            case 't':
+                func = isalnum;
+                required = 0;
+                break;
+            case '+':
+                mask++;
+                repeat = 1;
+                continue;
+            case '*':
+                return 1;
+            default:
+                if (*mask != *str)
+                {
+                    return 0;
+                }
+                break;
+        }
+
+        int match = func ? func((unsigned char)*str) : 1;
+
+        if (match)
+        {
+            str++;
+        }
+        else if (required)
+        {
+            return 0;
+        }
+        if (repeat)
+        {
+            if (func && match)
+            {
+                while (func((unsigned char)*str))
+                {
+                    str++;
+                }
+            }
+            repeat = 0;
+        }
+        mask++;
+    }
+    return *mask == *str;
+}
+
 int test_is_date(const char *str)
 {
-    int valid = isdigit((unsigned char)str[0]) &&
-                isdigit((unsigned char)str[1]) &&
-                isdigit((unsigned char)str[2]) &&
-                isdigit((unsigned char)str[3]) &&
-                (str[4] == '-') &&
-                isdigit((unsigned char)str[5]) &&
-                isdigit((unsigned char)str[6]) &&
-                (str[7] == '-') &&
-                isdigit((unsigned char)str[8]) &&
-                isdigit((unsigned char)str[9]) &&
-                (str[10] == '\0');
+    const char *mask = "0000-00-00";
 
-    if (valid)
+    if (test_mask(mask, str))
     {
         return is_date(
             strtol(&str[0], NULL, 10),
@@ -67,17 +138,9 @@ int test_is_date(const char *str)
 
 int test_is_time(const char *str)
 {
-    int valid = isdigit((unsigned char)str[0]) &&
-                isdigit((unsigned char)str[1]) &&
-                (str[2] == ':') &&
-                isdigit((unsigned char)str[3]) &&
-                isdigit((unsigned char)str[4]) &&
-                (str[5] == ':') &&
-                isdigit((unsigned char)str[6]) &&
-                isdigit((unsigned char)str[7]) &&
-                (str[8] == '\0');
+    const char *mask = "00:00:00";
 
-    if (valid)
+    if (test_mask(mask, str))
     {
         return (strtol(&str[0], NULL, 10) < 24)
             && (strtol(&str[3], NULL, 10) < 60)
@@ -88,66 +151,29 @@ int test_is_time(const char *str)
 
 int test_is_email(const char *str)
 {
-    if (!isalpha((unsigned char)*str++))
-    {
-        return 0;
-    }
+    const char *mask = "A+t@+T.+T";
 
-    int at = 0, dot = 0;
-
-    while (*str != '\0')
-    {
-        if (*str == '@')
-        {
-            if (at == 1)
-            {
-                return 0;
-            }
-            at = 1;
-        }
-        else if (*str == '.')
-        {
-            if ((at == 0) || (dot == 1) || (str[-1] == '@'))
-            {
-                return 0;
-            }
-            dot = 1;
-        }
-        else if (!isalnum((unsigned char)*str))
-        {
-            return 0;
-        }
-        str++;
-    }
-    return (dot == 1) && (str[-1] != '.');
+    return test_mask(mask, str);
 }
 
 int test_is_ip_address(const char *str)
 {
-    int dots = 0, pos = 0, num = 0;
+    const char *mask = "099.099.099.099";
 
-    while (*str != '\0')
+    if (test_mask(mask, str))
     {
-        if (*str == '.')
+        char *ptr;
+
+        for (int i = 0; i < 4; i++)
         {
-            if ((++dots > 3) || (pos == 0) || (num > 255))
+            if (strtol(str, &ptr, 10) > 255)
             {
                 return 0;
             }
-            num = 0;
-            pos = 0;
+            str = ptr + 1;
         }
-        else if ((pos < 3) && isdigit((unsigned char)*str))
-        {
-            num = num * 10 + (*str - '0');
-            pos++;
-        }
-        else
-        {
-            return 0;
-        }
-        str++;
+        return 1;
     }
-    return (dots == 3) && (pos > 0) && (num < 256);
+    return 0;
 }
 
