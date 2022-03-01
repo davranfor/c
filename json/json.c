@@ -47,14 +47,15 @@ static int is_control(int c)
     return (c == '\\') || iscntrl((unsigned char)c);
 }
 
-static wchar_t ucn_code(const char *str, int *error)
+/* Returns the codepoint of an UCN (Universal character name) "\uxxxx" */
+static unsigned ucn_code(const char *str, int *error)
 {
     if (error != NULL)
     {
         *error = 0;
     }
 
-    wchar_t code = 0;
+    int code = 0;
 
     for (int len = 0; len < 4; len++)
     {
@@ -81,10 +82,10 @@ static wchar_t ucn_code(const char *str, int *error)
                 return 0;
         }
     }
-    return code;
+    return (unsigned)code;
 }
 
-/* Check wether a character is an UCN (Universal character name) "\uxxxx" */
+/* Check wether a character is an UCN */
 static int is_ucn(const char *str)
 {
     if (*str == 'u')
@@ -104,18 +105,38 @@ static int is_ucn(const char *str)
 static size_t ucn_to_mb(const char *str, char *buf)
 {
     int error;
-    wchar_t code = ucn_code(str, &error);
+    unsigned code = ucn_code(str, &error);
 
-    if (!error)
+    if (error)
     {
-        int len = wctomb(buf, code);
-
-        if (len != -1)
-        {
-            return (size_t)len;
-        }
+        return 0;
     }
-    return 0;
+    if (code <= 0x7f)
+    {
+        buf[0] = (char)code;
+        return 1;
+    }
+    else if (code <= 0x7ff)
+    {
+        buf[0] = (char)(0xc0 | ((code >> 6) & 0x1f));
+        buf[1] = (char)(0x80 | ((code & 0x3f)));
+        return 2;
+    }
+    else if (code <= 0xffff)
+    {
+        buf[0] = (char)(0xe0 | ((code >> 12) & 0x0f));
+        buf[1] = (char)(0x80 | ((code >> 6) & 0x3f));
+        buf[2] = (char)(0x80 | ((code & 0x3f)));
+        return 3;
+    }
+    else
+    {
+        buf[0] = (char)(0xf0 | ((code >> 18) & 0x07));
+        buf[1] = (char)(0x80 | ((code >> 12) & 0x3f));
+        buf[2] = (char)(0x80 | ((code >> 6) & 0x3f));
+        buf[3] = (char)(0x80 | ((code & 0x3f)));
+        return 4;
+    }
 }
 
 /* Check wether a character is a json token */
