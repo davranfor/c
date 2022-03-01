@@ -61,18 +61,17 @@ static unsigned ucn_code(const char *str, int *error)
     {
         int c = *(++str);
 
-        code *= 16;
         switch (*str)
         {
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
-                code += c - '0';
+                code = code * 16 + c - '0';
                 break;
             case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-                code += 10 + c - 'A';
+                code = code * 16 + 10 + c - 'A';
                 break;
             case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-                code += 10 + c - 'a';
+                code = code * 16 + 10 + c - 'a';
                 break;
             default:
                 if (error != NULL)
@@ -104,13 +103,8 @@ static int is_ucn(const char *str)
  */
 static size_t ucn_to_mb(const char *str, char *buf)
 {
-    int error;
-    unsigned code = ucn_code(str, &error);
+    unsigned code = ucn_code(str, NULL);
 
-    if (error)
-    {
-        return 0;
-    }
     if (code <= 0x7f)
     {
         buf[0] = (char)code;
@@ -985,51 +979,48 @@ void json_raise_error(const json_error *error, const char *path)
     }
 }
 
-void json_free(json *node)
+/*
+ * Encodes a multibyte as UCN "\uxxxx"
+ * Returns the length of the string in bytes (6)
+ */
+size_t json_ucn_encode(char *buf, const char *str)
 {
-    json *next;
+    unsigned int code = 0;
 
-    while (node != NULL)
+    while (*str != 0)
     {
-        next = node->left;
-        node->left = NULL;
-        if (next == NULL)
+        unsigned char c = (unsigned char)*str;
+
+        if (c <= 0x7f)
         {
-            if (node->right != NULL)
-            {
-                next = node->right;
-            }
-            else
-            {
-                next = node->parent;
-            }
-            free(node->name);
-            free(node->value);
-            free(node);
+            code = c;
         }
-        node = next;
+        else if (c <= 0xbf)
+        {
+            code = (code << 6) | (c & 0x3f);
+        }
+        else if (c <= 0xdf)
+        {
+            code = c & 0x1f;
+        }
+        else if (c <= 0xef)
+        {
+            code = c & 0x0f;
+        }
+        else
+        {
+            code = c & 0x07;
+        }
+        str++;
     }
+    return (size_t)sprintf(buf, "\\u%04x", code);
 }
-
-/* Free recursive version
-void json_free(json *node)
-{
-    if (node != NULL)
-    {
-        json_free(node->left);
-        json_free(node->right);
-        free(node->name);
-        free(node->value);
-        free(node);
-    }
-}
-*/
 
 /*
  * Quotes a string escaping special characters 
  * Returns the length of the string in bytes
  */
-size_t json_encode(char *buf, const char *str)
+size_t json_string_encode(char *buf, const char *str)
 {
     #define CONCAT(c) *(ptr++) = c
     #define ENCODE(c) CONCAT('\\'); CONCAT(c)
@@ -1075,4 +1066,44 @@ size_t json_encode(char *buf, const char *str)
     *ptr = '\0';
     return (size_t)(ptr - buf);
 }
+
+void json_free(json *node)
+{
+    json *next;
+
+    while (node != NULL)
+    {
+        next = node->left;
+        node->left = NULL;
+        if (next == NULL)
+        {
+            if (node->right != NULL)
+            {
+                next = node->right;
+            }
+            else
+            {
+                next = node->parent;
+            }
+            free(node->name);
+            free(node->value);
+            free(node);
+        }
+        node = next;
+    }
+}
+
+/* Free recursive version
+void json_free(json *node)
+{
+    if (node != NULL)
+    {
+        json_free(node->left);
+        json_free(node->right);
+        free(node->name);
+        free(node->value);
+        free(node);
+    }
+}
+*/
 
