@@ -301,8 +301,10 @@ static int set_format(const json *node, schema *data)
         data->format =
             equal(format, "date") ? test_is_date :
             equal(format, "time") ? test_is_time :
+            equal(format, "date-time") ? test_is_date_time :
             equal(format, "email") ? test_is_email :
-            equal(format, "ip-address") ? test_is_ip_address : NULL;
+            equal(format, "ipv4") ? test_is_ipv4 :
+            equal(format, "ipv6") ? test_is_ipv6 : NULL;
 
         if (data->format == NULL)
         {

@@ -55,7 +55,7 @@ void json_foreach(const json *, void *, void (*)(const json *, void *));
 void json_foreach_child(const json *, void *, void (*)(const json *, void *));
 void json_print(const json *);
 void json_raise_error(const json_error *error, const char *);
-size_t json_ucn_encode(char *, const char *);
+size_t json_ucn_write(char *, unsigned int);
 size_t json_string_encode(char *, const char *);
 void json_free(json *);
 
