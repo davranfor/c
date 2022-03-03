@@ -258,3 +258,10 @@ int test_is_ipv6(const char *str)
     return valid_mask("xxxx", str) || test_is_ipv4(str);
 }
 
+int test_is_uuid(const char *str)
+{
+    const char *mask = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX";
+
+    return valid_mask(mask, str);
+}
+
