@@ -494,7 +494,7 @@ const char *json_type_name(const json *node)
     return type_name[node->type];
 }
 
-char *json_name(const json *node)
+const char *json_name(const json *node)
 {
     if (node == NULL)
     {
@@ -503,7 +503,7 @@ char *json_name(const json *node)
     return node->name;
 }
 
-char *json_string(const json *node)
+const char *json_string(const json *node)
 {
     if (node == NULL)
     {

@@ -16,9 +16,10 @@
 #define real(str) strtoul(str, NULL, 10)
 #define equal(a, b) (strcmp(a, b) == 0)
 
-#define UNIQUE_ITEMS        (1u << 0)
-#define EXCLUSIVE_MINIMUM   (1u << 1)
-#define EXCLUSIVE_MAXIMUM   (1u << 2)
+#define ADDITIONAL_PROPERTIES   (1u << 0)
+#define UNIQUE_ITEMS            (1u << 1)
+#define EXCLUSIVE_MINIMUM       (1u << 2)
+#define EXCLUSIVE_MAXIMUM       (1u << 3)
 
 typedef struct
 {
@@ -50,6 +51,23 @@ static void print(const json *node)
             json_type_name(node), json_name(node), json_string(node)
         );
     }
+}
+
+static int set_flag(const json *node, schema *data, unsigned flag)
+{
+    if (json_is_boolean(node))
+    {
+        if (json_boolean(node))
+        {
+            data->flags |= flag;
+        }
+        else
+        {
+            data->flags &= ~flag;
+        }
+        return 1;
+    }
+    return 0;
 }
 
 static int unique_strings(const json *node)
@@ -123,18 +141,6 @@ static int set_required(const json *node, schema *data)
     return 0;
 }
 
-static int set_properties(const json *node, schema *data)
-{
-    data->properties = json_child(node) ? node : NULL;
-    return 1;
-}
-
-static int set_items(const json *node, schema *data)
-{
-    data->items = json_child(node) ? node : NULL;
-    return 1;
-}
-
 static int set_dependent_required(const json *node, schema *data)
 {
     if (json_type(node) == JSON_ARRAY)
@@ -148,21 +154,15 @@ static int set_dependent_required(const json *node, schema *data)
     return 0;
 }
 
-static int set_unique_items(const json *node, schema *data)
+static int set_properties(const json *node, schema *data)
 {
-    if (json_is_boolean(node))
-    {
-        if (json_boolean(node))
-        {
-            data->flags |= UNIQUE_ITEMS;
-        }
-        else
-        {
-            data->flags &= ~UNIQUE_ITEMS;
-        }
-        return 1;
-    }
-    return 0;
+    data->properties = json_child(node) ? node : NULL;
+    return 1;
+}
+
+static int set_additional_properties(const json *node, schema *data)
+{
+    return set_flag(node, data, ADDITIONAL_PROPERTIES);
 }
 
 static int set_min_properties(const json *node, schema *data)
@@ -183,6 +183,17 @@ static int set_max_properties(const json *node, schema *data)
         return 1;
     }
     return 0;
+}
+
+static int set_items(const json *node, schema *data)
+{
+    data->items = json_child(node) ? node : NULL;
+    return 1;
+}
+
+static int set_unique_items(const json *node, schema *data)
+{
+    return set_flag(node, data, UNIQUE_ITEMS);
 }
 
 static int set_min_items(const json *node, schema *data)
@@ -247,36 +258,12 @@ static int set_maximum(const json *node, schema *data)
 
 static int set_exclusive_minimum(const json *node, schema *data)
 {
-    if (json_is_boolean(node))
-    {
-        if (json_boolean(node))
-        {
-            data->flags |= EXCLUSIVE_MINIMUM;
-        }
-        else
-        {
-            data->flags &= ~EXCLUSIVE_MINIMUM;
-        }
-        return 1;
-    }
-    return 0;
+    return set_flag(node, data, EXCLUSIVE_MINIMUM);
 }
 
 static int set_exclusive_maximum(const json *node, schema *data)
 {
-    if (json_is_boolean(node))
-    {
-        if (json_boolean(node))
-        {
-            data->flags |= EXCLUSIVE_MAXIMUM;
-        }
-        else
-        {
-            data->flags &= ~EXCLUSIVE_MAXIMUM;
-        }
-        return 1;
-    }
-    return 0;
+    return set_flag(node, data, EXCLUSIVE_MAXIMUM);
 }
 
 static int set_multiple_of(const json *node, schema *data)
@@ -469,13 +456,13 @@ static int test_number(schema *data)
 
 static int test_format(schema *data)
 {
-    int result = data->format(json_string(data->node));
+    int valid = data->format(json_string(data->node));
 
-    if (!result)
+    if (!valid)
     {
         fprintf(stderr, "Error testing 'format'\n");
     }
-    return result;
+    return valid;
 }
 
 static int test_data(schema *data)
@@ -540,9 +527,10 @@ static schema_setter get_setter(const json *node, const char *name)
             equal(name, "title") ? test_is_string :
             equal(name, "description") ? test_is_string :
             equal(name, "type") ? set_type :
-            equal(name, "uniqueItems") ? set_unique_items :
+            equal(name, "additionalProperties") ? set_additional_properties :
             equal(name, "minProperties") ? set_min_properties :
             equal(name, "maxProperties") ? set_max_properties :
+            equal(name, "uniqueItems") ? set_unique_items :
             equal(name, "minItems") ? set_min_items :
             equal(name, "maxItems") ? set_max_items :
             equal(name, "minLength") ? set_min_length :

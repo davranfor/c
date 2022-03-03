@@ -28,8 +28,8 @@ enum json_type
 
 enum json_type json_type(const json *);
 const char *json_type_name(const json *);
-char *json_name(const json *);
-char *json_string(const json *);
+const char *json_name(const json *);
+const char *json_string(const json *);
 double json_number(const json *);
 long json_integer(const json *);
 unsigned long json_real(const json *);
