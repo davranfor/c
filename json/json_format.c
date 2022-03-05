@@ -13,6 +13,9 @@
 static int valid_mask(const char *mask, const char *str)
 {
     /*
+     *  +   repeat while next intruction match
+     *  \\  next character is a literal (not a function) (required)
+     *  \?  next character is a literal (not a function) (optional)
      *  0   isdigit (required)
      *  9   isdigit (optional)
      *  A   isalpha (required)
@@ -21,76 +24,99 @@ static int valid_mask(const char *mask, const char *str)
      *  t   isalnum (optional)
      *  X   isxdigit (required)
      *  x   isxdigit (optional)
-     *  +   repeat while function matches
-     *  \\  next character is a literal (not a function))
      *  *   end (returns the position if there is more text to scan or 1)
      */
 
     const char *ptr = str;
+    int required = 0;
     int repeat = 0;
 
-    while (*mask)
+    while (*mask != '\0')
     {
         int (*func)(int) = NULL;
-        int required = 1;
 
         switch (*mask)
         {
+            case '+':
+                repeat = 1;
+                mask++;
+                continue;
+            case '\\':
+                required = 1;
+                mask++;
+                break;
+            case '\?':
+                mask++;
+                break;
             case '0':
                 func = isdigit;
+                required = 1;
                 break;
             case '9':
                 func = isdigit;
-                required = 0;
                 break;
             case 'A':
                 func = isalpha;
+                required = 1;
                 break;
             case 'a':
                 func = isalpha;
-                required = 0;
                 break;
             case 'T':
                 func = isalnum;
+                required = 1;
                 break;
             case 't':
                 func = isalnum;
-                required = 0;
                 break;
             case 'X':
                 func = isxdigit;
+                required = 1;
                 break;
             case 'x':
                 func = isxdigit;
-                required = 0;
                 break;
-            case '+':
-                mask++;
-                repeat = 1;
-                continue;
             case '*':
-                return (*str == '\0') ? 1 : (int)(str - ptr);
-            case '\\':
-                mask++;
-                /* fallthrough */
+                return *str ? 1 : (int)(str - ptr);
             default:
-                if (*mask != *str)
-                {
-                    return 0;
-                }
                 break;
         }
 
-        int match = func ? func((unsigned char)*str) : 1;
+        int match;
 
+        if (func != NULL)
+        {
+            match = func((unsigned char)*str);
+        }
+        else
+        {
+            match = (*mask == *str);
+        }
         if (match)
         {
-            str++;
-            if (repeat && func)
+            if (*str != '\0')
             {
-                while (func((unsigned char)*str))
+                str++;
+            }
+            else
+            {
+                break;
+            }
+            if (repeat)
+            {
+                if (func)
                 {
-                    str++;
+                    while (func((unsigned char)*str))
+                    {
+                        str++;
+                    }
+                }
+                else
+                {
+                    while (*mask == *str)
+                    {
+                        str++;
+                    }
                 }
             }
         }
@@ -98,10 +124,18 @@ static int valid_mask(const char *mask, const char *str)
         {
             return 0;
         }
+        if (*mask != '\0')
+        {
+            mask++;
+        }
+        else
+        {
+            break;
+        }
+        required = 0;
         repeat = 0;
-        mask++;
     }
-    return *mask == *str;
+    return (*str == *mask);
 }
 
 static int year_is_leap(long year)
