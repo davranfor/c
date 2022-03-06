@@ -14,6 +14,7 @@ static int valid_mask(const char *mask, const char *str)
 {
     /*
      *  +   repeat while next intruction match
+     *  !   negate next instruction
      *  \\  next character is a literal (not a function) (required)
      *  \?  next character is a literal (not a function) (optional)
      *  0   isdigit (required)
@@ -29,6 +30,7 @@ static int valid_mask(const char *mask, const char *str)
 
     const char *ptr = str;
     int required = 0;
+    int negate = 0;
     int repeat = 0;
 
     while (*mask != '\0')
@@ -39,6 +41,10 @@ static int valid_mask(const char *mask, const char *str)
         {
             case '+':
                 repeat = 1;
+                mask++;
+                continue;
+            case '!':
+                negate = 1;
                 mask++;
                 continue;
             case '\\':
@@ -86,11 +92,11 @@ static int valid_mask(const char *mask, const char *str)
 
         if (func != NULL)
         {
-            match = func((unsigned char)*str);
+            match = (!func((unsigned char)*str)) == negate;
         }
         else
         {
-            match = (*mask == *str);
+            match = (*mask != *str) == negate;
         }
         if (match)
         {
@@ -106,14 +112,14 @@ static int valid_mask(const char *mask, const char *str)
             {
                 if (func)
                 {
-                    while (func((unsigned char)*str))
+                    while (*str && ((!func((unsigned char)*str)) == negate))
                     {
                         str++;
                     }
                 }
                 else
                 {
-                    while (*mask == *str)
+                    while (*str && ((*mask != *str) == negate))
                     {
                         str++;
                     }
@@ -133,6 +139,7 @@ static int valid_mask(const char *mask, const char *str)
             break;
         }
         required = 0;
+        negate = 0;
         repeat = 0;
     }
     return (*str == *mask);
