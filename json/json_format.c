@@ -14,7 +14,6 @@ static int valid_mask(const char *mask, const char *str)
 {
     /*
      *  +   repeat while next intruction match
-     *  !   negate next instruction
      *  \\  next character is a literal (not a function) (required)
      *  \?  next character is a literal (not a function) (optional)
      *  0   isdigit (required)
@@ -30,7 +29,6 @@ static int valid_mask(const char *mask, const char *str)
 
     const char *ptr = str;
     int required = 0;
-    int negate = 0;
     int repeat = 0;
 
     while (*mask != '\0')
@@ -41,10 +39,6 @@ static int valid_mask(const char *mask, const char *str)
         {
             case '+':
                 repeat = 1;
-                mask++;
-                continue;
-            case '!':
-                negate = 1;
                 mask++;
                 continue;
             case '\\':
@@ -92,11 +86,11 @@ static int valid_mask(const char *mask, const char *str)
 
         if (func != NULL)
         {
-            match = (!func((unsigned char)*str)) == negate;
+            match = func((unsigned char)*str);
         }
         else
         {
-            match = (*mask != *str) == negate;
+            match = (*mask == *str);
         }
         if (match)
         {
@@ -112,14 +106,14 @@ static int valid_mask(const char *mask, const char *str)
             {
                 if (func)
                 {
-                    while (*str && ((!func((unsigned char)*str)) == negate))
+                    while (func((unsigned char)*str))
                     {
                         str++;
                     }
                 }
                 else
                 {
-                    while (*str && ((*mask != *str) == negate))
+                    while (*mask == *str)
                     {
                         str++;
                     }
@@ -139,7 +133,6 @@ static int valid_mask(const char *mask, const char *str)
             break;
         }
         required = 0;
-        negate = 0;
         repeat = 0;
     }
     return (*str == *mask);
@@ -239,9 +232,40 @@ int test_is_date_time(const char *str)
 
 int test_is_email(const char *str)
 {
-    const char *mask = "A+t@+T.+T";
+    if ((*str == '.') || strstr(str, ".."))
+    {
+        return 0;
+    }
 
-    return valid_mask(mask, str);
+    const char *at = strchr(str, '@');
+
+    if ((at == NULL) || (at == str))
+    {
+        return 0;
+    }
+
+    const char *dot = strchr(str, '.');
+
+    if ((dot == NULL) || (dot < at + 2) ||
+        (dot[1] == 0) || (dot[2] == 0))
+    {
+        return 0;
+    }
+
+    const char *txt = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                      "abcdefghijklmnopqrstuvwxyz"
+                      "@.!#$%&'*+-/=?^_`{|}~"
+                      "0123456789";
+
+    while (*str != '\0')
+    {
+        if (!strchr(txt, *str))
+        {
+            return 0;
+        }
+        str++;
+    }
+    return 1;
 }
 
 int test_is_ipv4(const char *str)
