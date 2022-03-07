@@ -252,8 +252,8 @@ int test_is_email(const char *str)
         return 0;
     }
 
-    const char *txt = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                      "abcdefghijklmnopqrstuvwxyz"
+    const char *txt = "abcdefghijklmnopqrstuvwxyz"
+                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                       "@.!#$%&'*+-/=?^_`{|}~"
                       "0123456789";
 
