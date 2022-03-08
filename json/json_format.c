@@ -252,14 +252,10 @@ int test_is_email(const char *str)
         return 0;
     }
 
-    const char *txt = "abcdefghijklmnopqrstuvwxyz"
-                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                      "@.!#$%&'*+-/=?^_`{|}~"
-                      "0123456789";
-
     while (*str != '\0')
     {
-        if (!strchr(txt, *str))
+        if (!isalnum((unsigned char)*str) &&
+            !strchr("@.!#$%&'*+-/=?^_`{|}~", *str))
         {
             return 0;
         }
