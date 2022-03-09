@@ -13,7 +13,6 @@
 static int valid_mask(const char *mask, const char *str)
 {
     /*
-     *  +   repeat while next intruction match
      *  \\  next character is a literal (not a function) (required)
      *  \?  next character is a literal (not a function) (optional)
      *  0   isdigit (required)
@@ -29,7 +28,6 @@ static int valid_mask(const char *mask, const char *str)
 
     const char *ptr = str;
     int required = 0;
-    int repeat = 0;
 
     while (*mask != '\0')
     {
@@ -37,10 +35,6 @@ static int valid_mask(const char *mask, const char *str)
 
         switch (*mask)
         {
-            case '+':
-                repeat = 1;
-                mask++;
-                continue;
             case '\\':
                 required = 1;
                 mask++;
@@ -102,23 +96,6 @@ static int valid_mask(const char *mask, const char *str)
             {
                 break;
             }
-            if (repeat)
-            {
-                if (func)
-                {
-                    while (func((unsigned char)*str))
-                    {
-                        str++;
-                    }
-                }
-                else
-                {
-                    while (*mask == *str)
-                    {
-                        str++;
-                    }
-                }
-            }
         }
         else if (required)
         {
@@ -133,7 +110,6 @@ static int valid_mask(const char *mask, const char *str)
             break;
         }
         required = 0;
-        repeat = 0;
     }
     return (*str == *mask);
 }
@@ -192,7 +168,7 @@ int test_is_date(const char *str)
 
 static int is_time_suffix(const char *str)
 {
-    const char *mask = "\\+00:00";
+    const char *mask = "+00:00";
 
     if (valid_mask(mask, str))
     {
