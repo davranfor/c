@@ -698,6 +698,34 @@ json *json_parse(const char *text, json_error *error)
     return node;
 }
 
+static json *json_self(const json *node)
+{
+    /* Silence compiler due to const to non-const conversion */
+    json *cast[1];
+
+    memcpy(cast, &node, sizeof node);
+    return cast[0];
+}
+
+json *json_root(const json *node)
+{
+    json *root = NULL;
+
+    if (node != NULL)
+    {
+        root = node->parent;
+        if (root == NULL)
+        {
+            return json_self(node);
+        }
+        while (root->parent != NULL)
+        {
+            root = root->parent;
+        }
+    }
+    return root;
+}
+
 json *json_parent(const json *node)
 {
     if (node == NULL)
@@ -726,7 +754,7 @@ json *json_child(const json *node)
 }
 
 /* Locates a child node by name */
-json *json_node(const json *root, const char *name)
+json *json_pair(const json *root, const char *name)
 {
     json *node;
 
@@ -742,6 +770,104 @@ json *json_node(const json *root, const char *name)
         }
     }
     return NULL;
+}
+
+/*
+ * Locates a child node by name given a name length
+ * Useful to stop comparing when there is more text after the name
+ */
+static json *json_find(const json *root, const char *name, size_t length)
+{
+    json *node;
+
+    if ((root != NULL) && (node = root->left))
+    {
+        while (node != NULL)
+        {
+            if ((node->name != NULL) &&
+                (strncmp(node->name, name, length) == 0) &&
+                (node->name[length] == '\0'))
+            {
+                return node;
+            }
+            node = node->right;
+        }
+    }
+    return NULL;
+}
+
+static json *node_helper(json *node, const char **path)
+{
+    const char *ptr = *path;
+    int item = 0;
+
+    while ((*ptr != '\0') && (*ptr != '/'))
+    {
+        if ((*ptr >= '0') && (*ptr <= '9'))
+        {
+            item = item * 10 + (*ptr - '0');
+        }
+        else
+        {
+            ptr = *path;
+            break;
+        }
+        ptr++;
+    }
+    /* Locate by #item */
+    if (ptr != *path)
+    {
+        node = json_item(node, (size_t)item);
+    }
+    /* Current node (noop) */
+    else if ((ptr[0] == '.') &&
+            ((ptr[1] == '/') || (ptr[1] == '\0')))
+    {
+        ptr += 1;
+    }
+    /* Parent node */
+    else if ((ptr[0] == '.') && (ptr[1] == '.') &&
+            ((ptr[2] == '/') || (ptr[2] == '\0')))
+    {
+        node = node->parent;
+        ptr += 2;
+    }
+    /* Locate by name */
+    else
+    {
+        while ((*ptr != '\0') && (*ptr != '/'))
+        {
+            ptr++;
+        }
+
+        size_t length = (size_t)(ptr - *path);
+
+        node = json_find(node, *path, length);
+    }
+    /* Skip '/' */
+    *path = *ptr ? ptr + 1 : ptr;
+    return node;
+}
+
+/* Locates a node by path */
+json *json_node(const json *root, const char *path)
+{
+    json *node = NULL;
+
+    if (*path == '/')
+    {
+        node = json_root(root);
+        path += 1;
+    }
+    else
+    {
+        node = json_self(root);
+    }
+    while ((node != NULL) && (*path != '\0'))
+    {
+        node = node_helper(node, &path);
+    }
+    return node;
 }
 
 /* Locates an item by offset */

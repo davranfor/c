@@ -355,7 +355,7 @@ static int test_required(schema *data)
 
     while (item != NULL)
     {
-        if (!json_node(data->node, json_string(item)))
+        if (!json_pair(data->node, json_string(item)))
         {
             fprintf(stderr, "Field '%s' is 'required'\n", json_string(item));
             return 0;
