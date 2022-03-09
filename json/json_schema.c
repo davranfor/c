@@ -35,24 +35,6 @@ typedef struct
     unsigned type, flags;
 } schema;
 
-static void print(const json *node)
-{
-    if (!json_string(node))
-    {
-        printf(
-            "%-10s%s\n",
-            json_type_name(node), json_name(node)
-        );
-    }
-    else
-    {
-        printf(
-            "%-10s%s = '%s'\n",
-            json_type_name(node), json_name(node), json_string(node)
-        );
-    }
-}
-
 static int set_flag(const json *node, schema *data, unsigned flag)
 {
     if (json_is_boolean(node))
@@ -579,7 +561,7 @@ static int test_schema(const json *node, schema *data)
         /* if property */
         if (name != NULL)
         {
-            print(node);
+            json_print(node);
 
             schema_setter setter = get_setter(node, name);
 

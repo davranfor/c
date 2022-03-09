@@ -460,7 +460,7 @@ static void set_error(const char *str, const char *end, json_error *error)
 {
     error->line = 1;
     error->column = 1;
-    while ((str < end) && (*str != '\0'))
+    while (str < end)
     {
         if (*str == '\n')
         {
@@ -918,23 +918,9 @@ void json_foreach(const json *node, void *data,
     }
 }
 
-/* Sends all childs to a callback */
-void json_foreach_child(const json *node, void *data,
-    void (*func)(const json *, void *))
-{
-    if ((node != NULL) && (node = node->left))
-    {
-        while (node != NULL)
-        {
-            func(node, data);
-            node = node->right;
-        }
-    }
-}
-
 static void print_node_begin(const json *node, int level)
 {
-    while (level--)
+    for (int i = 0; i < level; i++)
     {
         printf("  ");
     }
@@ -971,7 +957,7 @@ static void print_node_begin(const json *node, int level)
             default:
                 break;
         }
-        if (node->right != NULL)
+        if ((level > 0) && (node->right != NULL))
         {
             printf(",");
         }
@@ -985,7 +971,7 @@ static void print_node_end(const json *node, int level)
     /* if "array" or "object" */
     if (node->left != NULL)
     {
-        while (level--)
+        for (int i = 0; i < level; i++)
         {
             printf("  ");
         }
@@ -1000,7 +986,7 @@ static void print_node_end(const json *node, int level)
             default:
                 break;
         }
-        if (node->right != NULL)
+        if ((level > 0) && (node->right != NULL))
         {
             printf(",");
         }
@@ -1019,7 +1005,10 @@ static void print(const json *node, int level)
         print_node_begin(node, level);
         print(node->left, level + 1);
         print_node_end(node, level);
-        print(node->right, level);
+        if (level > 0)
+        {
+            print(node->right, level);
+        }
     }
 }
 
