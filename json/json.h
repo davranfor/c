@@ -45,6 +45,7 @@ int json_is_boolean(const json *);
 int json_is_null(const json *);
 int json_streq(const json *, const char *);
 json *json_parse(const char *, json_error *);
+json *json_self(const json *);
 json *json_root(const json *);
 json *json_parent(const json *);
 json *json_next(const json *);

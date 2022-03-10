@@ -238,34 +238,34 @@ static char *copy(const char *str, size_t len)
 
 static char *set_name(json *node, const char *left, const char *right)
 {
-    size_t len = (size_t)(right - left + 1);
+    size_t length = (size_t)(right - left + 1);
 
     /* Must start and end with quotes */
     if ((*left != '"') || (*right != '"'))
     {
         return NULL;
     }
-    node->name = copy(left, len);
+    node->name = copy(left, length);
     return node->name;
 }
 
 static char *set_value(json *node, const char *left, const char *right)
 {
-    size_t len = (size_t)(right - left + 1);
+    size_t length = (size_t)(right - left + 1);
 
     if ((*left == '"') && (*right == '"'))
     {
         node->type = JSON_STRING;
     }
-    else if ((len == 4) && (strncmp(left, "null", len) == 0))
+    else if ((length == 4) && (strncmp(left, "null", length) == 0))
     {
         node->type = JSON_NULL;
     }
-    else if ((len == 4) && (strncmp(left, "true", len) == 0))
+    else if ((length == 4) && (strncmp(left, "true", length) == 0))
     {
         node->type = JSON_BOOLEAN;
     }
-    else if ((len == 5) && (strncmp(left, "false", len) == 0))
+    else if ((length == 5) && (strncmp(left, "false", length) == 0))
     {
         node->type = JSON_BOOLEAN;
     }
@@ -280,7 +280,7 @@ static char *set_value(json *node, const char *left, const char *right)
         }
         node->type = JSON_NUMBER;
     }
-    node->value = copy(left, len);
+    node->value = copy(left, length);
     return node->value;
 }
 
@@ -698,7 +698,7 @@ json *json_parse(const char *text, json_error *error)
     return node;
 }
 
-static json *json_self(const json *node)
+json *json_self(const json *node)
 {
     /* Silence compiler due to const to non-const conversion */
     json *cast[1];
@@ -798,54 +798,30 @@ static json *json_find(const json *root, const char *name, size_t length)
 
 static json *node_helper(json *node, const char **path)
 {
-    const char *ptr = *path;
-    int item = 0;
+    const char *end = *path + strcspn(*path, "/");
+    size_t length = (size_t)(end - *path);
 
-    while ((*ptr != '\0') && (*ptr != '/'))
-    {
-        if ((*ptr >= '0') && (*ptr <= '9'))
-        {
-            item = item * 10 + (*ptr - '0');
-        }
-        else
-        {
-            ptr = *path;
-            break;
-        }
-        ptr++;
-    }
     /* Locate by #item */
-    if (ptr != *path)
+    if (strspn(*path, "0123456789") == length)
     {
-        node = json_item(node, (size_t)item);
+        node = json_item(node, strtoul(*path, NULL, 10));
     }
-    /* Current node (noop) */
-    else if ((ptr[0] == '.') &&
-            ((ptr[1] == '/') || (ptr[1] == '\0')))
+    /* . Current node (noop) */
+    else if ((length == 1) && (strspn(*path, ".") == 1))
     {
-        ptr += 1;
     }
-    /* Parent node */
-    else if ((ptr[0] == '.') && (ptr[1] == '.') &&
-            ((ptr[2] == '/') || (ptr[2] == '\0')))
+    /* .. Parent node */
+    else if ((length == 2) && (strspn(*path, ".") == 2))
     {
         node = node->parent;
-        ptr += 2;
     }
     /* Locate by name */
     else
     {
-        while ((*ptr != '\0') && (*ptr != '/'))
-        {
-            ptr++;
-        }
-
-        size_t length = (size_t)(ptr - *path);
-
         node = json_find(node, *path, length);
     }
-    /* Skip '/' */
-    *path = *ptr ? ptr + 1 : ptr;
+    /* Adjust pointer to path */
+    *path = (*end == '\0') ? end : end + 1;
     return node;
 }
 
