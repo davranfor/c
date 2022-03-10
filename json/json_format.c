@@ -76,17 +76,17 @@ static int valid_mask(const char *mask, const char *str)
                 break;
         }
 
-        int match;
+        int valid;
 
         if (func != NULL)
         {
-            match = func((unsigned char)*str);
+            valid = func((unsigned char)*str);
         }
         else
         {
-            match = (*mask == *str);
+            valid = (*mask == *str);
         }
-        if (match)
+        if (valid)
         {
             if (*str != '\0')
             {
@@ -111,7 +111,7 @@ static int valid_mask(const char *mask, const char *str)
         }
         required = 0;
     }
-    return (*str == *mask);
+    return *mask == *str;
 }
 
 static int year_is_leap(long year)
@@ -208,36 +208,31 @@ int test_is_date_time(const char *str)
 
 int test_is_email(const char *str)
 {
-    if ((*str == '.') || strstr(str, ".."))
+    if ((str[0] == '.') || (str[0] == '@') || strstr(str, ".."))
+    {
+        return 0;
+    }
+
+    const char *dot = strrchr(str, '.');
+
+    if ((dot == NULL) || (dot[1] == 0))
     {
         return 0;
     }
 
     const char *at = strchr(str, '@');
 
-    if ((at == NULL) || (at == str))
+    if ((at == NULL) || (at >= dot - 1))
     {
         return 0;
     }
 
-    const char *dot = strchr(str, '.');
+    const char *valid = "abcdefghijklmnopqrstuvwxyz"
+                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                        "0123456789"
+                        ".@!#$%&'*+-/=?^_`{|}~";
 
-    if ((dot == NULL) || (dot < at + 2) ||
-        (dot[1] == 0) || (dot[2] == 0))
-    {
-        return 0;
-    }
-
-    while (*str != '\0')
-    {
-        if (!isalnum((unsigned char)*str) &&
-            !strchr("@.!#$%&'*+-/=?^_`{|}~", *str))
-        {
-            return 0;
-        }
-        str++;
-    }
-    return 1;
+    return str[strspn(str, valid)] == '\0';
 }
 
 int test_is_ipv4(const char *str)
@@ -264,11 +259,11 @@ int test_is_ipv4(const char *str)
 int test_is_ipv6(const char *str)
 {
     const char *mask = "xxxx:*";
-    int colons = 0, pair = 0, len = 0;
+    int colons = 0, pair = 0, length = 0;
 
-    while ((len = valid_mask(mask, str)))
+    while ((length = valid_mask(mask, str)))
     {
-        str += len;
+        str += length;
         if (++colons > 7)
         {
             return 0;
