@@ -16,10 +16,10 @@
 #define real(str) strtoul(str, NULL, 10)
 #define equal(a, b) (strcmp(a, b) == 0)
 
-#define ADDITIONAL_PROPERTIES   (1u << 0)
-#define UNIQUE_ITEMS            (1u << 1)
-#define EXCLUSIVE_MINIMUM       (1u << 2)
-#define EXCLUSIVE_MAXIMUM       (1u << 3)
+#define ADDITIONAL_PROPERTIES   (1u << 0u)
+#define UNIQUE_ITEMS            (1u << 1u)
+#define EXCLUSIVE_MINIMUM       (1u << 2u)
+#define EXCLUSIVE_MAXIMUM       (1u << 3u)
 
 typedef struct
 {

@@ -32,7 +32,7 @@ static const char *type_name[] =
     "Null"
 };
 
-#define is_space(c) isspace((unsigned char)c)
+#define is_space(c) isspace((unsigned char)(c))
 
 /* Check wether a character is an escape character */
 static int is_escape(int c)
@@ -130,7 +130,7 @@ static const char *scan(const char **left, const char **right)
             }
             return NULL;
         }
-        else if (*str == '"')
+        if (*str == '"')
         {
             /* Multiple strings are not allowed: <"abc" "def"> */
             if (quotes > 1)
@@ -796,41 +796,12 @@ static json *json_find(const json *root, const char *name, size_t length)
     return NULL;
 }
 
-static json *node_helper(json *node, const char **path)
-{
-    const char *end = *path + strcspn(*path, "/");
-    size_t length = (size_t)(end - *path);
-
-    /* Locate by #item */
-    if (strspn(*path, "0123456789") == length)
-    {
-        node = json_item(node, strtoul(*path, NULL, 10));
-    }
-    /* . Current node (noop) */
-    else if ((length == 1) && (strspn(*path, ".") == 1))
-    {
-    }
-    /* .. Parent node */
-    else if ((length == 2) && (strspn(*path, ".") == 2))
-    {
-        node = node->parent;
-    }
-    /* Locate by name */
-    else
-    {
-        node = json_find(node, *path, length);
-    }
-    /* Adjust pointer to path */
-    *path = (*end == '\0') ? end : end + 1;
-    return node;
-}
-
 /* Locates a node by path */
 json *json_node(const json *root, const char *path)
 {
     json *node = NULL;
 
-    if (*path == '/')
+    if (path[0] == '/')
     {
         node = json_root(root);
         path += 1;
@@ -841,7 +812,30 @@ json *json_node(const json *root, const char *path)
     }
     while ((node != NULL) && (*path != '\0'))
     {
-        node = node_helper(node, &path);
+        const char *end = path + strcspn(path, "/");
+        size_t length = (size_t)(end - path);
+
+        /* Locate by #item */
+        if (strspn(path, "0123456789") == length)
+        {
+            node = json_item(node, strtoul(path, NULL, 10));
+        }
+        /* . Current node (noop) */
+        else if ((length == 1) && (path[0] == '.'))
+        {
+        }
+        /* .. Parent node */
+        else if ((length == 2) && (path[0] == '.') && (path[1] == '.'))
+        {
+            node = node->parent;
+        }
+        /* Locate by name */
+        else
+        {
+            node = json_find(node, path, length);
+        }
+        /* Adjust pointer to path */
+        path = (*end == '\0') ? end : end + 1;
     }
     return node;
 }
@@ -882,19 +876,43 @@ size_t json_items(const json *node)
     return count;
 }
 
-/* Sends all nodes to a callback */
-void json_foreach(const json *node, void *data,
-    void (*func)(const json *, void *))
+/*
+ * Sends all nodes to a callback "func"
+ * Exit when all nodes are read or when "func" returns a non 0 value
+ */
+static int callback(const json *node, void *data,
+    int (*func)(const json *, void *), int level)
 {
     if (node != NULL)
     {
-        func(node, data);
-        json_foreach(node->left, data, func);
-        json_foreach(node->right, data, func);
+        int result;
+
+        if ((result = func(node, data)))
+        {
+            return result;
+        }
+        if ((result = callback(node->left, data, func, level + 1)))
+        {
+            return result;
+        }
+        if (level > 0)
+        {
+            if ((result = callback(node->right, data, func, level)))
+            {
+                return result;
+            }
+        }
     }
+    return 0;
 }
 
-static void print_node_begin(const json *node, int level)
+int json_callback(const json *node, void *data,
+    int (*func)(const json *, void *))
+{
+    return callback(node, data, func, 0);
+}
+
+static void print_opening(const json *node, int level)
 {
     for (int i = 0; i < level; i++)
     {
@@ -942,7 +960,7 @@ static void print_node_begin(const json *node, int level)
 }
 
 /* Prints the close group character for each change of level */
-static void print_node_end(const json *node, int level)
+static void print_closure(const json *node, int level)
 {
     /* if "array" or "object" */
     if (node->left != NULL)
@@ -978,9 +996,9 @@ static void print(const json *node, int level)
 {
     if (node != NULL)
     {
-        print_node_begin(node, level);
+        print_opening(node, level);
         print(node->left, level + 1);
-        print_node_end(node, level);
+        print_closure(node, level);
         if (level > 0)
         {
             print(node->right, level);

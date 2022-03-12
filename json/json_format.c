@@ -27,11 +27,11 @@ static int valid_mask(const char *mask, const char *str)
      */
 
     const char *ptr = str;
-    int required = 0;
 
     while (*mask != '\0')
     {
         int (*func)(int) = NULL;
+        int required = 0;
 
         switch (*mask)
         {
@@ -88,28 +88,21 @@ static int valid_mask(const char *mask, const char *str)
         }
         if (valid)
         {
-            if (*str != '\0')
-            {
-                str++;
-            }
-            else
+            if (*str == '\0')
             {
                 break;
             }
+            str++;
         }
         else if (required)
         {
             return 0;
         }
-        if (*mask != '\0')
-        {
-            mask++;
-        }
-        else
+        if (*mask == '\0')
         {
             break;
         }
-        required = 0;
+        mask++;
     }
     return *mask == *str;
 }
