@@ -67,11 +67,11 @@ static size_t ucn_to_mb(const char *str, char *buf)
 
     if (sscanf(str, "u%04x", &code) == 1)
     {
-        int len = wctomb(buf, (wchar_t)code);
+        int length = wctomb(buf, (wchar_t)code);
 
-        if (len != -1)
+        if (length != -1)
         {
-            return (size_t)len;
+            return (size_t)length;
         }
     }
     return 0;
@@ -179,16 +179,16 @@ static const char *scan(const char **left, const char **right)
 }
 
 /* Allocates space for a 'name' or a 'value' escaping special characters */
-static char *copy(const char *str, size_t len)
+static char *copy(const char *str, size_t length)
 {
-    char *buf = malloc(len + 1);
+    char *buf = malloc(length + 1);
 
     if (buf == NULL)
     {
         return NULL;
     }
 
-    const char *end = str + len;
+    const char *end = str + length;
     char *ptr = buf;
 
     while (str < end)
@@ -628,11 +628,7 @@ int json_is_real(const json *node)
     {
         return 0;
     }
-    if (strchr(node->value, '.') != NULL)
-    {
-        return 0;
-    }
-    if (strchr(node->value, '-') != NULL)
+    if (strpbrk(node->value, ".-") != NULL)
     {
         return 0;
     }
@@ -880,10 +876,12 @@ size_t json_items(const json *node)
  * Sends all nodes to a callback "func"
  * Exit when all nodes are read or when "func" returns a non 0 value
  */
-static int callback(const json *node, void *data,
-    int (*func)(const json *, void *), int level)
+int json_callback(const json *root, void *data,
+    int (*func)(const json *, void *))
 {
-    if (node != NULL)
+    const json *node = root;
+
+    while (node != NULL)
     {
         int result;
 
@@ -891,25 +889,32 @@ static int callback(const json *node, void *data,
         {
             return result;
         }
-        if ((result = callback(node->left, data, func, level + 1)))
+        if (node->left != NULL)
         {
-            return result;
+            node = node->left;
         }
-        if (level > 0)
+        else if ((node != root) && (node->right != NULL))
         {
-            if ((result = callback(node->right, data, func, level)))
+            node = node->right;
+        }
+        else
+        {
+            while (node->parent != root->parent)
             {
-                return result;
+                node = node->parent;
+                if (node->right != NULL)
+                {
+                    node = node->right;
+                    break;
+                }
+            }
+            if (node->parent == root->parent)
+            {
+                break;
             }
         }
     }
     return 0;
-}
-
-int json_callback(const json *node, void *data,
-    int (*func)(const json *, void *))
-{
-    return callback(node, data, func, 0);
 }
 
 static void print_opening(const json *node, int level)
@@ -988,20 +993,36 @@ static void print_closure(const json *node, int level)
     }
 }
 
-/*
- * Prints a tree recursively
- * "level" is incremented when a left branch is taken
- */
 static void print(const json *node, int level)
 {
-    if (node != NULL)
+    while (node != NULL)
     {
         print_opening(node, level);
-        print(node->left, level + 1);
-        print_closure(node, level);
-        if (level > 0)
+        if (node->left != NULL)
         {
-            print(node->right, level);
+            node = node->left;
+            level++;
+        }
+        else if ((level > 0) && (node->right != NULL))
+        {
+            node = node->right;
+        }
+        else
+        {
+            while (level > 0)
+            {
+                node = node->parent;
+                print_closure(node, --level);
+                if (node->right != NULL)
+                {
+                    node = node->right;
+                    break;
+                }
+            }
+            if (level == 0)
+            {
+                return;
+            }
         }
     }
 }
@@ -1117,18 +1138,4 @@ void json_free(json *node)
         node = next;
     }
 }
-
-/* Free recursive version
-void json_free(json *node)
-{
-    if (node != NULL)
-    {
-        json_free(node->left);
-        json_free(node->right);
-        free(node->name);
-        free(node->value);
-        free(node);
-    }
-}
-*/
 
