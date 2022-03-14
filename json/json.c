@@ -558,112 +558,65 @@ int json_boolean(const json *node)
 
 int json_is_object(const json *node)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-    return node->type == JSON_OBJECT;
+    return (node != NULL)
+        && (node->type == JSON_OBJECT);
 }
 
 int json_is_array(const json *node)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-    return node->type == JSON_ARRAY;
+    return (node != NULL)
+        && (node->type == JSON_ARRAY);
 }
 
 int json_is_property(const json *node)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-    return node->name != NULL;
+    return (node != NULL)
+        && (node->name != NULL);
 }
 
 int json_is_string(const json *node)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-    return node->type == JSON_STRING;
+    return (node != NULL)
+        && (node->type == JSON_STRING);
 }
 
 int json_is_number(const json *node)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-    return node->type == JSON_NUMBER;
+    return (node != NULL)
+        && (node->type == JSON_NUMBER);
 }
 
 int json_is_integer(const json *node)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-    if (node->type != JSON_NUMBER)
-    {
-        return 0;
-    }
-    if (strchr(node->value, '.') != NULL)
-    {
-        return 0;
-    }
-    return 1;
+    return (node != NULL)
+        && (node->type == JSON_NUMBER)
+        && (strchr(node->value, '.') == NULL);
 }
 
 int json_is_real(const json *node)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-    if (node->type != JSON_NUMBER)
-    {
-        return 0;
-    }
-    if (strpbrk(node->value, ".-") != NULL)
-    {
-        return 0;
-    }
-    return 1;
+    return (node != NULL)
+        && (node->type == JSON_NUMBER)
+        && (strpbrk(node->value, ".-") == NULL);
 }
 
 int json_is_boolean(const json *node)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-    return node->type == JSON_BOOLEAN;
+    return (node != NULL)
+        && (node->type == JSON_BOOLEAN);
 }
 
 int json_is_null(const json *node)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-    return node->type == JSON_NULL;
+    return (node != NULL)
+        && (node->type == JSON_NULL);
 }
 
 int json_streq(const json *node, const char *str)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-    if (node->type != JSON_STRING)
-    {
-        return 0;
-    }
-    return !strcmp(node->value, str);
+    return (node != NULL)
+        && (node->type == JSON_STRING)
+        && (strcmp(node->value, str) == 0);
 }
 
 json *json_parse(const char *text, json_error *error)
@@ -917,6 +870,58 @@ int json_callback(const json *root, void *data,
     return 0;
 }
 
+static void print_text(const char *str)
+{
+    const char *end = str;
+
+    while (*str != '\0')
+    {
+        int escape = 0;
+
+        switch (*str)
+        {
+            case '\b':
+                escape = 'b';
+                break;
+            case '\f':
+                escape = 'f';
+                break;
+            case '\n':
+                escape = 'n';
+                break;
+            case '\r':
+                escape = 'r';
+                break;
+            case '\t':
+                escape = 't';
+                break;
+            default:
+                str++;
+                break;
+        }
+        if (escape != 0)
+        {
+            printf("%.*s\\%c", (int)(str - end), end, escape);
+            end = ++str;
+        }
+    }
+    printf("%s", end);
+}
+
+static void print_name(const char *str)
+{
+    printf("\"");
+    print_text(str);
+    printf("\": ");
+}
+
+static void print_quoted(const char *str)
+{
+    printf("\"");
+    print_text(str);
+    printf("\"");
+}
+
 static void print_opening(const json *node, int level)
 {
     for (int i = 0; i < level; i++)
@@ -925,7 +930,7 @@ static void print_opening(const json *node, int level)
     }
     if (node->name != NULL)
     {
-        printf("\"%s\": ", node->name);
+        print_name(node->name);
     }
     switch (node->type)
     {
@@ -936,10 +941,10 @@ static void print_opening(const json *node, int level)
             printf("[");
             break;
         case JSON_STRING:
-            printf("\"%s\"", node->value);
+            print_quoted(node->value);
             break;
         default:
-            printf("%s", node->value);
+            print_text(node->value);
             break;
     }
     if (node->left == NULL)
