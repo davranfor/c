@@ -880,6 +880,12 @@ static void print_text(const char *str)
 
         switch (*str)
         {
+            case '\\':
+                escape = '\\';
+                break;
+            case '"':
+                escape = '"';
+                break;
             case '\b':
                 escape = 'b';
                 break;
@@ -1044,78 +1050,20 @@ void json_raise_error(const json_error *error, const char *path)
         if (error->file)
         {
             fprintf(stderr, "json:\t%s\n\t%s\n",
-                    path ? path : "", strerror(errno));
+                path ? path : "", strerror(errno)
+            );
         }
         else
         {
             fprintf(stderr, "json:\t%s\n\tError at line %d, column %d\n",
-                    path ? path : "", error->line, error->column);
+                path ? path : "", error->line, error->column
+            );
         }
     }
     else
     {
         fprintf(stderr, "json: %s\n", path ? path : "Unhandled error");
     }
-}
-
-/*
- * Encodes n integer as UCN "\uxxxx"
- * Returns the length of the string in bytes (6)
- */
-size_t json_ucn_write(char *buf, unsigned int code)
-{
-    return (size_t)sprintf(buf, "\\u%04x", code);
-}
-
-/*
- * Quotes a string escaping special characters 
- * Returns the length of the string in bytes
- */
-size_t json_string_encode(char *buf, const char *str)
-{
-    #define CONCAT(c) *(ptr++) = c
-    #define ENCODE(c) CONCAT('\\'); CONCAT(c)
-
-    char *ptr = buf;
-
-    CONCAT('"');
-    while (*str != '\0')
-    {
-        switch (*str)
-        {
-            case '\\':
-                ENCODE('\\');
-                break;
-            case '/':
-                ENCODE('/');
-                break;
-            case '"':
-                ENCODE('"');
-                break;
-            case '\b':
-                ENCODE('b');
-                break;
-            case '\f':
-                ENCODE('f');
-                break;
-            case '\n':
-                ENCODE('n');
-                break;
-            case '\r':
-                ENCODE('r');
-                break;
-            case '\t':
-                ENCODE('t');
-                break;
-            default:
-                CONCAT(*str);
-                break;
-        }
-        str++;
-    }
-    CONCAT('"');
-    *ptr = '\0';
-    return (size_t)(ptr - buf);
 }
 
 void json_free(json *node)

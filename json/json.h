@@ -16,14 +16,14 @@ typedef struct
 
 enum json_type
 {
-    JSON_UNDEFINED, /* Sin asignar */
-    JSON_OBJECT,    /* {Objeto} */
-    JSON_ARRAY,     /* [Matriz] */
-    JSON_STRING,    /* "Cadena" */
-    JSON_NUMBER,    /* Número entero o con decimales */
-    JSON_BOOLEAN,   /* true o false */
+    JSON_UNDEFINED, /* Not assigned */
+    JSON_OBJECT,    /* {Object} */
+    JSON_ARRAY,     /* [Array] */
+    JSON_STRING,    /* "String" */
+    JSON_NUMBER,    /* Number */
+    JSON_BOOLEAN,   /* true or false */
     JSON_NULL,      /* null */
-    JSON_TYPES,     /* Número de tipos */
+    JSON_TYPES,     /* Number of types */
 };
 
 enum json_type json_type(const json *);
@@ -57,8 +57,6 @@ size_t json_items(const json *);
 int json_callback(const json *, void *, int (*)(const json *, void *));
 void json_print(const json *);
 void json_raise_error(const json_error *error, const char *);
-size_t json_ucn_write(char *, unsigned int);
-size_t json_string_encode(char *, const char *);
 void json_free(json *);
 
 #endif /* JSON_H */
