@@ -65,7 +65,7 @@ static int buffer_resize(json_buffer *buffer)
     return 1;
 }
 
-#define ESCAPE(buffer, c)                   \
+#define ESCAPE(c)                           \
 do                                          \
 {                                           \
     if (buffer->length + 2 >= buffer->size) \
@@ -79,7 +79,7 @@ do                                          \
     buffer->value[buffer->length++] = c;    \
 } while (0)
 
-#define CONCAT(buffer, c)                   \
+#define CONCAT(c)                           \
 do                                          \
 {                                           \
     if (buffer->length + 1 >= buffer->size) \
@@ -129,11 +129,11 @@ static int json_encode(json_buffer *buffer, const char *str)
         }
         if (escape == 0)
         {
-            CONCAT(buffer, *str);
+            CONCAT(*str);
         }
         else
         {
-            ESCAPE(buffer, escape);
+            ESCAPE(escape);
         }
         str++;
     }
@@ -143,13 +143,13 @@ static int json_encode(json_buffer *buffer, const char *str)
 
 static int json_quote(json_buffer *buffer, const char *str)
 {
-    CONCAT(buffer, '"');
+    CONCAT('"');
 
     int result = json_encode(buffer, str);
 
     if (result != 0)
     {
-        CONCAT(buffer, '"');
+        CONCAT('"');
         buffer->value[buffer->length] = '\0';
     }
     return result;
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
 
     if (buffer == NULL)
     {
-        perror("json_buffer_create");
+        perror("json_create_buffer");
         exit(EXIT_FAILURE);
     }
     printf("length = %zu | size = %zu\n", buffer->length, buffer->size); 
