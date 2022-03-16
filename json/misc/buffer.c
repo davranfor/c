@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define JSON_BUFFER_MIN_SIZE 16
+#define MIN_SIZE 16
 
 typedef struct
 {
@@ -10,8 +10,8 @@ typedef struct
     char *value;
 } json_buffer;
 
-/* Round to power of 2 */
-static size_t round_size(size_t size)
+/* Round to next power of 2 (>= size) */
+static size_t aligned_size(size_t size)
 {
     size--;
     size |= size >> 1;
@@ -33,20 +33,21 @@ static json_buffer *json_create_buffer(size_t size)
 
     if (buffer != NULL)
     {
-        if (size < JSON_BUFFER_MIN_SIZE)
+        if (size < MIN_SIZE)
         {
-            buffer->size = JSON_BUFFER_MIN_SIZE;
+            buffer->size = MIN_SIZE;
         }
         else
         {
-            buffer->size = round_size(size);
+            buffer->size = aligned_size(size);
         }
-    }
-    buffer->value = malloc(buffer->size);
-    if (buffer->value == NULL)
-    {
-        free(buffer);
-        buffer = NULL;
+        buffer->value = malloc(buffer->size);
+        if (buffer->value == NULL)
+        {
+            free(buffer);
+            return NULL;
+        }
+        buffer->value[0] = '\0';
     }
     return buffer;
 }
@@ -64,7 +65,7 @@ static int buffer_resize(json_buffer *buffer)
     return 1;
 }
 
-#define ENCODE(buffer, c)                   \
+#define ESCAPE(buffer, c)                   \
 do                                          \
 {                                           \
     if (buffer->length + 2 >= buffer->size) \
@@ -132,7 +133,7 @@ static int json_encode(json_buffer *buffer, const char *str)
         }
         else
         {
-            ENCODE(buffer, escape);
+            ESCAPE(buffer, escape);
         }
         str++;
     }
