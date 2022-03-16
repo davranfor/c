@@ -71,7 +71,7 @@ static int valid_mask(const char *mask, const char *str)
                 func = isxdigit;
                 break;
             case '*':
-                return *str ? 1 : (int)(str - ptr);
+                return *str ? (int)(str - ptr) : 1;
             default:
                 break;
         }
