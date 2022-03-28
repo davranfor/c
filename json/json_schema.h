@@ -9,7 +9,7 @@
 
 #include "json.h"
 
-int json_schema_validate(const json *, const json *);
+int json_validate(const json *, const json *);
 
 #endif /* JSON_SCHEMA_H */
 

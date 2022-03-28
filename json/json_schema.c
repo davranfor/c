@@ -23,7 +23,7 @@
 
 typedef struct
 {
-    const json *node, *path;
+    const json *node;
     const json *properties, *items;
     const json *required, *dependent_required;
     const char *min_properties, *max_properties;
@@ -316,33 +316,36 @@ static int test_is_boolean(const json *node, schema *data)
 
 static int test_type(schema *data, unsigned type)
 {
-    int valid = (data->type & (1u << type)) != 0;
-
-    if (valid || ((data->type & 1u) && json_is_integer(data->node)))
+    if (data->type)
     {
-        return 1;
+        /* Since "integer" is not a json type, an extra test is needed */
+        int match = ((data->type & (1u << type)) ||
+                    ((data->type & (1u << 0)) && json_is_integer(data->node)));
+
+        if (!match)
+        {
+            fprintf(stderr, "Error testing 'type'\n");
+            return 0;
+        }
     }
-    fprintf(stderr, "Error testing 'type'\n");
-    return 0;
+    return 1;
 }
 
 static int test_required(schema *data)
 {
-    if (!data->properties)
+    if (data->required)
     {
-        return 0;
-    }
+        const json *item = json_child(data->required);
 
-    const json *item = json_child(data->required);
-
-    while (item != NULL)
-    {
-        if (!json_pair(data->node, json_string(item)))
+        while (item != NULL)
         {
-            fprintf(stderr, "Field '%s' is 'required'\n", json_string(item));
-            return 0;
+            if (!json_pair(data->node, json_string(item)))
+            {
+                fprintf(stderr, "'%s' is required\n", json_string(item));
+                return 0;
+            }
+            item = json_next(item);
         }
-        item = json_next(item);
     }
     return 1;
 }
@@ -438,24 +441,32 @@ static int test_number(schema *data)
 
 static int test_format(schema *data)
 {
-    int valid = data->format(json_string(data->node));
-
-    if (!valid)
+    if (data->format)
     {
-        fprintf(stderr, "Error testing 'format'\n");
+        if (!data->format(json_string(data->node)))
+        {
+            fprintf(stderr, "Error testing 'format'\n");
+            return 0;
+        }
     }
-    return valid;
+    return 1;
 }
 
 static int test_data(schema *data)
 {
-    unsigned type = json_type(data->node);
 
-    if (data->type && !test_type(data, type))
+    if (!test_required(data))
     {
         return 0;
     }
-    if (data->required && !test_required(data))
+    if (data->node == NULL)
+    {
+        return 1;
+    }
+
+    unsigned type = json_type(data->node);
+
+    if (!test_type(data, type))
     {
         return 0;
     }
@@ -488,7 +499,7 @@ static int test_data(schema *data)
         case JSON_ARRAY:
             break;
         default:
-            if (data->format && !test_format(data))
+            if (!test_format(data))
             {
                 return 0;
             }
@@ -583,32 +594,24 @@ static int test_schema(const json *node, schema *data)
     return 1;
 }
 
-static int test(schema *data)
+static int test(const json *node, schema *data)
 {
-    if (!json_is_object(data->path))
+    if (!json_is_object(node))
     {
         fprintf(stderr, "Invalid schema\n");
         return 0;
     }
-    if (data->node == NULL)
-    {
-        fprintf(stderr, "Nothing to validate\n");
-        return 0;
-    }
-
-    const json *node = json_child(data->path);
-
-    if (node != NULL)
+    if ((node = json_child(node)))
     {
         return test_schema(node, data);
     }
     return 1;
 }
 
-int json_schema_validate(const json *node, const json *path)
+int json_validate(const json *node, const json *rules)
 {
-    schema data = {.node = node, .path = path};
+    schema data = {.node = node};
 
-    return test(&data);
+    return test(rules, &data);
 }
 

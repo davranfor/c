@@ -456,6 +456,13 @@ static json *parse(json *node, const char *left, const char **error)
     return ERROR;
 }
 
+static void clear_error(json_error *error)
+{
+    error->file = 0;
+    error->line = 0;
+    error->column = 0;
+}
+
 static void set_error(const char *str, const char *end, json_error *error)
 {
     error->line = 1;
@@ -621,11 +628,9 @@ int json_streq(const json *node, const char *str)
 
 json *json_parse(const char *text, json_error *error)
 {
-    if (error)
+    if (error != NULL)
     {
-        error->file = 0;
-        error->line = 0;
-        error->column = 0;
+        clear_error(error);
     }
 
     json *node = create_node();

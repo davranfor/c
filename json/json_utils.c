@@ -48,13 +48,6 @@ char *json_read_file(const char *path)
 
 json *json_parse_file(const char *path, json_error *error)
 {
-    if (error)
-    {
-        error->file = 0;
-        error->line = 0;
-        error->column = 0;
-    }
-
     char *str = json_read_file(path);
 
     if (str == NULL)
@@ -62,6 +55,8 @@ json *json_parse_file(const char *path, json_error *error)
         if (error)
         {
             error->file = 1;
+            error->line = 0;
+            error->column = 0;
         }
         return NULL;
     }
