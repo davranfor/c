@@ -54,27 +54,31 @@ static int set_flag(const json *node, schema *data, unsigned flag)
 
 static int unique_strings(const json *node)
 {
-    const json *first = node;
-
-    while (node != NULL)
+    if (json_is_array(node))
     {
-        if (json_is_property(node) || !json_is_string(node))
+        const json *head = node = json_child(node);
+
+        while (node != NULL)
         {
-            return 0;
-        }
-        for (const json *item = first; item != node; item = json_next(item))
-        {
-            if (equal(json_string(item), json_string(node)))
+            if (!json_is_string(node))
             {
                 return 0;
             }
+            for (const json *item = head; item != node; item = json_next(item))
+            {
+                if (equal(json_string(item), json_string(node)))
+                {
+                    return 0;
+                }
+            }
+            node = json_next(node);
         }
-        node = json_next(node);
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
-static void add_type(schema *data, const char *type)
+static int add_type(schema *data, const char *type)
 {
     static const char *types[] =
     {
@@ -87,9 +91,10 @@ static void add_type(schema *data, const char *type)
         if (equal(type, types[item]))
         {
             data->type |= 1u << item;
-            return;
+            return 1;
         }
     }
+    return 0;
 }
 
 static int set_type(const json *node, schema *data)
@@ -97,17 +102,18 @@ static int set_type(const json *node, schema *data)
     data->type = 0;
     if (json_is_string(node))
     {
-        add_type(data, json_string(node));
+        return add_type(data, json_string(node));
     }
-    else if ((json_is_array(node)) && (node = json_child(node)))
+    else if (unique_strings(node))
     {
-        if (unique_strings(node))
+        node = json_child(node);
+        while (node != NULL)
         {
-            while (node != NULL)
+            if (!add_type(data, json_string(node)))
             {
-                add_type(data, json_string(node));
-                node = json_next(node);
+                return 0;
             }
+            node = json_next(node);
         }
     }
     return data->type != 0;
@@ -115,7 +121,7 @@ static int set_type(const json *node, schema *data)
 
 static int set_required(const json *node, schema *data)
 {
-    if (json_is_array(node) && unique_strings(json_child(node)))
+    if (unique_strings(node))
     {
         data->required = node;
         return 1;
@@ -125,13 +131,10 @@ static int set_required(const json *node, schema *data)
 
 static int set_dependent_required(const json *node, schema *data)
 {
-    if (json_type(node) == JSON_ARRAY)
+    if (unique_strings(node))
     {
-        if (unique_strings(json_child(node)))
-        {
-            data->dependent_required = node;
-            return 1;
-        }
+        data->dependent_required = node;
+        return 1;
     }
     return 0;
 }
