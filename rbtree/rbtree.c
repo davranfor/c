@@ -476,8 +476,8 @@ void *rbtree_search(const rbtree *tree, const void *data)
 
 /*
  * Call func() for each node, passing it the node data and a cookie;
- * If func() returns non-zero for a node, the traversal stops and the
- * error value is returned.  Returns 0 on successful traversal.
+ * If func() returns a non NULL for a node, the traversal stops and the
+ * func return value is returned.
  */
 static void *walk(const rbtree *tree, struct node *node,
     void *(*func)(void *, void *), void *cookie)
