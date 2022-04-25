@@ -16,10 +16,11 @@
 #define real(str) strtoul(str, NULL, 10)
 #define equal(a, b) (strcmp(a, b) == 0)
 
-#define ADDITIONAL_PROPERTIES   (1u << 0u)
-#define UNIQUE_ITEMS            (1u << 1u)
-#define EXCLUSIVE_MINIMUM       (1u << 2u)
-#define EXCLUSIVE_MAXIMUM       (1u << 3u)
+#define REQUIRED                (1u << 0u)
+#define ADDITIONAL_PROPERTIES   (1u << 1u)
+#define UNIQUE_ITEMS            (1u << 2u)
+#define EXCLUSIVE_MINIMUM       (1u << 3u)
+#define EXCLUSIVE_MAXIMUM       (1u << 4u)
 
 typedef struct
 {
@@ -34,6 +35,12 @@ typedef struct
     schema_format format;
     unsigned type, flags;
 } schema;
+
+struct properties
+{
+    const json *parent, *node;
+    struct properties *next;
+};
 
 static int set_flag(const json *node, schema *data, unsigned flag)
 {
@@ -121,12 +128,21 @@ static int set_type(const json *node, schema *data)
 
 static int set_required(const json *node, schema *data)
 {
-    if (unique_strings(node))
+    if (json_is_boolean(node))
     {
-        data->required = node;
-        return 1;
+        set_flag(node, data, REQUIRED);
+        data->required = NULL;
     }
-    return 0;
+    else if (unique_strings(node))
+    {
+        data->flags &= ~REQUIRED;
+        data->required = node;
+    }
+    else
+    {
+        return 0;
+    }
+    return 1;
 }
 
 static int set_dependent_required(const json *node, schema *data)
@@ -141,7 +157,7 @@ static int set_dependent_required(const json *node, schema *data)
 
 static int set_properties(const json *node, schema *data)
 {
-    data->properties = json_child(node) ? node : NULL;
+    data->properties = json_child(node);
     return 1;
 }
 
@@ -253,13 +269,10 @@ static int set_exclusive_maximum(const json *node, schema *data)
 
 static int set_multiple_of(const json *node, schema *data)
 {
-    if (json_is_number(node))
+    if (json_is_number(node) && (json_number(node) > 0.0))
     {
-        if (json_number(node) > 0.0)
-        {
-            data->multiple_of = json_string(node);
-            return 1;
-        }
+        data->multiple_of = json_string(node);
+        return 1;
     }
     return 0;
 }
@@ -336,7 +349,15 @@ static int test_type(schema *data, unsigned type)
 
 static int test_required(schema *data)
 {
-    if (data->required)
+    if (data->flags & REQUIRED)
+    {
+        if (data->node == NULL)
+        {
+            fprintf(stderr, "Error testing 'required'\n");
+            return 0;
+        }
+    }
+    else if (data->required)
     {
         const json *item = json_child(data->required);
 
@@ -457,7 +478,6 @@ static int test_format(schema *data)
 
 static int test_data(schema *data)
 {
-
     if (!test_required(data))
     {
         return 0;
@@ -523,6 +543,7 @@ static schema_setter get_setter(const json *node, const char *name)
             equal(name, "title") ? test_is_string :
             equal(name, "description") ? test_is_string :
             equal(name, "type") ? set_type :
+            equal(name, "required") ? set_required :
             equal(name, "additionalProperties") ? set_additional_properties :
             equal(name, "minProperties") ? set_min_properties :
             equal(name, "maxProperties") ? set_max_properties :
@@ -560,23 +581,83 @@ static schema_setter get_setter(const json *node, const char *name)
     return NULL;
 }
 
+static struct properties *get_properties(struct properties *properties,
+    schema *data)
+{
+    if (data->properties != NULL)
+    {
+        struct properties *next = calloc(1, sizeof *next);
+
+        if (next == NULL)
+        {
+            return 0;
+        }
+        next->parent = data->node;
+        next->node = data->properties;
+        next->next = properties;
+        properties = next;
+    }
+    else
+    {
+        while (properties != NULL)
+        {
+            properties->node = json_next(properties->node);
+            if (properties->node == NULL)
+            {
+                struct properties *next = properties->next;
+
+                free(properties);
+                properties = next;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    return properties;
+}
+
+static void clean_properties(struct properties *properties)
+{
+    while (properties != NULL)
+    {
+        struct properties *next = properties->next;
+
+        free(properties);
+        properties = next;
+    }
+}
+
 static int test_schema(const json *node, schema *data)
 {
+    struct properties *properties = NULL;
+    const char *name;
+    int valid = 1;
+
     for (;;)
     {
         if (node == NULL)
         {
-            test_data(data);
-            break;
+            if (!test_data(data))
+            {
+                valid = 0;
+                break;
+            }
+            properties = get_properties(properties, data);
+            if (properties == NULL)
+            {
+                break;
+            }
+            memset(data, 0, sizeof *data);
+            node = json_child(properties->node);
+            name = json_name(properties->node);
+            data->node = json_pair(properties->parent, name);
         }
-
-        const char *name = json_name(node);
-
+        name = json_name(node);
         /* if property */
         if (name != NULL)
         {
-            json_print(node);
-
             schema_setter setter = get_setter(node, name);
 
             if (setter != NULL)
@@ -584,7 +665,8 @@ static int test_schema(const json *node, schema *data)
                 if (!setter(node, data))
                 {
                     fprintf(stderr, "Error setting '%s'\n", name);
-                    return 0;
+                    valid = 0;
+                    break;
                 }
             }
             else
@@ -594,7 +676,8 @@ static int test_schema(const json *node, schema *data)
         }
         node = json_next(node);
     }
-    return 1;
+    clean_properties(properties);
+    return valid;
 }
 
 static int test(const json *node, schema *data)

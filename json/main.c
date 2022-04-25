@@ -24,7 +24,6 @@ static int validate(const json *node, const char *path)
 
     puts("\nschema:");
     json_print(schema);
-    puts("\nValidated schema:");
 
     int valid = json_validate(node, schema);
 
