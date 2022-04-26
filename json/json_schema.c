@@ -24,8 +24,7 @@
 
 typedef struct
 {
-    const json *node;
-    const json *properties, *items;
+    const json *node, *properties, *items;
     const json *required, *dependent_required;
     const char *min_properties, *max_properties;
     const char *min_items, *max_items;
@@ -42,18 +41,23 @@ struct properties
     struct properties *next;
 };
 
+static void set_bit(schema *data, unsigned flag, int value)
+{
+    if (value)
+    {
+        data->flags |= flag;
+    }
+    else
+    {
+        data->flags &= ~flag;
+    }
+}
+
 static int set_flag(const json *node, schema *data, unsigned flag)
 {
     if (json_is_boolean(node))
     {
-        if (json_boolean(node))
-        {
-            data->flags |= flag;
-        }
-        else
-        {
-            data->flags &= ~flag;
-        }
+        set_bit(data, flag, json_boolean(node));
         return 1;
     }
     return 0;
@@ -130,12 +134,12 @@ static int set_required(const json *node, schema *data)
 {
     if (json_is_boolean(node))
     {
-        set_flag(node, data, REQUIRED);
+        set_bit(data, REQUIRED, json_boolean(node));
         data->required = NULL;
     }
     else if (unique_strings(node))
     {
-        data->flags &= ~REQUIRED;
+        set_bit(data, REQUIRED, 0);
         data->required = node;
     }
     else
@@ -414,6 +418,24 @@ static int test_items(schema *data)
     return 1;
 }
 
+static int test_format(schema *data)
+{
+    if (data->format)
+    {
+        if (!data->format(json_string(data->node)))
+        {
+            fprintf(stderr, "Error testing 'format'\n");
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int test_string(schema *data)
+{
+    return test_format(data);
+}
+
 static int test_minimum(schema *data, double value)
 {
     if (data->flags & EXCLUSIVE_MINIMUM)
@@ -463,19 +485,6 @@ static int test_number(schema *data)
     return 1;
 }
 
-static int test_format(schema *data)
-{
-    if (data->format)
-    {
-        if (!data->format(json_string(data->node)))
-        {
-            fprintf(stderr, "Error testing 'format'\n");
-            return 0;
-        }
-    }
-    return 1;
-}
-
 static int test_data(schema *data)
 {
     if (!test_required(data))
@@ -496,39 +505,16 @@ static int test_data(schema *data)
     switch (type)
     {
         case JSON_OBJECT:
-            if (!test_properties(data))
-            {
-                return 0;
-            }
-            break;
+            return test_properties(data);
         case JSON_ARRAY:
-            if (!test_items(data))
-            {
-                return 0;
-            }
-            break;
+            return test_items(data);
+        case JSON_STRING:
+            return test_string(data);
         case JSON_NUMBER:
-            if (!test_number(data))
-            {
-                return 0;
-            }
-            break;
+            return test_number(data);
         default:
-            break;
+            return 1;
     }
-    switch (type)
-    {
-        case JSON_OBJECT:
-        case JSON_ARRAY:
-            break;
-        default:
-            if (!test_format(data))
-            {
-                return 0;
-            }
-            break;
-    }
-    return 1;
 }
 
 typedef int (*schema_setter)(const json *, schema *);
