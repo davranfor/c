@@ -422,8 +422,8 @@ static int test_length(schema *data)
 {
     if (data->min_length || data->max_length)
     {
-        size_t min = data->min_length ? strtoul(data->min_length, NULL, 10) : 0;
-        size_t max = data->max_length ? strtoul(data->max_length, NULL, 10) : 0;
+        size_t min = data->min_length ? real(data->min_length) : 0;
+        size_t max = data->max_length ? real(data->max_length) : 0;
         const char *str = json_string(data->node);
         size_t length = 0;
 
@@ -671,9 +671,7 @@ static int test_schema(const json *node, schema *data)
             name = json_name(properties->node);
             data->node = json_pair(properties->parent, name);
         }
-        name = json_name(node);
-        /* if property */
-        if (name != NULL)
+        if ((name = json_name(node)))
         {
             schema_setter setter = get_setter(node, name);
 
