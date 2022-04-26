@@ -418,6 +418,37 @@ static int test_items(schema *data)
     return 1;
 }
 
+static int test_length(schema *data)
+{
+    if (data->min_length || data->max_length)
+    {
+        size_t min = data->min_length ? strtoul(data->min_length, NULL, 10) : 0;
+        size_t max = data->max_length ? strtoul(data->max_length, NULL, 10) : 0;
+        const char *str = json_string(data->node);
+        size_t length = 0;
+
+        while (*str != 0)
+        {
+            if ((*str & 0xc0) != 0x80)
+            {
+                length++;
+            }
+            str++;
+        }
+        if (data->min_length && (min > length))
+        {
+            fprintf(stderr, "Error testing 'minLength'\n");
+            return 0;
+        }
+        if (data->max_length && (max < length))
+        {
+            fprintf(stderr, "Error testing 'maxLength'\n");
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int test_format(schema *data)
 {
     if (data->format)
@@ -433,7 +464,7 @@ static int test_format(schema *data)
 
 static int test_string(schema *data)
 {
-    return test_format(data);
+    return test_length(data) && test_format(data);
 }
 
 static int test_minimum(schema *data, double value)

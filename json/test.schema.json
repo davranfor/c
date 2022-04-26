@@ -12,13 +12,6 @@
       "type": "string",
       "description": "The person's last name."
     },
-    "props": {
-      "properties": {
-          "a": {"type": "number"},
-          "b": {"type": "number"},
-          "c": {"type": "number", "required": true}
-      }
-    },
     "age": {
       "description": "Age in years which must be equal to or greater than zero.",
       "type": "integer",
