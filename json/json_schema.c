@@ -16,11 +16,11 @@
 #define real(str) strtoul(str, NULL, 10)
 #define equal(a, b) (strcmp(a, b) == 0)
 
-#define REQUIRED                (1u << 0u)
-#define ADDITIONAL_PROPERTIES   (1u << 1u)
-#define UNIQUE_ITEMS            (1u << 2u)
-#define EXCLUSIVE_MINIMUM       (1u << 3u)
-#define EXCLUSIVE_MAXIMUM       (1u << 4u)
+#define REQUIRED                    (1u << 0u)
+#define NOT_ADDITIONAL_PROPERTIES   (1u << 1u)
+#define UNIQUE_ITEMS                (1u << 2u)
+#define EXCLUSIVE_MINIMUM           (1u << 3u)
+#define EXCLUSIVE_MAXIMUM           (1u << 4u)
 
 typedef struct
 {
@@ -41,7 +41,7 @@ struct properties
     struct properties *next;
 };
 
-static void set_bit(schema *data, unsigned flag, int value)
+static void set_flag(schema *data, unsigned flag, int value)
 {
     if (value)
     {
@@ -51,16 +51,6 @@ static void set_bit(schema *data, unsigned flag, int value)
     {
         data->flags &= ~flag;
     }
-}
-
-static int set_flag(const json *node, schema *data, unsigned flag)
-{
-    if (json_is_boolean(node))
-    {
-        set_bit(data, flag, json_boolean(node));
-        return 1;
-    }
-    return 0;
 }
 
 static int unique_strings(const json *node)
@@ -134,12 +124,12 @@ static int set_required(const json *node, schema *data)
 {
     if (json_is_boolean(node))
     {
-        set_bit(data, REQUIRED, json_boolean(node));
+        set_flag(data, REQUIRED, json_boolean(node));
         data->required = NULL;
     }
     else if (unique_strings(node))
     {
-        set_bit(data, REQUIRED, 0);
+        set_flag(data, REQUIRED, 0);
         data->required = node;
     }
     else
@@ -167,7 +157,12 @@ static int set_properties(const json *node, schema *data)
 
 static int set_additional_properties(const json *node, schema *data)
 {
-    return set_flag(node, data, ADDITIONAL_PROPERTIES);
+    if (json_is_boolean(node))
+    {
+        set_flag(data, NOT_ADDITIONAL_PROPERTIES, !json_boolean(node));
+        return 1;
+    }
+    return 0;
 }
 
 static int set_min_properties(const json *node, schema *data)
@@ -198,7 +193,12 @@ static int set_items(const json *node, schema *data)
 
 static int set_unique_items(const json *node, schema *data)
 {
-    return set_flag(node, data, UNIQUE_ITEMS);
+    if (json_is_boolean(node))
+    {
+        set_flag(data, UNIQUE_ITEMS, json_boolean(node));
+        return 1;
+    }
+    return 0;
 }
 
 static int set_min_items(const json *node, schema *data)
@@ -263,12 +263,22 @@ static int set_maximum(const json *node, schema *data)
 
 static int set_exclusive_minimum(const json *node, schema *data)
 {
-    return set_flag(node, data, EXCLUSIVE_MINIMUM);
+    if (json_is_boolean(node))
+    {
+        set_flag(data, EXCLUSIVE_MINIMUM, json_boolean(node));
+        return 1;
+    }
+    return 0;
 }
 
 static int set_exclusive_maximum(const json *node, schema *data)
 {
-    return set_flag(node, data, EXCLUSIVE_MAXIMUM);
+    if (json_is_boolean(node))
+    {
+        set_flag(data, EXCLUSIVE_MAXIMUM, json_boolean(node));
+        return 1;
+    }
+    return 0;
 }
 
 static int set_multiple_of(const json *node, schema *data)
@@ -395,6 +405,32 @@ static int test_properties(schema *data)
             return 0;
         }
     }
+    if (data->properties && (data->flags & NOT_ADDITIONAL_PROPERTIES))
+    {
+        const json *item = json_child(data->node);
+
+        while (item != NULL)
+        {
+            const json *property = data->properties;
+            int found = 0;
+
+            while (property != NULL)
+            {
+                if (equal(json_name(item), json_name(property)))
+                {
+                    found = 1;
+                    break;
+                }
+                property = json_next(property);
+            }
+            if (!found)
+            {
+                fprintf(stderr, "'%s' was not expected\n", json_name(item));
+                return 0;
+            }
+            item = json_next(item);
+        }
+    }
     return 1;
 }
 
@@ -418,7 +454,7 @@ static int test_items(schema *data)
     return 1;
 }
 
-static int test_length(schema *data)
+static int test_string(schema *data)
 {
     if (data->min_length || data->max_length)
     {
@@ -446,11 +482,6 @@ static int test_length(schema *data)
             return 0;
         }
     }
-    return 1;
-}
-
-static int test_format(schema *data)
-{
     if (data->format)
     {
         if (!data->format(json_string(data->node)))
@@ -460,11 +491,6 @@ static int test_format(schema *data)
         }
     }
     return 1;
-}
-
-static int test_string(schema *data)
-{
-    return test_length(data) && test_format(data);
 }
 
 static int test_minimum(schema *data, double value)
