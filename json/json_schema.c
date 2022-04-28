@@ -105,7 +105,7 @@ static int set_type(const json *node, schema *data)
     {
         return add_type(data, json_string(node));
     }
-    else if (unique_strings(node))
+    if (unique_strings(node))
     {
         node = json_child(node);
         while (node != NULL)
@@ -126,22 +126,20 @@ static int set_required(const json *node, schema *data)
     {
         set_flag(data, REQUIRED, json_boolean(node));
         data->required = NULL;
+        return 1;
     }
-    else if (unique_strings(node))
+    if (unique_strings(node))
     {
         set_flag(data, REQUIRED, 0);
         data->required = node;
+        return 1;
     }
-    else
-    {
-        return 0;
-    }
-    return 1;
+    return 0;
 }
 
 static int set_dependent_required(const json *node, schema *data)
 {
-    if (unique_strings(node))
+    if (json_is_array(node) && unique_strings(node))
     {
         data->dependent_required = node;
         return 1;
@@ -151,8 +149,12 @@ static int set_dependent_required(const json *node, schema *data)
 
 static int set_properties(const json *node, schema *data)
 {
-    data->properties = json_child(node);
-    return 1;
+    if (json_is_object(node))
+    {
+        data->properties = json_child(node);
+        return 1;
+    }
+    return 0;
 }
 
 static int set_additional_properties(const json *node, schema *data)
@@ -187,8 +189,12 @@ static int set_max_properties(const json *node, schema *data)
 
 static int set_items(const json *node, schema *data)
 {
-    data->items = json_child(node) ? node : NULL;
-    return 1;
+    if (json_is_object(node))
+    {
+        data->items = json_child(node) ? node : NULL;
+        return 1;
+    }
+    return 0;
 }
 
 static int set_unique_items(const json *node, schema *data)
@@ -330,6 +336,12 @@ static int test_true(const json *node, schema *data)
     (void)node;
     (void)data;
     return 1;
+}
+
+static int test_is_array(const json *node, schema *data)
+{
+    (void)data;
+    return json_is_array(node);
 }
 
 static int test_is_string(const json *node, schema *data)
@@ -576,52 +588,38 @@ static int test_data(schema *data)
 
 typedef int (*schema_setter)(const json *, schema *);
 
-static schema_setter get_setter(const json *node, const char *name)
+static schema_setter get_setter(const char *name)
 {
-    if (json_string(node))
-    {
-        return
-            equal(name, "$id") ? test_is_string :
-            equal(name, "$schema") ? test_is_string :
-            equal(name, "title") ? test_is_string :
-            equal(name, "description") ? test_is_string :
-            equal(name, "type") ? set_type :
-            equal(name, "required") ? set_required :
-            equal(name, "additionalProperties") ? set_additional_properties :
-            equal(name, "minProperties") ? set_min_properties :
-            equal(name, "maxProperties") ? set_max_properties :
-            equal(name, "uniqueItems") ? set_unique_items :
-            equal(name, "minItems") ? set_min_items :
-            equal(name, "maxItems") ? set_max_items :
-            equal(name, "minLength") ? set_min_length :
-            equal(name, "maxLength") ? set_max_length :
-            equal(name, "minimum") ? set_minimum :
-            equal(name, "maximum") ? set_maximum :
-            equal(name, "exclusiveMinimum") ? set_exclusive_minimum :
-            equal(name, "exclusiveMaximum") ? set_exclusive_maximum :
-            equal(name, "multipleOf") ? set_multiple_of :
-            equal(name, "format") ? set_format :
-            equal(name, "pattern") ? set_pattern :
-            equal(name, "readOnly") ? test_is_boolean :
-            equal(name, "writeOnly") ? test_is_boolean :
-            equal(name, "deprecated") ? test_is_boolean :
-            equal(name, "default") ? test_true : NULL;
-    }
-    else if (json_is_object(node))
-    {
-        return
-            equal(name, "properties") ? set_properties :
-            equal(name, "items") ? set_items : NULL;
-    }
-    else if (json_is_array(node))
-    {
-        return
-            equal(name, "type") ? set_type :
-            equal(name, "required") ? set_required :
-            equal(name, "dependentRequired") ? set_dependent_required :
-            equal(name, "examples") ? test_true : NULL;
-    }
-    return NULL;
+    return
+        equal(name, "$id") ? test_is_string :
+        equal(name, "$schema") ? test_is_string :
+        equal(name, "title") ? test_is_string :
+        equal(name, "description") ? test_is_string :
+        equal(name, "type") ? set_type :
+        equal(name, "required") ? set_required :
+        equal(name, "dependentRequired") ? set_dependent_required :
+        equal(name, "properties") ? set_properties :
+        equal(name, "additionalProperties") ? set_additional_properties :
+        equal(name, "minProperties") ? set_min_properties :
+        equal(name, "maxProperties") ? set_max_properties :
+        equal(name, "items") ? set_items :
+        equal(name, "uniqueItems") ? set_unique_items :
+        equal(name, "minItems") ? set_min_items :
+        equal(name, "maxItems") ? set_max_items :
+        equal(name, "minLength") ? set_min_length :
+        equal(name, "maxLength") ? set_max_length :
+        equal(name, "minimum") ? set_minimum :
+        equal(name, "maximum") ? set_maximum :
+        equal(name, "exclusiveMinimum") ? set_exclusive_minimum :
+        equal(name, "exclusiveMaximum") ? set_exclusive_maximum :
+        equal(name, "multipleOf") ? set_multiple_of :
+        equal(name, "format") ? set_format :
+        equal(name, "pattern") ? set_pattern :
+        equal(name, "readOnly") ? test_is_boolean :
+        equal(name, "writeOnly") ? test_is_boolean :
+        equal(name, "deprecated") ? test_is_boolean :
+        equal(name, "examples") ? test_is_array :
+        equal(name, "default") ? test_true : NULL;
 }
 
 static struct properties *get_properties(struct properties *properties,
@@ -699,7 +697,7 @@ static int test_schema(const json *node, schema *data)
         }
         if ((name = json_name(node)))
         {
-            schema_setter setter = get_setter(node, name);
+            schema_setter setter = get_setter(name);
 
             if (setter != NULL)
             {
