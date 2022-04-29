@@ -41,42 +41,52 @@ struct properties
     struct properties *next;
 };
 
-static void set_flag(schema *data, unsigned flag, int value)
+static int is_named_object(const json *node)
 {
-    if (value)
+    return json_name(node) && json_is_object(node);
+}
+
+static int is_named_array(const json *node)
+{
+    return json_name(node) && json_is_array(node);
+}
+
+static int unique(const json *node,
+    int (*test_func)(const json *), const char *(*comp_func)(const json *))
+{
+    const json *head = node = json_child(node);
+
+    while (node != NULL)
     {
-        data->flags |= flag;
+        if (!test_func(node))
+        {
+            return 0;
+        }
+        for (const json *item = head; item != node; item = json_next(item))
+        {
+            if (equal(comp_func(item), comp_func(node)))
+            {
+                return 0;
+            }
+        }
+        node = json_next(node);
     }
-    else
-    {
-        data->flags &= ~flag;
-    }
+    return 1;
+}
+
+static int unique_objects(const json *node)
+{
+    return unique(node, is_named_object, json_name);
+}
+
+static int unique_arrays(const json *node)
+{
+    return unique(node, is_named_array, json_name);
 }
 
 static int unique_strings(const json *node)
 {
-    if (json_is_array(node))
-    {
-        const json *head = node = json_child(node);
-
-        while (node != NULL)
-        {
-            if (!json_is_string(node))
-            {
-                return 0;
-            }
-            for (const json *item = head; item != node; item = json_next(item))
-            {
-                if (equal(json_string(item), json_string(node)))
-                {
-                    return 0;
-                }
-            }
-            node = json_next(node);
-        }
-        return 1;
-    }
-    return 0;
+    return unique(node, json_is_string, json_string);
 }
 
 static int add_type(schema *data, const char *type)
@@ -105,7 +115,7 @@ static int set_type(const json *node, schema *data)
     {
         return add_type(data, json_string(node));
     }
-    if (unique_strings(node))
+    if (json_is_array(node) && unique_strings(node))
     {
         node = json_child(node);
         while (node != NULL)
@@ -120,6 +130,18 @@ static int set_type(const json *node, schema *data)
     return data->type != 0;
 }
 
+static void set_flag(schema *data, unsigned flag, int value)
+{
+    if (value)
+    {
+        data->flags |= flag;
+    }
+    else
+    {
+        data->flags &= ~flag;
+    }
+}
+
 static int set_required(const json *node, schema *data)
 {
     if (json_is_boolean(node))
@@ -128,10 +150,10 @@ static int set_required(const json *node, schema *data)
         data->required = NULL;
         return 1;
     }
-    if (unique_strings(node))
+    if (json_is_array(node) && unique_strings(node))
     {
         set_flag(data, REQUIRED, 0);
-        data->required = node;
+        data->required = json_child(node);
         return 1;
     }
     return 0;
@@ -139,8 +161,18 @@ static int set_required(const json *node, schema *data)
 
 static int set_dependent_required(const json *node, schema *data)
 {
-    if (json_is_array(node) && unique_strings(node))
+    if (json_is_object(node) && unique_arrays(node))
     {
+        const json *item = node = json_child(node);
+
+        while (item != NULL)
+        {
+            if (!unique_strings(item))
+            {
+                return 0;
+            }
+            item = json_next(item);
+        }
         data->dependent_required = node;
         return 1;
     }
@@ -149,7 +181,7 @@ static int set_dependent_required(const json *node, schema *data)
 
 static int set_properties(const json *node, schema *data)
 {
-    if (json_is_object(node))
+    if (json_is_object(node) && unique_objects(node))
     {
         data->properties = json_child(node);
         return 1;
@@ -385,16 +417,40 @@ static int test_required(schema *data)
     }
     else if (data->required)
     {
-        const json *item = json_child(data->required);
+        const json *node = data->required;
 
-        while (item != NULL)
+        while (node != NULL)
         {
-            if (!json_pair(data->node, json_string(item)))
+            if (!json_pair(data->node, json_string(node)))
             {
-                fprintf(stderr, "'%s' is required\n", json_string(item));
+                fprintf(stderr, "'%s' is required\n", json_string(node));
                 return 0;
             }
-            item = json_next(item);
+            node = json_next(node);
+        }
+    }
+    if (data->dependent_required)
+    {
+        const json *node = data->dependent_required;;
+
+        while (node != NULL)
+        {
+            if (json_pair(data->node, json_name(node)))
+            {
+                const json *item = json_child(node);
+
+                while (item != NULL)
+                {
+                    if (!json_pair(data->node, json_string(item)))
+                    {
+                        fprintf(stderr, "'%s' is required when '%s' is set\n",
+                                json_string(item), json_name(node));
+                        return 0;
+                    }
+                    item = json_next(item);
+                }
+            }
+            node = json_next(node);
         }
     }
     return 1;
@@ -419,16 +475,16 @@ static int test_properties(schema *data)
     }
     if (data->properties && (data->flags & NOT_ADDITIONAL_PROPERTIES))
     {
-        const json *item = json_child(data->node);
+        const json *node = json_child(data->node);
 
-        while (item != NULL)
+        while (node != NULL)
         {
             const json *property = data->properties;
             int found = 0;
 
             while (property != NULL)
             {
-                if (equal(json_name(item), json_name(property)))
+                if (equal(json_name(node), json_name(property)))
                 {
                     found = 1;
                     break;
@@ -437,10 +493,10 @@ static int test_properties(schema *data)
             }
             if (!found)
             {
-                fprintf(stderr, "'%s' was not expected\n", json_name(item));
+                fprintf(stderr, "'%s' was not expected\n", json_name(node));
                 return 0;
             }
-            item = json_next(item);
+            node = json_next(node);
         }
     }
     return 1;
