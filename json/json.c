@@ -864,12 +864,9 @@ static int equal(const json *a, const json *b, int level)
                 return 0;
             }
         }
-        else
+        else if (strcmp(a->value, b->value))
         {
-            if (strcmp(a->value, b->value))
-            {
-                return 0;
-            }
+            return 0;
         }
     }
     return 1;
