@@ -274,7 +274,8 @@ static char *set_value(json *node, const char *left, const char *right)
         char *end;
 
         strtod(left, &end);
-        if (end <= right)
+        if ((end <= right) ||
+            (*left == '+') || (*left == '.') || (*right == '.'))
         {
             return NULL;
         }
@@ -850,28 +851,49 @@ static int equal(const json *a, const json *b, int level)
     {
         return 0;
     }
-    if ((a->value != NULL) && strcmp(a->value, b->value))
+    if (a->value != NULL)
     {
-        return 0;
+        if (a->type == JSON_NUMBER)
+        {
+            if (!strchr(a->value, '.') ^ !strchr(b->value, '.'))
+            {
+                return 0;
+            }
+            if (strtod(a->value, NULL) != strtod(b->value, NULL))
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            if (strcmp(a->value, b->value))
+            {
+                return 0;
+            }
+        }
     }
     return 1;
 }
 
-/* Compares two nodes */
+/*
+ * Compares two nodes
+ * Returns 1 when nodes are equal, 0 otherwise
+ */
 int json_equal(const json *a, const json *b)
 {
+    if ((a == NULL) & (b == NULL))
+    {
+        return 1;
+    }
+    if ((a == NULL) ^ (b == NULL))
+    {
+        return 0;
+    }
+
     int level = 0;
 
     for (;;)
     {
-        if ((a == NULL) & (b == NULL))
-        {
-            return 1;
-        }
-        if ((a == NULL) ^ (b == NULL))
-        {
-            return 0;
-        }
         if (!equal(a, b, level))
         {
             return 0;
