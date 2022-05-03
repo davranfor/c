@@ -1,6 +1,7 @@
 {
   "firstName": "John",
   "lastName": "Doe",
-  "age": 21
+  "age": 21,
+  "sons": ["Mary", "Julie"]
 }
 

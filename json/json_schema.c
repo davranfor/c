@@ -223,7 +223,7 @@ static int set_items(const json *node, schema *data)
 {
     if (json_is_object(node))
     {
-        data->items = json_child(node) ? node : NULL;
+        data->items = json_child(node);
         return 1;
     }
     return 0;
@@ -517,6 +517,24 @@ static int test_items(schema *data)
         {
             fprintf(stderr, "Error testing 'maxItems'\n");
             return 0;
+        }
+    }
+    if (data->flags & UNIQUE_ITEMS)
+    {
+        const json *head, *node;
+
+        head = node = json_child(data->node);
+        while (node != NULL)
+        {
+            for (const json *item = head; item != node; item = json_next(item))
+            {
+                if (json_equal(item, node))
+                {
+                    fprintf(stderr, "Error testing 'uniqueItems'\n");
+                    return 0;
+                }
+            }
+            node = json_next(node);
         }
     }
     return 1;

@@ -575,12 +575,6 @@ int json_is_array(const json *node)
         && (node->type == JSON_ARRAY);
 }
 
-int json_is_property(const json *node)
-{
-    return (node != NULL)
-        && (node->name != NULL);
-}
-
 int json_is_string(const json *node)
 {
     return (node != NULL)
@@ -830,6 +824,92 @@ size_t json_items(const json *node)
     return count;
 }
 
+static int equal(const json *a, const json *b, int level)
+{
+    if (a->type != b->type)
+    {
+        return 0;
+    }
+    if ((a->left == NULL) ^ (b->left == NULL))
+    {
+        return 0;
+    }
+    if ((level > 0) & ((a->right == NULL) ^ (b->right == NULL)))
+    {
+        return 0;
+    }
+    if ((a->name == NULL) ^ (b->name == NULL))
+    {
+        return 0;
+    }
+    if ((a->value == NULL) ^ (b->value == NULL))
+    {
+        return 0;
+    }
+    if ((a->name != NULL) && strcmp(a->name, b->name))
+    {
+        return 0;
+    }
+    if ((a->value != NULL) && strcmp(a->value, b->value))
+    {
+        return 0;
+    }
+    return 1;
+}
+
+/* Compares two nodes */
+int json_equal(const json *a, const json *b)
+{
+    int level = 0;
+
+    for (;;)
+    {
+        if ((a == NULL) & (b == NULL))
+        {
+            return 1;
+        }
+        if ((a == NULL) ^ (b == NULL))
+        {
+            return 0;
+        }
+        if (!equal(a, b, level))
+        {
+            return 0;
+        }
+        if (a->left != NULL)
+        {
+            a = a->left;
+            b = b->left;
+            level++;
+        }
+        else if ((level > 0) && (a->right != NULL))
+        {
+            a = a->right;
+            b = b->right;
+        }
+        else
+        {
+            while (level > 0)
+            {
+                a = a->parent;
+                b = b->parent;
+                level--;
+                if (a->right != NULL)
+                {
+                    a = a->right;
+                    b = b->right;
+                    break;
+                }
+            }
+            if (level == 0)
+            {
+                return 1;
+            }
+        }
+    }
+    return 1;
+}
+
 /*
  * Sends all nodes to a callback "func"
  * Exit when all nodes are read or when "func" returns a non 0 value
@@ -875,7 +955,7 @@ int json_callback(const json *root, void *data,
     return 0;
 }
 
-static void print_text(const char *str)
+static void print(const char *str)
 {
     const char *end = str;
 
@@ -919,17 +999,10 @@ static void print_text(const char *str)
     printf("%s", end);
 }
 
-static void print_name(const char *str)
+static void quote(const char *str)
 {
     printf("\"");
-    print_text(str);
-    printf("\": ");
-}
-
-static void print_quoted(const char *str)
-{
-    printf("\"");
-    print_text(str);
+    print(str);
     printf("\"");
 }
 
@@ -941,7 +1014,8 @@ static void print_opening(const json *node, int level)
     }
     if (node->name != NULL)
     {
-        print_name(node->name);
+        quote(node->name);
+        printf(": ");
     }
     switch (node->type)
     {
@@ -952,10 +1026,10 @@ static void print_opening(const json *node, int level)
             printf("[");
             break;
         case JSON_STRING:
-            print_quoted(node->value);
+            quote(node->value);
             break;
         default:
-            print_text(node->value);
+            print(node->value);
             break;
     }
     if (node->left == NULL)
@@ -1009,8 +1083,10 @@ static void print_closure(const json *node, int level)
     }
 }
 
-static void print(const json *node, int level)
+void json_print(const json *node)
 {
+    int level = 0;
+
     while (node != NULL)
     {
         print_opening(node, level);
@@ -1041,11 +1117,6 @@ static void print(const json *node, int level)
             }
         }
     }
-}
-
-void json_print(const json *node)
-{
-    print(node, 0);
 }
 
 void json_raise_error(const json_error *error, const char *path)
