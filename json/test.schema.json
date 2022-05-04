@@ -6,7 +6,8 @@
   "properties": {
     "firstName": {
       "type": "string",
-      "description": "The person's first name."
+      "description": "The person's first name.",
+      "required": true
     },
     "lastName": {
       "type": "string",
@@ -20,6 +21,10 @@
     "sons": {
       "description": "Name of the sons.",
       "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 5
+      },
       "uniqueItems": true
     }
   }

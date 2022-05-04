@@ -38,6 +38,7 @@ typedef struct json_subschema
 {
     const json *root, *node;
     struct json_subschema *next;
+    int type;
 } json_subschema;
 
 static int is_named_object(const json *node)
@@ -63,7 +64,7 @@ static int unique(const json *node,
         }
         for (const json *item = head; item != node; item = json_next(item))
         {
-            if (equal(comp_func(item), comp_func(node)))
+            if (equal(comp_func(node), comp_func(item)))
             {
                 return 0;
             }
@@ -527,7 +528,7 @@ static int test_items(const json_schema *schema)
         {
             for (const json *item = head; item != node; item = json_next(item))
             {
-                if (json_equal(item, node))
+                if (json_equal(node, item))
                 {
                     fprintf(stderr, "Error testing 'uniqueItems'\n");
                     return 0;
@@ -704,38 +705,78 @@ static schema_setter get_setter(const char *name)
 static json_subschema *get_subschema(const json_schema *schema,
     json_subschema *subschema)
 {
-    if (schema->properties != NULL)
+    const json *node = NULL;
+    int type = 0;
+
+    if (schema->properties && schema->items)
+    {
+        if (json_is_array(schema->node))
+        {
+            node = schema->items;
+            type = JSON_ARRAY;
+        }
+        else
+        {
+            node = schema->properties;
+            type = JSON_OBJECT;
+        }
+    }
+    else if (schema->properties != NULL)
+    {
+        node = schema->properties;
+        type = JSON_OBJECT;
+    }
+    else if (schema->items != NULL)
+    {
+        node = schema->items;
+        type = JSON_ARRAY;
+    }
+    if (type != 0)
     {
         json_subschema *new = malloc(sizeof *new);
 
-        if (new == NULL)
+        if (new != NULL)
         {
-            return NULL;
+            new->root = schema->node;
+            new->node = node;
+            new->next = subschema;
+            new->type = type;
         }
-        new->root = schema->node;
-        new->node = schema->properties;
-        new->next = subschema;
-        subschema = new;
+        return new;
     }
-    else
+    if ((subschema != NULL) && (subschema->type == JSON_ARRAY))
     {
-        while (subschema != NULL)
+        if (json_next(schema->node) == NULL)
         {
-            subschema->node = json_next(subschema->node);
-            if (subschema->node == NULL)
-            {
-                json_subschema *next = subschema->next;
+            subschema->node = NULL;
+        }
+        else
+        {
+            subschema->root = NULL;
+            return subschema;
+        }
+    }
+    while (subschema != NULL)
+    {
+        subschema->node = json_next(subschema->node);
+        if (subschema->node == NULL)
+        {
+            json_subschema *next = subschema->next;
 
-                free(subschema);
-                subschema = next;
-            }
-            else
-            {
-                break;
-            }
+            free(subschema);
+            subschema = next;
+        }
+        else
+        {
+            break;
         }
     }
     return subschema;
+}
+
+static const json *get_property(const json_subschema *subschema)
+{
+    return json_pair(subschema->root, json_name(subschema->node));
 }
 
 static void clean_subschema(json_subschema *subschema)
@@ -768,9 +809,26 @@ static int valid_schema(json_schema *schema, const json *node)
             {
                 break;
             }
-            memset(schema, 0, sizeof *schema);
-            schema->node = json_pair(subschema->root, json_name(subschema->node));
-            node = json_child(subschema->node);
+            if (subschema->type == JSON_OBJECT)
+            {
+                memset(schema, 0, sizeof *schema);
+                schema->node = get_property(subschema);
+                node = json_child(subschema->node);
+            }
+            else /* if (subschema->type == JSON_ARRAY) */
+            {
+                if (subschema->root != NULL)
+                {
+                    memset(schema, 0, sizeof *schema);
+                    schema->node = json_child(subschema->root);
+                    node = subschema->node;
+                }
+                else
+                {
+                    schema->node = json_next(schema->node);
+                    continue;
+                }
+            }
         }
 
         const char *name = json_name(node);
