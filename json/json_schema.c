@@ -26,6 +26,7 @@ typedef struct
 {
     const json *node, *properties, *items;
     const json *required, *dependent_required;
+    const json *const_value, *enum_values;
     const char *min_properties, *max_properties;
     const char *min_items, *max_items;
     const char *min_length, *max_length, *pattern;
@@ -174,6 +175,22 @@ static int set_dependent_required(json_schema *schema, const json *node)
             item = json_next(item);
         }
         schema->dependent_required = node;
+        return 1;
+    }
+    return 0;
+}
+
+static int set_const(json_schema *schema, const json *node)
+{
+    schema->const_value = node;
+    return 1;
+}
+
+static int set_enum(json_schema *schema, const json *node)
+{
+    if (json_is_array(node))
+    {
+        schema->enum_values = json_child(node);
         return 1;
     }
     return 0;
@@ -456,6 +473,44 @@ static int test_required(const json_schema *schema)
     return 1;
 }
 
+static int test_const(const json_schema *schema)
+{
+    if (schema->const_value)
+    {
+        if (json_equal_value(schema->const_value, schema->node))
+        {
+            return 1;
+        } 
+        else if (json_equal(schema->const_value, schema->node))
+        {
+            return 1;
+        }
+        fprintf(stderr, "Error testing 'const'\n");
+        return 0;
+    }
+    return 1;
+}
+
+static int test_enum(const json_schema *schema)
+{
+    if (schema->enum_values)
+    {
+        const json *node = schema->enum_values;
+
+        while (node != NULL)
+        {
+            if (json_equal(node, schema->node))
+            {
+                return 1;
+            }
+            node = json_next(node);
+        }
+        fprintf(stderr, "Error testing 'enum'\n");
+        return 0;
+    }
+    return 1;
+}
+
 static int test_properties(const json_schema *schema)
 {
     if (schema->min_properties || schema->max_properties)
@@ -644,6 +699,14 @@ static int test_schema(const json_schema *schema)
     {
         return 1;
     }
+    if (!test_const(schema))
+    {
+        return 0;
+    }
+    if (!test_enum(schema))
+    {
+        return 0;
+    }
 
     unsigned type = json_type(schema->node);
 
@@ -678,6 +741,8 @@ static schema_setter get_setter(const char *name)
         equal(name, "type") ? set_type :
         equal(name, "required") ? set_required :
         equal(name, "dependentRequired") ? set_dependent_required :
+        equal(name, "const") ? set_const :
+        equal(name, "enum") ? set_enum :
         equal(name, "properties") ? set_properties :
         equal(name, "additionalProperties") ? set_additional_properties :
         equal(name, "minProperties") ? set_min_properties :

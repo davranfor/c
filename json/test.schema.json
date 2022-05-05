@@ -5,13 +5,13 @@
   "type": "object",
   "properties": {
     "firstName": {
-      "type": "string",
       "description": "The person's first name.",
+      "type": "string",
       "required": true
     },
     "lastName": {
-      "type": "string",
-      "description": "The person's last name."
+      "description": "The person's last name.",
+      "type": "string"
     },
     "age": {
       "description": "Age in years which must be equal to or greater than zero.",
@@ -22,8 +22,7 @@
       "description": "Name of the sons.",
       "type": "array",
       "items": {
-        "type": "string",
-        "maxLength": 5
+        "type": "string"
       },
       "uniqueItems": true
     }

@@ -614,13 +614,6 @@ int json_is_null(const json *node)
         && (node->type == JSON_NULL);
 }
 
-int json_streq(const json *node, const char *str)
-{
-    return (node != NULL)
-        && (node->type == JSON_STRING)
-        && (strcmp(node->value, str) == 0);
-}
-
 json *json_parse(const char *text, json_error *error)
 {
     if (error != NULL)
@@ -825,6 +818,54 @@ size_t json_items(const json *node)
     return count;
 }
 
+int json_streq(const json *node, const char *str)
+{
+    return (node != NULL)
+        && (node->type == JSON_STRING)
+        && (strcmp(node->value, str) == 0);
+}
+
+static int equal_value(const json *a, const json *b)
+{
+    if (a->type == JSON_NUMBER)
+    {
+        if (!strchr(a->value, '.') ^ !strchr(b->value, '.'))
+        {
+            return 0;
+        }
+        if (strtod(a->value, NULL) != strtod(b->value, NULL))
+        {
+            return 0;
+        }
+    }
+    else if (strcmp(a->value, b->value))
+    {
+        return 0;
+    }
+    return 1;
+}
+
+int json_equal_value(const json *a, const json *b)
+{
+    if ((a == NULL) & (b == NULL))
+    {
+        return 0;
+    }
+    if ((a == NULL) ^ (b == NULL))
+    {
+        return 0;
+    }
+    if (a->type != b->type)
+    {
+        return 0;
+    }
+    if (a->value == NULL)
+    {
+        return 0;
+    }
+    return equal_value(a, b);
+}
+
 static int equal(const json *a, const json *b, int level)
 {
     if (a->type != b->type)
@@ -851,23 +892,9 @@ static int equal(const json *a, const json *b, int level)
     {
         return 0;
     }
-    if (a->value != NULL)
+    if ((a->value != NULL) && !equal_value(a, b))
     {
-        if (a->type == JSON_NUMBER)
-        {
-            if (!strchr(a->value, '.') ^ !strchr(b->value, '.'))
-            {
-                return 0;
-            }
-            if (strtod(a->value, NULL) != strtod(b->value, NULL))
-            {
-                return 0;
-            }
-        }
-        else if (strcmp(a->value, b->value))
-        {
-            return 0;
-        }
+        return 0;
     }
     return 1;
 }
