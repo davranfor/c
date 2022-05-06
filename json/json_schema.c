@@ -481,7 +481,7 @@ static int test_const(const json_schema *schema)
         {
             return 1;
         } 
-        else if (json_equal(schema->const_value, schema->node))
+        if (json_equal(schema->const_value, schema->node))
         {
             return 1;
         }
@@ -767,35 +767,40 @@ static schema_setter get_setter(const char *name)
         equal(name, "default") ? test_true : NULL;
 }
 
-static json_subschema *get_subschema(const json_schema *schema,
-    json_subschema *subschema)
+static int subschema_type(const json_schema *schema, const json **node)
 {
-    const json *node = NULL;
-    int type = 0;
-
     if (schema->properties && schema->items)
     {
         if (json_is_array(schema->node))
         {
-            node = schema->items;
-            type = JSON_ARRAY;
+            *node = schema->items;
+            return JSON_ARRAY;
         }
         else
         {
-            node = schema->properties;
-            type = JSON_OBJECT;
+            *node = schema->properties;
+            return JSON_OBJECT;
         }
     }
-    else if (schema->properties != NULL)
+    if (schema->properties != NULL)
     {
-        node = schema->properties;
-        type = JSON_OBJECT;
+        *node = schema->properties;
+        return JSON_OBJECT;
     }
-    else if (schema->items != NULL)
+    if (schema->items != NULL)
     {
-        node = schema->items;
-        type = JSON_ARRAY;
+        *node = schema->items;
+        return JSON_ARRAY;
     }
+    return 0;
+}
+
+static json_subschema *next_subschema(const json_schema *schema,
+    json_subschema *subschema)
+{
+    const json *node = NULL;
+    int type = subschema_type(schema, &node);
+
     if (type != 0)
     {
         json_subschema *new = malloc(sizeof *new);
@@ -869,7 +874,7 @@ static int valid_schema(json_schema *schema, const json *node)
                 valid = 0;
                 break;
             }
-            subschema = get_subschema(schema, subschema);
+            subschema = next_subschema(schema, subschema);
             if (subschema == NULL)
             {
                 break;
