@@ -13,8 +13,11 @@
 
 struct json
 {
-    char *name, *value;
-    json *left, *right, *parent;
+    char *name;
+    char *value;
+    json *left;
+    json *right;
+    json *parent;
     enum json_type type;
 };
 

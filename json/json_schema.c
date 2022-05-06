@@ -35,19 +35,14 @@ typedef struct
     schema_format format;
 } json_schema;
 
-enum subschema_type
-{
-    SUBSCHEMA_OBJECT = 1,
-    SUBSCHEMA_TUPLE,
-    SUBSCHEMA_ARRAY
-};
-
 typedef struct json_subschema
 {
     const json *root, *node;
     struct json_subschema *next;
-    enum subschema_type type;
+    int type;
 } json_subschema;
+
+enum {SUBSCHEMA_OBJECT = 1, SUBSCHEMA_TUPLE, SUBSCHEMA_ARRAY};
 
 static int is_named_object(const json *node)
 {
@@ -795,10 +790,10 @@ static schema_setter get_setter(const char *name)
         equal(name, "default") ? test_true : NULL;
 }
 
-static enum subschema_type get_type(const json_schema *schema,
+static int subschema_type(const json_schema *schema,
     const json **root, const json **node)
 {
-    enum subschema_type type = 0;
+    int type = 0;
 
     if (schema->properties && schema->items)
     {
@@ -827,8 +822,6 @@ static enum subschema_type get_type(const json_schema *schema,
                 type = SUBSCHEMA_TUPLE;
             }
             break;
-        default:
-            break;
     }
     return type;
 }
@@ -837,7 +830,7 @@ static json_subschema *next_subschema(const json_schema *schema,
     json_subschema *subschema)
 {
     const json *root = NULL, *node = NULL;
-    enum subschema_type type = get_type(schema, &root, &node);
+    int type = subschema_type(schema, &root, &node);
 
     if (type != 0)
     {
