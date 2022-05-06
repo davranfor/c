@@ -25,6 +25,14 @@
         "type": "string"
       },
       "uniqueItems": true
+    },
+    "data": {
+      "description": "Testing tuple.",
+      "type": "array",
+      "items": [
+        {"type": "integer", "required": true},
+        {"type": "string", "required": true}
+      ]
     }
   }
 }

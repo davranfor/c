@@ -31,20 +31,32 @@ typedef struct
     const char *min_items, *max_items;
     const char *min_length, *max_length, *pattern;
     const char *minimum, *maximum, *multiple_of;
+    unsigned type, num_items, flags;
     schema_format format;
-    unsigned type, flags;
 } json_schema;
+
+enum subschema_type
+{
+    SUBSCHEMA_OBJECT = 1,
+    SUBSCHEMA_TUPLE,
+    SUBSCHEMA_ARRAY
+};
 
 typedef struct json_subschema
 {
     const json *root, *node;
     struct json_subschema *next;
-    int type;
+    enum subschema_type type;
 } json_subschema;
 
 static int is_named_object(const json *node)
 {
     return json_name(node) && json_is_object(node);
+}
+
+static int is_unnamed_object(const json *node)
+{
+    return !json_name(node) && json_is_object(node);
 }
 
 static int is_named_array(const json *node)
@@ -241,6 +253,22 @@ static int set_items(json_schema *schema, const json *node)
     if (json_is_object(node))
     {
         schema->items = json_child(node);
+        return 1;
+    }
+    if (json_is_array(node))
+    {
+        const json *item = node = json_child(node);
+
+        while (item != NULL)
+        {
+            if (!is_unnamed_object(item))
+            {
+                return 0;
+            }
+            item = json_next(item);
+            schema->num_items++;
+        }
+        schema->items = node;
         return 1;
     }
     return 0;
@@ -767,39 +795,49 @@ static schema_setter get_setter(const char *name)
         equal(name, "default") ? test_true : NULL;
 }
 
-static int subschema_type(const json_schema *schema, const json **node)
+static enum subschema_type get_type(const json_schema *schema,
+    const json **root, const json **node)
 {
+    enum subschema_type type = 0;
+
     if (schema->properties && schema->items)
     {
-        if (json_is_array(schema->node))
-        {
-            *node = schema->items;
-            return JSON_ARRAY;
-        }
-        else
-        {
+        type = json_is_array(schema->node) ?
+            SUBSCHEMA_ARRAY : SUBSCHEMA_OBJECT;
+    }
+    else if (schema->properties != NULL)
+    {
+        type = SUBSCHEMA_OBJECT;
+    }
+    else if (schema->items != NULL)
+    {
+        type = SUBSCHEMA_ARRAY;
+    }
+    switch (type)
+    {
+        case SUBSCHEMA_OBJECT:
+            *root = schema->node;
             *node = schema->properties;
-            return JSON_OBJECT;
-        }
+            break;
+        case SUBSCHEMA_ARRAY:
+            *root = json_child(schema->node);
+            *node = schema->items;
+            if (schema->num_items > 0)
+            {
+                type = SUBSCHEMA_TUPLE;
+            }
+            break;
+        default:
+            break;
     }
-    if (schema->properties != NULL)
-    {
-        *node = schema->properties;
-        return JSON_OBJECT;
-    }
-    if (schema->items != NULL)
-    {
-        *node = schema->items;
-        return JSON_ARRAY;
-    }
-    return 0;
+    return type;
 }
 
 static json_subschema *next_subschema(const json_schema *schema,
     json_subschema *subschema)
 {
-    const json *node = NULL;
-    int type = subschema_type(schema, &node);
+    const json *root = NULL, *node = NULL;
+    enum subschema_type type = get_type(schema, &root, &node);
 
     if (type != 0)
     {
@@ -807,23 +845,30 @@ static json_subschema *next_subschema(const json_schema *schema,
 
         if (new != NULL)
         {
-            new->root = schema->node;
+            new->root = root;
             new->node = node;
             new->next = subschema;
             new->type = type;
         }
         return new;
     }
-    if ((subschema != NULL) && (subschema->type == JSON_ARRAY))
+    if (subschema != NULL) 
     {
-        if (json_next(schema->node) == NULL)
+        if (subschema->type == SUBSCHEMA_TUPLE)
         {
-            subschema->node = NULL;
+            subschema->root = json_next(subschema->root);
         }
-        else
+        else if (subschema->type == SUBSCHEMA_ARRAY)
         {
-            subschema->root = NULL;
-            return subschema;
+            if (json_next(schema->node) == NULL)
+            {
+                subschema->node = NULL;
+            }
+            else
+            {
+                subschema->root = NULL;
+                return subschema;
+            }
         }
     }
     while (subschema != NULL)
@@ -879,25 +924,28 @@ static int valid_schema(json_schema *schema, const json *node)
             {
                 break;
             }
-            if (subschema->type == JSON_OBJECT)
+            if (subschema->type == SUBSCHEMA_OBJECT)
             {
                 memset(schema, 0, sizeof *schema);
                 schema->node = get_property(subschema);
                 node = json_child(subschema->node);
             }
-            else /* if (subschema->type == JSON_ARRAY) */
+            else if (subschema->type == SUBSCHEMA_TUPLE)
             {
-                if (subschema->root != NULL)
-                {
-                    memset(schema, 0, sizeof *schema);
-                    schema->node = json_child(subschema->root);
-                    node = subschema->node;
-                }
-                else
-                {
-                    schema->node = json_next(schema->node);
-                    continue;
-                }
+                memset(schema, 0, sizeof *schema);
+                schema->node = subschema->root;
+                node = json_child(subschema->node);
+            }
+            else if (subschema->root != NULL)
+            {
+                memset(schema, 0, sizeof *schema);
+                schema->node = subschema->root;
+                node = subschema->node;
+            }
+            else
+            {
+                schema->node = json_next(schema->node);
+                continue;
             }
         }
 

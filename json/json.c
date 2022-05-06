@@ -13,12 +13,9 @@
 
 struct json
 {
+    char *name, *value;
+    json *left, *right, *parent;
     enum json_type type;
-    char *name;
-    char *value;
-    json *left;
-    json *right;
-    json *parent;
 };
 
 static const char *type_name[] =

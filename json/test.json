@@ -2,6 +2,7 @@
   "firstName": "John",
   "lastName": "Doe",
   "age": 21,
-  "sons": ["Mary", "Julie"]
+  "sons": ["Mary", "Julie"],
+  "data": [1, "David"]
 }
 
