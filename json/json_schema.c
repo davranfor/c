@@ -37,7 +37,7 @@ typedef struct
 
 typedef struct json_subschema
 {
-    const json *root, *node;
+    const json *path, *node;
     struct json_subschema *next;
     int type;
 } json_subschema;
@@ -791,7 +791,7 @@ static schema_setter get_setter(const char *name)
 }
 
 static int subschema_type(const json_schema *schema,
-    const json **root, const json **node)
+    const json **path, const json **node)
 {
     int type = 0;
 
@@ -811,12 +811,12 @@ static int subschema_type(const json_schema *schema,
     switch (type)
     {
         case SUBSCHEMA_OBJECT:
-            *root = schema->node;
-            *node = schema->properties;
+            *path = schema->properties;
+            *node = schema->node;
             break;
         case SUBSCHEMA_ARRAY:
-            *root = json_child(schema->node);
-            *node = schema->items;
+            *path = schema->items;
+            *node = json_child(schema->node);
             if (schema->num_items > 0)
             {
                 type = SUBSCHEMA_TUPLE;
@@ -829,8 +829,8 @@ static int subschema_type(const json_schema *schema,
 static json_subschema *next_subschema(const json_schema *schema,
     json_subschema *subschema)
 {
-    const json *root = NULL, *node = NULL;
-    int type = subschema_type(schema, &root, &node);
+    const json *path = NULL, *node = NULL;
+    int type = subschema_type(schema, &path, &node);
 
     if (type != 0)
     {
@@ -838,7 +838,7 @@ static json_subschema *next_subschema(const json_schema *schema,
 
         if (new != NULL)
         {
-            new->root = root;
+            new->path = path;
             new->node = node;
             new->next = subschema;
             new->type = type;
@@ -849,25 +849,25 @@ static json_subschema *next_subschema(const json_schema *schema,
     {
         if (subschema->type == SUBSCHEMA_TUPLE)
         {
-            subschema->root = json_next(subschema->root);
+            subschema->node = json_next(subschema->node);
         }
         else if (subschema->type == SUBSCHEMA_ARRAY)
         {
             if (json_next(schema->node) == NULL)
             {
-                subschema->node = NULL;
+                subschema->path = NULL;
             }
             else
             {
-                subschema->root = NULL;
+                subschema->node = NULL;
                 return subschema;
             }
         }
     }
     while (subschema != NULL)
     {
-        subschema->node = json_next(subschema->node);
-        if (subschema->node == NULL)
+        subschema->path = json_next(subschema->path);
+        if (subschema->path == NULL)
         {
             json_subschema *next = subschema->next;
 
@@ -884,7 +884,7 @@ static json_subschema *next_subschema(const json_schema *schema,
 
 static const json *get_property(const json_subschema *subschema)
 {
-    return json_pair(subschema->root, json_name(subschema->node));
+    return json_pair(subschema->node, json_name(subschema->path));
 }
 
 static void clean_subschema(json_subschema *subschema)
@@ -921,19 +921,19 @@ static int valid_schema(json_schema *schema, const json *node)
             {
                 memset(schema, 0, sizeof *schema);
                 schema->node = get_property(subschema);
-                node = json_child(subschema->node);
+                node = json_child(subschema->path);
             }
             else if (subschema->type == SUBSCHEMA_TUPLE)
             {
                 memset(schema, 0, sizeof *schema);
-                schema->node = subschema->root;
-                node = json_child(subschema->node);
+                schema->node = subschema->node;
+                node = json_child(subschema->path);
             }
-            else if (subschema->root != NULL)
+            else if (subschema->node != NULL)
             {
                 memset(schema, 0, sizeof *schema);
-                schema->node = subschema->root;
-                node = subschema->node;
+                schema->node = subschema->node;
+                node = subschema->path;
             }
             else
             {
