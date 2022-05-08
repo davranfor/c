@@ -42,23 +42,6 @@ typedef struct json_subschema
     int type;
 } json_subschema;
 
-enum {SUBSCHEMA_OBJECT = 1, SUBSCHEMA_TUPLE, SUBSCHEMA_ARRAY};
-
-static int is_named_object(const json *node)
-{
-    return json_name(node) && json_is_object(node);
-}
-
-static int is_unnamed_object(const json *node)
-{
-    return !json_name(node) && json_is_object(node);
-}
-
-static int is_named_array(const json *node)
-{
-    return json_name(node) && json_is_array(node);
-}
-
 static int unique(const json *node,
     int (*test_func)(const json *), const char *(*comp_func)(const json *))
 {
@@ -84,12 +67,12 @@ static int unique(const json *node,
 
 static int unique_objects(const json *node)
 {
-    return unique(node, is_named_object, json_name);
+    return unique(node, json_is_named_object, json_name);
 }
 
 static int unique_arrays(const json *node)
 {
-    return unique(node, is_named_array, json_name);
+    return unique(node, json_is_named_array, json_name);
 }
 
 static int unique_strings(const json *node)
@@ -256,7 +239,7 @@ static int set_items(json_schema *schema, const json *node)
 
         while (item != NULL)
         {
-            if (!is_unnamed_object(item))
+            if (!json_is_unnamed_object(item))
             {
                 return 0;
             }
@@ -403,7 +386,7 @@ static int set_pattern(json_schema *schema, const json *node)
     return 0;
 }
 
-static int test_true(json_schema *schema, const json *node)
+static int test_any(json_schema *schema, const json *node)
 {
     (void)schema;
     (void)node;
@@ -787,81 +770,75 @@ static schema_setter get_setter(const char *name)
         equal(name, "writeOnly") ? test_is_boolean :
         equal(name, "deprecated") ? test_is_boolean :
         equal(name, "examples") ? test_is_array :
-        equal(name, "default") ? test_true : NULL;
+        equal(name, "default") ? test_any : NULL;
 }
 
-static int subschema_type(const json_schema *schema,
-    const json **path, const json **node)
+enum {SCHEMA_OBJECT = 1, SCHEMA_TUPLE, SCHEMA_ARRAY};
+enum {SCHEMA_BAD_ALLOC = 1, SCHEMA_REUSE_DATA};
+
+static json_subschema *new_subschema(const json_schema *schema,
+    json_subschema *subschema, int *flags)
 {
     int type = 0;
 
     if (schema->properties && schema->items)
     {
-        type = json_is_array(schema->node) ?
-            SUBSCHEMA_ARRAY : SUBSCHEMA_OBJECT;
+        type = json_is_array(schema->node) ? SCHEMA_ARRAY : SCHEMA_OBJECT;
     }
-    else if (schema->properties != NULL)
+    else
     {
-        type = SUBSCHEMA_OBJECT;
+        type = schema->properties ? SCHEMA_OBJECT : SCHEMA_ARRAY;
     }
-    else if (schema->items != NULL)
+
+    json_subschema *new = malloc(sizeof *new);
+
+    if (new != NULL)
     {
-        type = SUBSCHEMA_ARRAY;
-    }
-    switch (type)
-    {
-        case SUBSCHEMA_OBJECT:
-            *path = schema->properties;
-            *node = schema->node;
-            break;
-        case SUBSCHEMA_ARRAY:
-            *path = schema->items;
-            *node = json_child(schema->node);
+        if (type == SCHEMA_OBJECT)
+        {
+            new->path = schema->properties;
+            new->node = schema->node;
+        }
+        else
+        {
+            new->path = schema->items;
+            new->node = json_child(schema->node);
             if (schema->num_items > 0)
             {
-                type = SUBSCHEMA_TUPLE;
+                type = SCHEMA_TUPLE;
             }
-            break;
+        }
+        new->next = subschema;
+        new->type = type;
     }
-    return type;
+    else
+    {
+        *flags = SCHEMA_BAD_ALLOC;
+    }
+    return new;
 }
 
 static json_subschema *next_subschema(const json_schema *schema,
-    json_subschema *subschema)
+    json_subschema *subschema, int *flags)
 {
-    const json *path = NULL, *node = NULL;
-    int type = subschema_type(schema, &path, &node);
-
-    if (type != 0)
+    if (schema->properties || schema->items)
     {
-        json_subschema *new = malloc(sizeof *new);
-
-        if (new != NULL)
-        {
-            new->path = path;
-            new->node = node;
-            new->next = subschema;
-            new->type = type;
-        }
-        return new;
+        return new_subschema(schema, subschema, flags);
     }
     if (subschema != NULL) 
     {
-        if (subschema->type == SUBSCHEMA_TUPLE)
+        if (subschema->type == SCHEMA_TUPLE)
         {
             subschema->node = json_next(subschema->node);
         }
-        else if (subschema->type == SUBSCHEMA_ARRAY)
+        else if (subschema->type == SCHEMA_ARRAY)
         {
-            if (json_next(schema->node) == NULL)
+            if (json_next(schema->node))
             {
-                subschema->path = NULL;
-            }
-            else
-            {
-                subschema->node = NULL;
+                *flags = SCHEMA_REUSE_DATA;
                 return subschema;
             }
+            subschema->path = NULL;
         }
     }
     while (subschema != NULL)
@@ -880,11 +857,6 @@ static json_subschema *next_subschema(const json_schema *schema,
         }
     }
     return subschema;
-}
-
-static const json *get_property(const json_subschema *subschema)
-{
-    return json_pair(subschema->node, json_name(subschema->path));
 }
 
 static void clean_subschema(json_subschema *subschema)
@@ -912,33 +884,43 @@ static int valid_schema(json_schema *schema, const json *node)
                 valid = 0;
                 break;
             }
-            subschema = next_subschema(schema, subschema);
+
+            int flags = 0;
+
+            subschema = next_subschema(schema, subschema, &flags);
             if (subschema == NULL)
             {
+                if (flags & SCHEMA_BAD_ALLOC)
+                {
+                    fprintf(stderr, "Bad alloc\n");
+                    valid = 0;
+                }
                 break;
             }
-            if (subschema->type == SUBSCHEMA_OBJECT)
-            {
-                memset(schema, 0, sizeof *schema);
-                schema->node = get_property(subschema);
-                node = json_child(subschema->path);
-            }
-            else if (subschema->type == SUBSCHEMA_TUPLE)
-            {
-                memset(schema, 0, sizeof *schema);
-                schema->node = subschema->node;
-                node = json_child(subschema->path);
-            }
-            else if (subschema->node != NULL)
-            {
-                memset(schema, 0, sizeof *schema);
-                schema->node = subschema->node;
-                node = subschema->path;
-            }
-            else
+            if (flags & SCHEMA_REUSE_DATA)
             {
                 schema->node = json_next(schema->node);
                 continue;
+            }
+            else
+            {
+                memset(schema, 0, sizeof *schema);
+                switch (subschema->type)
+                {
+                    case SCHEMA_OBJECT:
+                        schema->node = json_pair(subschema->node,
+                                                 json_name(subschema->path));
+                        node = json_child(subschema->path);
+                        break;
+                    case SCHEMA_TUPLE:
+                        schema->node = subschema->node;
+                        node = json_child(subschema->path);
+                        break;
+                    case SCHEMA_ARRAY:
+                        schema->node = subschema->node;
+                        node = subschema->path;
+                        break;
+                }
             }
         }
 
@@ -968,8 +950,10 @@ static int valid_schema(json_schema *schema, const json *node)
     return valid;
 }
 
-static int validate(json_schema *schema, const json *node)
+int json_validate(const json *root, const json *node)
 {
+    json_schema schema = {.node = root};
+
     if (!json_is_object(node))
     {
         fprintf(stderr, "Invalid schema\n");
@@ -977,15 +961,8 @@ static int validate(json_schema *schema, const json *node)
     }
     if ((node = json_child(node)))
     {
-        return valid_schema(schema, node);
+        return valid_schema(&schema, node);
     }
     return 1;
-}
-
-int json_validate(const json *node, const json *rules)
-{
-    json_schema schema = {.node = node};
-
-    return validate(&schema, rules);
 }
 

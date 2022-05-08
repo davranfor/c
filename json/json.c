@@ -570,10 +570,38 @@ int json_is_object(const json *node)
         && (node->type == JSON_OBJECT);
 }
 
+int json_is_named_object(const json *node)
+{
+    return (node != NULL)
+        && (node->type == JSON_OBJECT)
+        && (node->name != NULL);
+}
+
+int json_is_unnamed_object(const json *node)
+{
+    return (node != NULL)
+        && (node->type == JSON_OBJECT)
+        && (node->name == NULL);
+}
+
 int json_is_array(const json *node)
 {
     return (node != NULL)
         && (node->type == JSON_ARRAY);
+}
+
+int json_is_named_array(const json *node)
+{
+    return (node != NULL)
+        && (node->type == JSON_ARRAY)
+        && (node->name != NULL);
+}
+
+int json_is_unnamed_array(const json *node)
+{
+    return (node != NULL)
+        && (node->type == JSON_ARRAY)
+        && (node->name == NULL);
 }
 
 int json_is_string(const json *node)
