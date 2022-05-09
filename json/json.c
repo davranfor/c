@@ -308,18 +308,20 @@ static json *parse(json *node, const char *left, const char **error)
         {
             case '{':
             case '[':
-                /*
-                 * if there is text before the token
-                 * e.g.: "abc"{ or 123[
-                 */
-                if (left != token)
-                {
-                    return ERROR;
-                }
                 /* Object properties must have a name */
                 if ((node->parent != NULL) &&
                     (node->parent->type == JSON_OBJECT) &&
                     (node->name == NULL))
+                {
+                    return ERROR;
+                }
+                /* Commas between groups are required, e.g.: [[] []] */
+                if (node->type != JSON_UNDEFINED)
+                {
+                    return ERROR;
+                }
+                /* if there is text before the token, e.g.: {"abc":1{}} */
+                if (left != token)
                 {
                     return ERROR;
                 }
