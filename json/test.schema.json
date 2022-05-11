@@ -1,39 +1,41 @@
 {
-  "$id": "https://example.com/person.schema.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Person",
-  "type": "object",
-  "properties": {
-    "firstName": {
-      "description": "The person's first name.",
-      "type": "string",
-      "required": true
-    },
-    "lastName": {
-      "description": "The person's last name.",
-      "type": "string"
-    },
-    "age": {
-      "description": "Age in years which must be equal to or greater than zero.",
-      "type": "integer",
-      "minimum": 0
-    },
-    "sons": {
-      "description": "Name of the sons.",
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "uniqueItems": true
-    },
-    "data": {
-      "description": "Testing tuple.",
-      "type": "array",
-      "items": [
-        {"type": "integer", "required": true},
-        {"type": "string", "required": true}
-      ]
+    "$id": "https://example.com/person.schema.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Person",
+    "type": "object",
+    "properties": {
+        "firstName": {
+            "description": "The person's first name.",
+            "type": "string",
+            "required": true
+        },
+        "lastName": {
+            "description": "The person's last name.",
+            "type": "string",
+            "required": true
+        },
+        "age": {
+            "description": "Age in years which must be equal to or greater than zero.",
+            "type": "integer",
+            "minimum": 0,
+            "required": true
+        },
+        "address": {
+            "properties": {
+                "street": {
+                    "type": "string",
+                    "required": true
+                },
+                "city": {
+                    "type": "string",
+                    "required": true
+                }
+            }
+        },
+        "dummy": {
+            "type": "integer",
+            "required": true
+        }
     }
-  }
 }
 

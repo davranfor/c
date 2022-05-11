@@ -1,8 +1,11 @@
 {
-  "firstName": "John",
-  "lastName": "Doe",
-  "age": 21,
-  "sons": ["Mary", "Julie"],
-  "data": [1, "David"]
+    "firstName": "John",
+    "lastName": "Doe",
+    "age": 21,
+    "address" : {
+        "street": "Dragonera",
+        "city": "Palma de Mallorca"
+    },
+    "dummy": 0
 }
 
