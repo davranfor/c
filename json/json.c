@@ -859,7 +859,7 @@ static int equal_value(const json *a, const json *b)
 {
     if (a->type == JSON_NUMBER)
     {
-        if (!strchr(a->value, '.') ^ !strchr(b->value, '.'))
+        if ((!strchr(a->value, '.')) ^ (!strchr(b->value, '.')))
         {
             return 0;
         }
