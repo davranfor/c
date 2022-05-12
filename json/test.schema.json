@@ -24,6 +24,14 @@
             "items": {
                 "type": "string"
             },
+            "uniqueItems": true,
+            "required": true
+        },
+        "data": {
+            "items": [
+                {"type": "integer", "required": true},
+                {"type": "string", "required": true}
+            ],
             "required": true
         },
         "address": {

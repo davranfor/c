@@ -766,7 +766,7 @@ static schema_setter get_setter(const char *name)
         equal(name, "default") ? test_any : NULL;
 }
 
-enum {SCHEMA_OBJECT = 1, SCHEMA_ARRAY};
+enum {SCHEMA_OBJECT = 1, SCHEMA_TUPLE, SCHEMA_ARRAY};
 
 typedef struct subschema
 {
@@ -785,6 +785,7 @@ static void set_node(json_schema *schema, json_subschema *subschema)
                 subschema->node, json_name(subschema->iter)
             );
             break;
+        case SCHEMA_TUPLE:
         case SCHEMA_ARRAY:
             subschema->node = json_child(schema->node);
             schema->node = subschema->node;
@@ -802,6 +803,14 @@ static int get_node(json_schema *schema, json_subschema *subschema)
                 schema->node = json_pair(
                     subschema->node, json_name(subschema->iter)
                 );
+                return 1;
+            }
+            break;
+        case SCHEMA_TUPLE:
+            if ((subschema->iter = json_next(subschema->iter)))
+            {
+                subschema->node = json_next(subschema->node);
+                schema->node = subschema->node;
                 return 1;
             }
             break;
@@ -831,7 +840,7 @@ static json_subschema *new_subschema(json_schema *schema,
         else
         {
             new->iter = schema->items;
-            new->type = SCHEMA_ARRAY;
+            new->type = schema->num_items ? SCHEMA_TUPLE : SCHEMA_ARRAY;
         }
         new->next = subschema;
         set_node(schema, new);
@@ -886,8 +895,7 @@ static int valid_schema(json_schema *schema, const json *node)
                 valid = 0;
                 break;
             }
-            subschema = next_subschema(schema, subschema);
-            if (subschema != NULL)
+            if ((subschema = next_subschema(schema, subschema)))
             {
                 const json *temp = schema->node;
 
