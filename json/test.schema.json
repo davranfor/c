@@ -20,6 +20,12 @@
             "minimum": 0,
             "required": true
         },
+        "phone": {
+            "items": {
+                "type": "string"
+            },
+            "required": true
+        },
         "address": {
             "properties": {
                 "street": {

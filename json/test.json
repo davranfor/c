@@ -2,6 +2,7 @@
     "firstName": "John",
     "lastName": "Doe",
     "age": 21,
+    "phone": ["123", "321"],
     "address" : {
         "street": "Dragonera",
         "city": "Palma de Mallorca"

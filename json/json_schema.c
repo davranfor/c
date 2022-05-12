@@ -183,7 +183,7 @@ static int set_properties(json_schema *schema, const json *node)
 {
     if (json_is_object(node) && unique_objects(node))
     {
-        schema->properties = json_child(node) ? node : NULL;
+        schema->properties = json_child(node);
         return 1;
     }
     return 0;
@@ -533,7 +533,7 @@ static int test_properties(const json_schema *schema)
 
         while (node != NULL)
         {
-            const json *property = json_child(schema->properties);
+            const json *property = schema->properties;
             int found = 0;
 
             while (property != NULL)
@@ -780,14 +780,40 @@ static void set_node(json_schema *schema, json_subschema *subschema)
     switch (subschema->type)
     {
         case SCHEMA_OBJECT:
+            subschema->node = schema->node;
             schema->node = json_pair(
                 subschema->node, json_name(subschema->iter)
             );
             break;
         case SCHEMA_ARRAY:
-            schema->node = json_child(schema->node);
+            subschema->node = json_child(schema->node);
+            schema->node = subschema->node;
             break;
     }
+}
+
+static int get_node(json_schema *schema, json_subschema *subschema)
+{
+    switch (subschema->type)
+    {
+        case SCHEMA_OBJECT:
+            if ((subschema->iter = json_next(subschema->iter)))
+            {
+                schema->node = json_pair(
+                    subschema->node, json_name(subschema->iter)
+                );
+                return 1;
+            }
+            break;
+        case SCHEMA_ARRAY:
+            if ((subschema->node = json_next(subschema->node)))
+            {
+                schema->node = subschema->node;
+                return 1;
+            }
+            break;
+    }
+    return 0;
 }
 
 static json_subschema *new_subschema(json_schema *schema,
@@ -799,15 +825,14 @@ static json_subschema *new_subschema(json_schema *schema,
     {
         if (schema->properties)
         {
-            new->iter = json_child(schema->properties);
+            new->iter = schema->properties;
             new->type = SCHEMA_OBJECT;
         }
         else
         {
-            new->iter = json_child(schema->items);
+            new->iter = schema->items;
             new->type = SCHEMA_ARRAY;
         }
-        new->node = schema->node;
         new->next = subschema;
         set_node(schema, new);
     }
@@ -823,19 +848,15 @@ static json_subschema *next_subschema(json_schema *schema,
     }
     while (subschema != NULL)
     {
-        subschema->iter = json_next(subschema->iter);
-        if (subschema->iter)
+        if (get_node(schema, subschema))
         {
-            set_node(schema, subschema);
             break;
         }
-        else
-        {
-            json_subschema *next = subschema->next;
 
-            free(subschema);
-            subschema = next;
-        }
+        json_subschema *next = subschema->next;
+
+        free(subschema);
+        subschema = next;
     }
     return subschema;
 }
