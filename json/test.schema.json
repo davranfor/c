@@ -28,10 +28,13 @@
             "required": true
         },
         "data": {
-            "items": [
-                {"type": "integer", "required": true},
-                {"type": "string", "required": true}
-            ],
+            "items": {
+                "items": [
+                    {"type": "integer", "required": true},
+                    {"type": "string", "required": true}
+                ],
+                "maxItems": 2
+            },
             "required": true
         },
         "address": {

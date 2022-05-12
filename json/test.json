@@ -3,7 +3,12 @@
     "lastName": "Doe",
     "age": 21,
     "phone": ["123", "321"],
-    "data": [1, "David"],
+    "data": [
+        [1, "David"],
+        [2, "Elena"],
+        [3, "Pascu"],
+        [4, "Dani"]
+    ],
     "address" : {
         "street": "Dragonera",
         "city": "Palma de Mallorca"
