@@ -22,6 +22,10 @@
 #define EXCLUSIVE_MINIMUM           (1u << 3u)
 #define EXCLUSIVE_MAXIMUM           (1u << 4u)
 
+#define SUBSCHEMA_BAD_ALLOC         (1u << 5u)
+#define IS_SUBSCHEMA                (1u << 6u)
+#define IS_TUPLE                    (1u << 7u)
+
 typedef struct
 {
     const json *node, *properties, *items;
@@ -31,7 +35,7 @@ typedef struct
     const char *min_items, *max_items;
     const char *min_length, *max_length, *pattern;
     const char *minimum, *maximum, *multiple_of;
-    unsigned type, num_items, flags;
+    unsigned type, flags;
     schema_format format;
 } json_schema;
 
@@ -237,9 +241,9 @@ static int set_items(json_schema *schema, const json *node)
                 return 0;
             }
             item = json_next(item);
-            schema->num_items++;
         }
         schema->items = node;
+        set_flag(schema, IS_TUPLE, 1);
         return 1;
     }
     return 0;
@@ -688,7 +692,7 @@ static int test_number(const json_schema *schema)
     return 1;
 }
 
-static int test_schema(const json_schema *schema)
+static int test_schema(json_schema *schema)
 {
     if (!test_required(schema))
     {
@@ -716,8 +720,10 @@ static int test_schema(const json_schema *schema)
     switch (type)
     {
         case JSON_OBJECT:
+            set_flag(schema, IS_SUBSCHEMA, 1);
             return test_properties(schema);
         case JSON_ARRAY:
+            set_flag(schema, IS_SUBSCHEMA, 1);
             return test_items(schema);
         case JSON_STRING:
             return test_string(schema);
@@ -766,7 +772,7 @@ static schema_setter get_setter(const char *name)
         equal(name, "default") ? test_any : NULL;
 }
 
-enum {SCHEMA_OBJECT = 1, SCHEMA_TUPLE, SCHEMA_ARRAY};
+enum {SCHEMA_OBJECT, SCHEMA_TUPLE, SCHEMA_ARRAY};
 
 typedef struct subschema
 {
@@ -774,6 +780,32 @@ typedef struct subschema
     struct subschema *next;
     int type;
 } json_subschema;
+
+static void set_iter(json_schema *schema, json_subschema *subschema)
+{
+    if (schema->properties && schema->items)
+    {
+        subschema->type = json_is_object(schema->node)
+                        ? SCHEMA_OBJECT : SCHEMA_ARRAY;
+    }
+    else
+    {
+        subschema->type = schema->properties
+                        ? SCHEMA_OBJECT : SCHEMA_ARRAY;
+    }
+    if (subschema->type == SCHEMA_OBJECT)
+    {
+        subschema->iter = schema->properties;
+    }
+    else
+    {
+        subschema->iter = schema->items;
+        if (schema->flags & IS_TUPLE)
+        {
+            subschema->type = SCHEMA_TUPLE;
+        }
+    }
+}
 
 static void set_node(json_schema *schema, json_subschema *subschema)
 {
@@ -793,7 +825,7 @@ static void set_node(json_schema *schema, json_subschema *subschema)
     }
 }
 
-static int get_node(json_schema *schema, json_subschema *subschema)
+static int next_node(json_schema *schema, json_subschema *subschema)
 {
     switch (subschema->type)
     {
@@ -832,18 +864,13 @@ static json_subschema *new_subschema(json_schema *schema,
 
     if (new != NULL)
     {
-        if (schema->properties)
-        {
-            new->iter = schema->properties;
-            new->type = SCHEMA_OBJECT;
-        }
-        else
-        {
-            new->iter = schema->items;
-            new->type = schema->num_items ? SCHEMA_TUPLE : SCHEMA_ARRAY;
-        }
-        new->next = subschema;
+        set_iter(schema, new);
         set_node(schema, new);
+        new->next = subschema;
+    }
+    else
+    {
+        set_flag(schema, SUBSCHEMA_BAD_ALLOC, 1);
     }
     return new;
 }
@@ -851,13 +878,14 @@ static json_subschema *new_subschema(json_schema *schema,
 static json_subschema *next_subschema(json_schema *schema,
     json_subschema *subschema)
 {
-    if ((schema->properties) || (schema->items))
+    if ((schema->flags & IS_SUBSCHEMA) &&
+       ((schema->properties) || (schema->items)))
     {
         return new_subschema(schema, subschema);
     }
     while (subschema != NULL)
     {
-        if (get_node(schema, subschema))
+        if (next_node(schema, subschema))
         {
             break;
         }
@@ -906,6 +934,11 @@ static int valid_schema(json_schema *schema, const json *node)
             }
             else
             {
+                if (schema->flags & SUBSCHEMA_BAD_ALLOC)
+                {
+                    fprintf(stderr, "Subschema BAD ALLOC\n");
+                    valid = 0;
+                }
                 break;
             }
         }
