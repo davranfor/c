@@ -876,7 +876,7 @@ static json_subschema *next_subschema(json_schema *schema,
     json_subschema *subschema)
 {
     if ((schema->flags & IS_SUBSCHEMA) &&
-       ((schema->properties) || (schema->items)))
+        (schema->properties || schema->items))
     {
         return new_subschema(schema, subschema);
     }
