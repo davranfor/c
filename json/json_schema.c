@@ -807,7 +807,7 @@ static void set_iter(const json_schema *schema, json_subschema *subschema)
     }
 }
 
-static void set_node(const json_schema *schema, json_subschema *subschema)
+static void set_root(const json_schema *schema, json_subschema *subschema)
 {
     subschema->root = schema->node;
     switch (subschema->type)
@@ -819,9 +819,27 @@ static void set_node(const json_schema *schema, json_subschema *subschema)
             break;
         case SCHEMA_TUPLE:
         case SCHEMA_ARRAY:
-            subschema->node = json_child(schema->node);
+            subschema->node = json_child(subschema->root);
             break;
     }
+}
+
+static json_subschema *new_subschema(json_schema *schema,
+    json_subschema *subschema)
+{
+    json_subschema *new = malloc(sizeof *new);
+
+    if (new != NULL)
+    {
+        set_iter(schema, new);
+        set_root(schema, new);
+        new->next = subschema;
+    }
+    else
+    {
+        set_flag(schema, SUBSCHEMA_BAD_ALLOC, 1);
+    }
+    return new;
 }
 
 static int next_node(json_subschema *subschema)
@@ -852,24 +870,6 @@ static int next_node(json_subschema *subschema)
             break;
     }
     return 0;
-}
-
-static json_subschema *new_subschema(json_schema *schema,
-    json_subschema *subschema)
-{
-    json_subschema *new = malloc(sizeof *new);
-
-    if (new != NULL)
-    {
-        set_iter(schema, new);
-        set_node(schema, new);
-        new->next = subschema;
-    }
-    else
-    {
-        set_flag(schema, SUBSCHEMA_BAD_ALLOC, 1);
-    }
-    return new;
 }
 
 static json_subschema *next_subschema(json_schema *schema,
