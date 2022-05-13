@@ -776,12 +776,12 @@ enum {SCHEMA_OBJECT, SCHEMA_TUPLE, SCHEMA_ARRAY};
 
 typedef struct subschema
 {
-    const json *node, *iter;
+    const json *root, *node, *iter;
     struct subschema *next;
     int type;
 } json_subschema;
 
-static void set_iter(json_schema *schema, json_subschema *subschema)
+static void set_iter(const json_schema *schema, json_subschema *subschema)
 {
     if (schema->properties && schema->items)
     {
@@ -807,33 +807,32 @@ static void set_iter(json_schema *schema, json_subschema *subschema)
     }
 }
 
-static void set_node(json_schema *schema, json_subschema *subschema)
+static void set_node(const json_schema *schema, json_subschema *subschema)
 {
+    subschema->root = schema->node;
     switch (subschema->type)
     {
         case SCHEMA_OBJECT:
-            subschema->node = schema->node;
-            schema->node = json_pair(
-                subschema->node, json_name(subschema->iter)
+            subschema->node = json_pair(
+                subschema->root, json_name(subschema->iter)
             );
             break;
         case SCHEMA_TUPLE:
         case SCHEMA_ARRAY:
             subschema->node = json_child(schema->node);
-            schema->node = subschema->node;
             break;
     }
 }
 
-static int next_node(json_schema *schema, json_subschema *subschema)
+static int next_node(json_subschema *subschema)
 {
     switch (subschema->type)
     {
         case SCHEMA_OBJECT:
             if ((subschema->iter = json_next(subschema->iter)))
             {
-                schema->node = json_pair(
-                    subschema->node, json_name(subschema->iter)
+                subschema->node = json_pair(
+                    subschema->root, json_name(subschema->iter)
                 );
                 return 1;
             }
@@ -842,14 +841,12 @@ static int next_node(json_schema *schema, json_subschema *subschema)
             if ((subschema->iter = json_next(subschema->iter)))
             {
                 subschema->node = json_next(subschema->node);
-                schema->node = subschema->node;
                 return 1;
             }
             break;
         case SCHEMA_ARRAY:
             if ((subschema->node = json_next(subschema->node)))
             {
-                schema->node = subschema->node;
                 return 1;
             }
             break;
@@ -885,7 +882,7 @@ static json_subschema *next_subschema(json_schema *schema,
     }
     while (subschema != NULL)
     {
-        if (next_node(schema, subschema))
+        if (next_node(subschema))
         {
             break;
         }
@@ -925,12 +922,10 @@ static int valid_schema(json_schema *schema, const json *node)
             }
             if ((subschema = next_subschema(schema, subschema)))
             {
-                const json *temp = schema->node;
-
-                memset(schema, 0, sizeof *schema);
                 printf("subschema: %s\n", json_name(subschema->iter));
                 node = json_child(subschema->iter);
-                schema->node = temp;
+                memset(schema, 0, sizeof *schema);
+                schema->node = subschema->node;
             }
             else
             {
