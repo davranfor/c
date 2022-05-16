@@ -17,5 +17,7 @@ int test_is_ipv4(const char *);
 int test_is_ipv6(const char *);
 int test_is_uuid(const char *);
 
+int test_pattern(const char *, const char *);
+
 #endif /* JSON_FORMAT_H */
 

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <regex.h>
 #include "json_format.h"
 
 static int valid_mask(const char *mask, const char *str)
@@ -288,5 +289,21 @@ int test_is_uuid(const char *str)
     const char *mask = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX";
 
     return valid_mask(mask, str);
+}
+
+int test_pattern(const char *pattern, const char *str)
+{
+    regex_t regex;
+    int result = 0;
+
+    // Compile regular expression
+    if (regcomp(&regex, pattern, REG_EXTENDED | REG_NOSUB) == 0)
+    {
+        // Execute regular expression
+        result = regexec(&regex, str, 0, NULL, 0) == 0;
+    }
+    // Free regular expression
+    regfree(&regex);
+    return result;
 }
 

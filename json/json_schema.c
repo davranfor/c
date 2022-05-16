@@ -640,6 +640,14 @@ static int test_string(const json_schema *schema)
             return 0;
         }
     }
+    if (schema->pattern)
+    {
+        if (!test_pattern(schema->pattern, json_string(schema->node)))
+        {
+            fprintf(stderr, "Error testing 'pattern'\n");
+            return 0;
+        }
+    }
     return 1;
 }
 

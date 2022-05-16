@@ -11,8 +11,9 @@
     ],
     "address" : {
         "street": "Dragonera",
-        "city": "Palma de Mallorca"
-    },
-    "dummy": 42
+        "city": "Palma de Mallorca",
+        "code": "07003",
+        "country": "Spain"
+    }
 }
 

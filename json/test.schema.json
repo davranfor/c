@@ -5,17 +5,17 @@
     "type": "object",
     "properties": {
         "firstName": {
-            "description": "The person's first name.",
+            "description": "The person's first name",
             "type": "string",
             "required": true
         },
         "lastName": {
-            "description": "The person's last name.",
+            "description": "The person's last name",
             "type": "string",
             "required": true
         },
         "age": {
-            "description": "Age in years which must be equal to or greater than zero.",
+            "description": "Age in years which must be equal to or greater than zero",
             "type": "integer",
             "minimum": 0,
             "required": true
@@ -46,12 +46,18 @@
                 "city": {
                     "type": "string",
                     "required": true
+                },
+                "code": {
+                    "description": "Test only numbers [0-9]",
+                    "type": "string",
+                    "pattern": "^[0-9]*$",
+                    "required": true
+                },
+                "country": {
+                    "type": "string",
+                    "required": true
                 }
             }
-        },
-        "dummy": {
-            "type": "integer",
-            "required": true
         }
     }
 }
