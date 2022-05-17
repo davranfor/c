@@ -294,16 +294,16 @@ int test_is_uuid(const char *str)
 int test_pattern(const char *pattern, const char *str)
 {
     regex_t regex;
-    int result = 0;
+    int valid = 0;
 
-    // Compile regular expression
+    /* Compile regular expression */
     if (regcomp(&regex, pattern, REG_EXTENDED | REG_NOSUB) == 0)
     {
-        // Execute regular expression
-        result = regexec(&regex, str, 0, NULL, 0) == 0;
+        /* Execute regular expression */
+        valid = regexec(&regex, str, 0, NULL, 0) == 0;
     }
-    // Free regular expression
+    /* Free regular expression */
     regfree(&regex);
-    return result;
+    return valid;
 }
 

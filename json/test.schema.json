@@ -33,7 +33,7 @@
                     {"type": "integer", "required": true},
                     {"type": "string", "required": true}
                 ],
-                "maxItems": 2
+                "additionalItems": false
             },
             "required": true
         },

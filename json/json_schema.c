@@ -18,13 +18,13 @@
 
 #define REQUIRED                    (1u << 0u)
 #define NOT_ADDITIONAL_PROPERTIES   (1u << 1u)
-#define UNIQUE_ITEMS                (1u << 2u)
-#define EXCLUSIVE_MINIMUM           (1u << 3u)
-#define EXCLUSIVE_MAXIMUM           (1u << 4u)
+#define NOT_ADDITIONAL_ITEMS        (1u << 2u)
+#define UNIQUE_ITEMS                (1u << 3u)
+#define EXCLUSIVE_MINIMUM           (1u << 4u)
+#define EXCLUSIVE_MAXIMUM           (1u << 5u)
 
-#define SUBSCHEMA_BAD_ALLOC         (1u << 5u)
-#define IS_SUBSCHEMA                (1u << 6u)
-#define IS_TUPLE                    (1u << 7u)
+#define SUBSCHEMA_BAD_ALLOC         (1u << 6u)
+#define IS_SUBSCHEMA                (1u << 7u)
 
 typedef struct
 {
@@ -35,7 +35,7 @@ typedef struct
     const char *min_items, *max_items;
     const char *min_length, *max_length, *pattern;
     const char *minimum, *maximum, *multiple_of;
-    unsigned type, flags;
+    unsigned type, tuples, flags;
     schema_format format;
 } json_schema;
 
@@ -241,19 +241,19 @@ static int set_items(json_schema *schema, const json *node)
                 return 0;
             }
             item = json_next(item);
+            schema->tuples++;
         }
         schema->items = node;
-        set_flag(schema, IS_TUPLE, 1);
         return 1;
     }
     return 0;
 }
 
-static int set_unique_items(json_schema *schema, const json *node)
+static int set_additional_items(json_schema *schema, const json *node)
 {
     if (json_is_boolean(node))
     {
-        set_flag(schema, UNIQUE_ITEMS, json_boolean(node));
+        set_flag(schema, NOT_ADDITIONAL_ITEMS, !json_boolean(node));
         return 1;
     }
     return 0;
@@ -274,6 +274,16 @@ static int set_max_items(json_schema *schema, const json *node)
     if (json_is_real(node))
     {
         schema->max_items = json_string(node);
+        return 1;
+    }
+    return 0;
+}
+
+static int set_unique_items(json_schema *schema, const json *node)
+{
+    if (json_is_boolean(node))
+    {
+        set_flag(schema, UNIQUE_ITEMS, json_boolean(node));
         return 1;
     }
     return 0;
@@ -562,7 +572,8 @@ static int test_properties(const json_schema *schema)
 
 static int test_items(const json_schema *schema)
 {
-    if (schema->min_items || schema->max_items)
+    if ((schema->min_items || schema->max_items)
+    || ((schema->flags & NOT_ADDITIONAL_ITEMS) && (schema->tuples > 0)))
     {
         size_t items = json_items(schema->node);
 
@@ -574,6 +585,12 @@ static int test_items(const json_schema *schema)
         if (schema->max_items && (items > real(schema->max_items)))
         {
             fprintf(stderr, "Error testing 'maxItems'\n");
+            return 0;
+        }
+        if ((schema->flags & NOT_ADDITIONAL_ITEMS) &&
+            (schema->tuples > 0) && (schema->tuples < items))
+        {
+            fprintf(stderr, "Error testing 'additionalItems'\n");
             return 0;
         }
     }
@@ -761,9 +778,10 @@ static schema_setter get_setter(const char *name)
         equal(name, "minProperties") ? set_min_properties :
         equal(name, "maxProperties") ? set_max_properties :
         equal(name, "items") ? set_items :
-        equal(name, "uniqueItems") ? set_unique_items :
+        equal(name, "additionalItems") ? set_additional_items :
         equal(name, "minItems") ? set_min_items :
         equal(name, "maxItems") ? set_max_items :
+        equal(name, "uniqueItems") ? set_unique_items :
         equal(name, "minLength") ? set_min_length :
         equal(name, "maxLength") ? set_max_length :
         equal(name, "minimum") ? set_minimum :
@@ -808,7 +826,7 @@ static void set_iter(const json_schema *schema, json_subschema *subschema)
     else
     {
         subschema->iter = schema->items;
-        if (schema->flags & IS_TUPLE)
+        if (schema->tuples > 0)
         {
             subschema->type = SCHEMA_TUPLE;
         }
