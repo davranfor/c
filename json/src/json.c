@@ -591,7 +591,7 @@ int json_boolean(const json *node)
     }
     if (node->type == JSON_INTEGER)
     {
-        return node->value[0] == '1';
+        return node->value[0] != '0';
     }
     return 0;
 }
