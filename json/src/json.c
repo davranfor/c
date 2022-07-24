@@ -27,7 +27,8 @@ static const char *type_name[] =
     "Object",
     "Array",
     "String",
-    "Number",
+    "Integer",
+    "Double",
     "Boolean",
     "Null"
 };
@@ -83,6 +84,34 @@ static int is_token(int c)
     return (c == '{') || (c == '}')
         || (c == '[') || (c == ']')
         || (c == ':') || (c == ',');
+}
+
+/* Check wether a string is a number */
+static int is_number(const char *left, const char *right)
+{
+    char *end;
+
+    strtod(left, &end);
+    if (end <= right)
+    {
+        return 0;
+    }
+    /* Skip sign */
+    if (left[0] == '-')
+    {
+        left++;
+    }
+    /* Do not allow padding 0s */
+    if ((left[0] == '0') && isdigit((unsigned char)left[1]))
+    {
+        return 0;
+    }
+    /* Must start and end with a digit */ 
+    if (!isdigit((unsigned char)*left) || !isdigit((unsigned char)*right))
+    {
+        return 0;
+    }
+    return 1;
 }
 
 /* Returns the type of a token group character */
@@ -269,17 +298,13 @@ static char *set_value(json *node, const char *left, const char *right)
     {
         node->type = JSON_BOOLEAN;
     }
+    else if (is_number(left, right))
+    {
+        node->type = strchr(left, '.') ? JSON_DOUBLE : JSON_INTEGER;
+    }
     else
     {
-        char *end;
-
-        strtod(left, &end);
-        if ((end <= right) ||
-            (*left == '+') || (*left == '.') || (*right == '.'))
-        {
-            return NULL;
-        }
-        node->type = JSON_NUMBER;
+        return NULL;
     }
     node->value = copy(left, length);
     return node->value;
@@ -522,7 +547,16 @@ const char *json_string(const json *node)
     return node->value;
 }
 
-double json_number(const json *node)
+long json_integer(const json *node)
+{
+    if ((node == NULL) || (node->value == NULL))
+    {
+        return 0;
+    }
+    return strtol(node->value, NULL, 10);
+}
+
+double json_double(const json *node)
 {
     if ((node == NULL) || (node->value == NULL))
     {
@@ -531,13 +565,9 @@ double json_number(const json *node)
     return strtod(node->value, NULL);
 }
 
-long json_integer(const json *node)
+double json_number(const json *node)
 {
-    if ((node == NULL) || (node->value == NULL))
-    {
-        return 0;
-    }
-    return strtol(node->value, NULL, 10);
+    return json_double(node);
 }
 
 unsigned long json_real(const json *node)
@@ -557,11 +587,11 @@ int json_boolean(const json *node)
     }
     if (node->type == JSON_BOOLEAN)
     {
-        return *node->value == 't';
+        return node->value[0] == 't';
     }
-    if (node->type == JSON_NUMBER)
+    if (node->type == JSON_INTEGER)
     {
-        return json_number(node) != 0.0;
+        return node->value[0] == '1';
     }
     return 0;
 }
@@ -612,24 +642,29 @@ int json_is_string(const json *node)
         && (node->type == JSON_STRING);
 }
 
-int json_is_number(const json *node)
-{
-    return (node != NULL)
-        && (node->type == JSON_NUMBER);
-}
-
 int json_is_integer(const json *node)
 {
     return (node != NULL)
-        && (node->type == JSON_NUMBER)
-        && (strchr(node->value, '.') == NULL);
+        && (node->type == JSON_INTEGER);
+}
+
+int json_is_double(const json *node)
+{
+    return (node != NULL)
+        && (node->type == JSON_DOUBLE);
+}
+
+int json_is_number(const json *node)
+{
+    return json_is_integer(node)
+        || json_is_double(node);
 }
 
 int json_is_real(const json *node)
 {
     return (node != NULL)
-        && (node->type == JSON_NUMBER)
-        && (strpbrk(node->value, ".-") == NULL);
+        && (node->type == JSON_INTEGER)
+        && (strtol(node->value, NULL, 10) < 0);
 }
 
 int json_is_boolean(const json *node)
@@ -855,31 +890,11 @@ int json_streq(const json *node, const char *str)
         && (strcmp(node->value, str) == 0);
 }
 
-static int equal_value(const json *a, const json *b)
-{
-    if (a->type == JSON_NUMBER)
-    {
-        if ((!strchr(a->value, '.')) ^ (!strchr(b->value, '.')))
-        {
-            return 0;
-        }
-        if (strtod(a->value, NULL) != strtod(b->value, NULL))
-        {
-            return 0;
-        }
-    }
-    else if (strcmp(a->value, b->value))
-    {
-        return 0;
-    }
-    return 1;
-}
-
 int json_equal_value(const json *a, const json *b)
 {
     if ((a == NULL) & (b == NULL))
     {
-        return 0;
+        return 1;
     }
     if ((a == NULL) ^ (b == NULL))
     {
@@ -889,11 +904,11 @@ int json_equal_value(const json *a, const json *b)
     {
         return 0;
     }
-    if (a->value == NULL)
+    if ((a->value != NULL) && strcmp(a->value, b->value))
     {
         return 0;
     }
-    return equal_value(a, b);
+    return 1;
 }
 
 static int equal(const json *a, const json *b, int level)
@@ -906,7 +921,7 @@ static int equal(const json *a, const json *b, int level)
     {
         return 0;
     }
-    if ((level > 0) & ((a->right == NULL) ^ (b->right == NULL)))
+    if ((level > 0) && ((a->right == NULL) ^ (b->right == NULL)))
     {
         return 0;
     }
@@ -922,7 +937,7 @@ static int equal(const json *a, const json *b, int level)
     {
         return 0;
     }
-    if ((a->value != NULL) && !equal_value(a, b))
+    if ((a->value != NULL) && strcmp(a->value, b->value))
     {
         return 0;
     }
@@ -954,9 +969,9 @@ int json_equal(const json *a, const json *b)
         }
         if (a->left != NULL)
         {
+            level++;
             a = a->left;
             b = b->left;
-            level++;
         }
         else if ((level > 0) && (a->right != NULL))
         {
@@ -967,9 +982,9 @@ int json_equal(const json *a, const json *b)
         {
             while (level > 0)
             {
+                level--;
                 a = a->parent;
                 b = b->parent;
-                level--;
                 if (a->right != NULL)
                 {
                     a = a->right;

@@ -81,7 +81,7 @@ static int add_type(json_schema *schema, const char *type)
 {
     static const char *types[] =
     {
-        "integer", "object", "array", "string", "number", "boolean", "null"
+        "object", "array", "string", "integer", "number", "boolean", "null"
     };
     size_t size = sizeof(types) / sizeof(char *);
 
@@ -89,7 +89,7 @@ static int add_type(json_schema *schema, const char *type)
     {
         if (equal(type, types[item]))
         {
-            schema->type |= 1u << item;
+            schema->type |= 1u << (item + 1);
             return 1;
         }
     }
@@ -420,19 +420,20 @@ static int test_is_boolean(json_schema *schema, const json *node)
 
 static int test_type(const json_schema *schema, unsigned type)
 {
+    int match = 1;
+
     if (schema->type)
     {
-        /* Since "integer" is not a json type, an extra test is needed */
-        int match = ((schema->type & (1u << type)) ||
-                    ((schema->type & (1u << 0)) && json_is_integer(schema->node)));
+        /* 'integer' must validate if type is 'number' */
+        match = (schema->type & (1u << type))
+            || ((schema->type & (1u << JSON_DOUBLE)) && (type == JSON_INTEGER));
 
         if (!match)
         {
             fprintf(stderr, "Error testing 'type'\n");
-            return 0;
         }
     }
-    return 1;
+    return match;
 }
 
 static int test_required(const json_schema *schema)
@@ -752,7 +753,8 @@ static int test_schema(json_schema *schema)
             return test_items(schema);
         case JSON_STRING:
             return test_string(schema);
-        case JSON_NUMBER:
+        case JSON_INTEGER:
+        case JSON_DOUBLE:
             return test_number(schema);
         default:
             return 1;

@@ -20,7 +20,8 @@ enum json_type
     JSON_OBJECT,    /* {Object} */
     JSON_ARRAY,     /* [Array] */
     JSON_STRING,    /* "String" */
-    JSON_NUMBER,    /* Number */
+    JSON_INTEGER,   /* Integer */
+    JSON_DOUBLE,    /* Double */
     JSON_BOOLEAN,   /* true or false */
     JSON_NULL,      /* null */
     JSON_TYPES,     /* Number of types */
@@ -30,8 +31,9 @@ enum json_type json_type(const json *);
 const char *json_type_name(const json *);
 const char *json_name(const json *);
 const char *json_string(const json *);
-double json_number(const json *);
 long json_integer(const json *);
+double json_double(const json *);
+double json_number(const json *);
 unsigned long json_real(const json *);
 int json_boolean(const json *);
 int json_is_object(const json *);
@@ -41,8 +43,9 @@ int json_is_array(const json *);
 int json_is_named_array(const json *);
 int json_is_unnamed_array(const json *);
 int json_is_string(const json *);
-int json_is_number(const json *);
 int json_is_integer(const json *);
+int json_is_double(const json *);
+int json_is_number(const json *);
 int json_is_real(const json *);
 int json_is_boolean(const json *);
 int json_is_null(const json *);
