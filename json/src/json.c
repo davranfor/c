@@ -33,6 +33,7 @@ static const char *type_name[] =
     "Null"
 };
 
+#define is_digit(c) isdigit((unsigned char)(c))
 #define is_space(c) isspace((unsigned char)(c))
 
 /* Check wether a character is an escape character */
@@ -102,12 +103,12 @@ static int is_number(const char *left, const char *right)
         left++;
     }
     /* Do not allow padding 0s */
-    if ((left[0] == '0') && isdigit((unsigned char)left[1]))
+    if ((left[0] == '0') && is_digit(left[1]))
     {
         return 0;
     }
     /* Must start and end with a digit */ 
-    if (!isdigit((unsigned char)*left) || !isdigit((unsigned char)*right))
+    if (!is_digit(*left) || !is_digit(*right))
     {
         return 0;
     }
@@ -589,9 +590,9 @@ int json_boolean(const json *node)
     {
         return node->value[0] == 't';
     }
-    if (node->type == JSON_INTEGER)
+    if (node->value != NULL)
     {
-        return node->value[0] != '0';
+        return strtod(node->value, NULL) != 0.0;
     }
     return 0;
 }
@@ -656,8 +657,9 @@ int json_is_double(const json *node)
 
 int json_is_number(const json *node)
 {
-    return json_is_integer(node)
-        || json_is_double(node);
+    return !(node == NULL)
+        && ((node->type == JSON_INTEGER) ||
+            (node->type == JSON_DOUBLE));
 }
 
 int json_is_real(const json *node)
