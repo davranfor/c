@@ -87,6 +87,22 @@ static int is_token(int c)
         || (c == ':') || (c == ',');
 }
 
+/* Returns the type of a token group character */
+static enum json_type token_type(int token)
+{
+    switch (token)
+    {
+        case '{':
+        case '}':
+            return JSON_OBJECT;
+        case '[':
+        case ']':
+            return JSON_ARRAY;
+        default:
+            return JSON_UNDEFINED;
+    }
+}
+
 /* Check wether a string is a number */
 static int is_number(const char *left, const char *right)
 {
@@ -115,20 +131,18 @@ static int is_number(const char *left, const char *right)
     return 1;
 }
 
-/* Returns the type of a token group character */
-static enum json_type token_type(int token)
+/* Check wether a number is a double */
+static int is_double(const char *left, const char *right)
 {
-    switch (token)
+    while (left <= right)
     {
-        case '{':
-        case '}':
-            return JSON_OBJECT;
-        case '[':
-        case ']':
-            return JSON_ARRAY;
-        default:
-            return JSON_UNDEFINED;
+        if ((*left == '.') || (*left == 'e') || (*left == 'E'))
+        {
+            return 1;
+        }
+        left++;
     }
+    return 0;
 }
 
 /* Returns a pointer to the next element or NULL on fail */
@@ -301,7 +315,7 @@ static char *set_value(json *node, const char *left, const char *right)
     }
     else if (is_number(left, right))
     {
-        node->type = strpbrk(left, ".eE") ? JSON_DOUBLE : JSON_INTEGER;
+        node->type = is_double(left, right) ? JSON_DOUBLE : JSON_INTEGER;
     }
     else
     {
@@ -825,13 +839,14 @@ json *json_node(const json *root, const char *path)
         size_t length = (size_t)(end - path);
 
         /* Locate by #item */
-        if (strspn(path, "0123456789") == length)
+        if ((node->type == JSON_ARRAY) && (strspn(path, "0123456789") == length))
         {
             node = json_item(node, strtoul(path, NULL, 10));
         }
-        /* . Current node (noop) */
+        /* . Current node */
         else if ((length == 1) && (path[0] == '.'))
         {
+            /* noop */
         }
         /* .. Parent node */
         else if ((length == 2) && (path[0] == '.') && (path[1] == '.'))
