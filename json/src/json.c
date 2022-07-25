@@ -103,7 +103,7 @@ static enum json_type token_type(int token)
     }
 }
 
-/* Check wether a string is a number */
+/* Check wether a string is a valid number */
 static int is_number(const char *left, const char *right)
 {
     char *end;
@@ -131,7 +131,7 @@ static int is_number(const char *left, const char *right)
     return 1;
 }
 
-/* Check wether a number is a double */
+/* Check wether a string (already tested as a valid number) is a double */
 static int is_double(const char *left, const char *right)
 {
     while (left <= right)
@@ -978,12 +978,8 @@ int json_equal(const json *a, const json *b)
 
     int level = 0;
 
-    for (;;)
+    while (equal(a, b, level))
     {
-        if (!equal(a, b, level))
-        {
-            return 0;
-        }
         if (a->left != NULL)
         {
             level++;
@@ -1015,7 +1011,7 @@ int json_equal(const json *a, const json *b)
             }
         }
     }
-    return 1;
+    return 0;
 }
 
 /*
