@@ -301,7 +301,7 @@ static char *set_value(json *node, const char *left, const char *right)
     }
     else if (is_number(left, right))
     {
-        node->type = strchr(left, '.') ? JSON_DOUBLE : JSON_INTEGER;
+        node->type = strpbrk(left, ".eE") ? JSON_DOUBLE : JSON_INTEGER;
     }
     else
     {
