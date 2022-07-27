@@ -7,11 +7,13 @@
 #ifndef JSON_H
 #define JSON_H
 
+#include <stdio.h>
+
 typedef struct json json;
 
 typedef struct
 {
-    int file, line, column;
+    int line, column;
 } json_error;
 
 enum json_type
@@ -63,6 +65,7 @@ int json_streq(const json *, const char *);
 int json_equal_value(const json *, const json *);
 int json_equal(const json *, const json *);
 int json_callback(const json *, void *, int (*)(const json *, void *));
+void json_write(FILE *, const json *);
 void json_print(const json *);
 void json_raise_error(const json_error *error, const char *);
 void json_free(json *);

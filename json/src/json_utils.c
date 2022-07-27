@@ -54,7 +54,6 @@ json *json_parse_file(const char *path, json_error *error)
     {
         if (error)
         {
-            error->file = 1;
             error->line = 0;
             error->column = 0;
         }

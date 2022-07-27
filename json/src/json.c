@@ -501,7 +501,6 @@ static json *parse(json *node, const char *left, const char **error)
 
 static void clear_error(json_error *error)
 {
-    error->file = 0;
     error->line = 0;
     error->column = 0;
 }
@@ -1059,7 +1058,7 @@ int json_callback(const json *root, void *data,
     return 0;
 }
 
-static void print(const char *str)
+static void print(FILE *file, const char *str)
 {
     const char *end = str;
 
@@ -1096,44 +1095,44 @@ static void print(const char *str)
         }
         if (escape != 0)
         {
-            printf("%.*s\\%c", (int)(str - end), end, escape);
+            fprintf(file, "%.*s\\%c", (int)(str - end), end, escape);
             end = ++str;
         }
     }
-    printf("%s", end);
+    fprintf(file, "%s", end);
 }
 
-static void quote(const char *str)
+static void quote(FILE *file, const char *str)
 {
-    printf("\"");
-    print(str);
-    printf("\"");
+    fprintf(file, "\"");
+    print(file, str);
+    fprintf(file, "\"");
 }
 
-static void print_opening(const json *node, int level)
+static void write_opening(FILE *file, const json *node, int level)
 {
     for (int i = 0; i < level; i++)
     {
-        printf("  ");
+        fprintf(file, "  ");
     }
     if (node->name != NULL)
     {
-        quote(node->name);
-        printf(": ");
+        quote(file, node->name);
+        fprintf(file, ": ");
     }
     switch (node->type)
     {
         case JSON_OBJECT:
-            printf("{");
+            fprintf(file, "{");
             break;
         case JSON_ARRAY:
-            printf("[");
+            fprintf(file, "[");
             break;
         case JSON_STRING:
-            quote(node->value);
+            quote(file, node->value);
             break;
         default:
-            print(node->value);
+            print(file, node->value);
             break;
     }
     if (node->left == NULL)
@@ -1142,58 +1141,58 @@ static void print_opening(const json *node, int level)
         switch (node->type)
         {
             case JSON_OBJECT:
-                printf("}");
+                fprintf(file, "}");
                 break;
             case JSON_ARRAY:
-                printf("]");
+                fprintf(file, "]");
                 break;
             default:
                 break;
         }
         if ((level > 0) && (node->right != NULL))
         {
-            printf(",");
+            fprintf(file, ",");
         }
     }
-    printf("\n");
+    fprintf(file, "\n");
 }
 
 /* Prints the close group character for each change of level */
-static void print_closure(const json *node, int level)
+static void write_closing(FILE *file, const json *node, int level)
 {
     /* if "array" or "object" */
     if (node->left != NULL)
     {
         for (int i = 0; i < level; i++)
         {
-            printf("  ");
+            fprintf(file, "  ");
         }
         switch (node->type)
         {
             case JSON_OBJECT:
-                printf("}");
+                fprintf(file, "}");
                 break;
             case JSON_ARRAY:
-                printf("]");
+                fprintf(file, "]");
                 break;
             default:
                 break;
         }
         if ((level > 0) && (node->right != NULL))
         {
-            printf(",");
+            fprintf(file, ",");
         }
-        printf("\n");
+        fprintf(file, "\n");
     }
 }
 
-void json_print(const json *node)
+void json_write(FILE *file, const json *node)
 {
     int level = 0;
 
     while (node != NULL)
     {
-        print_opening(node, level);
+        write_opening(file, node, level);
         if (node->left != NULL)
         {
             node = node->left;
@@ -1208,7 +1207,7 @@ void json_print(const json *node)
             while (level > 0)
             {
                 node = node->parent;
-                print_closure(node, --level);
+                write_closing(file, node, --level);
                 if (node->right != NULL)
                 {
                     node = node->right;
@@ -1223,11 +1222,16 @@ void json_print(const json *node)
     }
 }
 
+void json_print(const json *node)
+{
+    json_write(stdout, node);
+}
+
 void json_raise_error(const json_error *error, const char *path)
 {
     if (error)
     {
-        if (error->file)
+        if (error->line == 0)
         {
             fprintf(stderr, "json:\t%s\n\t%s\n",
                 path ? path : "", strerror(errno)
