@@ -33,8 +33,10 @@ static const char *type_name[] =
     "Null"
 };
 
-#define is_digit(c) isdigit((unsigned char)(c))
 #define is_space(c) isspace((unsigned char)(c))
+#define is_cntrl(c) iscntrl((unsigned char)(c))
+#define is_digit(c) isdigit((unsigned char)(c))
+#define is_xdigit(c) isxdigit((unsigned char)(c))
 
 /* Check wether a character is an escape character */
 static int is_escape(int c)
@@ -46,17 +48,17 @@ static int is_escape(int c)
 /* Check wether a character is a control character */
 static int is_control(int c)
 {
-    return (c == '\\') || iscntrl((unsigned char)c);
+    return (c == '\\') || is_cntrl(c);
 }
 
 /* Check wether a character is an UCN (Universal character name) "\uxxxx" */
 static int is_ucn(const char *str)
 {
     return (*str++ == 'u')
-        && isxdigit((unsigned char)*str++)
-        && isxdigit((unsigned char)*str++)
-        && isxdigit((unsigned char)*str++)
-        && isxdigit((unsigned char)*str);
+        && is_xdigit(*str++)
+        && is_xdigit(*str++)
+        && is_xdigit(*str++)
+        && is_xdigit(*str);
 }
 
 /*
@@ -501,14 +503,13 @@ static json *parse(json *node, const char *left, const char **error)
 
 static void clear_error(json_error *error)
 {
-    error->line = 0;
-    error->column = 0;
+    error->line = error->column = 0;
 }
 
 static void set_error(const char *str, const char *end, json_error *error)
 {
-    error->line = 1;
-    error->column = 1;
+    error->line = error->column = 1;
+
     while (str < end)
     {
         if (*str == '\n')
