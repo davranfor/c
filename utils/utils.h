@@ -14,9 +14,7 @@ char *file_read(const char *);
 char *file_read_with_prefix(const char *, const char *);
 char *file_read_with_suffix(const char *, const char *);
 char *file_read_quoted(const char *, const char *, const char *);
-char *file_read_line(FILE *);
-char *file_read_buffer(FILE *, char *, size_t);
-int file_clear_eof(FILE *);
+long file_read_line(char **, size_t *, FILE *);
 
 /* ************************************************************************* */
 /* String utilities                                                          */

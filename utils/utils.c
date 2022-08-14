@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <time.h>
+#include <assert.h>
 #include "utils.h"
 
 /* File utilities */
@@ -48,12 +49,12 @@ static long write(const char *path, const char *str, const char *mode)
         return -1;
     }
 
-    size_t size = strlen(str);
+    size_t len = strlen(str);
     long result = -1;
 
-    if (fwrite(str, 1, size, file) == size)
+    if (fwrite(str, 1, len, file) == len)
     {
-        result = (long)size;
+        result = (long)len;
     }
     fclose(file);
     return result;
@@ -140,83 +141,44 @@ char *file_read_quoted(const char *path, const char *prefix, const char *suffix)
     return read(path, prefix, suffix);
 }
 
-#define FILE_LINE_MAX 256
+#define FILE_READ_LINE_SIZE 128
 
-char *file_read_line(FILE *file)
+long file_read_line(char **buf, size_t *size, FILE *file)
 {
-    char str[FILE_LINE_MAX];
-    char *buf = NULL;
-    char *ptr = NULL;
-    size_t len = 0;
+    assert((buf != NULL) && (size != NULL));
+
+    char str[FILE_READ_LINE_SIZE];
+    size_t buflen = 0;
+    int done = 0;
 
     while (fgets(str, sizeof str, file) != NULL)
     {
-        size_t size = sizeof str;
-
-        ptr = strchr(str, '\n');
-        if (ptr != NULL)
-        {
-            *ptr = '\0';
-            size = (size_t)(ptr - str) + 1;
-        }
-        ptr = realloc(buf, len + size);
-        if (ptr == NULL)
-        {
-            break;
-        }
-        memcpy(ptr + len, str, size);
-        if (size != sizeof str)
-        {
-            return ptr;
-        }
-        len += size - 1;
-        buf = ptr;
-    }
-    free(buf);
-    return NULL;
-}
-
-static void flush(FILE *file)
-{
-    int c;
-
-    while (((c = fgetc(file)) != '\n') && (c != EOF));
-}
-
-char *file_read_buffer(FILE *file, char *str, size_t size)
-{
-    if (fgets(str, (int)size, file) != NULL)
-    {
+        size_t len = FILE_READ_LINE_SIZE - 1;
         char *ptr = strchr(str, '\n');
 
-        if (ptr == NULL)
+        if (ptr != NULL)
         {
-            flush(file);
+            len = (size_t)(ptr - str) + 1;
+            done = 1;
         }
-        else
+        if (buflen + len >= *size)
         {
-            *ptr = '\0';
+            *size = buflen + len + 1;
+            ptr = realloc(*buf, *size);
+            if (ptr == NULL)
+            {
+                return -1;
+            }
+            *buf = ptr;
         }
-        return str;
+        memcpy(*buf + buflen, str, len + 1);
+        buflen += len;
+        if (done)
+        {
+            return (long)buflen;
+        }
     }
-    return NULL;
-}
-
-int file_clear_eof(FILE *file)
-{
-    int error = ferror(file);
-
-    if (error)
-    {
-        clearerr(file);
-        return error;
-    }
-    if (feof(file))
-    {
-        clearerr(file);
-        return 0;
-    }
-    return -1;
+    return 0;
 }
 
 /* String utilities */

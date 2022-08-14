@@ -32,27 +32,15 @@ static void sample_files(void)
         printf("%s", str);
         free(str);
     }
-    while ((str = file_read_line(stdin)))
-    {
-        printf("<%s>\n", str);
-        free(str);
-    }
-    if (file_clear_eof(stdin) != 0)
-    {
-        perror("file_read_line");
-    }
 
-    char buf[10];
+    size_t size = 0;
 
-    puts("Enter text (Press CTRL + D to stop)");
-    while (file_read_buffer(stdin, buf, sizeof buf))
+    str = NULL;
+    while (file_read_line(&str, &size, stdin) > 0)
     {
-        printf("<%s>\n", buf);
+        printf("%s", str);
     }
-    if (file_clear_eof(stdin) != 0)
-    {
-        perror("file_read_buffer");
-    }
+    free(str);
 }
 
 static void sample_strings(void)
