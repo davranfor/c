@@ -36,9 +36,10 @@ static void sample_files(void)
     size_t size = 0;
 
     str = NULL;
-    while (file_read_line(&str, &size, stdin) > 0)
+    while (file_read_line(&str, &size, stdin) != -1)
     {
-        printf("%s", str);
+        str[strcspn(str, "\n")] = '\0';
+        printf("%s\n", str);
     }
     free(str);
 }

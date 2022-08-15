@@ -5,6 +5,7 @@
 #include <math.h>
 #include <time.h>
 #include <assert.h>
+#include <errno.h>
 #include "utils.h"
 
 /* File utilities */
@@ -153,20 +154,21 @@ long file_read_line(char **buf, size_t *size, FILE *file)
 
     while (fgets(str, sizeof str, file) != NULL)
     {
-        size_t len = FILE_READ_LINE_SIZE - 1;
-        char *ptr = strchr(str, '\n');
+        size_t len = strlen(str);
 
-        if (ptr != NULL)
+        if ((len > 0) && (str[len - 1] == '\n'))
         {
-            len = (size_t)(ptr - str) + 1;
             done = 1;
         }
         if (buflen + len >= *size)
         {
             *size = buflen + len + 1;
-            ptr = realloc(*buf, *size);
+
+            char *ptr = realloc(*buf, *size);
+
             if (ptr == NULL)
             {
+                errno = ENOMEM;
                 return -1;
             }
             *buf = ptr;
@@ -175,10 +177,10 @@ long file_read_line(char **buf, size_t *size, FILE *file)
         buflen += len;
         if (done)
         {
-            return (long)buflen;
+            break;
         }
     }
-    return 0;
+    return (buflen == 0) ? -1 : (long)buflen;
 }
 
 /* String utilities */
