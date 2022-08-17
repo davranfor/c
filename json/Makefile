@@ -6,15 +6,13 @@ LDLIBS = -lm
 
 .PHONY: all release debug clean
 
-all: json
+all: $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) $(LDLIBS) -o json
 
 release: all
 
 debug: CFLAGS := $(filter-out -O2, $(CFLAGS)) -DDEBUG -g
 debug: all
-
-json: $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) $(LDLIBS) -o json
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
