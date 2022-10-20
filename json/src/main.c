@@ -25,11 +25,11 @@ static int validate(const json *node, const char *path)
     puts("\nschema:");
     json_print(schema);
 
-    int valid = json_validate(node, schema);
+    int valid = schema_validate(node, schema, schema_default_callback, NULL);
 
     if (!valid)
     {
-        fprintf(stderr, "json_validate: %s\n", path);
+        fprintf(stderr, "'%s' doesn't validate\n", path);
     }
     json_free(schema);
     return valid;

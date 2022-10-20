@@ -9,7 +9,12 @@
 
 #include "json.h"
 
-int json_validate(const json *, const json *);
+enum {SCHEMA_WARNING, SCHEMA_ERROR};
+
+typedef void (*schema_callback)(const json *, void *, int, const char *);
+
+int schema_validate(const json *, const json *, schema_callback, void *);
+void schema_default_callback(const json *, void *, int, const char *);
 
 #endif /* JSON_SCHEMA_H */
 

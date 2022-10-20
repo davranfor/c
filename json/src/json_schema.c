@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <math.h>
 #include "json.h"
@@ -37,7 +38,41 @@ typedef struct
     const char *minimum, *maximum, *multiple_of;
     unsigned type, tuples, flags;
     schema_format format;
+    schema_callback callback;
+    void *data;
 } json_schema;
+
+static void raise_warning(const json_schema *schema, const char *fmt, ...)
+{
+    if (schema->callback == NULL)
+    {
+        return;
+    }
+
+    char message[1024];
+    va_list args;
+
+    va_start(args, fmt);
+    vsnprintf(message, sizeof message, fmt, args);
+    va_end(args);
+    schema->callback(schema->node, schema->data, SCHEMA_WARNING, message);
+}
+
+static void raise_error(const json_schema *schema, const char *fmt, ...)
+{
+    if (schema->callback == NULL)
+    {
+        return;
+    }
+
+    char message[1024];
+    va_list args;
+
+    va_start(args, fmt);
+    vsnprintf(message, sizeof message, fmt, args);
+    va_end(args);
+    schema->callback(schema->node, schema->data, SCHEMA_ERROR, message);
+}
 
 static int unique(const json *node,
     int (*test_func)(const json *), const char *(*comp_func)(const json *))
@@ -430,7 +465,7 @@ static int test_type(const json_schema *schema, unsigned type)
 
         if (!match)
         {
-            fprintf(stderr, "Error testing 'type'\n");
+            raise_error(schema, "Testing 'type'");
         }
     }
     return match;
@@ -442,7 +477,7 @@ static int test_required(const json_schema *schema)
     {
         if (schema->node == NULL)
         {
-            fprintf(stderr, "Error testing 'required'\n");
+            raise_error(schema, "Testing 'required'");
             return 0;
         }
     }
@@ -454,7 +489,7 @@ static int test_required(const json_schema *schema)
         {
             if (!json_pair(schema->node, json_string(node)))
             {
-                fprintf(stderr, "'%s' is required\n", json_string(node));
+                raise_error(schema, "'%s' is required", json_string(node));
                 return 0;
             }
             node = json_next(node);
@@ -474,7 +509,7 @@ static int test_required(const json_schema *schema)
                 {
                     if (!json_pair(schema->node, json_string(item)))
                     {
-                        fprintf(stderr, "'%s' is required when '%s' is set\n",
+                        raise_error(schema, "'%s' is required if '%s' is set",
                                 json_string(item), json_name(node));
                         return 0;
                     }
@@ -499,7 +534,7 @@ static int test_const(const json_schema *schema)
         {
             return 1;
         }
-        fprintf(stderr, "Error testing 'const'\n");
+        raise_error(schema, "Testing 'const'");
         return 0;
     }
     return 1;
@@ -519,7 +554,7 @@ static int test_enum(const json_schema *schema)
             }
             node = json_next(node);
         }
-        fprintf(stderr, "Error testing 'enum'\n");
+        raise_error(schema, "Testing 'enum'");
         return 0;
     }
     return 1;
@@ -533,12 +568,12 @@ static int test_properties(const json_schema *schema)
 
         if (schema->min_properties && (properties < real(schema->min_properties)))
         {
-            fprintf(stderr, "Error testing 'minProperties'\n");
+            raise_error(schema, "Testing 'minProperties: %s'", schema->min_properties);
             return 0;
         }
         if (schema->max_properties && (properties > real(schema->max_properties)))
         {
-            fprintf(stderr, "Error testing 'maxProperties'\n");
+            raise_error(schema, "Testing 'maxProperties: %s'", schema->max_properties);
             return 0;
         }
     }
@@ -562,7 +597,7 @@ static int test_properties(const json_schema *schema)
             }
             if (!found)
             {
-                fprintf(stderr, "'%s' was not expected\n", json_name(node));
+                raise_error(schema, "'%s' was not expected", json_name(node));
                 return 0;
             }
             node = json_next(node);
@@ -580,18 +615,18 @@ static int test_items(const json_schema *schema)
 
         if (schema->min_items && (items < real(schema->min_items)))
         {
-            fprintf(stderr, "Error testing 'minItems'\n");
+            raise_error(schema, "Testing 'minItems: %s'", schema->min_items);
             return 0;
         }
         if (schema->max_items && (items > real(schema->max_items)))
         {
-            fprintf(stderr, "Error testing 'maxItems'\n");
+            raise_error(schema, "Testing 'maxItems: %s'", schema->max_items);
             return 0;
         }
         if ((schema->flags & NOT_ADDITIONAL_ITEMS) &&
             (schema->tuples > 0) && (schema->tuples < items))
         {
-            fprintf(stderr, "Error testing 'additionalItems'\n");
+            raise_error(schema, "Testing 'additionalItems: false'");
             return 0;
         }
     }
@@ -606,7 +641,7 @@ static int test_items(const json_schema *schema)
             {
                 if (json_equal(node, item))
                 {
-                    fprintf(stderr, "Error testing 'uniqueItems'\n");
+                    raise_error(schema, "Testing 'uniqueItems: true'");
                     return 0;
                 }
             }
@@ -641,12 +676,12 @@ static int test_string(const json_schema *schema)
 
         if (schema->min_length && (min > length))
         {
-            fprintf(stderr, "Error testing 'minLength'\n");
+            raise_error(schema, "Testing 'minLength: %s'", schema->min_length);
             return 0;
         }
         if (schema->max_length && (max < length))
         {
-            fprintf(stderr, "Error testing 'maxLength'\n");
+            raise_error(schema, "Testing 'maxLength: %s'", schema->max_length);
             return 0;
         }
     }
@@ -654,7 +689,7 @@ static int test_string(const json_schema *schema)
     {
         if (!schema->format(json_string(schema->node)))
         {
-            fprintf(stderr, "Error testing 'format'\n");
+            raise_error(schema, "Testing 'format: %s'", schema->format);
             return 0;
         }
     }
@@ -662,7 +697,7 @@ static int test_string(const json_schema *schema)
     {
         if (!test_pattern(schema->pattern, json_string(schema->node)))
         {
-            fprintf(stderr, "Error testing 'pattern'\n");
+            raise_error(schema, "Testing 'pattern: %s'", schema->pattern);
             return 0;
         }
     }
@@ -701,17 +736,17 @@ static int test_number(const json_schema *schema)
 
         if (schema->minimum && !test_minimum(schema, value))
         {
-            fprintf(stderr, "Error testing 'minimum'\n");
+            raise_error(schema, "Testing 'minimum: %s'", schema->minimum);
             return 0;
         }
         if (schema->maximum && !test_maximum(schema, value))
         {
-            fprintf(stderr, "Error testing 'maximum'\n");
+            raise_error(schema, "Testing 'maximum: %s'", schema->maximum);
             return 0;
         }
         if (schema->multiple_of && fmod(value, number(schema->multiple_of)))
         {
-            fprintf(stderr, "Error testing 'multipleOf'\n");
+            raise_error(schema, "Testing 'multipleOf: %s'", schema->multiple_of);
             return 0;
         }
     }
@@ -936,6 +971,9 @@ static void clean_subschema(json_subschema *subschema)
 
 static int valid_schema(json_schema *schema, const json *node)
 {
+    schema_callback callback = schema->callback;
+    void *data = schema->data;
+
     json_subschema *subschema = NULL;
     int valid = 1;
 
@@ -954,12 +992,14 @@ static int valid_schema(json_schema *schema, const json *node)
                 node = json_child(subschema->iter);
                 memset(schema, 0, sizeof *schema);
                 schema->node = subschema->node;
+                schema->callback = callback;
+                schema->data = data;
             }
             else
             {
                 if (schema->flags & SUBSCHEMA_BAD_ALLOC)
                 {
-                    fprintf(stderr, "Subschema BAD ALLOC\n");
+                    raise_error(schema, "Out of memory");
                     valid = 0;
                 }
                 break;
@@ -976,14 +1016,14 @@ static int valid_schema(json_schema *schema, const json *node)
             {
                 if (!setter(schema, node))
                 {
-                    fprintf(stderr, "Error setting '%s'\n", name);
+                    raise_error(schema, "Setting '%s'", name);
                     valid = 0;
                     break;
                 }
             }
             else
             {
-                fprintf(stderr, "Unknown instance: '%s'\n", name);
+                raise_warning(schema, "Unknown instance '%s'", name);
             }
         }
         node = json_next(node);
@@ -992,19 +1032,34 @@ static int valid_schema(json_schema *schema, const json *node)
     return valid;
 }
 
-int json_validate(const json *root, const json *node)
+int schema_validate(const json *node, const json *rules,
+    schema_callback callback, void *data)
 {
-    json_schema schema = {.node = root};
-
-    if (!json_is_object(node))
+    json_schema schema =
     {
-        fprintf(stderr, "Invalid schema\n");
+        .node = node,
+        .callback = callback,
+        .data = data
+    };
+
+    if (!json_is_object(rules))
+    {
+        raise_error(&schema, "Invalid schema");
         return 0;
     }
-    if ((node = json_child(node)))
+    if ((rules = json_child(rules)))
     {
-        return valid_schema(&schema, node);
+        return valid_schema(&schema, rules);
     }
     return 1;
 }
+
+void schema_default_callback(const json *node, void *data, int type,
+    const char *message)
+{
+    (void)data;
+    json_write(stderr, node);
+    fprintf(stderr, "%s -> %s\n", type == SCHEMA_ERROR ? "Error" : "Warning", message);
+}
+
 
