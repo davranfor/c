@@ -22,7 +22,7 @@ static int validate(const json *node, const char *path)
 {
     json *schema = parse(path);
 
-    puts("\nschema:");
+    puts("schema:");
     json_print(schema);
 
     int valid = schema_validate(node, schema, schema_default_callback, NULL);
@@ -53,7 +53,7 @@ int main(void)
     atexit(clean);
 
     root = parse("test.json");
-    puts("\njson:");
+    puts("json:");
     print(root);
     validate(root, "test.schema.json");
     return 0;

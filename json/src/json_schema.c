@@ -839,7 +839,7 @@ enum {SCHEMA_OBJECT, SCHEMA_TUPLE, SCHEMA_ARRAY};
 
 typedef struct subschema
 {
-    const json *root, *node, *iter;
+    const json *iter, *root, *node;
     struct subschema *next;
     int type;
 } json_subschema;
@@ -873,36 +873,22 @@ static void set_iter(const json_schema *schema, json_subschema *subschema)
 static void set_root(const json_schema *schema, json_subschema *subschema)
 {
     subschema->root = schema->node;
+}
+
+static void set_node(const json_schema *schema, json_subschema *subschema)
+{
     switch (subschema->type)
     {
         case SCHEMA_OBJECT:
             subschema->node = json_pair(
-                subschema->root, json_name(subschema->iter)
+                schema->node, json_name(subschema->iter)
             );
             break;
         case SCHEMA_TUPLE:
         case SCHEMA_ARRAY:
-            subschema->node = json_child(subschema->root);
+            subschema->node = json_child(schema->node);
             break;
     }
-}
-
-static json_subschema *new_subschema(json_schema *schema,
-    json_subschema *subschema)
-{
-    json_subschema *new = malloc(sizeof *new);
-
-    if (new != NULL)
-    {
-        set_iter(schema, new);
-        set_root(schema, new);
-        new->next = subschema;
-    }
-    else
-    {
-        set_flag(schema, SUBSCHEMA_BAD_ALLOC, 1);
-    }
-    return new;
 }
 
 static int next_node(json_subschema *subschema)
@@ -933,6 +919,25 @@ static int next_node(json_subschema *subschema)
             break;
     }
     return 0;
+}
+
+static json_subschema *new_subschema(json_schema *schema,
+    json_subschema *subschema)
+{
+    json_subschema *new = malloc(sizeof *new);
+
+    if (new != NULL)
+    {
+        set_iter(schema, new);
+        set_root(schema, new);
+        set_node(schema, new);
+        new->next = subschema;
+    }
+    else
+    {
+        set_flag(schema, SUBSCHEMA_BAD_ALLOC, 1);
+    }
+    return new;
 }
 
 static json_subschema *next_subschema(json_schema *schema,
@@ -984,11 +989,10 @@ static int valid_schema(json_schema *schema, const json *node)
             if (!test_schema(schema))
             {
                 valid = 0;
-                break;
             }
             if ((subschema = next_subschema(schema, subschema)))
             {
-                printf("subschema: %s\n", json_name(subschema->iter));
+                //printf("subschema: %s\n", json_name(subschema->iter));
                 node = json_child(subschema->iter);
                 memset(schema, 0, sizeof *schema);
                 schema->node = subschema->node;
@@ -1058,8 +1062,7 @@ void schema_default_callback(const json *node, void *data, int type,
     const char *message)
 {
     (void)data;
+    fprintf(stderr, "%s: %s\n", type == SCHEMA_ERROR ? "Error" : "Warning", message);
     json_write(stderr, node);
-    fprintf(stderr, "%s -> %s\n", type == SCHEMA_ERROR ? "Error" : "Warning", message);
 }
-
 
