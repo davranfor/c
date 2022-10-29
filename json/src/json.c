@@ -617,38 +617,10 @@ int json_is_object(const json *node)
         && (node->type == JSON_OBJECT);
 }
 
-int json_is_named_object(const json *node)
-{
-    return (node != NULL)
-        && (node->type == JSON_OBJECT)
-        && (node->name != NULL);
-}
-
-int json_is_unnamed_object(const json *node)
-{
-    return (node != NULL)
-        && (node->type == JSON_OBJECT)
-        && (node->name == NULL);
-}
-
 int json_is_array(const json *node)
 {
     return (node != NULL)
         && (node->type == JSON_ARRAY);
-}
-
-int json_is_named_array(const json *node)
-{
-    return (node != NULL)
-        && (node->type == JSON_ARRAY)
-        && (node->name != NULL);
-}
-
-int json_is_unnamed_array(const json *node)
-{
-    return (node != NULL)
-        && (node->type == JSON_ARRAY)
-        && (node->name == NULL);
 }
 
 int json_is_string(const json *node)
@@ -680,7 +652,7 @@ int json_is_real(const json *node)
 {
     return (node != NULL)
         && (node->type == JSON_INTEGER)
-        && (strtol(node->value, NULL, 10) < 0);
+        && (strtol(node->value, NULL, 10) >= 0);
 }
 
 int json_is_boolean(const json *node)
@@ -776,7 +748,7 @@ json *json_child(const json *node)
 }
 
 /* Locates a child node by name */
-json *json_pair(const json *root, const char *name)
+json *json_find(const json *root, const char *name)
 {
     json *node;
 
@@ -798,7 +770,7 @@ json *json_pair(const json *root, const char *name)
  * Locates a child node by name given a name length
  * Useful to stop comparing when there is more text after the name
  */
-static json *json_find(const json *root, const char *name, size_t length)
+static json *json_match(const json *root, const char *name, size_t length)
 {
     json *node;
 
@@ -855,7 +827,7 @@ json *json_node(const json *root, const char *path)
         /* Locate by name */
         else
         {
-            node = json_find(node, path, length);
+            node = json_match(node, path, length);
         }
         /* Adjust pointer to path */
         path = (*end == '\0') ? end : end + 1;
@@ -906,27 +878,6 @@ int json_streq(const json *node, const char *str)
         && (strcmp(node->value, str) == 0);
 }
 
-int json_equal_value(const json *a, const json *b)
-{
-    if ((a == NULL) & (b == NULL))
-    {
-        return 1;
-    }
-    if ((a == NULL) ^ (b == NULL))
-    {
-        return 0;
-    }
-    if (a->type != b->type)
-    {
-        return 0;
-    }
-    if ((a->value != NULL) && strcmp(a->value, b->value))
-    {
-        return 0;
-    }
-    return 1;
-}
-
 static int equal(const json *a, const json *b, int level)
 {
     if (a->type != b->type)
@@ -937,25 +888,35 @@ static int equal(const json *a, const json *b, int level)
     {
         return 0;
     }
-    if ((level > 0) && ((a->right == NULL) ^ (b->right == NULL)))
+    if (level > 0)
     {
-        return 0;
-    }
-    if ((a->name == NULL) ^ (b->name == NULL))
-    {
-        return 0;
+        if ((a->right == NULL) ^ (b->right == NULL))
+        {
+            return 0;
+        }
+        if ((a->name == NULL) ^ (b->name == NULL))
+        {
+            return 0;
+        }
+        if ((a->name != NULL) && strcmp(a->name, b->name))
+        {
+            return 0;
+        }
     }
     if ((a->value == NULL) ^ (b->value == NULL))
     {
         return 0;
     }
-    if ((a->name != NULL) && strcmp(a->name, b->name))
+    if (a->value != NULL)
     {
-        return 0;
-    }
-    if ((a->value != NULL) && strcmp(a->value, b->value))
-    {
-        return 0;
+        if (json_is_number(a))
+        {
+            return strtod(a->value, NULL) == strtod(b->value, NULL);
+        }
+        else
+        {
+            return !strcmp(a->value, b->value);
+        }
     }
     return 1;
 }

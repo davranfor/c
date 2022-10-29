@@ -286,7 +286,7 @@ int test_is_uuid(const char *str)
     return valid_mask(mask, str);
 }
 
-int test_pattern(const char *pattern, const char *str)
+int test_regex(const char *pattern, const char *str)
 {
     regex_t regex;
     int valid = 0;
