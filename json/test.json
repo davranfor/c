@@ -1,7 +1,7 @@
 {
     "firstName": "John",
     "lastName": "Doe",
-    "age": 21,
+    "age": 42,
     "phone": ["123", "321"],
     "data": [
         [1, "David"],
