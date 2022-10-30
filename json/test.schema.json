@@ -62,8 +62,7 @@
         }
     },
     "dependentRequired": {
-        "lastName": ["firstName"],
-        "age": ["firstName", "lastName"]
+        "lastName": ["firstName"]
     }
 }
 
