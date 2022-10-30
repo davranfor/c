@@ -22,16 +22,22 @@ typedef struct
     const json *iter, *node;
     size_t size, flags;
     int type;
-    // User function
+} json_schema;
+
+typedef struct
+{
+    json_schema schema;
     schema_callback callback;
     void *data;
-} json_schema;
+} schema_validator;
 
 enum {SCHEMA_ROOT, SCHEMA_OBJECT, SCHEMA_TUPLE, SCHEMA_ARRAY};
 
 static void raise_warning(const json_schema *schema, const char *fmt, ...)
 {
-    if (schema->callback)
+    const schema_validator *user = (const schema_validator *)schema;
+
+    if (user->callback)
     {
         char message[1024];
         va_list args;
@@ -39,13 +45,15 @@ static void raise_warning(const json_schema *schema, const char *fmt, ...)
         va_start(args, fmt);
         vsnprintf(message, sizeof message, fmt, args);
         va_end(args);
-        schema->callback(schema->node, schema->data, SCHEMA_WARNING, message);
+        user->callback(schema->node, user->data, SCHEMA_WARNING, message);
     }
 }
 
 static void raise_error(const json_schema *schema, const char *fmt, ...)
 {
-    if (schema->callback)
+    const schema_validator *user = (const schema_validator *)schema;
+
+    if (user->callback)
     {
         char message[1024];
         va_list args;
@@ -53,7 +61,7 @@ static void raise_error(const json_schema *schema, const char *fmt, ...)
         va_start(args, fmt);
         vsnprintf(message, sizeof message, fmt, args);
         va_end(args);
-        schema->callback(schema->node, schema->data, SCHEMA_ERROR, message);
+        user->callback(schema->node, user->data, SCHEMA_ERROR, message);
     }
 }
 
@@ -908,9 +916,6 @@ static void clean_subschema(json_subschema *subschema)
 
 static int valid_schema(json_schema *schema, const json *node)
 {
-    schema_callback callback = schema->callback;
-    void *data = schema->data;
-
     json_subschema *subschema = NULL;
     int valid = 1;
 
@@ -924,8 +929,6 @@ static int valid_schema(json_schema *schema, const json *node)
                 node = json_child(subschema->iter);
                 memset(schema, 0, sizeof *schema);
                 schema->node = subschema->node;
-                schema->callback = callback;
-                schema->data = data;
             }
             else
             {
@@ -962,24 +965,24 @@ static int valid_schema(json_schema *schema, const json *node)
     return valid;
 }
 
-int schema_validate(const json *node, const json *rules,
+int schema_validate(const json *node, const json *schema,
     schema_callback callback, void *data)
 {
-    json_schema schema =
+    schema_validator validator =
     {
-        .node = node,
+        .schema.node = node,
         .callback = callback,
         .data = data
     };
 
-    if (!json_is_object(rules))
+    if (!json_is_object(schema))
     {
-        raise_error(&schema, "Invalid schema");
+        raise_error(&validator.schema, "Invalid schema");
         return 0;
     }
-    if ((rules = json_child(rules)))
+    if ((schema = json_child(schema)))
     {
-        return valid_schema(&schema, rules);
+        return valid_schema(&validator.schema, schema);
     }
     return 1;
 }
