@@ -15,17 +15,19 @@
 
 #define equal(a, b) (strcmp(a, b) == 0)
 
-#define SCHEMA_HAS_TUPLES   (1u << 0u)
-#define SUBSCHEMA_BAD_ALLOC (1u << 1u)
+#define SUBSCHEMA_BAD_ALLOC (1u << 0u)
 
 typedef struct
 {
-    const json *node, *properties, *items;
+    const json *iter, *node;
     size_t size, flags;
+    int type;
     // User function
     schema_callback callback;
     void *data;
 } json_schema;
+
+enum {SCHEMA_ROOT, SCHEMA_OBJECT, SCHEMA_TUPLE, SCHEMA_ARRAY};
 
 static void raise_warning(const json_schema *schema, const char *fmt, ...)
 {
@@ -116,20 +118,32 @@ static int test_any(json_schema *schema, const json *node)
 
 static int test_is_array(json_schema *schema, const json *node)
 {
-    (void)schema;
-    return json_is_array(node);
+    if (!json_is_array(node))
+    {
+        raise_error(schema, "Setting '%s'", json_name(node));
+        return 0;
+    }
+    return 1;
 }
 
 static int test_is_string(json_schema *schema, const json *node)
 {
-    (void)schema;
-    return json_is_string(node);
+    if (!json_is_string(node))
+    {
+        raise_error(schema, "Setting '%s'", json_name(node));
+        return 0;
+    }
+    return 1;
 }
 
 static int test_is_boolean(json_schema *schema, const json *node)
 {
-    (void)schema;
-    return json_is_boolean(node);
+    if (!json_is_boolean(node))
+    {
+        raise_error(schema, "Setting '%s'", json_name(node));
+        return 0;
+    }
+    return 1;
 }
 
 static unsigned set_type(const char *type, unsigned value)
@@ -324,7 +338,8 @@ static int test_properties(json_schema *schema, const json *node)
     }
     if (json_is_object(schema->node))
     {
-        schema->properties = json_child(node);
+        schema->iter = json_child(node);
+        schema->type = SCHEMA_OBJECT;
     }
     return 1;
 }
@@ -416,12 +431,13 @@ static int test_items(json_schema *schema, const json *node)
     {
         if (json_is_object(node))
         {
-            schema->items = node;
+            schema->iter = node;
+            schema->type = SCHEMA_ARRAY;
         }
         else
         {
-            schema->items = json_child(node);
-            schema->flags |= SCHEMA_HAS_TUPLES;
+            schema->iter = json_child(node);
+            schema->type = SCHEMA_TUPLE;
         }
     }
     return 1;
@@ -774,8 +790,6 @@ static schema_test get_test(const char *name)
         equal(name, "default") ? test_any : NULL;
 }
 
-enum {SCHEMA_OBJECT, SCHEMA_TUPLE, SCHEMA_ARRAY};
-
 typedef struct subschema
 {
     const json *iter, *root, *node;
@@ -785,19 +799,8 @@ typedef struct subschema
 
 static void set_iter(const json_schema *schema, json_subschema *subschema)
 {
-    subschema->type = schema->properties ? SCHEMA_OBJECT : SCHEMA_ARRAY;
-    if (subschema->type == SCHEMA_OBJECT)
-    {
-        subschema->iter = schema->properties;
-    }
-    else
-    {
-        subschema->iter = schema->items;
-        if (schema->flags & SCHEMA_HAS_TUPLES)
-        {
-            subschema->type = SCHEMA_TUPLE;
-        }
-    }
+    subschema->iter = schema->iter;
+    subschema->type = schema->type;
 }
 
 static void set_root(const json_schema *schema, json_subschema *subschema)
@@ -873,7 +876,7 @@ static json_subschema *new_subschema(json_schema *schema,
 static json_subschema *next_subschema(json_schema *schema,
     json_subschema *subschema)
 {
-    if (schema->properties || schema->items)
+    if (schema->iter != NULL)
     {
         return new_subschema(schema, subschema);
     }
