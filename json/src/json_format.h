@@ -7,8 +7,6 @@
 #ifndef JSON_FORMAT_H
 #define JSON_FORMAT_H
 
-typedef int (*schema_format)(const char *);
-
 int test_is_date(const char *);
 int test_is_time(const char *);
 int test_is_date_time(const char *);

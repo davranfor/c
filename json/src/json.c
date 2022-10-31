@@ -978,8 +978,7 @@ int json_equal(const json *a, const json *b)
  * Sends all nodes to a callback "func"
  * Exit when all nodes are read or when "func" returns a non 0 value
  */
-int json_callback(const json *root, void *data,
-    int (*func)(const json *, void *))
+int json_traverse(const json *root, json_callback func, void *data)
 {
     const json *node = root;
 

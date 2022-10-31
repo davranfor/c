@@ -27,15 +27,15 @@ typedef struct
 typedef struct
 {
     json_schema schema;
-    schema_callback callback;
+    json_callback callback;
     void *data;
-} schema_validator;
+} json_validator;
 
 enum {SCHEMA_ROOT, SCHEMA_OBJECT, SCHEMA_TUPLE, SCHEMA_ARRAY};
 
 static void raise_warning(const json_schema *schema, const char *fmt, ...)
 {
-    const schema_validator *user = (const schema_validator *)schema;
+    const json_validator *user = (const json_validator *)schema;
 
     if (user->callback)
     {
@@ -45,13 +45,14 @@ static void raise_warning(const json_schema *schema, const char *fmt, ...)
         va_start(args, fmt);
         vsnprintf(message, sizeof message, fmt, args);
         va_end(args);
-        user->callback(schema->node, user->data, SCHEMA_WARNING, message);
+        fprintf(stderr, "Warning: %s\n", message);
+        user->callback(schema->node, user->data);
     }
 }
 
 static void raise_error(const json_schema *schema, const char *fmt, ...)
 {
-    const schema_validator *user = (const schema_validator *)schema;
+    const json_validator *user = (const json_validator *)schema;
 
     if (user->callback)
     {
@@ -61,7 +62,8 @@ static void raise_error(const json_schema *schema, const char *fmt, ...)
         va_start(args, fmt);
         vsnprintf(message, sizeof message, fmt, args);
         va_end(args);
-        user->callback(schema->node, user->data, SCHEMA_ERROR, message);
+        fprintf(stderr, "Error: %s\n", message);
+        user->callback(schema->node, user->data);
     }
 }
 
@@ -617,7 +619,7 @@ static int test_format(json_schema *schema, const json *node)
         const char *name = json_string(node);
         int valid;
 
-        schema_format format =
+        int (*format)(const char *) =
             equal(name, "date") ? test_is_date :
             equal(name, "time") ? test_is_time :
             equal(name, "date-time") ? test_is_date_time :
@@ -759,9 +761,9 @@ static int test_multiple_of(json_schema *schema, const json *node)
     return 1;
 }
 
-typedef int (*schema_test)(json_schema *, const json *);
+typedef int (*tester)(json_schema *, const json *);
 
-static schema_test get_test(const char *name)
+static tester get_test(const char *name)
 {
     return
         equal(name, "$schema") ? test_is_string :
@@ -945,7 +947,7 @@ static int valid_schema(json_schema *schema, const json *node)
 
         if (name != NULL)
         {
-            schema_test func = get_test(name);
+            tester func = get_test(name);
 
             if (func != NULL)
             {
@@ -965,10 +967,10 @@ static int valid_schema(json_schema *schema, const json *node)
     return valid;
 }
 
-int schema_validate(const json *node, const json *schema,
-    schema_callback callback, void *data)
+int json_validate(const json *node, const json *schema,
+    json_callback callback, void *data)
 {
-    schema_validator validator =
+    json_validator validator =
     {
         .schema.node = node,
         .callback = callback,
@@ -987,11 +989,10 @@ int schema_validate(const json *node, const json *schema,
     return 1;
 }
 
-void schema_default_callback(const json *node, void *data, int type,
-    const char *message)
+int json_schema_print(const json *node, void *data)
 {
     (void)data;
-    fprintf(stderr, "%s: %s\n", type == SCHEMA_ERROR ? "Error" : "Warning", message);
     json_write(stderr, node);
+    return 1;
 }
 

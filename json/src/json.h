@@ -11,10 +11,8 @@
 
 typedef struct json json;
 
-typedef struct
-{
-    int line, column;
-} json_error;
+typedef struct { int line, column; } json_error;
+typedef int (*json_callback)(const json *, void *);
 
 enum json_type
 {
@@ -59,7 +57,7 @@ json *json_item(const json *, size_t);
 size_t json_items(const json *);
 int json_streq(const json *, const char *);
 int json_equal(const json *, const json *);
-int json_callback(const json *, void *, int (*)(const json *, void *));
+int json_traverse(const json *, json_callback, void *);
 void json_write(FILE *, const json *);
 void json_print(const json *);
 void json_raise_error(const json_error *error, const char *);
