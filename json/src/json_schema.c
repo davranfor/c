@@ -763,7 +763,7 @@ static int test_multiple_of(json_schema *schema, const json *node)
 
 typedef int (*tester)(json_schema *, const json *);
 
-static tester get_test(const char *name)
+static tester get_test_by_name(const char *name)
 {
     return
         equal(name, "$schema") ? test_is_string :
@@ -798,6 +798,25 @@ static tester get_test(const char *name)
         equal(name, "deprecated") ? test_is_boolean :
         equal(name, "examples") ? test_is_array :
         equal(name, "default") ? test_any : NULL;
+}
+
+static tester get_test(json_schema *schema, const json *node)
+{
+    const char *name = json_name(node);
+
+    if (name == NULL)
+    {
+        raise_warning(schema, "An attribute was expected");
+        return NULL;
+    }
+
+    tester test = get_test_by_name(name);
+
+    if (test == NULL)
+    {
+        raise_warning(schema, "Unknown instance '%s'", name);
+    }
+    return test;
 }
 
 typedef struct subschema
@@ -943,23 +962,11 @@ static int valid_schema(json_schema *schema, const json *node)
             }
         }
 
-        const char *name = json_name(node);
+        tester test = get_test(schema, node);
 
-        if (name != NULL)
+        if (test && !test(schema, node))
         {
-            tester func = get_test(name);
-
-            if (func != NULL)
-            {
-                if (!func(schema, node))
-                {
-                    valid = 0;
-                }
-            }
-            else
-            {
-                raise_warning(schema, "Unknown instance '%s'", name);
-            }
+            valid = 0;
         }
         node = json_next(node);
     }
