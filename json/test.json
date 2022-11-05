@@ -10,10 +10,9 @@
         [4, "Dani"]
     ],
     "address" : {
-        "street": "Dragonera",
+        "street": "Calle del socorro",
         "city": "Palma de Mallorca",
         "code": "07003",
         "country": "Spain"
     }
 }
-
