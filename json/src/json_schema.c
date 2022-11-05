@@ -251,18 +251,16 @@ static int test_required(json_schema *schema, const json *node, const json *iter
         if (json_is_object(iter))
         {
             const json *next = json_child(node);
-            int valid = 1;
 
             while (next != NULL)
             {
                 if (!json_find(iter, json_string(next)))
                 {
                     raise_error(schema, node, iter);
-                    valid = 0;
+                    return 0;
                 }
                 next = json_next(next);
             }
-            return valid;
         }
     }
     else
@@ -283,7 +281,6 @@ static int test_dependent_required(json_schema *schema, const json *node, const 
     if (json_is_object(iter))
     {
         const json *next = json_child(node);
-        int valid = 1;
 
         while (next != NULL)
         {
@@ -301,14 +298,13 @@ static int test_dependent_required(json_schema *schema, const json *node, const 
                     if (!json_find(iter, json_string(item)))
                     {
                         raise_error(schema, node, iter);
-                        valid = 0;
+                        return 0;
                     }
                     item = json_next(item);
                 }
             }
             next = json_next(next);
         }
-        return valid;
     }
     return 1;
 }
