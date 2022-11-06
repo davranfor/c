@@ -23,7 +23,8 @@ typedef struct
 
 enum {SCHEMA_ERROR, SCHEMA_ATTR, SCHEMA_OBJECT, SCHEMA_ARRAY, SCHEMA_TUPLE};
 
-static void raise_warning(const json_schema *schema, const json *node, const json *iter)
+static void raise_warning(const json_schema *schema,
+    const json *node, const json *iter)
 {
     if (schema->callback)
     {
@@ -33,7 +34,8 @@ static void raise_warning(const json_schema *schema, const json *node, const jso
     }
 }
 
-static void raise_error(const json_schema *schema, const json *node, const json *iter)
+static void raise_error(const json_schema *schema,
+    const json *node, const json *iter)
 {
     if (schema->callback)
     {
@@ -95,42 +97,29 @@ static int unique_strings(const json *node)
     return unique(node, JSON_STRING, json_string);
 }
 
-static int test_any(json_schema *schema, const json *node, const json *iter)
+static int test_any(const json *node, const json *iter)
 {
-    (void)schema;
     (void)node;
     (void)iter;
     return 1;
 }
 
-static int test_is_array(json_schema *schema, const json *node, const json *iter)
+static int test_is_array(const json *node, const json *iter)
 {
-    if (!json_is_array(node))
-    {
-        raise_error(schema, node, iter);
-        return 0;
-    }
-    return 1;
+    (void)iter;
+    return json_is_array(node);
 }
 
-static int test_is_string(json_schema *schema, const json *node, const json *iter)
+static int test_is_string(const json *node, const json *iter)
 {
-    if (!json_is_string(node))
-    {
-        raise_error(schema, node, iter);
-        return 0;
-    }
-    return 1;
+    (void)iter;
+    return json_is_string(node);
 }
 
-static int test_is_boolean(json_schema *schema, const json *node, const json *iter)
+static int test_is_boolean(const json *node, const json *iter)
 {
-    if (!json_is_boolean(node))
-    {
-        raise_error(schema, node, iter);
-        return 0;
-    }
-    return 1;
+    (void)iter;
+    return json_is_boolean(node);
 }
 
 static unsigned set_type(const char *type, unsigned value)
@@ -174,48 +163,38 @@ static unsigned get_type(const json *node)
     return type;
 }
 
-static int test_type(json_schema *schema, const json *node, const json *iter)
+static int test_type(const json *node, const json *iter)
 {
     unsigned mask = get_type(node);
 
     if (mask == 0)
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (iter)
     {
         unsigned type = json_type(iter);
-        int valid;
 
         // 'integer' must validate if type is 'number'
-        valid = (mask & (1u << type))
-            || ((mask & (1u << JSON_DOUBLE)) && (type == JSON_INTEGER));
-
-        if (!valid)
-        {
-            raise_error(schema, node, iter);
-            return 0;
-        }
+        return (mask & (1u << type))
+           || ((mask & (1u << JSON_DOUBLE)) && (type == JSON_INTEGER));
     }
     return 1;
 }
 
-static int test_const(json_schema *schema, const json *node, const json *iter)
+static int test_const(const json *node, const json *iter)
 {
     if (iter && !json_equal(node, iter))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     return 1;
 }
 
-static int test_enum(json_schema *schema, const json *node, const json *iter)
+static int test_enum(const json *node, const json *iter)
 {
     if (!json_is_array(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (iter)
@@ -230,19 +209,17 @@ static int test_enum(json_schema *schema, const json *node, const json *iter)
             }
             next = json_next(next);
         }
-        raise_error(schema, node, iter);
         return 0;
     }
     return 1;
 }
 
-static int test_required(json_schema *schema, const json *node, const json *iter)
+static int test_required(const json *node, const json *iter)
 {
     if (json_is_boolean(node))
     {
         if (json_is_boolean(node) && !iter)
         {
-            raise_error(schema, node, iter);
             return 0;
         }
     }
@@ -256,7 +233,6 @@ static int test_required(json_schema *schema, const json *node, const json *iter
             {
                 if (!json_find(iter, json_string(next)))
                 {
-                    raise_error(schema, node, iter);
                     return 0;
                 }
                 next = json_next(next);
@@ -265,17 +241,15 @@ static int test_required(json_schema *schema, const json *node, const json *iter
     }
     else
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     return 1;
 }
 
-static int test_dependent_required(json_schema *schema, const json *node, const json *iter)
+static int test_dependent_required(const json *node, const json *iter)
 {
     if (!json_is_object(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_object(iter))
@@ -286,7 +260,6 @@ static int test_dependent_required(json_schema *schema, const json *node, const 
         {
             if (!(json_is_array(next) && unique_strings(next)))
             {
-                raise_error(schema, node, iter);
                 return 0;
             }
             if (json_find(iter, json_name(next)))
@@ -297,7 +270,6 @@ static int test_dependent_required(json_schema *schema, const json *node, const 
                 {
                     if (!json_find(iter, json_string(item)))
                     {
-                        raise_error(schema, node, iter);
                         return 0;
                     }
                     item = json_next(item);
@@ -309,11 +281,10 @@ static int test_dependent_required(json_schema *schema, const json *node, const 
     return 1;
 }
 
-static int test_properties(json_schema *schema, const json *node, const json *iter)
+static int test_properties(const json *node, const json *iter)
 {
     if (!(json_is_object(node) && unique_objects(node)))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_object(iter))
@@ -323,11 +294,10 @@ static int test_properties(json_schema *schema, const json *node, const json *it
     return 1;
 }
 
-static int test_additional_properties(json_schema *schema, const json *node, const json *iter)
+static int test_additional_properties(const json *node, const json *iter)
 {
     if (!json_is_boolean(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (!json_boolean(node) && json_is_object(iter))
@@ -342,7 +312,6 @@ static int test_additional_properties(json_schema *schema, const json *node, con
             {
                 if (!json_find(properties, json_name(next)))
                 {
-                    raise_error(schema, node, iter);
                     return 0;
                 }
                 next = json_next(next);
@@ -352,48 +321,37 @@ static int test_additional_properties(json_schema *schema, const json *node, con
     return 1;
 }
 
-static int test_min_properties(json_schema *schema, const json *node, const json *iter)
+static int test_min_properties(const json *node, const json *iter)
 {
     if (!json_is_real(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_object(iter))
     {
-        if (json_items(iter) < json_real(node))
-        {
-            raise_error(schema, node, iter);
-            return 0;
-        }
+        return json_items(iter) >= json_real(node);
     }
     return 1;
 }
 
-static int test_max_properties(json_schema *schema, const json *node, const json *iter)
+static int test_max_properties(const json *node, const json *iter)
 {
     if (!json_is_real(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_object(iter))
     {
-        if (json_items(iter) > json_real(node))
-        {
-            raise_error(schema, node, iter);
-            return 0;
-        }
+        return json_items(iter) <= json_real(node);
     }
     return 1;
 }
 
-static int test_items(json_schema *schema, const json *node, const json *iter)
+static int test_items(const json *node, const json *iter)
 {
     if (!json_is_object(node) &&
         !(json_is_array(node) && childs_are_objects(node)))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_array(iter))
@@ -410,11 +368,10 @@ static int test_items(json_schema *schema, const json *node, const json *iter)
     return 1;
 }
 
-static int test_additional_items(json_schema *schema, const json *node, const json *iter)
+static int test_additional_items(const json *node, const json *iter)
 {
     if (!json_is_boolean(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (!json_boolean(node) && json_is_array(iter))
@@ -427,58 +384,43 @@ static int test_additional_items(json_schema *schema, const json *node, const js
 
             if (tuples > 0)
             {
-                if (json_items(iter) > tuples)
-                {
-                    raise_error(schema, node, iter);
-                    return 0;
-                }
+                return json_items(iter) <= tuples;
             }
         }
     }
     return 1;
 }
 
-static int test_min_items(json_schema *schema, const json *node, const json *iter)
+static int test_min_items(const json *node, const json *iter)
 {
     if (!json_is_real(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_array(iter))
     {
-        if (json_items(iter) < json_real(node))
-        {
-            raise_error(schema, node, iter);
-            return 0;
-        }
+        return json_items(iter) >= json_real(node);
     }
     return 1;
 }
 
-static int test_max_items(json_schema *schema, const json *node, const json *iter)
+static int test_max_items(const json *node, const json *iter)
 {
     if (!json_is_real(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_array(iter))
     {
-        if (json_items(iter) > json_real(node))
-        {
-            raise_error(schema, node, iter);
-            return 0;
-        }
+        return json_items(iter) <= json_real(node);
     }
     return 1;
 }
 
-static int test_unique_items(json_schema *schema, const json *node, const json *iter)
+static int test_unique_items(const json *node, const json *iter)
 {
     if (!json_is_boolean(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_boolean(node) && json_is_array(iter))
@@ -492,7 +434,6 @@ static int test_unique_items(json_schema *schema, const json *node, const json *
             {
                 if (json_equal(curr, item))
                 {
-                    raise_error(schema, node, iter);
                     return 0;
                 }
             }
@@ -517,53 +458,41 @@ static size_t get_length(const char *str)
     return length;
 }
 
-static int test_min_length(json_schema *schema, const json *node, const json *iter)
+static int test_min_length(const json *node, const json *iter)
 {
     if (!json_is_real(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_string(iter))
     {
-        if (json_real(node) > get_length(json_string(iter)))
-        {
-            raise_error(schema, node, iter);
-            return 0;
-        }
+        return get_length(json_string(iter)) >= json_real(node);
     }
     return 1;
 }
 
-static int test_max_length(json_schema *schema, const json *node, const json *iter)
+static int test_max_length(const json *node, const json *iter)
 {
     if (!json_is_real(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_string(iter))
     {
-        if (json_real(node) < get_length(json_string(iter)))
-        {
-            raise_error(schema, node, iter);
-            return 0;
-        }
+        return get_length(json_string(iter)) <= json_real(node);
     }
     return 1;
 }
 
-static int test_format(json_schema *schema, const json *node, const json *iter)
+static int test_format(const json *node, const json *iter)
 {
     if (!json_is_string(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_string(iter))
     {
         const char *name = json_string(node);
-        int valid;
 
         int (*format)(const char *) =
             equal(name, "date") ? test_is_date :
@@ -576,138 +505,87 @@ static int test_format(json_schema *schema, const json *node, const json *iter)
 
         if (format)
         {
-            valid = format(json_string(iter));
+            return format(json_string(iter));
         }
         else
         {
-            valid = test_regex(name, json_string(iter));
-        }
-        if (!valid)
-        {
-            raise_error(schema, node, iter);
-            return 0;
+            return test_regex(name, json_string(iter));
         }
     }
     return 1;
 }
 
-static int test_pattern(json_schema *schema, const json *node, const json *iter)
+static int test_pattern(const json *node, const json *iter)
 {
     if (!json_is_string(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_string(iter))
     {
-        const char *name = json_string(node);
-
-        if (!test_regex(name, json_string(iter)))
-        {
-            raise_error(schema, node, iter);
-            return 0;
-        }
+        return test_regex(json_string(node), json_string(iter));
     }
     return 1;
 }
 
-static int test_minimum(json_schema *schema, const json *node, const json *iter)
+static int test_minimum(const json *node, const json *iter)
 {
     if (!json_is_number(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_number(iter))
     {
         const json *exclusive = json_find(json_parent(node), "exclusiveMinimum");
-        int valid;
 
         if (json_is_boolean(exclusive) && json_boolean(exclusive))
         {
-            valid = json_number(iter) > json_number(node);
+            return json_number(iter) > json_number(node);
         }
         else
         {
-            valid = json_number(iter) >= json_number(node);
-        }
-        if (!valid)
-        {
-            raise_error(schema, node, iter);
-            return 0;
+            return json_number(iter) >= json_number(node);
         }
     }
     return 1;
 }
 
-static int test_maximum(json_schema *schema, const json *node, const json *iter)
+static int test_maximum(const json *node, const json *iter)
 {
     if (!json_is_number(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_number(iter))
     {
         const json *exclusive = json_find(json_parent(node), "exclusiveMaximum");
-        int valid;
 
         if (json_is_boolean(exclusive) && json_boolean(exclusive))
         {
-            valid = json_number(iter) < json_number(node);
+            return json_number(iter) < json_number(node);
         }
         else
         {
-            valid = json_number(iter) <= json_number(node);
-        }
-        if (!valid)
-        {
-            raise_error(schema, node, iter);
-            return 0;
+            return json_number(iter) <= json_number(node);
         }
     }
     return 1;
 }
 
-static int test_exclusive_minimum(json_schema *schema, const json *node, const json *iter)
-{
-    if (!json_is_boolean(node))
-    {
-        raise_error(schema, node, iter);
-        return 0;
-    }
-    return 1;
-}
-
-static int test_exclusive_maximum(json_schema *schema, const json *node, const json *iter)
-{
-    if (!json_is_boolean(node))
-    {
-        raise_error(schema, node, iter);
-        return 0;
-    }
-    return 1;
-}
-
-static int test_multiple_of(json_schema *schema, const json *node, const json *iter)
+static int test_multiple_of(const json *node, const json *iter)
 {
     if (!json_is_number(node))
     {
-        raise_error(schema, node, iter);
         return 0;
     }
     if (json_is_number(iter))
     {
-        if (fmod(json_number(iter), json_number(node)))
-        {
-            raise_error(schema, node, iter);
-            return 0;
-        }
+        return fmod(json_number(iter), json_number(node)) == 0;
     }
     return 1;
 }
 
-typedef int (*tester)(json_schema *, const json *, const json *);
+typedef int (*tester)(const json *, const json *);
 
 static tester get_test(const char *name)
 {
@@ -736,8 +614,8 @@ static tester get_test(const char *name)
         equal(name, "pattern") ? test_pattern :
         equal(name, "minimum") ? test_minimum :
         equal(name, "maximum") ? test_maximum :
-        equal(name, "exclusiveMinimum") ? test_exclusive_minimum :
-        equal(name, "exclusiveMaximum") ? test_exclusive_maximum :
+        equal(name, "exclusiveMinimum") ? test_is_boolean :
+        equal(name, "exclusiveMaximum") ? test_is_boolean :
         equal(name, "multipleOf") ? test_multiple_of :
         equal(name, "readOnly") ? test_is_boolean :
         equal(name, "writeOnly") ? test_is_boolean :
@@ -746,7 +624,8 @@ static tester get_test(const char *name)
         equal(name, "default") ? test_any : NULL;
 }
 
-static int valid_schema(json_schema *schema, const json *node, const json *iter)
+static int valid_schema(json_schema *schema,
+    const json *node, const json *iter)
 {
     int valid = 1;
 
@@ -764,7 +643,7 @@ static int valid_schema(json_schema *schema, const json *node, const json *iter)
 
         if (test != NULL)
         {
-            switch (test(schema, node, iter))
+            switch (test(node, iter))
             {
                 case SCHEMA_OBJECT:
                 {
@@ -774,10 +653,7 @@ static int valid_schema(json_schema *schema, const json *node, const json *iter)
                     {
                         const json *item = json_find(iter, json_name(next));
 
-                        if (!valid_schema(schema, json_child(next), item))
-                        {
-                            valid = 0;
-                        }
+                        valid &= valid_schema(schema, json_child(next), item);
                         next = json_next(next);
                     }
                 }
@@ -788,10 +664,7 @@ static int valid_schema(json_schema *schema, const json *node, const json *iter)
 
                     while (item != NULL)
                     {
-                        if (!valid_schema(schema, json_child(node), item))
-                        {
-                            valid = 0;
-                        }
+                        valid &= valid_schema(schema, json_child(node), item);
                         item = json_next(item);
                     }
                 }
@@ -803,10 +676,7 @@ static int valid_schema(json_schema *schema, const json *node, const json *iter)
 
                     while (next != NULL)
                     {
-                        if (!valid_schema(schema, json_child(next), item))
-                        {
-                            valid = 0;
-                        }
+                        valid &= valid_schema(schema, json_child(next), item);
                         next = json_next(next);
                         item = json_next(item);
                     }
@@ -814,6 +684,7 @@ static int valid_schema(json_schema *schema, const json *node, const json *iter)
                 break;
                 case SCHEMA_ERROR:
                 {
+                    raise_error(schema, node, iter);
                     valid = 0;
                 }
                 break;
