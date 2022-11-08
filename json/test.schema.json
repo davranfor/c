@@ -55,7 +55,9 @@
             }
         }
     },
+    "required": ["age"],
     "dependentRequired": {
         "lastName": ["firstName"]
     }
 }
+
