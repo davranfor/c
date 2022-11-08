@@ -698,6 +698,7 @@ json *json_self(const json *node)
     /* Silence compiler due to const to non-const conversion */
     union {const json *constant; json *not_constant;} cast_to = {node};
 
+    (void)cast_to.constant;
     return cast_to.not_constant;
 }
 
