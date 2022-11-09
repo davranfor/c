@@ -704,7 +704,7 @@ static int valid_schema(json_schema *schema,
                 {
                     const json *next = get_ref(node);
 
-                    if (next != NULL)
+                    if (json_is_object(next))
                     {
                         valid &= valid_schema(schema, json_child(next), iter);
                     }
