@@ -145,15 +145,12 @@ static int test_is_boolean(const json *node, const json *iter)
 
 static int test_ref(const json *node, const json *iter)
 {
+    (void)iter;
     if (!json_is_string(node))
     {
         return SCHEMA_ERROR;
     }
-    if (iter != NULL)
-    {
-        return SCHEMA_REF;
-    }
-    return 1;
+    return SCHEMA_REF;
 }
 
 static unsigned add_type(const char *type, unsigned value)
