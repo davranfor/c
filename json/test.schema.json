@@ -3,6 +3,11 @@
     "$id": "https://json-schema.org/draft/2019-09/schema",
     "title": "Person",
     "type": "object",
+    "$defs": {
+        "countries": {
+            "enum": ["Spain", "France", "Italy"]
+        }
+    },
     "properties": {
         "firstName": {
             "description": "The person's first name",
@@ -50,7 +55,7 @@
                     "pattern": "^[0-9]*$"
                 },
                 "country": {
-                    "type": "string"
+                    "$ref": "#/$defs/countries"
                 }
             }
         }
