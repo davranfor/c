@@ -24,7 +24,7 @@ typedef struct
 enum
 {
     SCHEMA_INVALID, SCHEMA_VALID, SCHEMA_ERROR,
-    SCHEMA_OBJECT, SCHEMA_ARRAY, SCHEMA_TUPLE
+    SCHEMA_OBJECT, SCHEMA_ARRAY, SCHEMA_TUPLE, SCHEMA_REF
 };
 
 static void schema_callback(const json_schema *schema,
@@ -119,6 +119,12 @@ static int test_valid(const json *node, const json *iter)
     return SCHEMA_VALID;
 }
 
+static int test_is_object(const json *node, const json *iter)
+{
+    (void)iter;
+    return json_is_object(node) ? SCHEMA_VALID : SCHEMA_ERROR;
+}
+
 static int test_is_array(const json *node, const json *iter)
 {
     (void)iter;
@@ -135,6 +141,19 @@ static int test_is_boolean(const json *node, const json *iter)
 {
     (void)iter;
     return json_is_boolean(node) ? SCHEMA_VALID : SCHEMA_ERROR;
+}
+
+static int test_ref(const json *node, const json *iter)
+{
+    if (!json_is_string(node))
+    {
+        return SCHEMA_ERROR;
+    }
+    if (iter != NULL)
+    {
+        return SCHEMA_REF;
+    }
+    return 1;
 }
 
 static unsigned add_type(const char *type, unsigned value)
@@ -574,6 +593,8 @@ static tester get_test_by_name(const char *name)
     return
         equal(name, "$schema") ? test_is_string :
         equal(name, "$id") ? test_is_string :
+        equal(name, "$defs") ? test_is_object :
+        equal(name, "$ref") ? test_ref :
         equal(name, "title") ? test_is_string :
         equal(name, "description") ? test_is_string :
         equal(name, "type") ? test_type :
@@ -615,6 +636,17 @@ static tester get_test(const json *node)
         return test_error;
     }
     return get_test_by_name(name);
+}
+
+static json *get_ref(const json *node)
+{
+    const char *ref = json_string(node);
+    
+    if (ref[0] != '#')
+    {
+        return NULL;
+    }
+    return json_node(node, ref + 1);
 }
 
 static int valid_schema(json_schema *schema,
@@ -665,6 +697,21 @@ static int valid_schema(json_schema *schema,
                         valid &= valid_schema(schema, json_child(next), item);
                         next = json_next(next);
                         item = json_next(item);
+                    }
+                }
+                break;
+                case SCHEMA_REF:
+                {
+                    const json *next = get_ref(node);
+
+                    if (next != NULL)
+                    {
+                        valid &= valid_schema(schema, json_child(next), iter);
+                    }
+                    else
+                    {
+                        raise_invalid(schema, node, iter);
+                        valid = 0;
                     }
                 }
                 break;
