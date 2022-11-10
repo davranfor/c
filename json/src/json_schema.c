@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <setjmp.h>
 #include <math.h>
 #include "json.h"
 #include "json_format.h"
@@ -18,12 +19,14 @@ typedef struct
 {
     json_callback callback;
     void *data;
+    jmp_buf error;
 } json_schema;
 
 enum
 {
     SCHEMA_INVALID, SCHEMA_VALID, SCHEMA_ERROR,
-    SCHEMA_OBJECT, SCHEMA_ARRAY, SCHEMA_TUPLE, SCHEMA_REF
+    SCHEMA_OBJECT, SCHEMA_ARRAY, SCHEMA_TUPLE,
+    SCHEMA_REF, SCHEMA_NOT
 };
 
 static void schema_callback(const json_schema *schema,
@@ -147,6 +150,13 @@ static int test_ref(const json *node, const json *iter)
     (void)iter;
     return json_is_string(node) ? SCHEMA_REF : SCHEMA_ERROR;
 }
+
+static int test_not(const json *node, const json *iter)
+{
+    (void)iter;
+    return json_is_object(node) ? SCHEMA_NOT : SCHEMA_ERROR;
+}
+
 
 static unsigned add_type(const char *type, unsigned value)
 {
@@ -575,6 +585,24 @@ static int test_multiple_of(const json *node, const json *iter)
     return 1;
 }
 
+#define FLAG_NOT 0x01
+
+static void set_flag_not(unsigned *flags)
+{
+    *flags |= FLAG_NOT;
+}
+
+static json *get_ref(const json *node)
+{
+    const char *ref = json_string(node);
+    
+    if (ref[0] != '#')
+    {
+        return NULL;
+    }
+    return json_node(node, ref + 1);
+}
+
 typedef int (*tester)(const json *, const json *);
 
 static tester get_test_by_name(const char *name)
@@ -586,6 +614,7 @@ static tester get_test_by_name(const char *name)
         equal(name, "$ref") ? test_ref :
         equal(name, "title") ? test_is_string :
         equal(name, "description") ? test_is_string :
+        equal(name, "not") ? test_not :
         equal(name, "type") ? test_type :
         equal(name, "const") ? test_const :
         equal(name, "enum") ? test_enum :
@@ -627,19 +656,8 @@ static tester get_test(const json *node)
     return get_test_by_name(name);
 }
 
-static json *get_ref(const json *node)
-{
-    const char *ref = json_string(node);
-    
-    if (ref[0] != '#')
-    {
-        return NULL;
-    }
-    return json_node(node, ref + 1);
-}
-
 static int valid_schema(json_schema *schema,
-    const json *node, const json *iter)
+    const json *node, const json *iter, unsigned flags)
 {
     int valid = 1;
 
@@ -659,7 +677,7 @@ static int valid_schema(json_schema *schema,
                     {
                         const json *item = json_find(iter, json_name(next));
 
-                        valid &= valid_schema(schema, json_child(next), item);
+                        valid &= valid_schema(schema, json_child(next), item, flags);
                         next = json_next(next);
                     }
                 }
@@ -671,7 +689,7 @@ static int valid_schema(json_schema *schema,
 
                     while (item != NULL)
                     {
-                        valid &= valid_schema(schema, next, item);
+                        valid &= valid_schema(schema, next, item, flags);
                         item = json_next(item);
                     }
                 }
@@ -683,7 +701,7 @@ static int valid_schema(json_schema *schema,
 
                     while (next != NULL)
                     {
-                        valid &= valid_schema(schema, json_child(next), item);
+                        valid &= valid_schema(schema, json_child(next), item, flags);
                         next = json_next(next);
                         item = json_next(item);
                     }
@@ -695,7 +713,7 @@ static int valid_schema(json_schema *schema,
 
                     if (json_is_object(next))
                     {
-                        valid &= valid_schema(schema, json_child(next), iter);
+                        valid &= valid_schema(schema, json_child(next), iter, flags);
                     }
                     else
                     {
@@ -704,16 +722,39 @@ static int valid_schema(json_schema *schema,
                     }
                 }
                 break;
+                case SCHEMA_NOT:
+                {
+                    int can_raise = (flags == 0);
+                    int old_valid = valid;
+
+                    set_flag_not(&flags);
+                    valid = !valid_schema(schema, json_child(node), iter, flags);
+                    if (can_raise)
+                    {
+                        if (valid)
+                        {
+                            valid = old_valid;
+                        }
+                        else
+                        {
+                            raise_invalid(schema, node, iter);
+                        }
+                    }
+                }
+                break;
                 case SCHEMA_INVALID:
                 {
-                    raise_invalid(schema, node, iter);
+                    if (flags == 0)
+                    {
+                        raise_invalid(schema, node, iter);
+                    }
                     valid = 0;
                 }
                 break;
                 case SCHEMA_ERROR:
                 {
                     raise_error(schema, node, iter);
-                    valid = 0;
+                    longjmp(schema->error, 1);
                 }
                 break;
             }
@@ -743,7 +784,14 @@ int json_validate(const json *iter, const json *node,
     }
     if ((node = json_child(node)))
     {
-        return valid_schema(&schema, node, iter);
+        if (setjmp(schema.error))
+        {
+            return 0;
+        }
+        else
+        {
+            return valid_schema(&schema, node, iter, 0);
+        }
     }
     return 1;
 }
