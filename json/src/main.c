@@ -13,49 +13,40 @@ static json *parse(const char *path)
     if (node == NULL)
     {
         json_raise_error(&error, path);
-        exit(EXIT_FAILURE);
     }
     return node;
 }
 
-static int validate(const json *node, const char *path)
+static void validate(json *node, const char *path)
 {
     json *schema = parse(path);
 
-    puts("schema:");
+    if (schema == NULL)
+    {
+        return;
+    }
+    puts("json:");
+    json_print(node);
+    puts("schema.json:");
     json_print(schema);
-
-    int valid = json_validate(node, schema, json_schema_print, NULL);
-
-    if (!valid)
+    if (!json_validate(node, schema, json_schema_default_callback, NULL))
     {
         fprintf(stderr, "'%s' doesn't validate\n", path);
     }
     json_free(schema);
-    return valid;
-}
-
-static void print(const json *node)
-{
-    json_print(node);
-}
-
-static json *root = NULL;
-
-static void clean(void)
-{
-    json_free(root);
 }
 
 int main(void)
 {
     setlocale(LC_CTYPE, "");
-    atexit(clean);
 
-    root = parse("test.json");
-    puts("json:");
-    print(root);
-    validate(root, "test.schema.json");
+    json *node;
+
+    if ((node = parse("test.json")))
+    {
+        validate(node, "test.schema.json");
+        json_free(node);
+    }
     return 0;
 }
 

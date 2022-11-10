@@ -334,7 +334,7 @@ static json *create_node(void)
 
 static json *parse(json *node, const char *left, const char **error)
 {
-    #define ERROR (*error = left, NULL)
+#define ERROR (*error = left, NULL)
 
     const char *right;
     const char *token;

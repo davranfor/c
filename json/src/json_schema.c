@@ -146,11 +146,7 @@ static int test_is_boolean(const json *node, const json *iter)
 static int test_ref(const json *node, const json *iter)
 {
     (void)iter;
-    if (!json_is_string(node))
-    {
-        return SCHEMA_ERROR;
-    }
-    return SCHEMA_REF;
+    return json_is_string(node) ? SCHEMA_REF : SCHEMA_ERROR;
 }
 
 static unsigned add_type(const char *type, unsigned value)
@@ -233,19 +229,25 @@ static int test_enum(const json *node, const json *iter)
     return 1;
 }
 
+static int find_required(const json *node, const json *iter)
+{
+    for (node = json_child(node); node != NULL; node = json_next(node))
+    {
+        if (!json_find(iter, json_string(node)))
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int test_required(const json *node, const json *iter)
 {
     if (json_is_array(node) && unique_strings(node))
     {
         if (json_is_object(iter))
         {
-            for (node = json_child(node); node != NULL; node = json_next(node))
-            {
-                if (!json_find(iter, json_string(node)))
-                {
-                    return 0;
-                }
-            }
+            return find_required(node, iter);
         }
         return 1;
     }
@@ -266,18 +268,9 @@ static int test_dependent_required(const json *node, const json *iter)
             {
                 return SCHEMA_ERROR;
             }
-            if (json_find(iter, json_name(node)))
+            if (json_find(iter, json_name(node)) && !find_required(node, iter))
             {
-                const json *item = json_child(node);
-
-                while (item != NULL)
-                {
-                    if (!json_find(iter, json_string(item)))
-                    {
-                        return 0;
-                    }
-                    item = json_next(item);
-                }
+                return 0;
             }
         }
     }
@@ -707,7 +700,7 @@ static int valid_schema(json_schema *schema,
                     }
                     else
                     {
-                        raise_invalid(schema, node, iter);
+                        raise_error(schema, node, iter);
                         valid = 0;
                     }
                 }
@@ -756,7 +749,7 @@ int json_validate(const json *iter, const json *node,
     return 1;
 }
 
-int json_schema_print(const json *node, void *data)
+int json_schema_default_callback(const json *node, void *data)
 {
     (void)data;
     json_write(stderr, node);
