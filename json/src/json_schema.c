@@ -25,8 +25,8 @@ typedef struct
 enum
 {
     SCHEMA_INVALID, SCHEMA_VALID, SCHEMA_ERROR,
-    SCHEMA_OBJECT, SCHEMA_ARRAY, SCHEMA_TUPLE,
-    SCHEMA_REF, SCHEMA_NOT
+    SCHEMA_OBJECT, SCHEMA_ARRAY, SCHEMA_TUPLE, SCHEMA_REF,
+    SCHEMA_NOT, SCHEMA_ALL_OF, SCHEMA_ANY_OF, SCHEMA_ONE_OF 
 };
 
 static void schema_callback(const json_schema *schema,
@@ -158,6 +158,29 @@ static int test_not(const json *node, const json *iter)
     return json_is_object(node) ? SCHEMA_NOT : SCHEMA_ERROR;
 }
 
+static int test_all_of(const json *node, const json *iter)
+{
+    (void)iter;
+    return json_is_array(node) && childs_are_objects(node)
+        ? SCHEMA_ALL_OF
+        : SCHEMA_ERROR;
+}
+
+static int test_any_of(const json *node, const json *iter)
+{
+    (void)iter;
+    return json_is_array(node) && childs_are_objects(node)
+        ? SCHEMA_ANY_OF
+        : SCHEMA_ERROR;
+}
+
+static int test_one_of(const json *node, const json *iter)
+{
+    (void)iter;
+    return json_is_array(node) && childs_are_objects(node)
+        ? SCHEMA_ONE_OF
+        : SCHEMA_ERROR;
+}
 
 static unsigned add_type(const char *type, unsigned value)
 {
@@ -586,13 +609,6 @@ static int test_multiple_of(const json *node, const json *iter)
     return 1;
 }
 
-#define FLAG_NOT 0x01
-
-static void set_flag_not(unsigned *flags)
-{
-    *flags |= FLAG_NOT;
-}
-
 static json *get_ref(const json *node)
 {
     const char *ref = json_string(node);
@@ -616,6 +632,9 @@ static tester get_test_by_name(const char *name)
         equal(name, "title") ? test_is_string :
         equal(name, "description") ? test_is_string :
         equal(name, "not") ? test_not :
+        equal(name, "allOf") ? test_all_of :
+        equal(name, "anyOf") ? test_any_of :
+        equal(name, "oneOf") ? test_one_of :
         equal(name, "type") ? test_type :
         equal(name, "const") ? test_const :
         equal(name, "enum") ? test_enum :
@@ -658,7 +677,7 @@ static tester get_test(const json *node)
 }
 
 static int valid_schema(json_schema *schema,
-    const json *node, const json *iter, unsigned flags)
+    const json *node, const json *iter, int flags)
 {
     int valid = 1;
 
@@ -727,8 +746,50 @@ static int valid_schema(json_schema *schema,
                     int can_raise = (flags == 0);
                     int old_valid = valid;
 
-                    set_flag_not(&flags);
-                    valid = !valid_schema(schema, json_child(node), iter, flags);
+                    valid = !valid_schema(schema, json_child(node), iter, 1);
+                    if (can_raise)
+                    {
+                        if (valid)
+                        {
+                            valid = old_valid;
+                        }
+                        else
+                        {
+                            raise_invalid(schema, node, iter);
+                        }
+                    }
+                }
+                break;
+                case SCHEMA_ALL_OF:
+                case SCHEMA_ANY_OF:
+                case SCHEMA_ONE_OF:
+                {
+                    const json *next = json_child(node);
+                    int can_raise = (flags == 0);
+                    int old_valid = valid;
+                    int count = 0;
+
+                    valid = 1;
+                    while (next != NULL)
+                    {
+                        if (count++ == 0)
+                        {
+                            valid = valid_schema(schema, json_child(next), iter, 1);
+                        }
+                        else if (test == test_all_of)
+                        {
+                            valid &= valid_schema(schema, json_child(next), iter, 1);
+                        }
+                        else if (test == test_any_of)
+                        {
+                            valid |= valid_schema(schema, json_child(next), iter, 1);
+                        }
+                        else if (test == test_one_of)
+                        {
+                            valid ^= valid_schema(schema, json_child(next), iter, 1);
+                        }
+                        next = json_next(next);
+                    }
                     if (can_raise)
                     {
                         if (valid)
