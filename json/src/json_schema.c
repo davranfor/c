@@ -719,7 +719,6 @@ static int valid_schema(json_schema *schema,
                     else
                     {
                         raise_error(schema, node, iter);
-                        valid = 0;
                     }
                 }
                 break;
