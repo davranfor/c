@@ -743,11 +743,10 @@ static int valid_schema(json_schema *schema,
                 break;
                 case SCHEMA_NOT:
                 {
-                    int can_raise = (flags == 0);
                     int old_valid = valid;
 
                     valid = !valid_schema(schema, json_child(node), iter, 1);
-                    if (can_raise)
+                    if (flags == 0)
                     {
                         if (valid)
                         {
@@ -765,7 +764,6 @@ static int valid_schema(json_schema *schema,
                 case SCHEMA_ONE_OF:
                 {
                     const json *next = json_child(node);
-                    int can_raise = (flags == 0);
                     int old_valid = valid;
                     int count = 0;
 
@@ -790,7 +788,7 @@ static int valid_schema(json_schema *schema,
                         }
                         next = json_next(next);
                     }
-                    if (can_raise)
+                    if (flags == 0)
                     {
                         if (valid)
                         {
