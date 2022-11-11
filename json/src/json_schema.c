@@ -52,10 +52,11 @@ static void raise_warning(const json_schema *schema,
     schema_callback(schema, node, iter, "Warning");
 }
 
-static void raise_error(const json_schema *schema,
+static void raise_error(json_schema *schema,
     const json *node, const json *iter)
 {
     schema_callback(schema, node, iter, "Error");
+    longjmp(schema->error, 1);
 }
 
 static int childs_are(const json *node, enum json_type type)
@@ -754,7 +755,6 @@ static int valid_schema(json_schema *schema,
                 case SCHEMA_ERROR:
                 {
                     raise_error(schema, node, iter);
-                    longjmp(schema->error, 1);
                 }
                 break;
             }
@@ -777,23 +777,16 @@ int json_validate(const json *iter, const json *node,
         .data = data
     };
 
-    if (!json_is_object(node))
+    if (setjmp(schema.error))
     {
-        raise_error(&schema, node, iter);
         return 0;
     }
-    if ((node = json_child(node)))
+    if (json_is_object(node))
     {
-        if (setjmp(schema.error))
-        {
-            return 0;
-        }
-        else
-        {
-            return valid_schema(&schema, node, iter, 0);
-        }
+        return valid_schema(&schema, json_child(node), iter, 0);
     }
-    return 1;
+    raise_error(&schema, node, iter);
+    return 0;
 }
 
 int json_schema_default_callback(const json *node, void *data)
