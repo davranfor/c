@@ -226,7 +226,7 @@ static int test_type(const json *node, const json *iter)
     {
         unsigned type = json_type(iter);
 
-        // 'integer' must validate if type is 'number'
+        /* 'integer' must validate if type is 'number' */
         return (mask & (1u << type))
            || ((mask & (1u << JSON_DOUBLE)) && (type == JSON_INTEGER));
     }

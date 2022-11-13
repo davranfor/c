@@ -233,20 +233,24 @@ int test_is_hostname(const char *str)
 
 int test_is_email(const char *str)
 {
-    // Control characters are not allowed
-    if (str[strcspn(str, "\b\f\n\r\t")] != '\0')
+    if ((str[0] == ' ') || (str[0] == '.'))
     {
         return 0;
     }
 
     const char *at = strrchr(str, '@');
 
-    // Maximum of 64 characters in the "local part" (before the "@")
+    /* Maximum of 64 characters in the "local part" (before the "@") */
     if ((at == NULL) || (at == str) || (at[-1] == '.') || (at > (str + 64)))
     {
         return 0;
     }
-    // Maximum of 255 characters in the "domain part" (after the "@") 
+    /* Control characters are not allowed */
+    if (str[strcspn(str, "\b\f\n\r\t")] != '\0')
+    {
+        return 0;
+    }
+    /* Maximum of 255 characters in the "domain part" (after the "@") */
     return is_hostname_helper(at + 1, 0);
 }
 
