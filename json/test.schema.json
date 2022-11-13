@@ -23,6 +23,12 @@
             "minimum": 0,
             "maximum": 120
         },
+        "hostname": {
+            "format": "hostname"
+        },
+        "email": {
+            "format": "email"
+        },
         "phone": {
             "items": {
                 "type": "string"
@@ -60,7 +66,6 @@
             }
         }
     },
-    "required": ["age"],
     "dependentRequired": {
         "lastName": ["firstName"]
     }

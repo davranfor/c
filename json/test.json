@@ -2,6 +2,8 @@
     "firstName": "John",
     "lastName": "Doe",
     "age": 42,
+    "email": "john.doe@example.com",
+    "hostname": "example.com",
     "phone": ["123", "321"],
     "data": [
         [1, "David"],
