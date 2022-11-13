@@ -10,6 +10,7 @@
 int test_is_date(const char *);
 int test_is_time(const char *);
 int test_is_date_time(const char *);
+int test_is_hostname(const char *);
 int test_is_email(const char *);
 int test_is_ipv4(const char *);
 int test_is_ipv6(const char *);

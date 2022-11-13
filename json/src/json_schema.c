@@ -522,6 +522,7 @@ static int test_format(const json *node, const json *iter)
             equal(name, "date") ? test_is_date :
             equal(name, "time") ? test_is_time :
             equal(name, "date-time") ? test_is_date_time :
+            equal(name, "hostname") ? test_is_hostname :
             equal(name, "email") ? test_is_email :
             equal(name, "ipv4") ? test_is_ipv4 :
             equal(name, "ipv6") ? test_is_ipv6 :
@@ -683,7 +684,7 @@ static int valid_schema(json_schema *schema,
 
     while (node != NULL)
     {
-        tester test = get_test(node);
+        const tester test = get_test(node);
 
         if (test != NULL)
         {

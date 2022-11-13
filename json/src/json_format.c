@@ -195,33 +195,59 @@ int test_is_date_time(const char *str)
     return 0;
 }
 
+static int is_hostname_helper(const char *str, int can_end_with_dot)
+{
+    const char *ptr = str;
+    size_t count = 0;
+
+    while (*ptr != '\0')
+    {
+        if (isalnum((unsigned char)*ptr) || ((*ptr == '-') && (count > 0)))
+        {
+            if (++count == 64)
+            {
+                return 0;
+            }
+        }
+        else if ((*ptr == '.') && (count > 0) && (ptr[-1] != '-'))
+        {
+            count = 0;
+        }
+        else
+        {
+            return 0;
+        }
+        ptr++;
+    }
+    if ((ptr == str) || ((ptr - str) >= 256) || (ptr[-1] == '-'))
+    {
+        return 0;
+    }
+    return (count == 0) ? can_end_with_dot : 1;
+}
+
+int test_is_hostname(const char *str)
+{
+    return is_hostname_helper(str, 1);
+}
+
 int test_is_email(const char *str)
 {
-    if ((str[0] == '.') || (str[0] == '@') || strstr(str, ".."))
+    // Control characters are not allowed
+    if (str[strcspn(str, "\b\f\n\r\t")] != '\0')
     {
         return 0;
     }
 
-    const char *dot = strrchr(str, '.');
+    const char *at = strrchr(str, '@');
 
-    if ((dot == NULL) || (dot[1] == 0))
+    // Maximum of 64 characters in the "local part" (before the "@")
+    if ((at == NULL) || (at == str) || (at[-1] == '.') || (at > (str + 64)))
     {
         return 0;
     }
-
-    const char *at = strchr(str, '@');
-
-    if ((at == NULL) || (at >= dot - 1))
-    {
-        return 0;
-    }
-
-    const char *valid = "abcdefghijklmnopqrstuvwxyz"
-                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                        "0123456789"
-                        ".@!#$%&'*+-/=?^_`{|}~";
-
-    return str[strspn(str, valid)] == '\0';
+    // Maximum of 255 characters in the "domain part" (after the "@") 
+    return is_hostname_helper(at + 1, 0);
 }
 
 int test_is_ipv4(const char *str)
