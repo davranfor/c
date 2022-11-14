@@ -20,8 +20,8 @@ static int valid_mask(const char *mask, const char *str)
      *  9   isdigit (optional)
      *  A   isalpha (required)
      *  a   isalpha (optional)
-     *  T   isalnum (required)
-     *  t   isalnum (optional)
+     *  W   isalnum (required)
+     *  w   isalnum (optional)
      *  X   isxdigit (required)
      *  x   isxdigit (optional)
      *  *   end (returns the position if there is more text to scan or 1)
@@ -57,11 +57,11 @@ static int valid_mask(const char *mask, const char *str)
             case 'a':
                 func = isalpha;
                 break;
-            case 'T':
+            case 'W':
                 func = isalnum;
                 required = 1;
                 break;
-            case 't':
+            case 'w':
                 func = isalnum;
                 break;
             case 'X':
@@ -74,6 +74,7 @@ static int valid_mask(const char *mask, const char *str)
             case '*':
                 return *str ? (int)(str - ptr) : 1;
             default:
+                required = 1;
                 break;
         }
 
@@ -262,7 +263,7 @@ int test_is_ipv4(const char *str)
     {
         char *ptr;
 
-        for (int i = 0; i < 4; i++)
+        for (int byte = 0; byte < 4; byte++)
         {
             if (strtol(str, &ptr, 10) > 255)
             {
@@ -314,6 +315,26 @@ int test_is_uuid(const char *str)
     const char *mask = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX";
 
     return valid_mask(mask, str);
+}
+
+int test_is_url(const char *str)
+{
+    const char *mask = "http\?s://*";
+    int valid = valid_mask(mask, str);
+
+    if (valid > 1)
+    {
+        const char *allow = "abcdefghijklmnopqrstuvwxyz"
+                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                            "0123456789"
+                            "-._~:/?#[]@!$&'()*+,;%=";
+
+        size_t end = strspn(str, allow);
+
+        // Maximum of 2048 characters
+        return (str[end] == '\0') && (end <= 2048);
+    }
+    return 0;
 }
 
 int test_regex(const char *pattern, const char *str)

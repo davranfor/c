@@ -526,7 +526,8 @@ static int test_format(const json *node, const json *iter)
             equal(name, "email") ? test_is_email :
             equal(name, "ipv4") ? test_is_ipv4 :
             equal(name, "ipv6") ? test_is_ipv6 :
-            equal(name, "uuid") ? test_is_uuid : NULL;
+            equal(name, "uuid") ? test_is_uuid :
+            equal(name, "url") ? test_is_url : NULL;
 
         if (format != NULL)
         {
