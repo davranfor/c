@@ -2,6 +2,7 @@
     "firstName": "John",
     "lastName": "Doe",
     "age": 42,
+    "url": "http://www.example.com",
     "email": "john.doe@example.com",
     "hostname": "example.com",
     "phone": ["123", "321"],
