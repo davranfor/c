@@ -23,14 +23,8 @@
             "minimum": 0,
             "maximum": 120
         },
-        "url": {
-            "format": "url"
-        },
         "email": {
             "format": "email"
-        },
-        "hostname": {
-            "format": "hostname"
         },
         "phone": {
             "items": {
@@ -67,10 +61,21 @@
                     "$ref": "#/$defs/countries"
                 }
             }
+        },
+        "credit_card": {
+            "type": "number"
         }
     },
     "dependentRequired": {
         "lastName": ["firstName"]
+    },
+    "dependentSchemas": {
+        "credit_card": {
+            "properties": {
+                "billing_address": {"type": "string"}
+            },
+            "required": ["billing_address"]
+        }
     }
 }
 
