@@ -76,6 +76,11 @@ static int childs_are_objects(const json *node)
     return childs_are(node, JSON_OBJECT);
 }
 
+static int childs_are_strings(const json *node)
+{
+    return childs_are(node, JSON_STRING);
+}
+/*
 static int unique(const json *node, enum json_type type,
     const char *(*comp)(const json *))
 {
@@ -107,7 +112,7 @@ static int unique_strings(const json *node)
 {
     return unique(node, JSON_STRING, json_string);
 }
-
+*/
 static int test_error(const json *node, const json *iter)
 {
     (void)node;
@@ -206,19 +211,22 @@ static int test_type(const json *node, const json *iter)
 
     if (json_is_string(node))
     {
-        mask = add_type(json_string(node), mask);
+        if ((mask = add_type(json_string(node), mask)) == 0)
+        {
+            return SCHEMA_ERROR;
+        }
     }
-    else if (json_is_array(node) && unique_strings(node))
+    else if (json_is_array(node) && childs_are_strings(node))
     {
         for (node = json_child(node); node != NULL; node = json_next(node))
         {
             if ((mask = add_type(json_string(node), mask)) == 0)
             {
-                break;
+                return SCHEMA_ERROR;
             }
         }
     }
-    if (mask == 0)
+    else
     {
         return SCHEMA_ERROR;
     }
@@ -276,7 +284,7 @@ static int find_required(const json *node, const json *iter)
 
 static int test_required(const json *node, const json *iter)
 {
-    if (json_is_array(node) && unique_strings(node))
+    if (json_is_array(node) && childs_are_strings(node))
     {
         if (json_is_object(iter))
         {
@@ -297,7 +305,7 @@ static int test_dependent_required(const json *node, const json *iter)
     {
         for (node = json_child(node); node != NULL; node = json_next(node))
         {
-            if (!(json_is_array(node) && unique_strings(node)))
+            if (!(json_is_array(node) && childs_are_strings(node)))
             {
                 return SCHEMA_ERROR;
             }
@@ -312,7 +320,7 @@ static int test_dependent_required(const json *node, const json *iter)
 
 static int test_properties(const json *node, const json *iter)
 {
-    if (!(json_is_object(node) && unique_objects(node)))
+    if (!(json_is_object(node) && childs_are_objects(node)))
     {
         return SCHEMA_ERROR;
     }
@@ -600,7 +608,7 @@ static int test_maximum(const json *node, const json *iter)
 
 static int test_multiple_of(const json *node, const json *iter)
 {
-    if (!json_is_number(node))
+    if (json_number(node) <= 0)
     {
         return SCHEMA_ERROR;
     }
@@ -699,7 +707,10 @@ static int valid_schema(json_schema *schema,
                     {
                         const json *item = json_find(iter, json_name(next));
 
-                        valid &= valid_schema(schema, json_child(next), item, flags);
+                        do
+                        {
+                            valid &= valid_schema(schema, json_child(next), item, flags);
+                        } while ((item = json_find_next(item, json_name(next)));
                         next = json_next(next);
                     }
                 }

@@ -582,7 +582,11 @@ double json_double(const json *node)
 
 double json_number(const json *node)
 {
-    return json_double(node);
+    if ((node == NULL) || (node->value == NULL))
+    {
+        return 0.0;
+    }
+    return strtod(node->value, NULL);
 }
 
 unsigned long json_real(const json *node)
@@ -754,6 +758,25 @@ json *json_find(const json *root, const char *name)
     json *node;
 
     if ((root != NULL) && (node = root->left))
+    {
+        while (node != NULL)
+        {
+            if ((node->name != NULL) && (strcmp(node->name, name) == 0))
+            {
+                return node;
+            }
+            node = node->right;
+        }
+    }
+    return NULL;
+}
+
+/* Locates the next sibling by name */
+json *json_find_next(const json *root, const char *name)
+{
+    json *node;
+
+    if ((root != NULL) && (node = root->right))
     {
         while (node != NULL)
         {

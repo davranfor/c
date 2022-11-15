@@ -52,6 +52,7 @@ json *json_parent(const json *);
 json *json_next(const json *);
 json *json_child(const json *);
 json *json_find(const json *, const char *);
+json *json_find_next(const json *, const char *);
 json *json_node(const json *, const char *);
 json *json_item(const json *, size_t);
 size_t json_items(const json *);
