@@ -25,8 +25,8 @@ typedef struct
 enum
 {
     SCHEMA_INVALID, SCHEMA_VALID, SCHEMA_ERROR,
-    SCHEMA_OBJECT, SCHEMA_ARRAY, SCHEMA_TUPLE, SCHEMA_REF,
-    SCHEMA_NOT, SCHEMA_ALL_OF, SCHEMA_ANY_OF, SCHEMA_ONE_OF 
+    SCHEMA_DEPENDENT, SCHEMA_PROPERTIES, SCHEMA_ITEMS, SCHEMA_TUPLES,
+    SCHEMA_REF, SCHEMA_NOT, SCHEMA_ALL_OF, SCHEMA_ANY_OF, SCHEMA_ONE_OF
 };
 
 static void schema_callback(const json_schema *schema,
@@ -80,39 +80,7 @@ static int childs_are_strings(const json *node)
 {
     return childs_are(node, JSON_STRING);
 }
-/*
-static int unique(const json *node, enum json_type type,
-    const char *(*comp)(const json *))
-{
-    const json *head = json_child(node);
 
-    for (node = head; node != NULL; node = json_next(node))
-    {
-        if (json_type(node) != type)
-        {
-            return 0;
-        }
-        for (const json *item = head; item != node; item = json_next(item))
-        {
-            if (equal(comp(node), comp(item)))
-            {
-                return 0;
-            }
-        }
-    }
-    return 1;
-}
-
-static int unique_objects(const json *node)
-{
-    return unique(node, JSON_OBJECT, json_name);
-}
-
-static int unique_strings(const json *node)
-{
-    return unique(node, JSON_STRING, json_string);
-}
-*/
 static int test_error(const json *node, const json *iter)
 {
     (void)node;
@@ -318,6 +286,19 @@ static int test_dependent_required(const json *node, const json *iter)
     return 1;
 }
 
+static int test_dependent_schemas(const json *node, const json *iter)
+{
+    if (!(json_is_object(node) && childs_are_objects(node)))
+    {
+        return SCHEMA_ERROR;
+    }
+    if (json_is_object(iter))
+    {
+        return SCHEMA_DEPENDENT;
+    }
+    return 1;
+}
+
 static int test_properties(const json *node, const json *iter)
 {
     if (!(json_is_object(node) && childs_are_objects(node)))
@@ -326,7 +307,7 @@ static int test_properties(const json *node, const json *iter)
     }
     if (json_is_object(iter))
     {
-        return SCHEMA_OBJECT;
+        return SCHEMA_PROPERTIES;
     }
     return 1;
 }
@@ -392,11 +373,11 @@ static int test_items(const json *node, const json *iter)
     {
         if (json_is_object(node))
         {
-            return SCHEMA_ARRAY;
+            return SCHEMA_ITEMS;
         }
         else
         {
-            return SCHEMA_TUPLE;
+            return SCHEMA_TUPLES;
         }
     }
     return 1;
@@ -650,6 +631,7 @@ static tester get_test_by_name(const char *name)
         equal(name, "enum") ? test_enum :
         equal(name, "required") ? test_required :
         equal(name, "dependentRequired") ? test_dependent_required :
+        equal(name, "dependentSchemas") ? test_dependent_schemas :
         equal(name, "properties") ? test_properties :
         equal(name, "additionalProperties") ? test_additional_properties :
         equal(name, "minProperties") ? test_min_properties :
@@ -699,7 +681,21 @@ static int valid_schema(json_schema *schema,
         {
             switch (test(node, iter))
             {
-                case SCHEMA_OBJECT:
+                case SCHEMA_DEPENDENT:
+                {
+                    const json *next = json_child(node);
+
+                    while (next != NULL)
+                    {
+                        if (json_find(iter, json_name(next)))
+                        {
+                            valid &= valid_schema(schema, json_child(next), iter, flags);
+                        }
+                        next = json_next(next);
+                    }
+                }
+                break;
+                case SCHEMA_PROPERTIES:
                 {
                     const json *next = json_child(node);
 
@@ -707,15 +703,13 @@ static int valid_schema(json_schema *schema,
                     {
                         const json *item = json_find(iter, json_name(next));
 
-                        do
-                        {
-                            valid &= valid_schema(schema, json_child(next), item, flags);
-                        } while ((item = json_find_next(item, json_name(next))));
+                        do valid &= valid_schema(schema, json_child(next), item, flags);
+                        while ((item = json_find_next(item, json_name(next))));
                         next = json_next(next);
                     }
                 }
                 break;
-                case SCHEMA_ARRAY:
+                case SCHEMA_ITEMS:
                 {
                     const json *next = json_child(node);
                     const json *item = json_child(iter);
@@ -727,7 +721,7 @@ static int valid_schema(json_schema *schema,
                     }
                 }
                 break;
-                case SCHEMA_TUPLE:
+                case SCHEMA_TUPLES:
                 {
                     const json *next = json_child(node);
                     const json *item = json_child(iter);
