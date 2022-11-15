@@ -710,7 +710,7 @@ static int valid_schema(json_schema *schema,
                         do
                         {
                             valid &= valid_schema(schema, json_child(next), item, flags);
-                        } while ((item = json_find_next(item, json_name(next)));
+                        } while ((item = json_find_next(item, json_name(next))));
                         next = json_next(next);
                     }
                 }
