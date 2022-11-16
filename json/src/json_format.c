@@ -246,11 +246,6 @@ int test_is_email(const char *str)
     {
         return 0;
     }
-    /* Control characters are not allowed */
-    if (str[strcspn(str, "\b\f\n\r\t")] != '\0')
-    {
-        return 0;
-    }
     /* Maximum of 255 characters in the "domain part" (after the "@") */
     return is_hostname_helper(at + 1, 0);
 }

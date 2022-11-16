@@ -25,8 +25,10 @@ typedef struct
 enum
 {
     SCHEMA_INVALID, SCHEMA_VALID, SCHEMA_ERROR,
-    SCHEMA_DEPENDENT, SCHEMA_PROPERTIES, SCHEMA_ITEMS, SCHEMA_TUPLES,
-    SCHEMA_REF, SCHEMA_NOT, SCHEMA_ALL_OF, SCHEMA_ANY_OF, SCHEMA_ONE_OF
+    SCHEMA_DEPENDENT_SCHEMAS, SCHEMA_PROPERTIES,
+    SCHEMA_ITEMS, SCHEMA_TUPLES,
+    SCHEMA_REF,
+    SCHEMA_NOT, SCHEMA_ALL_OF, SCHEMA_ANY_OF, SCHEMA_ONE_OF
 };
 
 static void schema_callback(const json_schema *schema,
@@ -294,7 +296,7 @@ static int test_dependent_schemas(const json *node, const json *iter)
     }
     if (json_is_object(iter))
     {
-        return SCHEMA_DEPENDENT;
+        return SCHEMA_DEPENDENT_SCHEMAS;
     }
     return 1;
 }
@@ -681,7 +683,7 @@ static int valid_schema(json_schema *schema,
         {
             switch (test(node, iter))
             {
-                case SCHEMA_DEPENDENT:
+                case SCHEMA_DEPENDENT_SCHEMAS:
                 {
                     const json *next = json_child(node);
 
