@@ -271,21 +271,24 @@ static int test_dependent_required(const json *node, const json *iter)
     {
         return SCHEMA_ERROR;
     }
-    if (json_is_object(iter))
+
+    int valid = 1;
+
+    for (node = json_child(node); node != NULL; node = json_next(node))
     {
-        for (node = json_child(node); node != NULL; node = json_next(node))
+        if (!(json_is_array(node) && childs_are_strings(node)))
         {
-            if (!(json_is_array(node) && childs_are_strings(node)))
-            {
-                return SCHEMA_ERROR;
-            }
+            return SCHEMA_ERROR;
+        }
+        if (valid && json_is_object(iter))
+        {
             if (json_find(iter, json_name(node)) && !find_required(node, iter))
             {
-                return 0;
+                valid = 0;
             }
         }
     }
-    return 1;
+    return valid;
 }
 
 static int test_dependent_schemas(const json *node, const json *iter)
