@@ -290,28 +290,18 @@ static int test_dependent_required(const json *node, const json *iter)
 
 static int test_dependent_schemas(const json *node, const json *iter)
 {
-    if (!(json_is_object(node) && childs_are_objects(node)))
-    {
-        return SCHEMA_ERROR;
-    }
-    if (json_is_object(iter))
-    {
-        return SCHEMA_DEPENDENT_SCHEMAS;
-    }
-    return 1;
+    (void)iter;
+    return json_is_object(node) && childs_are_objects(node)
+        ? SCHEMA_DEPENDENT_SCHEMAS
+        : SCHEMA_ERROR;
 }
 
 static int test_properties(const json *node, const json *iter)
 {
-    if (!(json_is_object(node) && childs_are_objects(node)))
-    {
-        return SCHEMA_ERROR;
-    }
-    if (json_is_object(iter))
-    {
-        return SCHEMA_PROPERTIES;
-    }
-    return 1;
+    (void)iter;
+    return json_is_object(node) && childs_are_objects(node)
+        ? SCHEMA_PROPERTIES
+        : SCHEMA_ERROR;
 }
 
 static int test_additional_properties(const json *node, const json *iter)
@@ -366,23 +356,16 @@ static int test_max_properties(const json *node, const json *iter)
 
 static int test_items(const json *node, const json *iter)
 {
-    if (!json_is_object(node) &&
-        !(json_is_array(node) && childs_are_objects(node)))
+    (void)iter;
+    if (json_is_object(node))
     {
-        return SCHEMA_ERROR;
+        return SCHEMA_ITEMS;
     }
-    if (json_is_array(iter))
+    if (json_is_array(node) && childs_are_objects(node))
     {
-        if (json_is_object(node))
-        {
-            return SCHEMA_ITEMS;
-        }
-        else
-        {
-            return SCHEMA_TUPLES;
-        }
+        return SCHEMA_TUPLES;
     }
-    return 1;
+    return SCHEMA_ERROR;
 }
 
 static int test_additional_items(const json *node, const json *iter)
@@ -699,12 +682,20 @@ static int valid_schema(json_schema *schema,
                 break;
                 case SCHEMA_PROPERTIES:
                 {
+                    const json *item = json_is_object(iter) ? iter : NULL;
                     const json *next = json_child(node);
 
-                    while (next != NULL)
+                    if (item == NULL)
                     {
-                        const json *item = json_find(iter, json_name(next));
-
+                        while (next != NULL)
+                        {
+                            valid_schema(schema, json_child(next), item, 1);
+                            next = json_next(next);
+                        }
+                    }
+                    else while (next != NULL)
+                    {
+                        item = json_find(iter, json_name(next));
                         do valid &= valid_schema(schema, json_child(next), item, flags);
                         while ((item = json_find_next(item, json_name(next))));
                         next = json_next(next);
@@ -713,10 +704,14 @@ static int valid_schema(json_schema *schema,
                 break;
                 case SCHEMA_ITEMS:
                 {
+                    const json *item = json_is_array(iter) ? json_child(iter) : NULL;
                     const json *next = json_child(node);
-                    const json *item = json_child(iter);
 
-                    while (item != NULL)
+                    if (item == NULL)
+                    {
+                        valid_schema(schema, next, item, 1);
+                    }
+                    else while (item != NULL)
                     {
                         valid &= valid_schema(schema, next, item, flags);
                         item = json_next(item);
@@ -725,10 +720,18 @@ static int valid_schema(json_schema *schema,
                 break;
                 case SCHEMA_TUPLES:
                 {
+                    const json *item = json_is_array(iter) ? json_child(iter) : NULL;
                     const json *next = json_child(node);
-                    const json *item = json_child(iter);
 
-                    while (next != NULL)
+                    if (item == NULL)
+                    {
+                        while (next != NULL)
+                        {
+                            valid_schema(schema, json_child(next), item, 1);
+                            next = json_next(next);
+                        }
+                    }
+                    else while (next != NULL)
                     {
                         valid &= valid_schema(schema, json_child(next), item, flags);
                         next = json_next(next);
