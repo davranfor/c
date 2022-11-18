@@ -28,7 +28,9 @@ enum
     SCHEMA_DEPENDENT_SCHEMAS, SCHEMA_PROPERTIES,
     SCHEMA_ITEMS, SCHEMA_TUPLES,
     SCHEMA_REF,
-    SCHEMA_NOT, SCHEMA_ALL_OF, SCHEMA_ANY_OF, SCHEMA_ONE_OF
+    SCHEMA_NOT,
+    SCHEMA_ALL_OF, SCHEMA_ANY_OF, SCHEMA_ONE_OF,
+    SCHEMA_IF, SCHEMA_THEN, SCHEMA_ELSE
 };
 
 static void schema_callback(const json_schema *schema,
@@ -155,6 +157,24 @@ static int test_one_of(const json *node, const json *iter)
     return json_is_array(node) && childs_are_objects(node)
         ? SCHEMA_ONE_OF
         : SCHEMA_ERROR;
+}
+
+static int test_if(const json *node, const json *iter)
+{
+    (void)iter;
+    return json_is_object(node) ? SCHEMA_IF : SCHEMA_ERROR;
+}
+
+static int test_then(const json *node, const json *iter)
+{
+    (void)iter;
+    return json_is_object(node) ? SCHEMA_THEN : SCHEMA_ERROR;
+}
+
+static int test_else(const json *node, const json *iter)
+{
+    (void)iter;
+    return json_is_object(node) ? SCHEMA_ELSE : SCHEMA_ERROR;
 }
 
 static unsigned add_type(const char *type, unsigned value)
@@ -599,6 +619,27 @@ static json *get_ref(const json *node)
     return json_node(node, ref + 1);
 }
 
+static int get_cond(const json **node, int cond)
+{
+    const json *next = json_next(*node);
+    const char *name;
+
+    if (json_is_object(next) && (name = json_name(next)))
+    {
+        if (equal(name, "then"))
+        {
+            *node = next;
+            return cond == 1;
+        }
+        if (equal(name, "else"))
+        {
+            *node = next;
+            return cond == 0;
+        }
+    }
+    return -1;
+}
+
 typedef int (*tester)(const json *, const json *);
 
 static tester get_test_by_name(const char *name)
@@ -614,6 +655,9 @@ static tester get_test_by_name(const char *name)
         equal(name, "allOf") ? test_all_of :
         equal(name, "anyOf") ? test_any_of :
         equal(name, "oneOf") ? test_one_of :
+        equal(name, "if") ? test_if :
+        equal(name, "then") ? test_then :
+        equal(name, "else") ? test_else :
         equal(name, "type") ? test_type :
         equal(name, "const") ? test_const :
         equal(name, "enum") ? test_enum :
@@ -814,6 +858,30 @@ static int valid_schema(json_schema *schema,
                             raise_invalid(schema, node, iter);
                         }
                     }
+                }
+                break;
+                case SCHEMA_IF:
+                {
+                    int temp = valid_schema(schema, json_child(node), iter, 1);
+                    int cond;
+
+                    while ((cond = get_cond(&node, temp)) != -1)
+                    {
+                        if (cond == 1)
+                        {
+                            valid &= valid_schema(schema, json_child(node), iter, flags);
+                        }
+                        else
+                        {
+                            valid_schema(schema, json_child(node), iter, 1);
+                        }
+                    }
+                }
+                break;
+                case SCHEMA_THEN:
+                case SCHEMA_ELSE:
+                {
+                    valid_schema(schema, json_child(node), NULL, 1);
                 }
                 break;
                 case SCHEMA_INVALID:
