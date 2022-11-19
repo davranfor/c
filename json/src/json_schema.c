@@ -25,8 +25,9 @@ typedef struct
 enum
 {
     SCHEMA_INVALID, SCHEMA_VALID, SCHEMA_ERROR,
-    SCHEMA_DEPENDENT_SCHEMAS, SCHEMA_PROPERTIES,
-    SCHEMA_ITEMS, SCHEMA_TUPLES,
+    SCHEMA_DEPENDENT_SCHEMAS,
+    SCHEMA_PROPERTIES, SCHEMA_PATTERN_PROPERTIES, SCHEMA_ADDITIONAL_PROPERTIES,
+    SCHEMA_ITEMS, SCHEMA_ADDITIONAL_ITEMS, SCHEMA_TUPLES,
     SCHEMA_REF,
     SCHEMA_NOT,
     SCHEMA_ALL_OF, SCHEMA_ANY_OF, SCHEMA_ONE_OF,
@@ -327,8 +328,20 @@ static int test_properties(const json *node, const json *iter)
         : SCHEMA_ERROR;
 }
 
+static int test_pattern_properties(const json *node, const json *iter)
+{
+    (void)iter;
+    return json_is_object(node) && childs_are_objects(node)
+        ? SCHEMA_PATTERN_PROPERTIES
+        : SCHEMA_ERROR;
+}
+
 static int test_additional_properties(const json *node, const json *iter)
 {
+    if (json_is_object(node))
+    {
+        return SCHEMA_ADDITIONAL_PROPERTIES;
+    }
     if (!json_is_boolean(node))
     {
         return SCHEMA_ERROR;
@@ -393,6 +406,10 @@ static int test_items(const json *node, const json *iter)
 
 static int test_additional_items(const json *node, const json *iter)
 {
+    if (json_is_object(node))
+    {
+        return SCHEMA_ADDITIONAL_ITEMS;
+    }
     if (!json_is_boolean(node))
     {
         return SCHEMA_ERROR;
@@ -403,12 +420,7 @@ static int test_additional_items(const json *node, const json *iter)
 
         if (json_is_array(items))
         {
-            size_t tuples = json_items(items);
-
-            if (tuples > 0)
-            {
-                return json_items(iter) <= tuples;
-            }
+            return json_items(iter) <= json_items(items);
         }
     }
     return 1;
@@ -665,6 +677,7 @@ static tester get_test_by_name(const char *name)
         equal(name, "dependentRequired") ? test_dependent_required :
         equal(name, "dependentSchemas") ? test_dependent_schemas :
         equal(name, "properties") ? test_properties :
+        equal(name, "patternProperties") ? test_pattern_properties :
         equal(name, "additionalProperties") ? test_additional_properties :
         equal(name, "minProperties") ? test_min_properties :
         equal(name, "maxProperties") ? test_max_properties :
@@ -753,9 +766,79 @@ static int validate(json_schema *schema,
                     }
                 }
                 break;
+                case SCHEMA_PATTERN_PROPERTIES:
+                {
+                    const json *head = json_is_object(iter) ? json_child(iter) : NULL;
+                    const json *next = json_child(node);
+
+                    while (next != NULL)
+                    {
+                        const char *regex = json_name(next);
+                        const json *item = head;
+                        int count = 0;
+
+                        while (item != NULL)
+                        {
+                            if (test_regex(regex, json_name(item)))
+                            {
+                                valid &= validate(schema, json_child(next), item, flag);
+                                count++;
+                            }
+                            item = json_next(item);
+                        }
+                        if (count == 0)
+                        {
+                            validate(schema, json_child(next), NULL, 1);
+                        }
+                        next = json_next(next);
+                    }
+                }
+                break;
+                case SCHEMA_ADDITIONAL_PROPERTIES:
+                {
+                    const json *properties = json_find(json_parent(node), "properties");
+                    const json *item = json_is_object(iter) ? json_child(iter) : NULL;
+                    const json *next = json_child(node);
+                    int count = 0;
+
+                    if (properties != NULL)
+                    {
+                        while (item != NULL)
+                        {
+                            if (!json_find(properties, json_name(item)))
+                            {
+                                valid &= validate(schema, next, item, flag);
+                                count++;
+                            }
+                            item = json_next(item);
+                        }
+                    }
+                    if (count == 0)
+                    {
+                        validate(schema, json_child(node), NULL, 1);
+                    }
+                }
+                break;
                 case SCHEMA_ITEMS:
                 {
                     const json *item = json_is_array(iter) ? json_child(iter) : NULL;
+                    const json *next = json_child(node);
+
+                    if (item == NULL)
+                    {
+                        validate(schema, next, item, 1);
+                    }
+                    else while (item != NULL)
+                    {
+                        valid &= validate(schema, next, item, flag);
+                        item = json_next(item);
+                    }
+                }
+                break;
+                case SCHEMA_ADDITIONAL_ITEMS:
+                {
+                    const json *items = json_find(json_parent(node), "items");
+                    const json *item = json_item(iter, json_items(items));
                     const json *next = json_child(node);
 
                     if (item == NULL)
