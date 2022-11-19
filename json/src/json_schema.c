@@ -815,7 +815,7 @@ static int validate(json_schema *schema,
                     }
                     if (count == 0)
                     {
-                        validate(schema, json_child(node), NULL, 1);
+                        validate(schema, next, NULL, 1);
                     }
                 }
                 break;
