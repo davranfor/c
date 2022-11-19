@@ -629,12 +629,12 @@ static int get_cond(const json **node, int cond)
         if (equal(name, "then"))
         {
             *node = next;
-            return cond == 1;
+            return cond;
         }
         if (equal(name, "else"))
         {
             *node = next;
-            return cond == 0;
+            return !cond;
         }
     }
     return -1;
@@ -700,8 +700,8 @@ static tester get_test(const json *node)
     return get_test_by_name(name);
 }
 
-static int valid_schema(json_schema *schema,
-    const json *node, const json *iter, int flags)
+static int validate(json_schema *schema,
+    const json *node, const json *iter, int flag)
 {
     int valid = 1;
 
@@ -721,7 +721,11 @@ static int valid_schema(json_schema *schema,
                     {
                         if (json_find(iter, json_name(next)))
                         {
-                            valid &= valid_schema(schema, json_child(next), iter, flags);
+                            valid &= validate(schema, json_child(next), iter, flag);
+                        }
+                        else
+                        {
+                            validate(schema, json_child(next), NULL, 1);
                         }
                         next = json_next(next);
                     }
@@ -736,14 +740,14 @@ static int valid_schema(json_schema *schema,
                     {
                         while (next != NULL)
                         {
-                            valid_schema(schema, json_child(next), item, 1);
+                            validate(schema, json_child(next), item, 1);
                             next = json_next(next);
                         }
                     }
                     else while (next != NULL)
                     {
                         item = json_find(iter, json_name(next));
-                        do valid &= valid_schema(schema, json_child(next), item, flags);
+                        do valid &= validate(schema, json_child(next), item, flag);
                         while ((item = json_find_next(item, json_name(next))));
                         next = json_next(next);
                     }
@@ -756,11 +760,11 @@ static int valid_schema(json_schema *schema,
 
                     if (item == NULL)
                     {
-                        valid_schema(schema, next, item, 1);
+                        validate(schema, next, item, 1);
                     }
                     else while (item != NULL)
                     {
-                        valid &= valid_schema(schema, next, item, flags);
+                        valid &= validate(schema, next, item, flag);
                         item = json_next(item);
                     }
                 }
@@ -774,13 +778,13 @@ static int valid_schema(json_schema *schema,
                     {
                         while (next != NULL)
                         {
-                            valid_schema(schema, json_child(next), item, 1);
+                            validate(schema, json_child(next), item, 1);
                             next = json_next(next);
                         }
                     }
                     else while (next != NULL)
                     {
-                        valid &= valid_schema(schema, json_child(next), item, flags);
+                        valid &= validate(schema, json_child(next), item, flag);
                         next = json_next(next);
                         item = json_next(item);
                     }
@@ -792,7 +796,7 @@ static int valid_schema(json_schema *schema,
 
                     if (json_is_object(next))
                     {
-                        valid &= valid_schema(schema, json_child(next), iter, flags);
+                        valid &= validate(schema, json_child(next), iter, flag);
                     }
                     else
                     {
@@ -804,8 +808,8 @@ static int valid_schema(json_schema *schema,
                 {
                     int old_valid = valid;
 
-                    valid = !valid_schema(schema, json_child(node), iter, 1);
-                    if (flags == 0)
+                    valid = !validate(schema, json_child(node), iter, 1);
+                    if (flag == 0)
                     {
                         if (valid)
                         {
@@ -831,23 +835,23 @@ static int valid_schema(json_schema *schema,
                     {
                         if (count++ == 0)
                         {
-                            valid = valid_schema(schema, json_child(next), iter, 1);
+                            valid = validate(schema, json_child(next), iter, 1);
                         }
                         else if (test == test_all_of)
                         {
-                            valid &= valid_schema(schema, json_child(next), iter, 1);
+                            valid &= validate(schema, json_child(next), iter, 1);
                         }
                         else if (test == test_any_of)
                         {
-                            valid |= valid_schema(schema, json_child(next), iter, 1);
+                            valid |= validate(schema, json_child(next), iter, 1);
                         }
                         else if (test == test_one_of)
                         {
-                            valid ^= valid_schema(schema, json_child(next), iter, 1);
+                            valid ^= validate(schema, json_child(next), iter, 1);
                         }
                         next = json_next(next);
                     }
-                    if (flags == 0)
+                    if (flag == 0)
                     {
                         if (valid)
                         {
@@ -862,18 +866,18 @@ static int valid_schema(json_schema *schema,
                 break;
                 case SCHEMA_IF:
                 {
-                    int temp = valid_schema(schema, json_child(node), iter, 1);
+                    int cond_valid = validate(schema, json_child(node), iter, 1);
                     int cond;
 
-                    while ((cond = get_cond(&node, temp)) != -1)
+                    while ((cond = get_cond(&node, cond_valid)) != -1)
                     {
                         if (cond == 1)
                         {
-                            valid &= valid_schema(schema, json_child(node), iter, flags);
+                            valid &= validate(schema, json_child(node), iter, flag);
                         }
                         else
                         {
-                            valid_schema(schema, json_child(node), iter, 1);
+                            validate(schema, json_child(node), NULL, 1);
                         }
                     }
                 }
@@ -881,12 +885,12 @@ static int valid_schema(json_schema *schema,
                 case SCHEMA_THEN:
                 case SCHEMA_ELSE:
                 {
-                    valid_schema(schema, json_child(node), NULL, 1);
+                    validate(schema, json_child(node), NULL, 1);
                 }
                 break;
                 case SCHEMA_INVALID:
                 {
-                    if (flags == 0)
+                    if (flag == 0)
                     {
                         raise_invalid(schema, node, iter);
                     }
@@ -924,7 +928,7 @@ int json_validate(const json *iter, const json *node,
     }
     if (json_is_object(node))
     {
-        return valid_schema(&schema, json_child(node), iter, 0);
+        return validate(&schema, json_child(node), iter, 0);
     }
     raise_error(&schema, node, iter);
     return 0;
