@@ -350,7 +350,7 @@ static int test_additional_properties(const json *node, const json *iter)
     {
         const json *properties = json_find(json_parent(node), "properties");
 
-        if (properties != NULL)
+        if (json_is_object(properties) && childs_are_objects(properties))
         {
             for (iter = json_child(iter); iter != NULL; iter = json_next(iter))
             {
@@ -418,7 +418,7 @@ static int test_additional_items(const json *node, const json *iter)
     {
         const json *items = json_find(json_parent(node), "items");
 
-        if (json_is_array(items))
+        if (json_is_array(items) && childs_are_objects(items))
         {
             return json_items(iter) <= json_items(items);
         }
@@ -801,7 +801,7 @@ static int validate(json_schema *schema,
                     const json *next = json_child(node);
                     int count = 0;
 
-                    if (properties != NULL)
+                    if (json_is_object(properties) && childs_are_objects(properties))
                     {
                         while (item != NULL)
                         {
@@ -838,9 +838,14 @@ static int validate(json_schema *schema,
                 case SCHEMA_ADDITIONAL_ITEMS:
                 {
                     const json *items = json_find(json_parent(node), "items");
-                    const json *item = json_item(iter, json_items(items));
                     const json *next = json_child(node);
+                    const json *item = NULL;
 
+                    if (json_is_array(items) && childs_are_objects(items) &&
+                        json_is_array(iter))
+                    {
+                        item = json_item(iter, json_items(items));
+                    }
                     if (item == NULL)
                     {
                         validate(schema, next, item, 1);
