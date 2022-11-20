@@ -665,6 +665,20 @@ int json_is_boolean(const json *node)
         && (node->type == JSON_BOOLEAN);
 }
 
+int json_is_true(const json *node)
+{
+    return (node != NULL)
+        && (node->type == JSON_BOOLEAN)
+        && (node->value[0] == 't');
+}
+
+int json_is_false(const json *node)
+{
+    return (node != NULL)
+        && (node->type == JSON_BOOLEAN)
+        && (node->value[0] == 'f');
+}
+
 int json_is_null(const json *node)
 {
     return (node != NULL)

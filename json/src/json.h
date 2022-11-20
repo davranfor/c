@@ -44,6 +44,8 @@ int json_is_double(const json *);
 int json_is_number(const json *);
 int json_is_real(const json *);
 int json_is_boolean(const json *);
+int json_is_true(const json *);
+int json_is_false(const json *);
 int json_is_null(const json *);
 json *json_parse(const char *, json_error *);
 json *json_self(const json *);

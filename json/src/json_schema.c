@@ -346,7 +346,7 @@ static int test_additional_properties(const json *node, const json *iter)
     {
         return SCHEMA_ERROR;
     }
-    if (!json_boolean(node) && json_is_object(iter))
+    if (json_is_false(node) && json_is_object(iter))
     {
         const json *properties = json_find(json_parent(node), "properties");
 
@@ -414,7 +414,7 @@ static int test_additional_items(const json *node, const json *iter)
     {
         return SCHEMA_ERROR;
     }
-    if (!json_boolean(node) && json_is_array(iter))
+    if (json_is_false(node) && json_is_array(iter))
     {
         const json *items = json_find(json_parent(node), "items");
 
@@ -458,7 +458,7 @@ static int test_unique_items(const json *node, const json *iter)
     {
         return SCHEMA_ERROR;
     }
-    if (json_boolean(node) && json_is_array(iter))
+    if (json_is_true(node) && json_is_array(iter))
     {
         const json *head = json_child(iter);
 
