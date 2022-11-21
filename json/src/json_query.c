@@ -17,7 +17,7 @@ static int (*func_array[])(const json *) =
 
 enum {func_size = sizeof func_array / sizeof *func_array};
 
-static int is_basic(const json *node, int (*func)(const json *))
+static int is(const json *node, int (*func)(const json *))
 {
     while (func(node))
     {
@@ -53,39 +53,39 @@ int json_is(const json *node, enum json_query query)
 
     int (*func)(const json *) = func_array[query % func_size];
 
-    if ((query >= objectOfValues) && (query <= objectOfNulls))
+    if ((query >= objectOfItems) && (query <= objectOfNulls))
     {
         if (json_type(node) != JSON_OBJECT)
         {
             return 0;
         }
-        return (node = json_child(node)) ? is_basic(node, func) : 0;
+        return (node = json_child(node)) ? is(node, func) : 0;
     }
-    if ((query >= arrayOfValues) && (query <= arrayOfNulls))
+    if ((query >= arrayOfItems) && (query <= arrayOfNulls))
     {
         if (json_type(node) != JSON_ARRAY)
         {
             return 0;
         }
-        return (node = json_child(node)) ? is_basic(node, func) : 0;
+        return (node = json_child(node)) ? is(node, func) : 0;
     }
-    if ((query >= objectOfOptionalValues) && (query <= objectOfOptionalNulls))
+    if ((query >= objectOfOptionalItems) && (query <= objectOfOptionalNulls))
     {
         if (json_type(node) != JSON_OBJECT)
         {
             return 0;
         }
-        return (node = json_child(node)) ? is_basic(node, func) : 1;
+        return (node = json_child(node)) ? is(node, func) : 1;
     }
-    if ((query >= arrayOfOptionalValues) && (query <= arrayOfOptionalNulls))
+    if ((query >= arrayOfOptionalItems) && (query <= arrayOfOptionalNulls))
     {
         if (json_type(node) != JSON_ARRAY)
         {
             return 0;
         }
-        return (node = json_child(node)) ? is_basic(node, func) : 1;
+        return (node = json_child(node)) ? is(node, func) : 1;
     }
-    if ((query >= objectOfUniqueValues) && (query <= objectOfUniqueNulls))
+    if ((query >= objectOfUniqueItems) && (query <= objectOfUniqueNulls))
     {
         if (json_type(node) != JSON_OBJECT)
         {
@@ -93,7 +93,7 @@ int json_is(const json *node, enum json_query query)
         }
         return (node = json_child(node)) ? is_unique(node, func) : 1;
     }
-    if ((query >= arrayOfUniqueValues) && (query <= arrayOfUniqueNulls))
+    if ((query >= arrayOfUniqueItems) && (query <= arrayOfUniqueNulls))
     {
         if (json_type(node) != JSON_ARRAY)
         {

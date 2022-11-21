@@ -7,7 +7,7 @@
  */
 enum json_query
 {
-    objectOfValues,
+    objectOfItems,
     objectOfObjects,
     objectOfArrays,
     objectOfStrings,
@@ -18,7 +18,7 @@ enum json_query
     objectOfBooleans,
     objectOfNulls,
 
-    arrayOfValues,
+    arrayOfItems,
     arrayOfObjects,
     arrayOfArrays,
     arrayOfStrings,
@@ -29,7 +29,7 @@ enum json_query
     arrayOfBooleans,
     arrayOfNulls,
 
-    objectOfOptionalValues,
+    objectOfOptionalItems,
     objectOfOptionalObjects,
     objectOfOptionalArrays,
     objectOfOptionalStrings,
@@ -40,7 +40,7 @@ enum json_query
     objectOfOptionalBooleans,
     objectOfOptionalNulls,
 
-    arrayOfOptionalValues,
+    arrayOfOptionalItems,
     arrayOfOptionalObjects,
     arraytOfOptionalArrays,
     arrayOfOptionalStrings,
@@ -51,7 +51,7 @@ enum json_query
     arrayOfOptionalBooleans,
     arrayOfOptionalNulls,
 
-    objectOfUniqueValues,
+    objectOfUniqueItems,
     objectOfUniqueObjects,
     objectOfUniqueArrays,
     objectOfUniqueStrings,
@@ -62,7 +62,7 @@ enum json_query
     objectOfUniqueBooleans,
     objectOfUniqueNulls,
 
-    arrayOfUniqueValues,
+    arrayOfUniqueItems,
     arrayOfUniqueObjects,
     arrayOfUniqueArrays,
     arrayOfUniqueStrings,

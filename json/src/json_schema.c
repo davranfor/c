@@ -439,7 +439,7 @@ static int test_unique_items(const json *node, const json *iter)
     }
     if (json_is_true(node) && json_is_array(iter))
     {
-        return json_is(iter, arrayOfUniqueValues);
+        return json_is(iter, arrayOfUniqueItems);
     }
     return 1;
 }
