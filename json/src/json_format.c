@@ -13,7 +13,7 @@
 
 static int valid_mask(const char *mask, const char *str)
 {
-    /*
+    /**
      *  \\  next character is a literal (not a function) (required)
      *  \?  next character is a literal (not a function) (optional)
      *  0   isdigit (required)

@@ -36,6 +36,7 @@ double json_double(const json *);
 double json_number(const json *);
 unsigned long json_real(const json *);
 int json_boolean(const json *);
+int json_is_any(const json *);
 int json_is_object(const json *);
 int json_is_array(const json *);
 int json_is_string(const json *);
