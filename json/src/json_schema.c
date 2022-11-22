@@ -371,7 +371,10 @@ static int test_max_properties(const json *node, const json *iter)
 
 static int test_items(const json *node, const json *iter)
 {
-    (void)iter;
+    if (json_is_boolean(node))
+    {
+        return json_boolean(node) == json_is_any(json_child(iter));
+    }
     if (json_is_object(node))
     {
         return SCHEMA_ITEMS;
@@ -801,13 +804,17 @@ static int validate(json_schema *schema,
                 break;
                 case SCHEMA_ADDITIONAL_ITEMS:
                 {
-                    const json *items = json_find(json_parent(node), "items");
                     const json *next = json_child(node);
                     const json *item = NULL;
 
-                    if (json_is_array(iter) && json_is(items, arrayOfOptionalObjects))
+                    if (json_is_array(iter))
                     {
-                        item = json_item(iter, json_items(items));
+                        const json *items = json_find(json_parent(node), "items");
+
+                        if (json_is(items, arrayOfOptionalObjects))
+                        {
+                            item = json_item(iter, json_items(items));
+                        }
                     }
                     if (item == NULL)
                     {
