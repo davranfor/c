@@ -373,7 +373,9 @@ static int test_items(const json *node, const json *iter)
 {
     if (json_is_boolean(node))
     {
-        return json_boolean(node) == json_is_any(json_child(iter));
+        return json_is_array(iter)
+            ? (json_boolean(node) == json_is_any(json_child(iter)))
+            : SCHEMA_VALID;
     }
     if (json_is_object(node))
     {

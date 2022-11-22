@@ -615,6 +615,11 @@ int json_boolean(const json *node)
     return 0;
 }
 
+int json_is_any(const json *node)
+{
+    return node != NULL;
+}
+
 int json_is_object(const json *node)
 {
     return (node != NULL)
