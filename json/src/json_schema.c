@@ -14,12 +14,16 @@
 #include "json_format.h"
 #include "json_schema.h"
 
-#define equal(a, b) (strcmp(a, b) == 0)
-
 typedef struct
 {
+    const json *root;
+    // Recursion
+    const json *skip;
+    int depth;
+    // User data
     json_callback callback;
     void *data;
+    // Exception
     jmp_buf error;
 } json_schema;
 
@@ -34,6 +38,10 @@ enum
     SCHEMA_ALL_OF, SCHEMA_ANY_OF, SCHEMA_ONE_OF,
     SCHEMA_IF, SCHEMA_THEN, SCHEMA_ELSE
 };
+
+#define SCHEMA_MAX_DEPTH 1024
+
+#define equal(a, b) (strcmp(a, b) == 0)
 
 static void schema_callback(const json_schema *schema,
     const json *node, const json *iter, const char *title)
@@ -589,18 +597,45 @@ static int test_multiple_of(const json *node, const json *iter)
     return 1;
 }
 
-static json *get_ref(const json *node)
+static const json *handle_ref(json_schema *schema,
+    const json *node, const json *iter)
 {
     const char *ref = json_string(node);
     
     if (ref[0] != '#')
     {
-        return NULL;
+        raise_error(schema, node, iter);
     }
-    return json_node(node, ref + 1);
+
+    const json *next = ref[1] ? json_node(node, ref + 1) : schema->root;
+
+    if (json_is_object(next))
+    {
+        if (iter == NULL)
+        {
+            if (schema->skip == node)
+            {
+                schema->skip = NULL;
+                return NULL;
+            }
+            if (schema->skip == NULL)
+            {
+                schema->skip = node;
+            }
+        }
+        else
+        {
+            schema->skip = NULL;
+        }
+    }
+    else
+    {
+        raise_error(schema, node, iter);
+    }
+    return next;
 }
 
-static int get_cond(const json **node, int cond)
+static int handle_cond(const json **node, int cond)
 {
     const json *next = json_next(*node);
     const char *name;
@@ -687,6 +722,10 @@ static int validate(json_schema *schema,
 {
     int valid = 1;
 
+    if (schema->depth++ > SCHEMA_MAX_DEPTH)
+    {
+        raise_error(schema, node, iter);
+    }
     while (node != NULL)
     {
         const tester test = get_test(node);
@@ -852,15 +891,11 @@ static int validate(json_schema *schema,
                 break;
                 case SCHEMA_REF:
                 {
-                    const json *next = get_ref(node);
+                    const json *next = handle_ref(schema, node, iter);
 
-                    if (json_is_object(next))
+                    if (next != NULL)
                     {
                         valid &= validate(schema, json_child(next), iter, flag);
-                    }
-                    else
-                    {
-                        raise_error(schema, node, iter);
                     }
                 }
                 break;
@@ -929,7 +964,7 @@ static int validate(json_schema *schema,
                     int cond_valid = validate(schema, json_child(node), iter, 1);
                     int cond;
 
-                    while ((cond = get_cond(&node, cond_valid)) != -1)
+                    while ((cond = handle_cond(&node, cond_valid)) != -1)
                     {
                         if (cond == 1)
                         {
@@ -970,14 +1005,16 @@ static int validate(json_schema *schema,
         }
         node = json_next(node);
     }
+    schema->depth--;
     return valid;
 }
 
-int json_validate(const json *iter, const json *node,
+int json_validate(const json *iter, const json *root,
     json_callback callback, void *data)
 {
     json_schema schema =
     {
+        .root = root,
         .callback = callback,
         .data = data
     };
@@ -986,11 +1023,11 @@ int json_validate(const json *iter, const json *node,
     {
         return 0;
     }
-    if (json_is_object(node))
+    if (json_is_object(root))
     {
-        return validate(&schema, json_child(node), iter, 0);
+        return validate(&schema, json_child(root), iter, 0);
     }
-    raise_error(&schema, node, iter);
+    raise_error(&schema, root, iter);
     return 0;
 }
 

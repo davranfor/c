@@ -921,7 +921,7 @@ int json_streq(const json *node, const char *str)
         && (strcmp(node->value, str) == 0);
 }
 
-static int equal(const json *a, const json *b, int level)
+static int equal(const json *a, const json *b, int depth)
 {
     if (a->type != b->type)
     {
@@ -931,7 +931,7 @@ static int equal(const json *a, const json *b, int level)
     {
         return 0;
     }
-    if (level > 0)
+    if (depth > 0)
     {
         if ((a->right == NULL) ^ (b->right == NULL))
         {
@@ -979,26 +979,26 @@ int json_equal(const json *a, const json *b)
         return 0;
     }
 
-    int level = 0;
+    int depth = 0;
 
-    while (equal(a, b, level))
+    while (equal(a, b, depth))
     {
         if (a->left != NULL)
         {
-            level++;
+            depth++;
             a = a->left;
             b = b->left;
         }
-        else if ((level > 0) && (a->right != NULL))
+        else if ((depth > 0) && (a->right != NULL))
         {
             a = a->right;
             b = b->right;
         }
         else
         {
-            while (level > 0)
+            while (depth > 0)
             {
-                level--;
+                depth--;
                 a = a->parent;
                 b = b->parent;
                 if (a->right != NULL)
@@ -1008,7 +1008,7 @@ int json_equal(const json *a, const json *b)
                     break;
                 }
             }
-            if (level == 0)
+            if (depth == 0)
             {
                 return 1;
             }
@@ -1112,9 +1112,9 @@ static void quote(FILE *file, const char *str)
     fprintf(file, "\"");
 }
 
-static void write_opening(FILE *file, const json *node, int level)
+static void write_opening(FILE *file, const json *node, int depth)
 {
-    for (int i = 0; i < level; i++)
+    for (int i = 0; i < depth; i++)
     {
         fprintf(file, "  ");
     }
@@ -1152,7 +1152,7 @@ static void write_opening(FILE *file, const json *node, int level)
             default:
                 break;
         }
-        if ((level > 0) && (node->right != NULL))
+        if ((depth > 0) && (node->right != NULL))
         {
             fprintf(file, ",");
         }
@@ -1161,12 +1161,12 @@ static void write_opening(FILE *file, const json *node, int level)
 }
 
 /* Prints the close group character for each change of level */
-static void write_closing(FILE *file, const json *node, int level)
+static void write_closing(FILE *file, const json *node, int depth)
 {
     /* if "array" or "object" */
     if (node->left != NULL)
     {
-        for (int i = 0; i < level; i++)
+        for (int i = 0; i < depth; i++)
         {
             fprintf(file, "  ");
         }
@@ -1181,7 +1181,7 @@ static void write_closing(FILE *file, const json *node, int level)
             default:
                 break;
         }
-        if ((level > 0) && (node->right != NULL))
+        if ((depth > 0) && (node->right != NULL))
         {
             fprintf(file, ",");
         }
@@ -1191,33 +1191,33 @@ static void write_closing(FILE *file, const json *node, int level)
 
 void json_write(FILE *file, const json *node)
 {
-    int level = 0;
+    int depth = 0;
 
     while (node != NULL)
     {
-        write_opening(file, node, level);
+        write_opening(file, node, depth);
         if (node->left != NULL)
         {
             node = node->left;
-            level++;
+            depth++;
         }
-        else if ((level > 0) && (node->right != NULL))
+        else if ((depth > 0) && (node->right != NULL))
         {
             node = node->right;
         }
         else
         {
-            while (level > 0)
+            while (depth > 0)
             {
                 node = node->parent;
-                write_closing(file, node, --level);
+                write_closing(file, node, --depth);
                 if (node->right != NULL)
                 {
                     node = node->right;
                     break;
                 }
             }
-            if (level == 0)
+            if (depth == 0)
             {
                 return;
             }
