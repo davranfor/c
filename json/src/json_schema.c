@@ -609,28 +609,25 @@ static const json *handle_ref(json_schema *schema,
 
     const json *next = ref[1] ? json_node(node, ref + 1) : schema->root;
 
-    if (json_is_object(next))
+    if (!json_is_object(next))
     {
-        if (iter == NULL)
-        {
-            if (schema->skip == node)
-            {
-                schema->skip = NULL;
-                return NULL;
-            }
-            if (schema->skip == NULL)
-            {
-                schema->skip = node;
-            }
-        }
-        else
+        raise_error(schema, node, iter);
+    }
+    if (iter == NULL)
+    {
+        if (schema->skip == node)
         {
             schema->skip = NULL;
+            return NULL;
+        }
+        if (schema->skip == NULL)
+        {
+            schema->skip = node;
         }
     }
     else
     {
-        raise_error(schema, node, iter);
+        schema->skip = NULL;
     }
     return next;
 }

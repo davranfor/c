@@ -194,14 +194,14 @@ static const char *scan(const char **left, const char **right)
                 break;
             }
         }
-        /* Control characters are not allowed outside a string */
+        /* Control characters must be escaped inside a string */
         else if (is_control(*str))
         {
             return NULL;
         }
         if (!is_space(*str))
         {
-            /* Update left pointer  */
+            /* Update left pointer */
             if (*left == NULL)
             {
                 *left = str;
