@@ -1,20 +1,21 @@
 CC = gcc
 CFLAGS = -std=c11 -Wpedantic -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wcast-qual -Wnested-externs -MMD -MP -O2
-SOURCE = $(wildcard src/*.c)
-OBJECTS = $(patsubst src/%.c, obj/%.o, $(SOURCE))
 LDLIBS = -lm
+TARGET = json
+SOURCES = $(wildcard src/*.c)
+OBJECTS = $(patsubst src/%.c, obj/%.o, $(SOURCES))
 
 .PHONY: all release debug clean
 
-all: json
+all: $(TARGET)
 
-release: all
+release: $(TARGET)
 
 debug: CFLAGS := $(filter-out -O2, $(CFLAGS)) -DDEBUG -g
-debug: all
+debug: $(TARGET)
 
-json: $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) $(LDLIBS) -o json
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) $(LDLIBS) -o $(TARGET)
 
 obj/%.o: src/%.c | obj
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -26,5 +27,5 @@ obj:
 
 clean:
 	rm -rf obj
-	rm -f json
+	rm -f $(TARGET)
 
