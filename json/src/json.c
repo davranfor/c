@@ -61,24 +61,24 @@ static int is_ucn(const char *str)
         && is_xdigit(*str);
 }
 
+/* Converts UCN - Base 16 skipping the initial "u" */
+static unsigned long ucn_to_ul(const char *str)
+{
+    char hex[5] = "";
+
+    memcpy(hex, str + 1, 4);
+    return strtoul(hex, NULL, 16);
+}
+
 /*
  * Converts UCN to multibyte
  * Returns the length of the multibyte in bytes
  */
-static size_t ucn_to_mb(const char *str, char *buf)
+static int ucn_to_mb(const char *str, char *buf)
 {
-    unsigned int code;
+    int length = wctomb(buf, (wchar_t)ucn_to_ul(str));
 
-    if (sscanf(str, "u%04x", &code) == 1)
-    {
-        int length = wctomb(buf, (wchar_t)code);
-
-        if (length != -1)
-        {
-            return (size_t)length;
-        }
-    }
-    return 0;
+    return length == -1 ? 0 : length;
 }
 
 /* Check wether a character is a json token */
@@ -133,7 +133,7 @@ static int is_number(const char *left, const char *right)
     return 1;
 }
 
-/* Check wether a string (already tested as a valid number) is a double */
+/* Check wether a string already tested as a valid number is a double */
 static int is_double(const char *left, const char *right)
 {
     while (left <= right)

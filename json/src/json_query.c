@@ -46,11 +46,6 @@ static int is_unique(const json *node, int (*func)(const json *))
 
 int json_is(const json *node, enum json_query query)
 {
-    if (node == NULL)
-    {
-        return 0;
-    }
-
     int (*func)(const json *) = func_array[query % func_size];
 
     if ((query >= objectOfItems) && (query <= objectOfNulls))
