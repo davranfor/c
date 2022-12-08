@@ -334,8 +334,9 @@ static json *create_node(void)
 
 static json *parse(json *node, const char *left, const char **error)
 {
-#define ERROR (*error = left, NULL)
+    #define ERROR (*error = left, NULL)
 
+    const json *parent = node ? node->parent : NULL;
     const char *right;
     const char *token;
 
@@ -488,7 +489,7 @@ static json *parse(json *node, const char *left, const char **error)
                     return ERROR;
                 }
                 /* Bad closed document */
-                if (node->parent != NULL)
+                if (node->parent != parent)
                 {
                     return ERROR;
                 }
@@ -716,6 +717,52 @@ json *json_parse(const char *text, json_error *error)
     return node;
 }
 
+json *json_new(json *parent, const char *text)
+{
+    if (parent == NULL)
+    {
+        return json_parse(text, NULL);
+    }
+    if ((parent->type != JSON_OBJECT) && (parent->type != JSON_ARRAY))
+    {
+        return NULL;
+    }
+
+    json *node = create_node();
+
+    if (node != NULL)
+    {
+        json *last = json_last_child(parent);
+
+        if (last == NULL)
+        {
+            parent->left = node;
+        }
+        else
+        {
+            last->right = node;
+        }
+        node->parent = parent;
+
+        const char *end = text;
+
+        if (parse(node, text, &end) == NULL)
+        {
+            json_free(node);
+            if (last == NULL)
+            {
+                parent->left = NULL;
+            }
+            else
+            {
+                last->right = NULL;
+            }
+            return NULL;
+        }
+    }
+    return node;
+}
+
 json *json_self(const json *node)
 {
     /* Silence compiler due to const to non-const conversion */
@@ -769,6 +816,20 @@ json *json_child(const json *node)
         return NULL;
     }
     return node->left;
+}
+
+json *json_last_child(const json *root)
+{
+    json *node = NULL;
+
+    if ((root != NULL) && (node = root->left))
+    {
+        while (node->right != NULL)
+        {
+            node = node->right;
+        }
+    }
+    return node;
 }
 
 /* Locates a child node by name */
@@ -1255,9 +1316,10 @@ void json_raise_error(const json_error *error, const char *path)
 
 void json_free(json *node)
 {
+    json *parent = node ? node->parent : NULL;
     json *next;
 
-    while (node != NULL)
+    while ((node != NULL) && (node != parent))
     {
         next = node->left;
         node->left = NULL;
