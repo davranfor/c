@@ -717,6 +717,25 @@ json *json_parse(const char *text, json_error *error)
     return node;
 }
 
+/*
+ * Returns a reference to parent->left if parent is empty
+ *         a reference to the last child->right otherwise
+ * parent can not be NULL
+ */
+static json **get_link(json *parent)
+{
+    json *node = NULL;
+
+    if ((node = parent->left))
+    {
+        while (node->right != NULL)
+        {
+            node = node->right;
+        }
+    }
+    return node ? &node->right : &parent->left;
+}
+
 json *json_new(json *parent, const char *text)
 {
     if (parent == NULL)
@@ -732,16 +751,9 @@ json *json_new(json *parent, const char *text)
 
     if (node != NULL)
     {
-        json *last = json_last_child(parent);
+        json **link = get_link(parent);
 
-        if (last == NULL)
-        {
-            parent->left = node;
-        }
-        else
-        {
-            last->right = node;
-        }
+        *link = node;
         node->parent = parent;
 
         const char *end = text;
@@ -749,14 +761,7 @@ json *json_new(json *parent, const char *text)
         if (parse(node, text, &end) == NULL)
         {
             json_free(node);
-            if (last == NULL)
-            {
-                parent->left = NULL;
-            }
-            else
-            {
-                last->right = NULL;
-            }
+            *link = NULL;
             return NULL;
         }
     }
@@ -800,15 +805,6 @@ json *json_parent(const json *node)
     return node->parent;
 }
 
-json *json_next(const json *node)
-{
-    if (node == NULL)
-    {
-        return NULL;
-    }
-    return node->right;
-}
-
 json *json_child(const json *node)
 {
     if (node == NULL)
@@ -818,18 +814,13 @@ json *json_child(const json *node)
     return node->left;
 }
 
-json *json_last_child(const json *root)
+json *json_next(const json *node)
 {
-    json *node = NULL;
-
-    if ((root != NULL) && (node = root->left))
+    if (node == NULL)
     {
-        while (node->right != NULL)
-        {
-            node = node->right;
-        }
+        return NULL;
     }
-    return node;
+    return node->right;
 }
 
 /* Locates a child node by name */
