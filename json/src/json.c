@@ -61,22 +61,18 @@ static int is_ucn(const char *str)
         && is_xdigit(*str);
 }
 
-/* Converts UCN - Base 16 skipping the initial "u" */
-static unsigned long ucn_to_ul(const char *str)
-{
-    char hex[5] = "";
-
-    memcpy(hex, str + 1, 4);
-    return strtoul(hex, NULL, 16);
-}
-
 /*
  * Converts UCN to multibyte
  * Returns the length of the multibyte in bytes
  */
 static int ucn_to_mb(const char *str, char *buf)
 {
-    int length = wctomb(buf, (wchar_t)ucn_to_ul(str));
+    char hex[5] = "";
+
+    /* Copy UCN skipping the initial "u" */
+    memcpy(hex, str + 1, 4);
+
+    int length = wctomb(buf, (wchar_t)strtoul(hex, NULL, 16));
 
     return length == -1 ? 0 : length;
 }
@@ -718,8 +714,9 @@ json *json_parse(const char *text, json_error *error)
 }
 
 /*
- * Returns a reference to parent->left if parent is empty
- *         a reference to the last child->right otherwise
+ * Returns:
+ * - A reference to parent->left if parent is empty
+ * - A reference to the last child->right otherwise
  * parent can not be NULL
  */
 static json **get_link(json *parent)
@@ -1010,7 +1007,7 @@ static int equal(const json *a, const json *b, int depth)
         }
         else
         {
-            return !strcmp(a->value, b->value);
+            return strcmp(a->value, b->value) == 0;
         }
     }
     return 1;
