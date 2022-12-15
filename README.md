@@ -3,7 +3,7 @@ C generic data structures and utilities
 - BinMap - Binary growable map
 - DynArray - Dynamic growable array (pointers)
 - HashMap - Optimized hash table
-- JSON - Ligthweight JSON parser
+- JSON - Ligthweight JSON parser + Schema validator
 - List - Stacks, queues, deques, circular lists
 - RBTree - Red-Black tree
 - SkipList - Fast CRUD operations on a list
