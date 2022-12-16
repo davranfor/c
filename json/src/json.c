@@ -72,9 +72,27 @@ static int ucn_to_mb(const char *str, char *buf)
     /* Copy UCN skipping the initial "u" */
     memcpy(hex, str + 1, 4);
 
-    int length = wctomb(buf, (wchar_t)strtoul(hex, NULL, 16));
+    unsigned long codepoint = strtoul(hex, NULL, 16);
 
-    return length == -1 ? 0 : length;
+    /* Convert to multibyte and return the length */
+    if (codepoint <= 0x7f)
+    {
+        *buf = (char)(codepoint);
+        return 1;
+    }
+    else if (codepoint <= 0x7ff)
+    {
+        *buf++ = (char)(0xc0 | ((codepoint >> 6) & 0x1f));
+        *buf   = (char)(0x80 |  (codepoint & 0x3f));
+        return 2;
+    }
+    else // if (codepoint <= 0xffff)
+    {
+        *buf++ = (char)(0xe0 | ((codepoint >> 12) & 0x0f));
+        *buf++ = (char)(0x80 | ((codepoint >> 6) & 0x3f));
+        *buf   = (char)(0x80 |  (codepoint & 0x3f));
+        return 3;
+    }
 }
 
 /* Check wether a character is a json token */
