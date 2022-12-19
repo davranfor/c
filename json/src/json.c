@@ -77,20 +77,20 @@ static int ucn_to_mb(const char *str, char *buf)
     /* Convert to multibyte and return the length */
     if (codepoint <= 0x7f)
     {
-        *buf = (char)(codepoint);
+        buf[0] = (char)(codepoint);
         return 1;
     }
     else if (codepoint <= 0x7ff)
     {
-        *buf++ = (char)(0xc0 | ((codepoint >> 6) & 0x1f));
-        *buf   = (char)(0x80 |  (codepoint & 0x3f));
+        buf[0] = (char)(0xc0 | ((codepoint >> 6) & 0x1f));
+        buf[1] = (char)(0x80 | (codepoint & 0x3f));
         return 2;
     }
     else // if (codepoint <= 0xffff)
     {
-        *buf++ = (char)(0xe0 | ((codepoint >> 12) & 0x0f));
-        *buf++ = (char)(0x80 | ((codepoint >> 6) & 0x3f));
-        *buf   = (char)(0x80 |  (codepoint & 0x3f));
+        buf[0] = (char)(0xe0 | ((codepoint >> 12) & 0x0f));
+        buf[1] = (char)(0x80 | ((codepoint >> 6) & 0x3f));
+        buf[2] = (char)(0x80 | (codepoint & 0x3f));
         return 3;
     }
 }
@@ -739,7 +739,7 @@ json *json_parse(const char *text, json_error *error)
  */
 static json **get_link(json *parent)
 {
-    json *node = NULL;
+    json *node;
 
     if ((node = parent->left))
     {
