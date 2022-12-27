@@ -327,7 +327,7 @@ int test_is_url(const char *str)
         size_t end = strspn(str, allow);
 
         // Maximum of 2048 characters
-        return (str[end] == '\0') && (end <= 2048);
+        return (end <= 2048) && (str[end] == '\0');
     }
     return 0;
 }

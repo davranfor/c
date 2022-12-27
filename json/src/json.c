@@ -77,7 +77,7 @@ static int ucn_to_mb(const char *str, char *buf)
     /* Convert to multibyte and return the length */
     if (codepoint <= 0x7f)
     {
-        buf[0] = (char)(codepoint);
+        buf[0] = (char)codepoint;
         return 1;
     }
     else if (codepoint <= 0x7ff)
@@ -1050,6 +1050,7 @@ int json_equal(const json *a, const json *b)
 
     while (equal(a, b, depth))
     {
+        loop:
         if (a->left != NULL)
         {
             depth++;
@@ -1072,13 +1073,10 @@ int json_equal(const json *a, const json *b)
                 {
                     a = a->right;
                     b = b->right;
-                    break;
+                    goto loop;
                 }
             }
-            if (depth == 0)
-            {
-                return 1;
-            }
+            return 1;
         }
     }
     return 0;
@@ -1091,11 +1089,11 @@ int json_equal(const json *a, const json *b)
 int json_traverse(const json *root, json_callback func, void *data)
 {
     const json *node = root;
+    int result;
 
     while (node != NULL)
     {
-        int result;
-
+        loop:
         if ((result = func(node, data)))
         {
             return result;
@@ -1116,13 +1114,10 @@ int json_traverse(const json *root, json_callback func, void *data)
                 if (node->right != NULL)
                 {
                     node = node->right;
-                    break;
+                    goto loop;
                 }
             }
-            if (node->parent == root->parent)
-            {
-                break;
-            }
+            return 0;
         }
     }
     return 0;
@@ -1262,6 +1257,7 @@ void json_write(FILE *file, const json *node)
 
     while (node != NULL)
     {
+        loop:
         write_opening(file, node, depth);
         if (node->left != NULL)
         {
@@ -1281,13 +1277,10 @@ void json_write(FILE *file, const json *node)
                 if (node->right != NULL)
                 {
                     node = node->right;
-                    break;
+                    goto loop;
                 }
             }
-            if (depth == 0)
-            {
-                return;
-            }
+            return;
         }
     }
 }
