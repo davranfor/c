@@ -1065,12 +1065,12 @@ int json_equal(const json *a, const json *b)
                 {
                     a = a->right;
                     b = b->right;
-                    goto loop;
+                    goto end;
                 }
             }
             return 1;
-            loop: ;
         }
+        end:;
     }
     return 0;
 }
