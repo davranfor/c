@@ -880,7 +880,7 @@ json *json_find_next(const json *root, const char *name)
  * Locates a child node by name given a name length
  * Useful to stop comparing when there is more text after the name
  */
-static json *json_match(const json *root, const char *name, size_t length)
+json *json_match(const json *root, const char *name, size_t length)
 {
     json *node;
 
@@ -981,13 +981,6 @@ size_t json_items(const json *node)
     return count;
 }
 
-int json_streq(const json *node, const char *str)
-{
-    return (node != NULL)
-        && (node->type == JSON_STRING)
-        && (strcmp(node->value, str) == 0);
-}
-
 static int equal(const json *a, const json *b, int depth)
 {
     if (a->type != b->type)
@@ -1050,7 +1043,6 @@ int json_equal(const json *a, const json *b)
 
     while (equal(a, b, depth))
     {
-        loop:
         if (a->left != NULL)
         {
             depth++;
@@ -1077,6 +1069,7 @@ int json_equal(const json *a, const json *b)
                 }
             }
             return 1;
+            loop: ;
         }
     }
     return 0;
