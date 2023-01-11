@@ -1084,7 +1084,11 @@ int json_traverse(const json *root, json_callback func, void *data)
     const json *node = root;
     int result;
 
-    while (node != NULL)
+    if (node == NULL)
+    {
+        return 0;
+    }
+    while (1)
     {
         loop:
         if ((result = func(node, data)))
@@ -1162,9 +1166,9 @@ static void print(const char *str, FILE *file)
 
 static void quote(const char *str, FILE *file)
 {
-    fputs("\"", file);
+    fputc('"', file);
     print(str, file);
-    fputs("\"", file);
+    fputc('"', file);
 }
 
 static void write_opening(FILE *file, const json *node, int depth)
@@ -1181,10 +1185,10 @@ static void write_opening(FILE *file, const json *node, int depth)
     switch (node->type)
     {
         case JSON_OBJECT:
-            fputs("{", file);
+            fputc('{', file);
             break;
         case JSON_ARRAY:
-            fputs("[", file);
+            fputc('[', file);
             break;
         case JSON_STRING:
             quote(node->value, file);
@@ -1199,20 +1203,20 @@ static void write_opening(FILE *file, const json *node, int depth)
         switch (node->type)
         {
             case JSON_OBJECT:
-                fputs("}", file);
+                fputc('}', file);
                 break;
             case JSON_ARRAY:
-                fputs("]", file);
+                fputc(']', file);
                 break;
             default:
                 break;
         }
         if ((depth > 0) && (node->right != NULL))
         {
-            fputs(",", file);
+            fputc(',', file);
         }
     }
-    fputs("\n", file);
+    fputc('\n', file);
 }
 
 /* Prints the close group character for each change of level */
@@ -1228,19 +1232,19 @@ static void write_closing(FILE *file, const json *node, int depth)
         switch (node->type)
         {
             case JSON_OBJECT:
-                fputs("}", file);
+                fputc('}', file);
                 break;
             case JSON_ARRAY:
-                fputs("]", file);
+                fputc(']', file);
                 break;
             default:
                 break;
         }
         if ((depth > 0) && (node->right != NULL))
         {
-            fputs(",", file);
+            fputc(',', file);
         }
-        fputs("\n", file);
+        fputc('\n', file);
     }
 }
 
@@ -1248,7 +1252,11 @@ void json_write(FILE *file, const json *node)
 {
     int depth = 0;
 
-    while (node != NULL)
+    if (node == NULL)
+    {
+        return;
+    }
+    while (1)
     {
         loop:
         write_opening(file, node, depth);
