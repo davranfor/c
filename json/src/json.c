@@ -346,11 +346,11 @@ static json *create_node(void)
 
 static const char *parse(json *node, const char *left)
 {
-    #define ERROR left
-
     const json *parent = node ? node->parent : NULL;
     const char *right;
     const char *token;
+
+    #define ERROR left
 
     while (node != NULL)
     {
