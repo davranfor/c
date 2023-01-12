@@ -164,11 +164,8 @@ static int is_double(const char *left, const char *right)
 /* Returns a pointer to the next element or NULL on fail */
 static const char *scan(const char **left, const char **right)
 {
+    int tokens = 0, quotes = 0;
     const char *str = *left;
-
-    *left = *right = NULL;
-
-    int quotes = 0;
 
     while (*str != '\0')
     {
@@ -216,9 +213,10 @@ static const char *scan(const char **left, const char **right)
         if (!is_space(*str))
         {
             /* Update left pointer */
-            if (*left == NULL)
+            if (tokens == 0)
             {
                 *left = str;
+                tokens = 1;
             }
             /* Right pointer is always updated */
             *right = str;
@@ -231,7 +229,7 @@ static const char *scan(const char **left, const char **right)
         return NULL;
     }
     /* There are no contents in front of the token */
-    if (*left == NULL)
+    if (tokens == 0)
     {
         *left = *right = str;
     }
