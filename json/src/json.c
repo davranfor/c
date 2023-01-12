@@ -344,9 +344,9 @@ static json *create_node(void)
     return calloc(1, sizeof(struct json));
 }
 
-static json *parse(json *node, const char *left, const char **error)
+static const char *parse(json *node, const char *left)
 {
-    #define ERROR (*error = left, NULL)
+    #define ERROR left
 
     const json *parent = node ? node->parent : NULL;
     const char *right;
@@ -506,7 +506,7 @@ static json *parse(json *node, const char *left, const char **error)
                     return ERROR;
                 }
                 /* Correct document */
-                return node;
+                return NULL;
         }
         /* Keep going ... */
         left = token + 1;
@@ -705,7 +705,7 @@ int json_is_null(const json *node)
 
 json *json_parse(const char *text, json_error *error)
 {
-    if (error != NULL)
+    if (error)
     {
         clear_error(error);
     }
@@ -714,9 +714,9 @@ json *json_parse(const char *text, json_error *error)
 
     if (node != NULL)
     {
-        const char *end = text;
+        const char *end = parse(node, text);
 
-        if (parse(node, text, &end) == NULL)
+        if (end != NULL)
         {
             if (error)
             {
@@ -768,10 +768,7 @@ json *json_new(json *parent, const char *text)
 
         *link = node;
         node->parent = parent;
-
-        const char *end = text;
-
-        if (parse(node, text, &end) == NULL)
+        if (parse(node, text) != NULL)
         {
             json_free(node);
             *link = NULL;
