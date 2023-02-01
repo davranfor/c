@@ -50,7 +50,7 @@ static void schema_callback(const json_schema *schema,
     {
         fprintf(stderr, "%s:\n", title);
         schema->callback(iter, schema->data);
-        json_write(stderr, node);
+        json_write(node, stderr);
     }
 }
 
@@ -1031,7 +1031,7 @@ int json_validate(const json *iter, const json *root,
 int json_schema_default_callback(const json *node, void *data)
 {
     (void)data;
-    json_write(stderr, node);
+    json_write(node, stderr);
     return 1;
 }
 

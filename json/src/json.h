@@ -63,8 +63,9 @@ json *json_item(const json *, size_t);
 size_t json_items(const json *);
 int json_equal(const json *, const json *);
 int json_traverse(const json *, json_callback, void *);
-void json_write(FILE *, const json *);
-void json_print(const json *);
+char *json_encode(const json *);
+int json_write(const json *, FILE *);
+int json_print(const json *);
 void json_raise_error(const json_error *error, const char *);
 void json_free(json *);
 

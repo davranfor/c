@@ -354,8 +354,7 @@ static const char *parse(json *node, const char *left)
 
     while (node != NULL)
     {
-        token = scan(&left, &right);
-        if (token == NULL)
+        if ((token = scan(&left, &right)) == NULL)
         {
             return ERROR;
         }
@@ -789,19 +788,20 @@ json *json_self(const json *node)
 
 json *json_root(const json *node)
 {
-    json *root = NULL;
-
-    if (node != NULL)
+    if (node == NULL)
     {
-        root = node->parent;
-        if (root == NULL)
-        {
-            return json_self(node);
-        }
-        while (root->parent != NULL)
-        {
-            root = root->parent;
-        }
+        return NULL;
+    }
+
+    json *root = node->parent;
+
+    if (root == NULL)
+    {
+        return json_self(node);
+    }
+    while (root->parent != NULL)
+    {
+        root = root->parent;
     }
     return root;
 }
@@ -1115,13 +1115,93 @@ int json_traverse(const json *root, json_callback func, void *data)
     return 0;
 }
 
-static void print(const char *str, FILE *file)
+#define JSON_BUFFER_DEFAULT_SIZE 16
+
+typedef struct { char *text; size_t length, size; } json_buffer;
+
+static json_buffer *buffer_new(void)
+{
+    json_buffer *buffer = calloc(1, sizeof *buffer);
+
+    if (buffer != NULL)
+    {
+        buffer->size = JSON_BUFFER_DEFAULT_SIZE;
+        buffer->text = malloc(buffer->size);
+        if (buffer->text == NULL)
+        {
+            free(buffer);
+            return NULL;
+        }
+        buffer->text[0] = '\0';
+    }
+    return buffer;
+}
+
+static char *buffer_realloc(json_buffer *buffer, size_t size)
+{
+    char *text = realloc(buffer->text, size);
+
+    if (text != NULL)
+    {
+        buffer->text = text;
+        buffer->size = size;
+    }
+    return text;
+}
+
+static size_t buffer_next_size(size_t size)
+{
+    size--;
+    size |= size >> 1;
+    size |= size >> 2;
+    size |= size >> 4;
+    size |= size >> 8;
+    size |= size >> 16;
+    size++;
+    return size;
+}
+
+static json_buffer *buffer_write_length(json_buffer *buffer,
+    const char *text, size_t length)
+{
+    size_t size = buffer->length + length + 1;
+
+    if (size > buffer->size)
+    {
+        if (buffer_realloc(buffer, buffer_next_size(size)) == NULL)
+        {
+            return NULL;
+        }
+    }
+    memcpy(buffer->text + buffer->length, text, length);
+    buffer->length += length;
+    buffer->text[buffer->length] = '\0';
+    return buffer;
+}
+
+static json_buffer *buffer_write(json_buffer *buffer, const char *text)
+{
+    return buffer_write_length(buffer, text, strlen(text));
+}
+
+#define BUFFER_WRITE(text)  \
+    if (buffer_write(buffer, text) == NULL) return 0;
+
+#define BUFFER_WRITE_LENGTH(text, length)  \
+    if (buffer_write_length(buffer, text, length) == NULL) return 0;
+
+#define BUFFER_QUOTE(text)                                      \
+    if (buffer_write_length(buffer, "\"", 1) == NULL) return 0; \
+    if (buffer_encode(buffer, text) == 0) return 0;             \
+    if (buffer_write_length(buffer, "\"", 1) == NULL) return 0;
+
+static int buffer_encode(json_buffer *buffer, const char *str)
 {
     const char *end = str;
 
     while (*str != '\0')
     {
-        int escape = 0;
+        char escape = 0;
 
         switch (*str)
         {
@@ -1152,44 +1232,41 @@ static void print(const char *str, FILE *file)
         }
         if (escape != 0)
         {
-            fprintf(file, "%.*s\\%c", (int)(str - end), end, escape);
+            const char esc[] = {'\\', escape, '\0'};
+
+            BUFFER_WRITE_LENGTH(end, (size_t)(str - end));
+            BUFFER_WRITE_LENGTH(esc, 2);
             end = ++str;
         }
     }
-    fputs(end, file);
+    BUFFER_WRITE(end);
+    return 1;
 }
 
-static void quote(const char *str, FILE *file)
-{
-    fputc('"', file);
-    print(str, file);
-    fputc('"', file);
-}
-
-static void write_opening(FILE *file, const json *node, int depth)
+static int buffer_write_opening(json_buffer *buffer, const json *node, int depth)
 {
     for (int i = 0; i < depth; i++)
     {
-        fputs("  ", file);
+        BUFFER_WRITE("  ");
     }
     if (node->name != NULL)
     {
-        quote(node->name, file);
-        fputs(": ", file);
+        BUFFER_QUOTE(node->name);
+        BUFFER_WRITE(": ");
     }
     switch (node->type)
     {
         case JSON_OBJECT:
-            fputc('{', file);
+            BUFFER_WRITE("{");
             break;
         case JSON_ARRAY:
-            fputc('[', file);
+            BUFFER_WRITE("[");
             break;
         case JSON_STRING:
-            quote(node->value, file);
+            BUFFER_QUOTE(node->value);
             break;
         default:
-            print(node->value, file);
+            BUFFER_WRITE(node->value);
             break;
     }
     if (node->left == NULL)
@@ -1198,63 +1275,68 @@ static void write_opening(FILE *file, const json *node, int depth)
         switch (node->type)
         {
             case JSON_OBJECT:
-                fputc('}', file);
+                BUFFER_WRITE("}");
                 break;
             case JSON_ARRAY:
-                fputc(']', file);
+                BUFFER_WRITE("]");
                 break;
             default:
                 break;
         }
         if ((depth > 0) && (node->right != NULL))
         {
-            fputc(',', file);
+            BUFFER_WRITE(",");
         }
     }
-    fputc('\n', file);
+    BUFFER_WRITE("\n");
+    return 1;
 }
 
 /* Prints the close group character for each change of level */
-static void write_closing(FILE *file, const json *node, int depth)
+static int buffer_write_closing(json_buffer *buffer, const json *node, int depth)
 {
     /* if "array" or "object" */
     if (node->left != NULL)
     {
         for (int i = 0; i < depth; i++)
         {
-            fputs("  ", file);
+            BUFFER_WRITE("  ");
         }
         switch (node->type)
         {
             case JSON_OBJECT:
-                fputc('}', file);
+                BUFFER_WRITE("}");
                 break;
             case JSON_ARRAY:
-                fputc(']', file);
+                BUFFER_WRITE("]");
                 break;
             default:
                 break;
         }
         if ((depth > 0) && (node->right != NULL))
         {
-            fputc(',', file);
+           BUFFER_WRITE(",");
         }
-        fputc('\n', file);
+        BUFFER_WRITE("\n");
     }
+    return 1;
 }
 
-void json_write(FILE *file, const json *node)
+static int json_set_buffer(const json *node, json_buffer *buffer)
 {
     int depth = 0;
 
     if (node == NULL)
     {
-        return;
+        return 1;
     }
     while (1)
     {
         loop:
-        write_opening(file, node, depth);
+        if (!buffer_write_opening(buffer, node, depth))
+        {
+            return 0;
+        }
         if (node->left != NULL)
         {
             node = node->left;
@@ -1269,21 +1351,62 @@ void json_write(FILE *file, const json *node)
             while (depth > 0)
             {
                 node = node->parent;
-                write_closing(file, node, --depth);
+                if (!buffer_write_closing(buffer, node, --depth))
+                {
+                    return 0;
+                }
                 if (node->right != NULL)
                 {
                     node = node->right;
                     goto loop;
                 }
             }
-            return;
+            return 1;
         }
     }
 }
 
-void json_print(const json *node)
+char *json_encode(const json *node)
 {
-    json_write(stdout, node);
+    json_buffer *buffer = buffer_new();
+
+    if (buffer == NULL)
+    {
+        return NULL;
+    }
+
+    char *text = NULL;
+
+    if (json_set_buffer(node, buffer))
+    {
+        text = buffer->text;
+    }
+    else
+    {
+        free(buffer->text);
+    }
+    free(buffer);
+    return text;
+}
+
+int json_write(const json *node, FILE *file)
+{
+    char *str = json_encode(node);
+
+    if (str == NULL)
+    {
+        return 0;
+    }
+
+    int result = fputs(str, file) != EOF;
+
+    free(str);
+    return result;
+}
+
+int json_print(const json *node)
+{
+    return json_write(node, stdout);
 }
 
 void json_raise_error(const json_error *error, const char *path)
