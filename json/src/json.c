@@ -1168,7 +1168,7 @@ static json_buffer *buffer_write_length(json_buffer *buffer,
 
     if (size > buffer->size)
     {
-        if (buffer_resize(buffer, buffer_next_size(size)) == NULL)
+        if (!buffer_resize(buffer, buffer_next_size(size)))
         {
             return NULL;
         }
