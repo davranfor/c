@@ -1137,7 +1137,7 @@ static json_buffer *buffer_new(void)
     return buffer;
 }
 
-static char *buffer_realloc(json_buffer *buffer, size_t size)
+static char *buffer_resize(json_buffer *buffer, size_t size)
 {
     char *text = realloc(buffer->text, size);
 
@@ -1168,14 +1168,13 @@ static json_buffer *buffer_write_length(json_buffer *buffer,
 
     if (size > buffer->size)
     {
-        if (buffer_realloc(buffer, buffer_next_size(size)) == NULL)
+        if (buffer_resize(buffer, buffer_next_size(size)) == NULL)
         {
             return NULL;
         }
     }
-    memcpy(buffer->text + buffer->length, text, length);
+    memcpy(buffer->text + buffer->length, text, length + 1);
     buffer->length += length;
-    buffer->text[buffer->length] = '\0';
     return buffer;
 }
 
@@ -1184,26 +1183,41 @@ static json_buffer *buffer_write(json_buffer *buffer, const char *text)
     return buffer_write_length(buffer, text, strlen(text));
 }
 
-#define BUFFER_WRITE(text)  \
-    if (buffer_write(buffer, text) == NULL) return 0;
+#define BUFFER_WRITE(text)                          \
+    if (!buffer_write(buffer, text))                \
+    {                                               \
+        return 0;                                   \
+    }
 
-#define BUFFER_WRITE_LENGTH(text, length)  \
-    if (buffer_write_length(buffer, text, length) == NULL) return 0;
+#define BUFFER_WRITE_LENGTH(text, length)           \
+    if (!buffer_write_length(buffer, text, length)) \
+    {                                               \
+        return 0;                                   \
+    }
 
-#define BUFFER_QUOTE(text)                                      \
-    if (buffer_write_length(buffer, "\"", 1) == NULL) return 0; \
-    if (buffer_encode(buffer, text) == 0) return 0;             \
-    if (buffer_write_length(buffer, "\"", 1) == NULL) return 0;
+#define BUFFER_QUOTE(text)                          \
+    if (!buffer_write_length(buffer, "\"", 1))      \
+    {                                               \
+        return 0;                                   \
+    }                                               \
+    if (!buffer_encode(buffer, text))               \
+    {                                               \
+        return 0;                                   \
+    }                                               \
+    if (!buffer_write_length(buffer, "\"", 1))      \
+    {                                               \
+        return 0;                                   \
+    }
 
-static int buffer_encode(json_buffer *buffer, const char *str)
+static int buffer_encode(json_buffer *buffer, const char *text)
 {
-    const char *end = str;
+    const char *end = text;
 
-    while (*str != '\0')
+    while (*text != '\0')
     {
         char escape = 0;
 
-        switch (*str)
+        switch (*text)
         {
             case '\\':
                 escape = '\\';
@@ -1227,16 +1241,16 @@ static int buffer_encode(json_buffer *buffer, const char *str)
                 escape = 't';
                 break;
             default:
-                str++;
+                text++;
                 break;
         }
         if (escape != 0)
         {
             const char esc[] = {'\\', escape, '\0'};
 
-            BUFFER_WRITE_LENGTH(end, (size_t)(str - end));
+            BUFFER_WRITE_LENGTH(end, (size_t)(text - end));
             BUFFER_WRITE_LENGTH(esc, 2);
-            end = ++str;
+            end = ++text;
         }
     }
     BUFFER_WRITE(end);
@@ -1398,10 +1412,10 @@ int json_write(const json *node, FILE *file)
         return 0;
     }
 
-    int result = fputs(str, file) != EOF;
+    int ok = fputs(str, file) != EOF;
 
     free(str);
-    return result;
+    return ok;
 }
 
 int json_print(const json *node)
