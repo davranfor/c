@@ -1079,11 +1079,7 @@ int json_traverse(const json *root, json_callback func, void *data)
     const json *node = root;
     int result;
 
-    if (node == NULL)
-    {
-        return 0;
-    }
-    while (1)
+    while (node != NULL)
     {
         loop:
         if ((result = func(node, data)))
@@ -1109,7 +1105,7 @@ int json_traverse(const json *root, json_callback func, void *data)
                     goto loop;
                 }
             }
-            return 0;
+            break;
         }
     }
     return 0;
@@ -1340,11 +1336,7 @@ static int json_set_buffer(const json *node, json_buffer *buffer)
 {
     int depth = 0;
 
-    if (node == NULL)
-    {
-        return 1;
-    }
-    while (1)
+    while (node != NULL)
     {
         loop:
         if (!buffer_write_opening(buffer, node, depth))
@@ -1375,9 +1367,10 @@ static int json_set_buffer(const json *node, json_buffer *buffer)
                     goto loop;
                 }
             }
-            return 1;
+            break;
         }
     }
+    return 1;
 }
 
 char *json_encode(const json *node)
