@@ -1253,7 +1253,7 @@ static int buffer_encode(json_buffer *buffer, const char *text)
             end = ++text;
         }
     }
-    BUFFER_WRITE(end);
+    BUFFER_WRITE_LENGTH(end, (size_t)(text - end));
     return 1;
 }
 
