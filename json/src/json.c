@@ -1117,6 +1117,32 @@ int json_traverse(const json *root, json_callback func, void *data)
 
 #define JSON_BUFFER_DEFAULT_SIZE 16
 
+#define BUFFER_WRITE(text)                          \
+    if (!buffer_write(buffer, text))                \
+    {                                               \
+        return 0;                                   \
+    }
+
+#define BUFFER_WRITE_LENGTH(text, length)           \
+    if (!buffer_write_length(buffer, text, length)) \
+    {                                               \
+        return 0;                                   \
+    }
+
+#define BUFFER_QUOTE(text)                          \
+    if (!buffer_write_length(buffer, "\"", 1))      \
+    {                                               \
+        return 0;                                   \
+    }                                               \
+    if (!buffer_encode(buffer, text))               \
+    {                                               \
+        return 0;                                   \
+    }                                               \
+    if (!buffer_write_length(buffer, "\"", 1))      \
+    {                                               \
+        return 0;                                   \
+    }
+
 typedef struct { char *text; size_t length, size; } json_buffer;
 
 static json_buffer *buffer_new(void)
@@ -1182,32 +1208,6 @@ static json_buffer *buffer_write(json_buffer *buffer, const char *text)
 {
     return buffer_write_length(buffer, text, strlen(text));
 }
-
-#define BUFFER_WRITE(text)                          \
-    if (!buffer_write(buffer, text))                \
-    {                                               \
-        return 0;                                   \
-    }
-
-#define BUFFER_WRITE_LENGTH(text, length)           \
-    if (!buffer_write_length(buffer, text, length)) \
-    {                                               \
-        return 0;                                   \
-    }
-
-#define BUFFER_QUOTE(text)                          \
-    if (!buffer_write_length(buffer, "\"", 1))      \
-    {                                               \
-        return 0;                                   \
-    }                                               \
-    if (!buffer_encode(buffer, text))               \
-    {                                               \
-        return 0;                                   \
-    }                                               \
-    if (!buffer_write_length(buffer, "\"", 1))      \
-    {                                               \
-        return 0;                                   \
-    }
 
 static int buffer_encode(json_buffer *buffer, const char *text)
 {
