@@ -1205,51 +1205,49 @@ static json_buffer *buffer_write(json_buffer *buffer, const char *text)
     return buffer_write_length(buffer, text, strlen(text));
 }
 
-static int buffer_encode(json_buffer *buffer, const char *text)
+static int buffer_encode(json_buffer *buffer, const char *str)
 {
-    const char *end = text;
+    const char *ptr = str;
 
-    while (*text != '\0')
+    while (*str != '\0')
     {
-        char escape = 0;
+        char chr = 0;
 
-        switch (*text)
+        switch (*str)
         {
             case '\\':
-                escape = '\\';
+                chr = '\\';
                 break;
             case '"':
-                escape = '"';
+                chr = '"';
                 break;
             case '\b':
-                escape = 'b';
+                chr = 'b';
                 break;
             case '\f':
-                escape = 'f';
+                chr = 'f';
                 break;
             case '\n':
-                escape = 'n';
+                chr = 'n';
                 break;
             case '\r':
-                escape = 'r';
+                chr = 'r';
                 break;
             case '\t':
-                escape = 't';
+                chr = 't';
                 break;
             default:
-                text++;
+                str++;
                 break;
         }
-        if (escape != 0)
+        if (chr != 0)
         {
-            const char esc[] = {'\\', escape, '\0'};
-
-            BUFFER_WRITE_LENGTH(end, (size_t)(text - end));
-            BUFFER_WRITE_LENGTH(esc, 2);
-            end = ++text;
+            BUFFER_WRITE_LENGTH(ptr, (size_t)(str - ptr));
+            BUFFER_WRITE_LENGTH(((const char []){'\\', chr, '\0'}), 2);
+            ptr = ++str;
         }
     }
-    BUFFER_WRITE_LENGTH(end, (size_t)(text - end));
+    BUFFER_WRITE_LENGTH(ptr, (size_t)(str - ptr));
     return 1;
 }
 
