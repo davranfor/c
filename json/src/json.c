@@ -1130,7 +1130,7 @@ int json_traverse(const json *root, json_callback func, void *data)
     {                                               \
         return 0;                                   \
     }                                               \
-    if (!buffer_encode(buffer, text))               \
+    if (!buffer_write_string(buffer, text))         \
     {                                               \
         return 0;                                   \
     }                                               \
@@ -1205,7 +1205,7 @@ static json_buffer *buffer_write(json_buffer *buffer, const char *text)
     return buffer_write_length(buffer, text, strlen(text));
 }
 
-static int buffer_encode(json_buffer *buffer, const char *str)
+static int buffer_write_string(json_buffer *buffer, const char *str)
 {
     const char *ptr = str;
 
@@ -1251,7 +1251,7 @@ static int buffer_encode(json_buffer *buffer, const char *str)
     return 1;
 }
 
-static int buffer_write_opening(json_buffer *buffer, const json *node, int depth)
+static int buffer_print_node(json_buffer *buffer, const json *node, int depth)
 {
     for (int i = 0; i < depth; i++)
     {
@@ -1300,8 +1300,7 @@ static int buffer_write_opening(json_buffer *buffer, const json *node, int depth
     return 1;
 }
 
-/* Prints the close group character for each change of level */
-static int buffer_write_closing(json_buffer *buffer, const json *node, int depth)
+static int buffer_next_node(json_buffer *buffer, const json *node, int depth)
 {
     /* if "array" or "object" */
     if (node->left != NULL)
@@ -1330,14 +1329,14 @@ static int buffer_write_closing(json_buffer *buffer, const json *node, int depth
     return 1;
 }
 
-static int json_set_buffer(const json *node, json_buffer *buffer)
+static int buffer_encode(json_buffer *buffer, const json *node)
 {
     int depth = 0;
 
     while (node != NULL)
     {
         loop:
-        if (!buffer_write_opening(buffer, node, depth))
+        if (!buffer_print_node(buffer, node, depth))
         {
             return 0;
         }
@@ -1355,7 +1354,7 @@ static int json_set_buffer(const json *node, json_buffer *buffer)
             while (depth > 0)
             {
                 node = node->parent;
-                if (!buffer_write_closing(buffer, node, --depth))
+                if (!buffer_next_node(buffer, node, --depth))
                 {
                     return 0;
                 }
@@ -1382,7 +1381,7 @@ char *json_encode(const json *node)
 
     char *text = NULL;
 
-    if (json_set_buffer(node, buffer))
+    if (buffer_encode(buffer, node))
     {
         text = buffer->text;
     }
