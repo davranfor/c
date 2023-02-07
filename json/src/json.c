@@ -1113,19 +1113,18 @@ int json_traverse(const json *root, json_callback func, void *data)
 
 #define JSON_BUFFER_DEFAULT_SIZE 16
 
-#define BUFFER_WRITE(text)                          \
+/* Macros checking if buffers allocations succeeds */
+#define BUFFER_WRITE(buffer, text)                  \
     if (!buffer_write(buffer, text))                \
     {                                               \
         return 0;                                   \
     }
-
-#define BUFFER_WRITE_LENGTH(text, length)           \
+#define BUFFER_WRITE_LENGTH(buffer, text, length)   \
     if (!buffer_write_length(buffer, text, length)) \
     {                                               \
         return 0;                                   \
     }
-
-#define BUFFER_QUOTE(text)                          \
+#define BUFFER_QUOTE(buffer, text)                  \
     if (!buffer_write_length(buffer, "\"", 1))      \
     {                                               \
         return 0;                                   \
@@ -1242,12 +1241,12 @@ static int buffer_write_string(json_buffer *buffer, const char *str)
         }
         if (chr != 0)
         {
-            BUFFER_WRITE_LENGTH(ptr, (size_t)(str - ptr));
-            BUFFER_WRITE_LENGTH(((const char []){'\\', chr, '\0'}), 2);
+            BUFFER_WRITE_LENGTH(buffer, ptr, (size_t)(str - ptr));
+            BUFFER_WRITE_LENGTH(buffer, ((const char []){'\\', chr, '\0'}), 2);
             ptr = ++str;
         }
     }
-    BUFFER_WRITE_LENGTH(ptr, (size_t)(str - ptr));
+    BUFFER_WRITE_LENGTH(buffer, ptr, (size_t)(str - ptr));
     return 1;
 }
 
@@ -1255,26 +1254,26 @@ static int buffer_print_node(json_buffer *buffer, const json *node, int depth)
 {
     for (int i = 0; i < depth; i++)
     {
-        BUFFER_WRITE("  ");
+        BUFFER_WRITE(buffer, "  ");
     }
     if (node->name != NULL)
     {
-        BUFFER_QUOTE(node->name);
-        BUFFER_WRITE(": ");
+        BUFFER_QUOTE(buffer, node->name);
+        BUFFER_WRITE(buffer, ": ");
     }
     switch (node->type)
     {
         case JSON_OBJECT:
-            BUFFER_WRITE("{");
+            BUFFER_WRITE(buffer, "{");
             break;
         case JSON_ARRAY:
-            BUFFER_WRITE("[");
+            BUFFER_WRITE(buffer, "[");
             break;
         case JSON_STRING:
-            BUFFER_QUOTE(node->value);
+            BUFFER_QUOTE(buffer, node->value);
             break;
         default:
-            BUFFER_WRITE(node->value);
+            BUFFER_WRITE(buffer, node->value);
             break;
     }
     if (node->left == NULL)
@@ -1283,20 +1282,20 @@ static int buffer_print_node(json_buffer *buffer, const json *node, int depth)
         switch (node->type)
         {
             case JSON_OBJECT:
-                BUFFER_WRITE("}");
+                BUFFER_WRITE(buffer, "}");
                 break;
             case JSON_ARRAY:
-                BUFFER_WRITE("]");
+                BUFFER_WRITE(buffer, "]");
                 break;
             default:
                 break;
         }
         if ((depth > 0) && (node->right != NULL))
         {
-            BUFFER_WRITE(",");
+            BUFFER_WRITE(buffer, ",");
         }
     }
-    BUFFER_WRITE("\n");
+    BUFFER_WRITE(buffer, "\n");
     return 1;
 }
 
@@ -1307,24 +1306,24 @@ static int buffer_next_node(json_buffer *buffer, const json *node, int depth)
     {
         for (int i = 0; i < depth; i++)
         {
-            BUFFER_WRITE("  ");
+            BUFFER_WRITE(buffer, "  ");
         }
         switch (node->type)
         {
             case JSON_OBJECT:
-                BUFFER_WRITE("}");
+                BUFFER_WRITE(buffer, "}");
                 break;
             case JSON_ARRAY:
-                BUFFER_WRITE("]");
+                BUFFER_WRITE(buffer, "]");
                 break;
             default:
                 break;
         }
         if ((depth > 0) && (node->right != NULL))
         {
-           BUFFER_WRITE(",");
+           BUFFER_WRITE(buffer, ",");
         }
-        BUFFER_WRITE("\n");
+        BUFFER_WRITE(buffer, "\n");
     }
     return 1;
 }
