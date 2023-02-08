@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <locale.h>
-#include "json.h"
+#include "json_common.h"
 #include "json_schema.h"
-#include "json_utils.h"
 
 static json *parse(const char *path)
 {

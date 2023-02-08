@@ -9,8 +9,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include <math.h>
-#include "json.h"
-#include "json_query.h"
+#include "json_common.h"
 #include "json_format.h"
 #include "json_schema.h"
 
