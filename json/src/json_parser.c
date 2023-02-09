@@ -492,6 +492,55 @@ static const char *parse(json *node, const char *left)
     return ERROR;
 }
 
+/*
+ * Returns:
+ * - A reference to parent->left if parent is empty
+ * - A reference to the last child->right otherwise
+ * parent can not be NULL
+ */
+static json **get_link(json *parent)
+{
+    json *node;
+
+    if ((node = parent->left))
+    {
+        while (node->right != NULL)
+        {
+            node = node->right;
+        }
+    }
+    return node ? &node->right : &parent->left;
+}
+
+json *json_new(json *parent, const char *str)
+{
+    if (parent == NULL)
+    {
+        return json_parse(str, NULL);
+    }
+    if ((parent->type != JSON_OBJECT) && (parent->type != JSON_ARRAY))
+    {
+        return NULL;
+    }
+
+    json *node = create_node();
+
+    if (node != NULL)
+    {
+        json **link = get_link(parent);
+
+        *link = node;
+        node->parent = parent;
+        if (parse(node, str) != NULL)
+        {
+            json_free(node);
+            *link = NULL;
+            return NULL;
+        }
+    }
+    return node;
+}
+
 static void clear_error(json_error *error)
 {
     error->line = error->column = 0;
@@ -517,58 +566,9 @@ static void set_error(const char *str, const char *end, json_error *error)
     }
 }
 
-/*
- * Returns:
- * - A reference to parent->left if parent is empty
- * - A reference to the last child->right otherwise
- * parent can not be NULL
- */
-static json **get_link(json *parent)
+json *json_parse(const char *str, json_error *error)
 {
-    json *node;
-
-    if ((node = parent->left))
-    {
-        while (node->right != NULL)
-        {
-            node = node->right;
-        }
-    }
-    return node ? &node->right : &parent->left;
-}
-
-json *json_new(json *parent, const char *text)
-{
-    if (parent == NULL)
-    {
-        return json_parse(text, NULL);
-    }
-    if ((parent->type != JSON_OBJECT) && (parent->type != JSON_ARRAY))
-    {
-        return NULL;
-    }
-
-    json *node = create_node();
-
-    if (node != NULL)
-    {
-        json **link = get_link(parent);
-
-        *link = node;
-        node->parent = parent;
-        if (parse(node, text) != NULL)
-        {
-            json_free(node);
-            *link = NULL;
-            return NULL;
-        }
-    }
-    return node;
-}
-
-json *json_parse(const char *text, json_error *error)
-{
-    if (error)
+    if (error != NULL)
     {
         clear_error(error);
     }
@@ -577,13 +577,13 @@ json *json_parse(const char *text, json_error *error)
 
     if (node != NULL)
     {
-        const char *end = parse(node, text);
+        const char *end = parse(node, str);
 
         if (end != NULL)
         {
-            if (error)
+            if (error != NULL)
             {
-                set_error(text, end, error);
+                set_error(str, end, error);
             }
             json_free(node);
             return NULL;
@@ -641,10 +641,9 @@ json *json_parse_file(const char *path, json_error *error)
 
     if (str == NULL)
     {
-        if (error)
+        if (error != NULL)
         {
-            error->line = 0;
-            error->column = 0;
+            clear_error(error);
         }
         return NULL;
     }
@@ -657,24 +656,17 @@ json *json_parse_file(const char *path, json_error *error)
 
 void json_raise_error(const json_error *error, const char *path)
 {
-    if (error)
+    if ((error == NULL) || (error->line == 0))
     {
-        if (error->line == 0)
-        {
-            fprintf(stderr, "json:\t%s\n\t%s\n",
-                path ? path : "", strerror(errno)
-            );
-        }
-        else
-        {
-            fprintf(stderr, "json:\t%s\n\tError at line %d, column %d\n",
-                path ? path : "", error->line, error->column
-            );
-        }
+        fprintf(stderr, "json:\t%s\n\t%s\n",
+            path ? path : "", strerror(errno)
+        );
     }
     else
     {
-        fprintf(stderr, "json: %s\n", path ? path : "Unhandled error");
+        fprintf(stderr, "json:\t%s\n\tError at line %d, column %d\n",
+            path ? path : "", error->line, error->column
+        );
     }
 }
 
