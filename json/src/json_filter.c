@@ -34,7 +34,7 @@ enum {func_size = sizeof func_array / sizeof *func_array};
 
 static int is(const json *node, int (*func)(const json *))
 {
-    while (func(node))
+    while (func(node) != 0)
     {
         node = node->right;
     }
@@ -45,7 +45,7 @@ static int is_unique(const json *node, int (*func)(const json *))
 {
     const json *head = node;
 
-    while (func(node))
+    while (func(node) != 0)
     {
         for (const json *item = head; item != node; item = item->right)
         {

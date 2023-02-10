@@ -12,15 +12,15 @@ typedef int (*json_callback)(const json *, void *);
 
 enum json_type
 {
-    JSON_UNDEFINED, /* Not assigned */
-    JSON_OBJECT,    /* {Object} */
-    JSON_ARRAY,     /* [Array] */
-    JSON_STRING,    /* "String" */
-    JSON_INTEGER,   /* Integer */
-    JSON_DOUBLE,    /* Double */
-    JSON_BOOLEAN,   /* true or false */
-    JSON_NULL,      /* null */
-    JSON_TYPES,     /* Number of types */
+    JSON_UNDEFINED,
+    JSON_OBJECT,
+    JSON_ARRAY,
+    JSON_STRING,
+    JSON_INTEGER,
+    JSON_DOUBLE,
+    JSON_BOOLEAN,
+    JSON_NULL,
+    JSON_TYPES,
 };
 
 #endif /* JSON_H */
