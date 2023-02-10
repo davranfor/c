@@ -654,7 +654,7 @@ json *json_parse_file(const char *path, json_error *error)
     return node;
 }
 
-void json_raise_error(const json_error *error, const char *path)
+void json_raise_error(const char *path, const json_error *error)
 {
     if ((error == NULL) || (error->line == 0))
     {
