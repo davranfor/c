@@ -546,9 +546,9 @@ int json_equal(const json *a, const json *b)
     {
         if (a->left != NULL)
         {
-            depth++;
             a = a->left;
             b = b->left;
+            depth++;
         }
         else if ((depth > 0) && (a->right != NULL))
         {
@@ -557,9 +557,8 @@ int json_equal(const json *a, const json *b)
         }
         else
         {
-            while (depth > 0)
+            while (depth-- > 0)
             {
-                depth--;
                 a = a->parent;
                 b = b->parent;
                 if (a->right != NULL)

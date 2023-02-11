@@ -243,10 +243,10 @@ static int buffer_encode(json_buffer *buffer, const json *node)
         }
         else
         {
-            while (depth > 0)
+            while (depth-- > 0)
             {
                 node = node->parent;
-                if (!buffer_next_node(buffer, node, --depth))
+                if (!buffer_next_node(buffer, node, depth))
                 {
                     return 0;
                 }
