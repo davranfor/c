@@ -48,7 +48,7 @@ static void schema_callback(const json_schema *schema,
     if (schema->callback)
     {
         fprintf(stderr, "%s:\n", title);
-        schema->callback(iter, schema->data);
+        schema->callback(iter, schema->depth, schema->data);
         json_write(node, stderr);
     }
 }
@@ -1027,9 +1027,10 @@ int json_validate(const json *iter, const json *root,
     return 0;
 }
 
-int json_schema_default_callback(const json *node, void *data)
+int json_schema_default_callback(const json *node, int depth, void *data)
 {
     (void)data;
+    (void)depth;
     json_write(node, stderr);
     return 1;
 }

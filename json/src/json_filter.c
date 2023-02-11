@@ -580,29 +580,30 @@ int json_equal(const json *a, const json *b)
  * Sends all nodes to a callback "func"
  * Exit when all nodes are read or when "func" returns a non 0 value
  */
-int json_traverse(const json *root, json_callback func, void *data)
+int json_traverse(const json *node, json_callback func, void *data)
 {
-    const json *node = root;
+    int depth = 0;
     int result;
 
     while (node != NULL)
     {
         loop:
-        if ((result = func(node, data)))
+        if ((result = func(node, depth, data)))
         {
             return result;
         }
         if (node->left != NULL)
         {
             node = node->left;
+            depth++;
         }
-        else if ((node != root) && (node->right != NULL))
+        else if ((depth > 0) && (node->right != NULL))
         {
             node = node->right;
         }
         else
         {
-            while (node->parent != root->parent)
+            while (depth-- > 0)
             {
                 node = node->parent;
                 if (node->right != NULL)

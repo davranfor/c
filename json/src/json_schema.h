@@ -10,7 +10,7 @@
 #include "json.h"
 
 int json_validate(const json *, const json *, json_callback, void *);
-int json_schema_default_callback(const json *, void *);
+int json_schema_default_callback(const json *, int, void *);
 
 #endif /* JSON_SCHEMA_H */
 
