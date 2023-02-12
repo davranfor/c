@@ -482,6 +482,21 @@ size_t json_items(const json *node)
     return count;
 }
 
+size_t json_depth(const json *node)
+{
+    size_t depth = 0;
+
+    if (node != NULL)
+    {
+        while (node->parent != NULL)
+        {
+            node = node->parent;
+            depth++;
+        }
+    }
+    return depth;
+}
+
 static int equal(const json *a, const json *b, int depth)
 {
     if (a->type != b->type)
