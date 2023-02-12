@@ -116,7 +116,7 @@ json *json_match(const json *, const char *, size_t);
 json *json_node(const json *, const char *);
 json *json_item(const json *, size_t);
 size_t json_items(const json *);
-size_t json_depth(const json *);
+int json_depth(const json *);
 int json_equal(const json *, const json *);
 int json_traverse(const json *, json_callback, void *);
 

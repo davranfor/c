@@ -482,9 +482,9 @@ size_t json_items(const json *node)
     return count;
 }
 
-size_t json_depth(const json *node)
+int json_depth(const json *node)
 {
-    size_t depth = 0;
+    int depth = 0;
 
     if (node != NULL)
     {
