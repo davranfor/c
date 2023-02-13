@@ -528,7 +528,7 @@ static int equal(const json *a, const json *b, int depth)
     }
     if (a->value != NULL)
     {
-        if (json_is_number(a))
+        if (json_is_double(a))
         {
             return strtod(a->value, NULL) == strtod(b->value, NULL);
         }
