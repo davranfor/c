@@ -119,10 +119,7 @@ static int buffer_write_string(json_buffer *buffer, const char *str)
             ptr = ++str;
         }
     }
-    if (ptr != str)
-    {
-        BUFFER_WRITE_LENGTH(buffer, ptr, (size_t)(str - ptr));
-    }
+    BUFFER_WRITE_LENGTH(buffer, ptr, (size_t)(str - ptr));
     return 1;
 }
 
