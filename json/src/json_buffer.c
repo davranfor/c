@@ -4,8 +4,6 @@
 #include "json_struct.h"
 #include "json_buffer.h"
 
-#define JSON_BUFFER_DEFAULT_SIZE 16
-
 /* Macros checking if buffers allocations succeeds */
 #define BUFFER_WRITE(buffer, text)                  \
     if (!buffer_write(buffer, text))                \
@@ -32,24 +30,6 @@
     }
 
 typedef struct { char *text; size_t length, size; } json_buffer;
-
-static json_buffer *buffer_new(void)
-{
-    json_buffer *buffer = calloc(1, sizeof *buffer);
-
-    if (buffer != NULL)
-    {
-        buffer->size = JSON_BUFFER_DEFAULT_SIZE;
-        buffer->text = malloc(buffer->size);
-        if (buffer->text == NULL)
-        {
-            free(buffer);
-            return NULL;
-        }
-        buffer->text[0] = '\0';
-    }
-    return buffer;
-}
 
 static char *buffer_resize(json_buffer *buffer, size_t size)
 {
@@ -264,24 +244,17 @@ static int buffer_encode(json_buffer *buffer, const json *node)
 
 char *json_encode(const json *node)
 {
-    json_buffer *buffer = buffer_new();
-
-    if (buffer == NULL)
-    {
-        return NULL;
-    }
-
+    json_buffer buffer = {NULL, 0, 0};
     char *text = NULL;
 
-    if (buffer_encode(buffer, node))
+    if (buffer_encode(&buffer, node))
     {
-        text = buffer->text;
+        text = buffer.text;
     }
     else
     {
-        free(buffer->text);
+        free(buffer.text);
     }
-    free(buffer);
     return text;
 }
 
