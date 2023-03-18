@@ -10,7 +10,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include "json_struct.h"
-#include "json_parser.h"
 
 #define is_space(c) isspace((unsigned char)(c))
 #define is_cntrl(c) iscntrl((unsigned char)(c))
@@ -500,9 +499,9 @@ static const char *parse(json *node, const char *left)
  */
 static json **get_link(json *parent)
 {
-    json *node;
+    json *node = parent->left;
 
-    if ((node = parent->left))
+    if (node != NULL)
     {
         while (node->right != NULL)
         {

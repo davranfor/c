@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "json_struct.h"
-#include "json_filter.h"
 
 static const char *type_name[] =
 {

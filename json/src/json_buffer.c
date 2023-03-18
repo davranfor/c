@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "json_struct.h"
-#include "json_buffer.h"
 
 /* Macros checking if buffers allocations succeeds */
 #define BUFFER_WRITE(buffer, text)                  \
@@ -267,10 +266,10 @@ int json_write(const json *node, FILE *file)
         return 0;
     }
 
-    int ok = fputs(str, file) != EOF;
+    int rc = fputs(str, file) != EOF;
 
     free(str);
-    return ok;
+    return rc;
 }
 
 int json_print(const json *node)
