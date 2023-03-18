@@ -102,7 +102,7 @@ json *json_parse_file(const char *, json_error *);
 void json_raise_error(const char *, const json_error *);
 void json_free(json *);
 // ============================================================================
-// Filter
+// Reader
 // ============================================================================
 enum json_type json_type(const json *);
 const char *json_type_name(const json *);
@@ -141,7 +141,7 @@ int json_depth(const json *);
 int json_equal(const json *, const json *);
 int json_traverse(const json *, json_callback, void *);
 // ============================================================================
-// Buffer
+// Writer
 // ============================================================================
 char *json_encode(const json *);
 int json_write(const json *, FILE *);
