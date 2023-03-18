@@ -86,27 +86,13 @@ static int buffer_write_string(json_buffer *buffer, const char *str)
 
         switch (*str)
         {
-            case '\\':
-                chr = '\\';
-                break;
-            case '"':
-                chr = '"';
-                break;
-            case '\b':
-                chr = 'b';
-                break;
-            case '\f':
-                chr = 'f';
-                break;
-            case '\n':
-                chr = 'n';
-                break;
-            case '\r':
-                chr = 'r';
-                break;
-            case '\t':
-                chr = 't';
-                break;
+            case '\\': chr = '\\'; break;
+            case '"' : chr = '"' ; break;
+            case '\b': chr = 'b' ; break;
+            case '\f': chr = 'f' ; break;
+            case '\n': chr = 'n' ; break;
+            case '\r': chr = 'r' ; break;
+            case '\t': chr = 't' ; break;
             default:
                 str++;
                 break;
