@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <locale.h>
 #include "json.h"
 #include "json_schema.h"
@@ -19,8 +20,29 @@ static int callback(const json *node, const json *rule, int depth, void *data)
 {
     (void)depth;
     (void)data;
-    json_write(node, stderr);
-    json_write(rule, stderr);
+
+    char *path;
+
+    path = json_path(rule);
+    if (path != NULL)
+    {
+        fprintf(stderr, "Testing: %s\n", path);
+        free(path);
+    }
+    if (json_string(rule))
+    {
+        fprintf(stderr, "Expected: %s\n", json_string(rule));
+    }
+    if (json_string(node))
+    {
+        fprintf(stderr, "Got: %s\n", json_string(node));
+    }
+    path = json_path(node);
+    if (path != NULL)
+    {
+        fprintf(stderr, "At: %s\n", path);
+        free(path);
+    }
     return 1;
 }
 

@@ -14,6 +14,11 @@
     {                                               \
         return 0;                                   \
     }
+#define BUFFER_WRITE_STRING(buffer, text)           \
+    if (!buffer_write_string(buffer, text))         \
+    {                                               \
+        return 0;                                   \
+    }
 #define BUFFER_QUOTE(buffer, text)                  \
     if (!buffer_write_length(buffer, "\"", 1))      \
     {                                               \
@@ -87,12 +92,12 @@ static int buffer_write_string(json_buffer *buffer, const char *str)
         switch (*str)
         {
             case '\\': chr = (str[1] != 'u') ? '\\': '\0'; break;
-            case '"' : chr = '"' ; break;
-            case '\b': chr = 'b' ; break;
-            case '\f': chr = 'f' ; break;
-            case '\n': chr = 'n' ; break;
-            case '\r': chr = 'r' ; break;
-            case '\t': chr = 't' ; break;
+            case '"' : chr = '"'; break;
+            case '\b': chr = 'b'; break;
+            case '\f': chr = 'f'; break;
+            case '\n': chr = 'n'; break;
+            case '\r': chr = 'r'; break;
+            case '\t': chr = 't'; break;
             default: break;
         }
         if (chr != '\0')
@@ -265,5 +270,58 @@ int json_write(const json *node, FILE *file)
 int json_print(const json *node)
 {
     return json_write(node, stdout);
+}
+
+static int buffer_print_path(json_buffer *buffer, const json *node)
+{
+    if (node->parent == NULL)
+    {
+        BUFFER_WRITE(buffer, "$");
+    }
+    else
+    {
+        if (node->name != NULL)
+        {
+            BUFFER_WRITE(buffer, ".");
+            BUFFER_WRITE_STRING(buffer, node->name);
+        }
+        if (json_type(node->parent) == JSON_ARRAY)
+        {
+            char str[32];
+
+            snprintf(str, sizeof str, "[%zu]", json_offset(node));
+            BUFFER_WRITE(buffer, str);
+        }
+    }
+    return 1;
+}
+
+static int buffer_path(json_buffer *buffer, const json *node)
+{
+    if (node == NULL)
+    {
+        return 1;
+    }
+    if (!buffer_path(buffer, node->parent))
+    {
+        return 0;
+    }
+    return buffer_print_path(buffer, node);
+}
+
+char *json_path(const json *node)
+{
+    json_buffer buffer = {NULL, 0, 0};
+    char *text = NULL;
+
+    if (buffer_path(&buffer, node))
+    {
+        text = buffer.text;
+    }
+    else
+    {
+        free(buffer.text);
+    }
+    return text;
 }
 

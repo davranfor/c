@@ -481,6 +481,23 @@ size_t json_items(const json *node)
     return count;
 }
 
+size_t json_offset(const json *node)
+{
+    size_t offset = 0;
+
+    if ((node != NULL) && (node->parent != NULL))
+    {
+        const json *iter = node->parent->left;
+
+        while (iter != node)
+        {
+            iter = iter->right;
+            offset++;
+        }
+    }
+    return offset;
+}
+
 int json_depth(const json *node)
 {
     int depth = 0;

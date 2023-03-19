@@ -40,7 +40,7 @@ enum
 
 #define SCHEMA_MAX_DEPTH 1024
 
-#define equal(a, b) (strcmp(a, b) == 0)
+#define equal(a, b) (strcmp((a), (b)) == 0)
 
 static void schema_callback(const json_schema *schema,
     const json *rule, const json *node, const char *title)
