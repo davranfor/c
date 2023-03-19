@@ -16,23 +16,85 @@
 #define is_digit(c) isdigit((unsigned char)(c))
 #define is_xdigit(c) isxdigit((unsigned char)(c))
 
-/* Check wether a character is an escape character */
-static int is_escape(int c)
+/* Check whether a character is a json token */
+static int is_token(int c)
 {
+    return (c == '{') || (c == '}')
+        || (c == '[') || (c == ']')
+        || (c == ':') || (c == ',');
+}
+
+/* Returns the type of a token group character */
+static enum json_type token_type(int token)
+{
+    switch (token)
+    {
+        case '{':
+        case '}':
+            return JSON_OBJECT;
+        case '[':
+        case ']':
+            return JSON_ARRAY;
+        default:
+            return JSON_UNDEFINED;
+    }
+}
+
+/* Check whether a string is a valid number */
+static int is_number(const char *left, const char *right)
+{
+    char *end;
+
+    strtod(left, &end);
+    if (end <= right)
+    {
+        return 0;
+    }
+    /* Skip sign */
+    if (left[0] == '-')
+    {
+        left++;
+    }
+    /* Do not allow padding 0s */
+    if ((left[0] == '0') && is_digit(left[1]))
+    {
+        return 0;
+    }
+    /* Must start and end with a digit */ 
+    if (!is_digit(*left) || !is_digit(*right))
+    {
+        return 0;
+    }
+    return 1;
+}
+
+/* Check whether a string already tested as a valid number is a double */
+static int is_double(const char *left, const char *right)
+{
+    while (left <= right)
+    {
+        if ((*left == '.') || (*left == 'e') || (*left == 'E'))
+        {
+            return 1;
+        }
+        left++;
+    }
+    return 0;
+}
+
+/* Check whether a character is an escape character */
+static int is_esc(const char *str)
+{
+    char c = *str;
+
     return (c == '\\') || (c == '/') || (c == '"') ||
            (c == 'b')  || (c == 'f') || (c == 'n') || (c == 'r') || (c == 't');
 }
 
-/* Check wether a character is a control character */
-static int is_control(int c)
-{
-    return (c == '\\') || is_cntrl(c);
-}
-
-/* Check wether a character is an UCN (Universal character name) "\uxxxx" */
+/* Check whether a character is an UCN (Universal character name) "\uxxxx" */
 static int is_ucn(const char *str)
 {
-    return (*str++ == 'u')
+    return ((*str++) == 'u')
         && is_xdigit(*str++)
         && is_xdigit(*str++)
         && is_xdigit(*str++)
@@ -73,72 +135,6 @@ static int ucn_to_mb(const char *str, char *buf)
     }
 }
 
-/* Check wether a character is a json token */
-static int is_token(int c)
-{
-    return (c == '{') || (c == '}')
-        || (c == '[') || (c == ']')
-        || (c == ':') || (c == ',');
-}
-
-/* Returns the type of a token group character */
-static enum json_type token_type(int token)
-{
-    switch (token)
-    {
-        case '{':
-        case '}':
-            return JSON_OBJECT;
-        case '[':
-        case ']':
-            return JSON_ARRAY;
-        default:
-            return JSON_UNDEFINED;
-    }
-}
-
-/* Check wether a string is a valid number */
-static int is_number(const char *left, const char *right)
-{
-    char *end;
-
-    strtod(left, &end);
-    if (end <= right)
-    {
-        return 0;
-    }
-    /* Skip sign */
-    if (left[0] == '-')
-    {
-        left++;
-    }
-    /* Do not allow padding 0s */
-    if ((left[0] == '0') && is_digit(left[1]))
-    {
-        return 0;
-    }
-    /* Must start and end with a digit */ 
-    if (!is_digit(*left) || !is_digit(*right))
-    {
-        return 0;
-    }
-    return 1;
-}
-
-/* Check wether a string already tested as a valid number is a double */
-static int is_double(const char *left, const char *right)
-{
-    while (left <= right)
-    {
-        if ((*left == '.') || (*left == 'e') || (*left == 'E'))
-        {
-            return 1;
-        }
-        left++;
-    }
-    return 0;
-}
-
 /* Returns a pointer to the next element or NULL on fail */
 static const char *scan(const char **left, const char **right)
 {
@@ -149,25 +145,26 @@ static const char *scan(const char **left, const char **right)
     {
         if (*str == '\\')
         {
+            /* Skip escape sequences and UCN strings */
             if (quotes == 1)
             {
-                str++;
-                if (is_escape(*str))
+                if (is_esc(str + 1))
                 {
-                    str += 1;
+                    str += 2;
                     continue;
                 }
-                if (is_ucn(str))
+                if (is_ucn(str + 1))
                 {
-                    str += 5;
+                    str += 6;
                     continue;
                 }
             }
+            /* Escape equences are not allowed outside a string */
             return NULL;
         }
         if (*str == '"')
         {
-            /* Multiple strings are not allowed: <"abc" "def"> */
+            /* Multiple strings are not allowed: "abc" "def" */
             if (quotes > 1)
             {
                 return NULL;
@@ -175,18 +172,21 @@ static const char *scan(const char **left, const char **right)
             /* Change state */
             quotes++;
         }
-        /* Breaks on the first occurrence of a token outside a string */
-        else if (quotes != 1)
+        else if (quotes == 1)
         {
+            /* Control characters not allowed inside a string */
+            if (is_cntrl(*str))
+            {
+                return NULL;
+            }
+        }
+        else
+        {
+            /* Break on first token outside a string */
             if (is_token(*str))
             {
                 break;
             }
-        }
-        /* Control characters must be escaped inside a string */
-        else if (is_control(*str))
-        {
-            return NULL;
         }
         if (!is_space(*str))
         {
@@ -206,7 +206,7 @@ static const char *scan(const char **left, const char **right)
     {
         return NULL;
     }
-    /* There are no contents in front of the token */
+    /* There are no contents in front of the token - adjust positions */
     if (tokens == 0)
     {
         *left = *right = str;
