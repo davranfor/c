@@ -101,6 +101,16 @@ static int is_ucn(const char *str)
         && is_xdigit(*str);
 }
 
+/* Check whether a UCN converted to codepoint is valid */
+static int valid_ucn(unsigned long c)
+{
+    if ((c == '\b') || (c == '\f') || (c == '\n') || (c == '\r') || (c == '\t'))
+    {
+        return 1;
+    }
+    return !is_cntrl(c);
+}
+
 /*
  * Converts UCN to multibyte
  * Returns the length of the multibyte in bytes
@@ -114,6 +124,12 @@ static int ucn_to_mb(const char *str, char *buf)
 
     unsigned long codepoint = strtoul(hex, NULL, 16);
 
+    /* Copy as is if invalid */
+    if (!valid_ucn(codepoint))
+    {
+        memcpy(buf, str - 1, 6);
+        return 6;
+    }
     /* Convert to multibyte and return the length */
     if (codepoint <= 0x7f)
     {
@@ -165,12 +181,10 @@ static const char *scan(const char **left, const char **right)
         if (*str == '"')
         {
             /* Multiple strings are not allowed: "abc" "def" */
-            if (quotes > 1)
+            if (quotes++ > 1)
             {
                 return NULL;
             }
-            /* Change state */
-            quotes++;
         }
         else if (quotes == 1)
         {
@@ -233,9 +247,6 @@ static char *copy(const char *str, size_t length)
         {
             switch (*++str)
             {
-                case '\\':
-                case '/' :
-                case '"' : *ptr++ = *str; break;
                 case 'b' : *ptr++ = '\b'; break;
                 case 'f' : *ptr++ = '\f'; break;
                 case 'n' : *ptr++ = '\n'; break;
@@ -246,6 +257,7 @@ static char *copy(const char *str, size_t length)
                     str += 4;
                     break;
                 default:
+                    *ptr++ = *str;
                     break;
             }
         }

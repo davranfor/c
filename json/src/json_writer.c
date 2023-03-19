@@ -82,26 +82,30 @@ static int buffer_write_string(json_buffer *buffer, const char *str)
 
     while (*str != '\0')
     {
-        char chr = 0;
+        char chr = '\0';
 
         switch (*str)
         {
-            case '\\': chr = '\\'; break;
+            case '\\': chr = (str[1] != 'u') ? '\\': '\0'; break;
             case '"' : chr = '"' ; break;
             case '\b': chr = 'b' ; break;
             case '\f': chr = 'f' ; break;
             case '\n': chr = 'n' ; break;
             case '\r': chr = 'r' ; break;
             case '\t': chr = 't' ; break;
-            default:
-                str++;
-                break;
+            default: break;
         }
-        if (chr != 0)
+        if (chr != '\0')
         {
+            const char esc[] = {'\\', chr, '\0'};
+
             BUFFER_WRITE_LENGTH(buffer, ptr, (size_t)(str - ptr));
-            BUFFER_WRITE_LENGTH(buffer, ((const char []){'\\', chr, '\0'}), 2);
+            BUFFER_WRITE_LENGTH(buffer, esc, 2);
             ptr = ++str;
+        }
+        else
+        {
+            str++;
         }
     }
     BUFFER_WRITE_LENGTH(buffer, ptr, (size_t)(str - ptr));
