@@ -247,12 +247,12 @@ static char *copy(const char *str, size_t length)
         {
             switch (*++str)
             {
-                case 'b' : *ptr++ = '\b'; break;
-                case 'f' : *ptr++ = '\f'; break;
-                case 'n' : *ptr++ = '\n'; break;
-                case 'r' : *ptr++ = '\r'; break;
-                case 't' : *ptr++ = '\t'; break;
-                case 'u' :
+                case 'b': *ptr++ = '\b'; break;
+                case 'f': *ptr++ = '\f'; break;
+                case 'n': *ptr++ = '\n'; break;
+                case 'r': *ptr++ = '\r'; break;
+                case 't': *ptr++ = '\t'; break;
+                case 'u':
                     ptr += ucn_to_mb(str, ptr);
                     str += 4;
                     break;
