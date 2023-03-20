@@ -9,6 +9,8 @@
 
 #include "json.h"
 
+enum {JSON_SCHEMA_WARNING, JSON_SCHEMA_INVALID, JSON_SCHEMA_ERROR};
+
 typedef int (*json_schema_callback)(const json *, const json*, int, void *);
 
 int json_validate(const json *, const json *, json_schema_callback, void *);

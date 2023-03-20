@@ -42,33 +42,37 @@ enum
 
 #define equal(a, b) (strcmp((a), (b)) == 0)
 
-static void schema_callback(const json_schema *schema,
-    const json *rule, const json *node, const char *title)
+static void notify(json_schema *schema,
+    const json *rule, const json *node, int event)
 {
+    int aborted = 0;
+
     if (schema->callback)
     {
-        fprintf(stderr, "%s:\n", title);
-        schema->callback(node, rule, schema->depth, schema->data);
+        aborted = !schema->callback(node, rule, event, schema->data);
+    }
+    if (aborted || (event == JSON_SCHEMA_ERROR))
+    {
+        longjmp(schema->error, 1);
     }
 }
 
-static void raise_invalid(const json_schema *schema,
+static void raise_warning(json_schema *schema,
     const json *rule, const json *node)
 {
-    schema_callback(schema, rule, node, "Invalid");
+    notify(schema, rule, node, JSON_SCHEMA_WARNING);
 }
 
-static void raise_warning(const json_schema *schema,
+static void raise_invalid(json_schema *schema,
     const json *rule, const json *node)
 {
-    schema_callback(schema, rule, node, "Warning");
+    notify(schema, rule, node, JSON_SCHEMA_INVALID);
 }
 
 static void raise_error(json_schema *schema,
     const json *rule, const json *node)
 {
-    schema_callback(schema, rule, node, "Error");
-    longjmp(schema->error, 1);
+    notify(schema, rule, node, JSON_SCHEMA_ERROR);
 }
 
 static int test_error(const json *rule, const json *node)

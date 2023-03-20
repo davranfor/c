@@ -16,33 +16,32 @@ static json *parse(const char *path)
     return node;
 }
 
-static int callback(const json *node, const json *rule, int depth, void *data)
+static void raise(const json *node, const char *title)
 {
-    (void)depth;
-    (void)data;
+    char *path = json_path(node);
 
-    char *path;
-
-    path = json_path(rule);
     if (path != NULL)
     {
-        fprintf(stderr, "Testing: %s\n", path);
+        fprintf(stderr, "%s: %s\n", title, path);
         free(path);
-    }
-    if (json_string(rule))
-    {
-        fprintf(stderr, "Expected: %s\n", json_string(rule));
     }
     if (json_string(node))
     {
-        fprintf(stderr, "Got: %s\n", json_string(node));
+        const char *fmt = json_is_string(node) ? " -> \"%s\"\n" : " -> %s\n";
+
+        fprintf(stderr, fmt, json_string(node));
     }
-    path = json_path(node);
-    if (path != NULL)
-    {
-        fprintf(stderr, "At: %s\n", path);
-        free(path);
-    }
+}
+
+static int callback(const json *node, const json *rule, int event, void *data)
+{
+    (void)data;
+
+    const char *event_title[] = {"Warning", "Error", "Malformed schema"};
+
+    fprintf(stderr, "\n%s:\n", event_title[event]);
+    raise(rule, "Testing rule");
+    raise(node, "Testing node");
     return 1;
 }
 
@@ -58,7 +57,7 @@ static void validate(const json *node, const char *path)
         json_print(schema);
         if (!json_validate(node, schema, callback, NULL))
         {
-            fprintf(stderr, "'%s' doesn't validate\n", path);
+            fprintf(stderr, "\n'%s' doesn't validate\n", path);
         }
         json_free(schema);
     }
