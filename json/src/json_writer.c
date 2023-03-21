@@ -3,35 +3,8 @@
 #include <string.h>
 #include "json_struct.h"
 
-/* Macros checking if buffers allocations succeeds */
-#define BUFFER_WRITE(buffer, text)                  \
-    if (!buffer_write(buffer, text))                \
-    {                                               \
-        return 0;                                   \
-    }
-#define BUFFER_WRITE_LENGTH(buffer, text, length)   \
-    if (!buffer_write_length(buffer, text, length)) \
-    {                                               \
-        return 0;                                   \
-    }
-#define BUFFER_WRITE_STRING(buffer, text)           \
-    if (!buffer_write_string(buffer, text))         \
-    {                                               \
-        return 0;                                   \
-    }
-#define BUFFER_QUOTE(buffer, text)                  \
-    if (!buffer_write_length(buffer, "\"", 1))      \
-    {                                               \
-        return 0;                                   \
-    }                                               \
-    if (!buffer_write_string(buffer, text))         \
-    {                                               \
-        return 0;                                   \
-    }                                               \
-    if (!buffer_write_length(buffer, "\"", 1))      \
-    {                                               \
-        return 0;                                   \
-    }
+/* return 0 if buffer_resize() fails */
+#define CHECK(expr) do { if (!(expr)) return 0; } while(0)
 
 typedef struct { char *text; size_t length, size; } json_buffer;
 
@@ -59,7 +32,7 @@ static size_t buffer_next_size(size_t size)
     return size;
 }
 
-static json_buffer *buffer_write_length(json_buffer *buffer,
+static json_buffer *buffer_write_sized(json_buffer *buffer,
     const char *text, size_t length)
 {
     size_t size = buffer->length + length + 1;
@@ -78,10 +51,10 @@ static json_buffer *buffer_write_length(json_buffer *buffer,
 
 static json_buffer *buffer_write(json_buffer *buffer, const char *text)
 {
-    return buffer_write_length(buffer, text, strlen(text));
+    return buffer_write_sized(buffer, text, strlen(text));
 }
 
-static int buffer_write_string(json_buffer *buffer, const char *str)
+static int buffer_parse(json_buffer *buffer, const char *str)
 {
     const char *ptr = str;
 
@@ -104,8 +77,8 @@ static int buffer_write_string(json_buffer *buffer, const char *str)
         {
             const char esc[] = {'\\', chr, '\0'};
 
-            BUFFER_WRITE_LENGTH(buffer, ptr, (size_t)(str - ptr));
-            BUFFER_WRITE_LENGTH(buffer, esc, 2);
+            CHECK(buffer_write_sized(buffer, ptr, (size_t)(str - ptr)));
+            CHECK(buffer_write_sized(buffer, esc, 2));
             ptr = ++str;
         }
         else
@@ -113,34 +86,42 @@ static int buffer_write_string(json_buffer *buffer, const char *str)
             str++;
         }
     }
-    BUFFER_WRITE_LENGTH(buffer, ptr, (size_t)(str - ptr));
+    CHECK(buffer_write_sized(buffer, ptr, (size_t)(str - ptr)));
     return 1;
 }
 
-static int buffer_print_node(json_buffer *buffer, const json *node, int depth)
+static int buffer_quote(json_buffer *buffer, const char *text)
+{
+    CHECK(buffer_write(buffer, "\""));
+    CHECK(buffer_parse(buffer, text));
+    CHECK(buffer_write(buffer, "\""));
+    return 1;
+}
+
+static int buffer_write_node(json_buffer *buffer, const json *node, int depth)
 {
     for (int i = 0; i < depth; i++)
     {
-        BUFFER_WRITE(buffer, "  ");
+        CHECK(buffer_write(buffer, "  "));
     }
     if (node->name != NULL)
     {
-        BUFFER_QUOTE(buffer, node->name);
-        BUFFER_WRITE(buffer, ": ");
+        CHECK(buffer_quote(buffer, node->name));
+        CHECK(buffer_write(buffer, ": "));
     }
     switch (node->type)
     {
         case JSON_OBJECT:
-            BUFFER_WRITE(buffer, "{");
+            CHECK(buffer_write(buffer, "{"));
             break;
         case JSON_ARRAY:
-            BUFFER_WRITE(buffer, "[");
+            CHECK(buffer_write(buffer, "["));
             break;
         case JSON_STRING:
-            BUFFER_QUOTE(buffer, node->value);
+            CHECK(buffer_quote(buffer, node->value));
             break;
         default:
-            BUFFER_WRITE(buffer, node->value);
+            CHECK(buffer_write(buffer, node->value));
             break;
     }
     if (node->left == NULL)
@@ -149,48 +130,48 @@ static int buffer_print_node(json_buffer *buffer, const json *node, int depth)
         switch (node->type)
         {
             case JSON_OBJECT:
-                BUFFER_WRITE(buffer, "}");
+                CHECK(buffer_write(buffer, "}"));
                 break;
             case JSON_ARRAY:
-                BUFFER_WRITE(buffer, "]");
+                CHECK(buffer_write(buffer, "]"));
                 break;
             default:
                 break;
         }
         if ((depth > 0) && (node->right != NULL))
         {
-            BUFFER_WRITE(buffer, ",");
+            CHECK(buffer_write(buffer, ","));
         }
     }
-    BUFFER_WRITE(buffer, "\n");
+    CHECK(buffer_write(buffer, "\n"));
     return 1;
 }
 
-static int buffer_next_node(json_buffer *buffer, const json *node, int depth)
+static int buffer_write_next(json_buffer *buffer, const json *node, int depth)
 {
     /* if "array" or "object" */
     if (node->left != NULL)
     {
         for (int i = 0; i < depth; i++)
         {
-            BUFFER_WRITE(buffer, "  ");
+            CHECK(buffer_write(buffer, "  "));
         }
         switch (node->type)
         {
             case JSON_OBJECT:
-                BUFFER_WRITE(buffer, "}");
+                CHECK(buffer_write(buffer, "}"));
                 break;
             case JSON_ARRAY:
-                BUFFER_WRITE(buffer, "]");
+                CHECK(buffer_write(buffer, "]"));
                 break;
             default:
                 break;
         }
         if ((depth > 0) && (node->right != NULL))
         {
-           BUFFER_WRITE(buffer, ",");
+           CHECK(buffer_write(buffer, ","));
         }
-        BUFFER_WRITE(buffer, "\n");
+        CHECK(buffer_write(buffer, "\n"));
     }
     return 1;
 }
@@ -202,7 +183,7 @@ static int buffer_encode(json_buffer *buffer, const json *node)
     while (node != NULL)
     {
         loop:
-        if (!buffer_print_node(buffer, node, depth))
+        if (!buffer_write_node(buffer, node, depth))
         {
             return 0;
         }
@@ -220,7 +201,7 @@ static int buffer_encode(json_buffer *buffer, const json *node)
             while (depth-- > 0)
             {
                 node = node->parent;
-                if (!buffer_next_node(buffer, node, depth))
+                if (!buffer_write_next(buffer, node, depth))
                 {
                     return 0;
                 }
@@ -272,25 +253,25 @@ int json_print(const json *node)
     return json_write(node, stdout);
 }
 
-static int buffer_print_path(json_buffer *buffer, const json *node)
+static int buffer_write_path(json_buffer *buffer, const json *node)
 {
     if (node->parent == NULL)
     {
-        BUFFER_WRITE(buffer, "$");
+        CHECK(buffer_write(buffer, "$"));
     }
     else
     {
         if (node->name != NULL)
         {
-            BUFFER_WRITE(buffer, ".");
-            BUFFER_WRITE_STRING(buffer, node->name);
+            CHECK(buffer_write(buffer, "."));
+            CHECK(buffer_parse(buffer, node->name));
         }
-        if (json_type(node->parent) == JSON_ARRAY)
+        if (node->parent->type == JSON_ARRAY)
         {
             char str[32];
 
             snprintf(str, sizeof str, "[%zu]", json_offset(node));
-            BUFFER_WRITE(buffer, str);
+            CHECK(buffer_write(buffer, str));
         }
     }
     return 1;
@@ -306,7 +287,7 @@ static int buffer_path(json_buffer *buffer, const json *node)
     {
         return 0;
     }
-    return buffer_print_path(buffer, node);
+    return buffer_write_path(buffer, node);
 }
 
 char *json_path(const json *node)
