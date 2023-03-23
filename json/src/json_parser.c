@@ -29,14 +29,11 @@ static enum json_type token_type(int token)
 {
     switch (token)
     {
+        default : return JSON_UNDEFINED;
         case '{':
-        case '}':
-            return JSON_OBJECT;
+        case '}': return JSON_OBJECT;
         case '[':
-        case ']':
-            return JSON_ARRAY;
-        default:
-            return JSON_UNDEFINED;
+        case ']': return JSON_ARRAY;
     }
 }
 
@@ -124,7 +121,7 @@ static int ucn_to_mb(const char *str, char *buf)
 
     unsigned long codepoint = strtoul(hex, NULL, 16);
 
-    /* Copy as is if invalid */
+    /* Copy "as is" if invalid */
     if (!valid_ucn(codepoint))
     {
         memcpy(buf, str - 1, 6);
@@ -161,7 +158,7 @@ static const char *scan(const char **left, const char **right)
     {
         if (*str == '\\')
         {
-            /* Skip escape sequences and UCN strings */
+            /* Skip escape sequences and UCN strings or fail */
             if (quotes == 1)
             {
                 if (is_esc(str + 1))
@@ -175,57 +172,72 @@ static const char *scan(const char **left, const char **right)
                     continue;
                 }
             }
-            /* Escape equences are not allowed outside a string */
-            return NULL;
+            /* Escape sequences are not allowed outside a string */
+            goto fail;
         }
         if (*str == '"')
         {
-            /* Multiple strings are not allowed: "abc" "def" */
-            if (quotes++ > 1)
+            /* Multiple values are not allowed */
+            if (quotes++ != tokens)
             {
-                return NULL;
+                goto fail;
             }
         }
         else if (quotes == 1)
         {
-            /* Control characters not allowed inside a string */
+            /* Control characters are not allowed inside a string */
             if (is_cntrl(*str))
             {
-                return NULL;
+                goto fail;
             }
         }
-        else
+        else if (is_token(*str))
         {
-            /* Break on first token outside a string */
-            if (is_token(*str))
-            {
-                break;
-            }
+            /* Exit on first token outside a string */
+            break;
         }
         if (!is_space(*str))
         {
+            /* Multiple values are not allowed */
+            if (tokens == -1)
+            {
+                goto fail;
+            }
             /* Update left pointer */
-            if (tokens == 0)
+            else if (tokens == 0)
             {
                 *left = str;
                 tokens = 1;
             }
+            /* A value is completed */
+            else if (quotes > 1)
+            {
+                tokens = -1;
+            }
             /* Right pointer is always updated */
             *right = str;
+        }
+        else if ((tokens == 1) && (quotes != 1))
+        {
+            /* A value is completed */
+            tokens = -1;
         }
         str++;
     }
     /* Quotes are not closed */
     if (quotes == 1)
     {
-        return NULL;
+        goto fail;
     }
-    /* There are no contents in front of the token - adjust positions */
+    /* There are no contents in front of the token - Adjust positions */
     if (tokens == 0)
     {
         *left = *right = str;
     }
     return str;
+fail:
+    *left = str;
+    return NULL;
 }
 
 /* Allocates space for a 'name' or a 'value' escaping special characters */
@@ -247,6 +259,7 @@ static char *copy(const char *str, size_t length)
         {
             switch (*++str)
             {
+                default : *ptr++ = *str; break;
                 case 'b': *ptr++ = '\b'; break;
                 case 'f': *ptr++ = '\f'; break;
                 case 'n': *ptr++ = '\n'; break;
@@ -255,9 +268,6 @@ static char *copy(const char *str, size_t length)
                 case 'u':
                     ptr += ucn_to_mb(str, ptr);
                     str += 4;
-                    break;
-                default:
-                    *ptr++ = *str;
                     break;
             }
         }
@@ -322,165 +332,169 @@ static json *create_node(void)
     return calloc(1, sizeof(struct json));
 }
 
+static json *create_child(json *parent)
+{
+    json *node = calloc(1, sizeof(struct json));
+
+    if (node != NULL)
+    {
+        node->parent = parent;   
+    }
+    return node;
+}
+
+/* Parse document - Returns error position or NULL on success */
 static const char *parse(json *node, const char *left)
 {
     const json *parent = node ? node->parent : NULL;
-    const char *right;
+    const char *right = NULL;
     const char *token;
-
-    #define ERROR left
 
     while (node != NULL)
     {
         if ((token = scan(&left, &right)) == NULL)
         {
-            return ERROR;
+            return left;
         }
         switch (*token)
         {
             case '{':
             case '[':
                 /* Object properties must have a name */
-                if ((node->parent != NULL) &&
-                    (node->parent->type == JSON_OBJECT) &&
-                    (node->name == NULL))
+                if (json_is_object(node->parent) && (node->name == NULL))
                 {
-                    return ERROR;
+                    return token;
                 }
-                /* Commas between groups are required, e.g.: [[] []] */
+                /* Commas between groups are required: [[] []] */
                 if (node->type != JSON_UNDEFINED)
                 {
-                    return ERROR;
+                    return left;
                 }
-                /* if there is text before the token, e.g.: {"abc":1{}} */
+                /* Contents before groups are not allowed: x[] */
                 if (left != token)
                 {
-                    return ERROR;
+                    return token;
                 }
                 node->type = token_type(*token);
-                /* Creates a left node (child) */
-                node->left = create_node();
+                /* Create a left (child) node */
+                node->left = create_child(node);
                 if (node->left == NULL)
                 {
-                    return ERROR;
+                    return left;
                 }
-                node->left->parent = node;
                 node = node->left;
                 break;
             case ':':
                 /* Only object properties can have a name */
-                if ((node->parent == NULL) ||
-                    (node->parent->type != JSON_OBJECT) ||
-                    (node->name != NULL))
+                if (!json_is_object(node->parent) || (node->name != NULL))
                 {
-                    return ERROR;
+                    return token;
+                }
+                if (left == token)
+                {
+                    return left;
                 }
                 if (set_name(node, left, right) == NULL)
                 {
-                    return ERROR;
+                    return left;
                 }
                 break;
             case ',':
-                /* Object properties must have a name */
-                if ((node->parent == NULL) ||
-                   ((node->parent->type == JSON_OBJECT) && (node->name == NULL)))
+                if (node->parent == NULL)
                 {
-                    return ERROR;
+                    return token;
+                }
+                if (json_is_object(node->parent) && (node->name == NULL))
+                {
+                    return left;
                 }
                 if (node->type == JSON_UNDEFINED)
                 {
                     if (left == token)
                     {
-                        return ERROR;
+                        return left;
                     }
                     if (set_value(node, left, right) == NULL)
                     {
-                        return ERROR;
+                        return left;
                     }
                 }
-                else if (left != token)
+                else
                 {
-                    return ERROR;
+                    if (left != token)
+                    {
+                        return left;
+                    }
                 }
-                /* Creates a right node (sibling) */
-                node->right = create_node();
+                /* Create a right (siblling) node */
+                node->right = create_child(node->parent);
                 if (node->right == NULL)
                 {
-                    return ERROR;
+                    return left;
                 }
-                node->right->parent = node->parent;
                 node = node->right;
                 break;
             case ']':
             case '}':
-                /* For every close there must be an open of the same type */
-                if ((node->parent == NULL) ||
-                    (node->parent->type != token_type(*token)))
+                if (json_type(node->parent) != token_type(*token))
                 {
-                    return ERROR;
+                    return token;
+                }
+                if (json_is_object(node->parent) && (node->name == NULL))
+                {
+                    return token;
                 }
                 if (node->type == JSON_UNDEFINED)
                 {
                     if (left == token)
                     {
-                        /* Can be an empty group {} or [] */
-                        if (node->parent->left != node)
+                        /* Remove empty groups: {} or [] */
+                        if (node->parent->left == node)
                         {
-                            return ERROR;
+                            node = node->parent;
+                            free(node->left);
+                            node->left = NULL;
+                            break;
                         }
-                    }
-                    else
-                    {
-                        /* Object properties must have a name */
-                        if ((node->parent->type == JSON_OBJECT) &&
-                            (node->name == NULL))
-                        {
-                            return ERROR;
-                        }
-                        if (set_value(node, left, right) == NULL)
-                        {
-                            return ERROR;
-                        }
-                    }
-                }
-                else if (left != token)
-                {
-                    return ERROR;
-                }
-                node = node->parent;
-                /* Removes empty group nodes: {} or [] */
-                if (node->left->type == JSON_UNDEFINED)
-                {
-                    free(node->left);
-                    node->left = NULL;
-                }
-                break;
-            /* We have reached the end */
-            default:
-                if (left != token)
-                {
-                    /*
-                     * A json document can consist of a single value
-                     * e.g.: "Text" or 123
-                     */
-                    if (node->type != JSON_UNDEFINED)
-                    {
-                        return ERROR;
+                        return left;
                     }
                     if (set_value(node, left, right) == NULL)
                     {
-                        return ERROR;
+                        return left;
                     }
                 }
-                /* A json document can't be empty */
-                if (node->type == JSON_UNDEFINED)
+                else
                 {
-                    return ERROR;
+                    if (left != token)
+                    {
+                        return left;
+                    }
                 }
+                node = node->parent;
+                break;
+            case '\0':
                 /* Bad closed document */
                 if (node->parent != parent)
                 {
-                    return ERROR;
+                    return left;
+                }
+                if (node->type == JSON_UNDEFINED)
+                {
+                    if (left == token)
+                    {
+                        return left;
+                    }
+                    if (set_value(node, left, right) == NULL)
+                    {
+                        return left;
+                    }
+                }
+                else
+                {
+                    if (left != token)
+                    {
+                        return left;
+                    }
                 }
                 /* Correct document */
                 return NULL;
@@ -488,7 +502,7 @@ static const char *parse(json *node, const char *left)
         /* Keep going ... */
         left = token + 1;
     }
-    return ERROR;
+    return left;
 }
 
 /*

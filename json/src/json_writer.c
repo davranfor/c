@@ -32,8 +32,8 @@ static size_t buffer_next_size(size_t size)
     return size;
 }
 
-static json_buffer *buffer_write_sized(json_buffer *buffer,
-    const char *text, size_t length)
+static json_buffer *buffer_write_sized(json_buffer *buffer, const char *text,
+    size_t length)
 {
     size_t size = buffer->length + length + 1;
 
