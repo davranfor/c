@@ -373,7 +373,7 @@ static const char *parse(json *node, const char *left)
                 /* Contents before groups are not allowed: x[] */
                 if (left != token)
                 {
-                    return token;
+                    return left;
                 }
                 node->type = token_type(*token);
                 /* Create a left (child) node */
