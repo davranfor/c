@@ -343,7 +343,14 @@ static json *create_child(json *parent)
     return node;
 }
 
-/* Parse document - Returns error position or NULL on success */
+static json *remove_child(json *node)
+{
+    free(node->left);
+    node->left = NULL;
+    return node;
+}
+
+/* Parse document - returns an error position or NULL on success */
 static const char *parse(json *node, const char *left)
 {
     const json *parent = node ? node->parent : NULL;
@@ -440,10 +447,6 @@ static const char *parse(json *node, const char *left)
                 {
                     return token;
                 }
-                if (json_is_object(node->parent) && (node->name == NULL))
-                {
-                    return token;
-                }
                 if (node->type == JSON_UNDEFINED)
                 {
                     if (left == token)
@@ -451,9 +454,7 @@ static const char *parse(json *node, const char *left)
                         /* Remove empty groups: {} or [] */
                         if (node->parent->left == node)
                         {
-                            node = node->parent;
-                            free(node->left);
-                            node->left = NULL;
+                            node = remove_child(node->parent);
                             break;
                         }
                         return left;
@@ -465,6 +466,11 @@ static const char *parse(json *node, const char *left)
                 }
                 else
                 {
+                    /* Must be tested here, otherwise it fails with: [{}] */
+                    if (json_is_object(node->parent) && (node->name == NULL))
+                    {
+                        return token;
+                    }
                     if (left != token)
                     {
                         return left;
