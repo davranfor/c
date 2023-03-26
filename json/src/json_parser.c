@@ -21,7 +21,8 @@ static int is_token(int c)
 {
     return (c == '{') || (c == '}')
         || (c == '[') || (c == ']')
-        || (c == ':') || (c == ',');
+        || (c == ':') || (c == ',')
+        || (c == '\0');
 }
 
 /* Returns the type of a token group character */
@@ -148,95 +149,87 @@ static int ucn_to_mb(const char *str, char *buf)
     }
 }
 
-/* Returns a pointer to the next element or NULL on fail */
-static const char *scan(const char **left, const char **right)
+/* scan() helper */
+static const char *scan_string(const char *str)
 {
-    int tokens = 0, quotes = 0;
-    const char *str = *left;
-
-    while (*str != '\0')
+    while (!is_cntrl(*str))
     {
-        if (*str == '\\')
-        {
-            /* Skip escape sequences and UCN strings or fail */
-            if (quotes == 1)
-            {
-                if (is_esc(str + 1))
-                {
-                    str += 2;
-                    continue;
-                }
-                if (is_ucn(str + 1))
-                {
-                    str += 6;
-                    continue;
-                }
-            }
-            /* Escape sequences are not allowed outside a string */
-            goto fail;
-        }
         if (*str == '"')
         {
-            /* Multiple values are not allowed */
-            if (quotes++ != tokens)
-            {
-                goto fail;
-            }
-        }
-        else if (quotes == 1)
-        {
-            /* Control characters are not allowed inside a string */
-            if (is_cntrl(*str))
-            {
-                goto fail;
-            }
-        }
-        else if (is_token(*str))
-        {
-            /* Exit on first token outside a string */
             break;
         }
-        if (!is_space(*str))
+        if (*str == '\\')
         {
-            /* Multiple values are not allowed */
-            if (tokens == -1)
+            if (is_esc(str + 1))
             {
-                goto fail;
+                str += 2;
+                continue;
             }
-            /* Update left pointer */
-            else if (tokens == 0)
+            if (is_ucn(str + 1))
             {
-                *left = str;
-                tokens = 1;
+                str += 6;
+                continue;
             }
-            /* A value is completed */
-            else if (quotes > 1)
-            {
-                tokens = -1;
-            }
-            /* Right pointer is always updated */
-            *right = str;
-        }
-        else if ((tokens == 1) && (quotes != 1))
-        {
-            /* A value is completed */
-            tokens = -1;
+            break;
         }
         str++;
     }
-    /* Quotes are not closed */
-    if (quotes == 1)
+    return str;
+}
+
+/* Returns a pointer to the next element or NULL on fail */
+static const char *scan(const char **left, const char **right)
+{
+    const char *str = *left;
+
+    /* Skip leading spaces */
+    while (is_space(*str))
+    {
+        str++;
+    }
+    /* Adjust pointers to token */
+    *left = *right = str;
+    /* Return on empty contents */
+    if (is_token(*str))
+    {
+        return str;
+    }
+    /* Handle string or value */
+    if (*str == '"')
+    {
+        str = scan_string(str + 1);
+        if (*str != '"')
+        {
+            goto fail;
+        }
+        *right = str++;
+    }
+    else
+    {
+        while ((*str != '"') && !is_space(*str) && !is_token(*str))
+        {
+            *right = str++;
+        }
+        if (*str == '"')
+        {
+            goto fail;
+        }
+    }
+    /* Skip trailing spaces */
+    while (is_space(*str))
+    {
+        str++;
+    }
+    /* Unexpected character */
+    if (!is_token(*str))
     {
         goto fail;
     }
-    /* There are no contents in front of the token - Adjust positions */
-    if (tokens == 0)
-    {
-        *left = *right = str;
-    }
+    /* Valid */
     return str;
 fail:
-    *left = str;
+    /* Adjust pointers to error */
+    *left = *right = str;
     return NULL;
 }
 
@@ -332,18 +325,33 @@ static json *create_node(void)
     return calloc(1, sizeof(struct json));
 }
 
-static json *create_child(json *parent)
-{
-    json *node = calloc(1, sizeof(struct json));
+/* parse() helpers - node must exist */
 
-    if (node != NULL)
+static json *create_child(json *node)
+{
+    json *child = calloc(1, sizeof(struct json));
+
+    if (child != NULL)
     {
-        node->parent = parent;   
+        child->parent = node;
+        node->left = child;
     }
-    return node;
+    return child;
 }
 
-static json *remove_child(json *node)
+static json *create_sibling(json *node)
+{
+    json *sibling = calloc(1, sizeof(struct json));
+
+    if (sibling != NULL)
+    {
+        sibling->parent = node->parent;
+        node->right = sibling;
+    }
+    return sibling;
+}
+
+static json *delete_child(json *node)
 {
     free(node->left);
     node->left = NULL;
@@ -367,11 +375,6 @@ static const char *parse(json *node, const char *left)
         {
             case '{':
             case '[':
-                /* Object properties must have a name */
-                if (json_is_object(node->parent) && (node->name == NULL))
-                {
-                    return token;
-                }
                 /* Commas between groups are required: [[] []] */
                 if (node->type != JSON_UNDEFINED)
                 {
@@ -382,24 +385,23 @@ static const char *parse(json *node, const char *left)
                 {
                     return left;
                 }
+                /* Object properties must have a name */
+                if (json_is_object(node->parent) && (node->name == NULL))
+                {
+                    return token;
+                }
                 node->type = token_type(*token);
-                /* Create a left (child) node */
-                node->left = create_child(node);
-                if (node->left == NULL)
+                node = create_child(node);
+                break;
+            case ':':
+                if (left == token)
                 {
                     return left;
                 }
-                node = node->left;
-                break;
-            case ':':
                 /* Only object properties can have a name */
                 if (!json_is_object(node->parent) || (node->name != NULL))
                 {
                     return token;
-                }
-                if (left == token)
-                {
-                    return left;
                 }
                 if (set_name(node, left, right) == NULL)
                 {
@@ -411,13 +413,13 @@ static const char *parse(json *node, const char *left)
                 {
                     return token;
                 }
-                if (json_is_object(node->parent) && (node->name == NULL))
-                {
-                    return left;
-                }
                 if (node->type == JSON_UNDEFINED)
                 {
                     if (left == token)
+                    {
+                        return left;
+                    }
+                    if (json_is_object(node->parent) && (node->name == NULL))
                     {
                         return left;
                     }
@@ -433,13 +435,7 @@ static const char *parse(json *node, const char *left)
                         return left;
                     }
                 }
-                /* Create a right (siblling) node */
-                node->right = create_child(node->parent);
-                if (node->right == NULL)
-                {
-                    return left;
-                }
-                node = node->right;
+                node = create_sibling(node);
                 break;
             case ']':
             case '}':
@@ -451,12 +447,16 @@ static const char *parse(json *node, const char *left)
                 {
                     if (left == token)
                     {
-                        /* Remove empty groups: {} or [] */
-                        if (node->parent->left == node)
+                        /* Remove empty group: {} or [] */
+                        if ((node->parent->left == node) && (node->name == NULL))
                         {
-                            node = remove_child(node->parent);
+                            node = delete_child(node->parent);
                             break;
                         }
+                        return left;
+                    }
+                    if (json_is_object(node->parent) && (node->name == NULL))
+                    {
                         return left;
                     }
                     if (set_value(node, left, right) == NULL)
@@ -466,11 +466,6 @@ static const char *parse(json *node, const char *left)
                 }
                 else
                 {
-                    /* Must be tested here, otherwise it fails with: [{}] */
-                    if (json_is_object(node->parent) && (node->name == NULL))
-                    {
-                        return token;
-                    }
                     if (left != token)
                     {
                         return left;
