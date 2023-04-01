@@ -10,7 +10,7 @@
         [3, "Pascu"],
         [4, "Dani"]
     ],
-    "address" : {
+    "address": {
         "street": "Calle del socorro",
         "city": "Palma de Mallorca",
         "code": "07003",

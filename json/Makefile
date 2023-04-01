@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c11 -Wpedantic -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wcast-qual -Wnested-externs -MMD -MP -O2
+CFLAGS = -std=c11 -Wpedantic -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wcast-qual -Wnested-externs -MMD -MP
 LDLIBS = -lm
 TARGET = json
 SRCDIR = src
@@ -9,15 +9,16 @@ OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
 
 .PHONY: all release debug clean
 
-all: $(TARGET)
+all: release
 
+release: CFLAGS += -O2
 release: $(TARGET)
 
-debug: CFLAGS := $(filter-out -O2, $(CFLAGS)) -DDEBUG -g
+debug: CFLAGS += -DDEBUG -g
 debug: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) $(LDLIBS) -o $(TARGET)
+	$(CC) $(OBJECTS) $(LDLIBS) -o $(TARGET)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@

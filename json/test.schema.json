@@ -39,7 +39,8 @@
                     {"type": "integer"},
                     {"type": "string"}
                 ],
-                "additionalItems": false
+                "additionalItems": false,
+                "type": "array"
             }
         },
         "address": {
