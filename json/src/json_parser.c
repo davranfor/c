@@ -149,8 +149,9 @@ static int ucn_to_mb(const char *str, char *buf)
     }
 }
 
-/* scan() helper */
-static const char *scan_string(const char *str)
+/* scan() helpers */
+
+static const char *scan_quoted(const char *str)
 {
     while (!is_cntrl(*str))
     {
@@ -177,6 +178,19 @@ static const char *scan_string(const char *str)
     return str;
 }
 
+static const char *scan_unquoted(const char *str)
+{
+    while (!is_space(*str) && !is_token(*str))
+    {
+        if (*str == '"')
+        {
+            break;
+        }
+        str++;
+    }
+    return str;
+}
+
 /* Returns a pointer to the next element or NULL on fail */
 static const char *scan(const char **left, const char **right)
 {
@@ -189,31 +203,29 @@ static const char *scan(const char **left, const char **right)
     }
     /* Adjust pointers to token */
     *left = *right = str;
-    /* Return on empty contents */
+    /* Return on first token */
     if (is_token(*str))
     {
         return str;
     }
-    /* Handle string or value */
+    /* Handle name or string scalar */
     if (*str == '"')
     {
-        str = scan_string(str + 1);
+        str = scan_quoted(str + 1);
         if (*str != '"')
         {
             goto fail;
         }
         *right = str++;
     }
-    else
+    else // ... handle other scalars
     {
-        while ((*str != '"') && !is_space(*str) && !is_token(*str))
-        {
-            *right = str++;
-        }
+        str = scan_unquoted(str + 1);
         if (*str == '"')
         {
             goto fail;
         }
+        *right = str - 1;
     }
     /* Skip trailing spaces */
     while (is_space(*str))
@@ -233,7 +245,7 @@ fail:
     return NULL;
 }
 
-/* Allocates space for a 'name' or a 'value' escaping special characters */
+/* Allocates space for a name or a scalar value escaping special characters */
 static char *copy(const char *str, size_t length)
 {
     char *buf = malloc(length + 1);
@@ -380,7 +392,7 @@ static const char *parse(json *node, const char *left)
                 {
                     return left;
                 }
-                /* Contents before groups are not allowed: x[] */
+                /* Contents before groups are not allowed: 1[] */
                 if (left != token)
                 {
                     return left;
