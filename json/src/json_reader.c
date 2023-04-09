@@ -18,6 +18,7 @@ static const char *type_name[] =
 static int (*func_array[])(const json *) =
 {
     json_is_any,
+    json_is_scalar,
     json_is_object,
     json_is_array,
     json_is_string,
@@ -210,6 +211,13 @@ int json_boolean(const json *node)
 int json_is_any(const json *node)
 {
     return node != NULL;
+}
+
+int json_is_scalar(const json *node)
+{
+    return (node != NULL)
+        && (node->type != JSON_OBJECT)
+        && (node->type != JSON_ARRAY);
 }
 
 int json_is_object(const json *node)

@@ -100,7 +100,7 @@ static int is_ucn(const char *str)
 }
 
 /* Check whether a UCN converted to codepoint is valid */
-static int valid_ucn(unsigned long c)
+static int valid_ucn(unsigned c)
 {
     if ((c == '\b') || (c == '\f') || (c == '\n') || (c == '\r') || (c == '\t'))
     {
@@ -120,7 +120,7 @@ static int ucn_to_mb(const char *str, char *buf)
     /* Copy UCN skipping the initial "u" */
     memcpy(hex, str + 1, 4);
 
-    unsigned long codepoint = strtoul(hex, NULL, 16);
+    unsigned codepoint = (unsigned)strtoul(hex, NULL, 16);
 
     /* Copy "as is" if invalid */
     if (!valid_ucn(codepoint))
@@ -680,7 +680,7 @@ json *json_parse_file(const char *path, json_error *error)
     return node;
 }
 
-void json_raise_error(const char *path, const json_error *error)
+void json_print_error(const char *path, const json_error *error)
 {
     if ((error == NULL) || (error->line == 0))
     {

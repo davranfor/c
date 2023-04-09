@@ -11,7 +11,7 @@ static json *parse(const char *path)
 
     if (node == NULL)
     {
-        json_raise_error(path, &error);
+        json_print_error(path, &error);
     }
     return node;
 }

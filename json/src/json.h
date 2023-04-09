@@ -27,6 +27,7 @@ enum json_type
 enum json_query
 {
     objectOfItems,
+    objectOfScalars,
     objectOfObjects,
     objectOfArrays,
     objectOfStrings,
@@ -38,6 +39,7 @@ enum json_query
     objectOfNulls,
 
     arrayOfItems,
+    arrayOfScalars,
     arrayOfObjects,
     arrayOfArrays,
     arrayOfStrings,
@@ -49,6 +51,7 @@ enum json_query
     arrayOfNulls,
 
     objectOfOptionalItems,
+    objectOfOptionalScalars,
     objectOfOptionalObjects,
     objectOfOptionalArrays,
     objectOfOptionalStrings,
@@ -60,8 +63,9 @@ enum json_query
     objectOfOptionalNulls,
 
     arrayOfOptionalItems,
+    arrayOfOptionalScalars,
     arrayOfOptionalObjects,
-    arraytOfOptionalArrays,
+    arrayOfOptionalArrays,
     arrayOfOptionalStrings,
     arrayOfOptionalIntegers,
     arrayOfOptionalDoubles,
@@ -71,6 +75,7 @@ enum json_query
     arrayOfOptionalNulls,
 
     objectOfUniqueItems,
+    objectOfUniqueScalars,
     objectOfUniqueObjects,
     objectOfUniqueArrays,
     objectOfUniqueStrings,
@@ -82,6 +87,7 @@ enum json_query
     objectOfUniqueNulls,
 
     arrayOfUniqueItems,
+    arrayOfUniqueScalars,
     arrayOfUniqueObjects,
     arrayOfUniqueArrays,
     arrayOfUniqueStrings,
@@ -99,7 +105,7 @@ enum json_query
 json *json_new(json *, const char *);
 json *json_parse(const char *, json_error *);
 json *json_parse_file(const char *, json_error *);
-void json_raise_error(const char *, const json_error *);
+void json_print_error(const char *, const json_error *);
 void json_free(json *);
 // ============================================================================
 // Reader
@@ -115,6 +121,7 @@ unsigned long json_real(const json *);
 int json_boolean(const json *);
 int json_is(const json *, enum json_query);
 int json_is_any(const json *);
+int json_is_scalar(const json *);
 int json_is_object(const json *);
 int json_is_array(const json *);
 int json_is_string(const json *);
