@@ -518,55 +518,6 @@ static const char *parse(json *node, const char *left)
     return left;
 }
 
-/*
- * Returns:
- * - A reference to parent->left if parent is empty
- * - A reference to the last child->right otherwise
- * parent can not be NULL
- */
-static json **get_link(json *parent)
-{
-    json *node = parent->left;
-
-    if (node != NULL)
-    {
-        while (node->right != NULL)
-        {
-            node = node->right;
-        }
-    }
-    return node ? &node->right : &parent->left;
-}
-
-json *json_new(json *parent, const char *str)
-{
-    if (parent == NULL)
-    {
-        return json_parse(str, NULL);
-    }
-    if ((parent->type != JSON_OBJECT) && (parent->type != JSON_ARRAY))
-    {
-        return NULL;
-    }
-
-    json *node = create_node();
-
-    if (node != NULL)
-    {
-        json **link = get_link(parent);
-
-        *link = node;
-        node->parent = parent;
-        if (parse(node, str) != NULL)
-        {
-            json_free(node);
-            *link = NULL;
-            return NULL;
-        }
-    }
-    return node;
-}
-
 static void clear_error(json_error *error)
 {
     error->line = error->column = 0;
@@ -693,33 +644,6 @@ void json_print_error(const char *path, const json_error *error)
         fprintf(stderr, "json:\t%s\n\tError at line %d, column %d\n",
             path ? path : "", error->line, error->column
         );
-    }
-}
-
-void json_free(json *node)
-{
-    json *parent = node ? node->parent : NULL;
-    json *next;
-
-    while (node != parent)
-    {
-        next = node->left;
-        node->left = NULL;
-        if (next == NULL)
-        {
-            if (node->right != NULL)
-            {
-                next = node->right;
-            }
-            else
-            {
-                next = node->parent;
-            }
-            free(node->name);
-            free(node->value);
-            free(node);
-        }
-        node = next;
     }
 }
 

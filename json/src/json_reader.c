@@ -18,6 +18,7 @@ static const char *type_name[] =
 static int (*func_array[])(const json *) =
 {
     json_is_any,
+    json_is_iterable,
     json_is_scalar,
     json_is_object,
     json_is_array,
@@ -155,13 +156,22 @@ const char *json_string(const json *node)
     return node->value;
 }
 
-long json_integer(const json *node)
+long long json_integer(const json *node)
 {
     if ((node == NULL) || (node->value == NULL))
     {
         return 0;
     }
-    return strtol(node->value, NULL, 10);
+    return strtoll(node->value, NULL, 10);
+}
+
+unsigned long long json_real(const json *node)
+{
+    if ((node == NULL) || (node->value == NULL))
+    {
+        return 0;
+    }
+    return strtoull(node->value, NULL, 10);
 }
 
 double json_double(const json *node)
@@ -180,15 +190,6 @@ double json_number(const json *node)
         return 0.0;
     }
     return strtod(node->value, NULL);
-}
-
-unsigned long json_real(const json *node)
-{
-    if ((node == NULL) || (node->value == NULL))
-    {
-        return 0;
-    }
-    return strtoul(node->value, NULL, 10);
 }
 
 int json_boolean(const json *node)
@@ -211,6 +212,13 @@ int json_boolean(const json *node)
 int json_is_any(const json *node)
 {
     return node != NULL;
+}
+
+int json_is_iterable(const json *node)
+{
+    return (node != NULL)
+        && ((node->type == JSON_OBJECT) ||
+            (node->type == JSON_ARRAY));
 }
 
 int json_is_scalar(const json *node)
@@ -244,6 +252,13 @@ int json_is_integer(const json *node)
         && (node->type == JSON_INTEGER);
 }
 
+int json_is_real(const json *node)
+{
+    return (node != NULL)
+        && (node->type == JSON_INTEGER)
+        && (strtod(node->value, NULL) >= 0);
+}
+
 int json_is_double(const json *node)
 {
     return (node != NULL)
@@ -252,16 +267,9 @@ int json_is_double(const json *node)
 
 int json_is_number(const json *node)
 {
-    return !(node == NULL)
+    return (node != NULL)
         && ((node->type == JSON_INTEGER) ||
             (node->type == JSON_DOUBLE));
-}
-
-int json_is_real(const json *node)
-{
-    return (node != NULL)
-        && (node->type == JSON_INTEGER)
-        && (strtol(node->value, NULL, 10) >= 0);
 }
 
 int json_is_boolean(const json *node)
