@@ -188,40 +188,65 @@ static json **link(json *parent)
     return node ? &node->right : &parent->left;
 }
 
-int json_add_child(json *parent, json *child)
+json *json_push_front(json *parent, json *child)
 {
     if (!json_is_iterable(parent) || (child == NULL))
     {
-        return 0;
+        return NULL;
     }
     if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
     {
-        return 0;
+        return NULL;
+    }
+    child->parent = parent;
+    child->right = parent->left;
+    parent->left = child;
+    return child;
+}
+
+json *json_push_back(json *parent, json *child)
+{
+    if (!json_is_iterable(parent) || (child == NULL))
+    {
+        return NULL;
+    }
+    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
+    {
+        return NULL;
     }
     child->parent = parent;
     *link(parent) = child;
-    return 1;
+    return child;
 }
 
-int json_append_to(json *node, json *next)
+json *json_push_fast(json *parent, json *node, json *next)
+{
+    if (node == NULL)
+    {
+        return json_push_back(parent, next);
+    }
+    else
+    {
+        return json_append_to(node, next);
+    }
+}
+
+json *json_append_to(json *node, json *next)
 {
     json *parent = json_parent(node);
 
     if ((parent == NULL) || (next == NULL))
     {
-        return 0;
+        return NULL;
     }
     if ((parent->type == JSON_OBJECT) ^ (next->name != NULL))
     {
-        return 0;
+        return NULL;
     }
-
-    json *right = node->right;
-
-    node->right = next;
-    next->right = right;
     next->parent = parent;
-    return 1;
+    next->right = node->right;
+    node->right = next;
+    return next;
 }
 
 void json_free(json *node)

@@ -116,8 +116,10 @@ json *json_new_real(const char *, unsigned long long);
 json *json_new_double(const char *, double, int);
 json *json_new_boolean(const char *, int);
 json *json_new_null(const char *);
-int json_add_child(json *, json *);
-int json_append_to(json *, json *);
+json *json_push_front(json *, json *);
+json *json_push_back(json *, json *);
+json *json_push_fast(json *, json *, json *);
+json *json_append_to(json *, json *);
 void json_free(json *);
 // ============================================================================
 // Parser
