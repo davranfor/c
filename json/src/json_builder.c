@@ -1,60 +1,49 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include "json_struct.h"
 
-static int must_escape(char c)
+static int valid_char(char c)
 {
     if (!iscntrl((unsigned char)c))
     {
-        return 0;
+        return 1;
     }
-    return (c != '\b') && (c != '\f') && (c != '\n') && (c != '\r') && (c != '\t');
+    return (c == '\b') || (c == '\f') || (c == '\n') || (c == '\r') || (c == '\t');
 }
 
-static size_t copy_length(const char *str)
+static size_t copy_size(const char *str)
 {
-    size_t length = 0;
+    const char *ptr = str;
 
     while (*str != '\0')
     {
-        if (must_escape(*str))
+        if (!valid_char(*str))
         {
-            length += 6;
-        }
-        else
-        {
-            length += 1;
+            return 0;
         }
         str++;
     }
-    return length;
+    return (size_t)(str - ptr) + 1;
 }
 
 static char *copy(const char *str)
 {
-    size_t length = copy_length(str);
-    char *ptr, *res;
+    size_t size = copy_size(str);
 
-    ptr = res = malloc(length + 1);
-    if (ptr == NULL)
+    if (size == 0)
     {
         return NULL;
     }
-    while (*str != '\0')
+
+    char *ptr = malloc(size);
+
+    if (ptr != NULL)
     {
-        if (must_escape(*str))
-        {
-            ptr += snprintf(ptr, 7, "\\u%04x", *str);
-        }
-        else
-        {
-            *ptr++ = *str;
-        }
-        str++;
+        memcpy(ptr, str, size);
     }
-    *ptr = '\0';
-    return res;
+    return ptr;
 }
 
 static json *new_type(enum json_type type, const char *key, char *value)
