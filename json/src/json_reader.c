@@ -354,6 +354,21 @@ json *json_next(const json *node)
     return node->next;
 }
 
+/* Returns the last node of an interable */
+json *json_last(const json *root)
+{
+    json *node = NULL;
+
+    if ((root != NULL) && (node = root->child))
+    {
+        while (node->next != NULL)
+        {
+            node = node->next;
+        }
+    }
+    return node;
+}
+
 /* Locates a child node by name */
 json *json_find(const json *root, const char *name)
 {

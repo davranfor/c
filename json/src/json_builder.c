@@ -5,9 +5,11 @@
 
 static int must_escape(char c)
 {
-    return iscntrl((unsigned char)c)
-        ? (c != '\b') && (c != '\f') && (c != '\n') && (c != '\r') && (c != '\t')
-        : 0;
+    if (!iscntrl((unsigned char)c))
+    {
+        return 0;
+    }
+    return (c != '\b') && (c != '\f') && (c != '\n') && (c != '\r') && (c != '\t');
 }
 
 static size_t copy_length(const char *str)
@@ -43,8 +45,7 @@ static char *copy(const char *str)
     {
         if (must_escape(*str))
         {
-            snprintf(ptr, 7, "\\u%04x", *str);
-            ptr += 6;
+            ptr += snprintf(ptr, 7, "\\u%04x", *str);
         }
         else
         {
@@ -168,26 +169,6 @@ json *json_new_null(const char *name)
     return new_type(JSON_NULL, name, str);
 }
 
-/*
- * Returns:
- * - A reference to parent->child if parent is empty
- * - A reference to the last child->next otherwise
- * parent can not be NULL
- */
-static json **link(json *parent)
-{
-    json *node = parent->child;
-
-    if (node != NULL)
-    {
-        while (node->next != NULL)
-        {
-            node = node->next;
-        }
-    }
-    return node ? &node->next : &parent->child;
-}
-
 json *json_push_front(json *parent, json *child)
 {
     if (!json_is_iterable(parent) || (child == NULL))
@@ -215,7 +196,14 @@ json *json_push_back(json *parent, json *child)
         return NULL;
     }
     child->parent = parent;
-    *link(parent) = child;
+    if (parent->child == NULL)
+    {
+        parent->child = child;
+    }
+    else
+    {
+        json_last(parent)->next = child;
+    }
     return child;
 }
 

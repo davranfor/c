@@ -159,6 +159,7 @@ json *json_root(const json *);
 json *json_parent(const json *);
 json *json_child(const json *);
 json *json_next(const json *);
+json *json_last(const json *);
 json *json_find(const json *, const char *);
 json *json_find_next(const json *, const char *);
 json *json_match(const json *, const char *, size_t);
