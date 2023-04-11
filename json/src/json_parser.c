@@ -339,35 +339,35 @@ static json *create_node(void)
 
 /* parse() helpers - node must exist */
 
-static json *create_child(json *node)
+static json *create_child(json *parent)
 {
     json *child = calloc(1, sizeof(struct json));
 
     if (child != NULL)
     {
-        child->parent = node;
-        node->left = child;
+        child->parent = parent;
+        parent->child = child;
     }
     return child;
 }
 
-static json *create_sibling(json *node)
+static json *delete_child(json *parent)
 {
-    json *sibling = calloc(1, sizeof(struct json));
-
-    if (sibling != NULL)
-    {
-        sibling->parent = node->parent;
-        node->right = sibling;
-    }
-    return sibling;
+    free(parent->child);
+    parent->child = NULL;
+    return parent;
 }
 
-static json *delete_child(json *node)
+static json *create_next(json *node)
 {
-    free(node->left);
-    node->left = NULL;
-    return node;
+    json *next = calloc(1, sizeof(struct json));
+
+    if (next != NULL)
+    {
+        next->parent = node->parent;
+        node->next = next;
+    }
+    return next;
 }
 
 /* Parse document - returns an error position or NULL on success */
@@ -447,7 +447,7 @@ static const char *parse(json *node, const char *left)
                         return left;
                     }
                 }
-                node = create_sibling(node);
+                node = create_next(node);
                 break;
             case ']':
             case '}':
@@ -460,7 +460,7 @@ static const char *parse(json *node, const char *left)
                     if (left == token)
                     {
                         /* Remove empty group: {} or [] */
-                        if ((node->parent->left == node) && (node->name == NULL))
+                        if ((node->parent->child == node) && (node->name == NULL))
                         {
                             node = delete_child(node->parent);
                             break;

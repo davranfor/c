@@ -170,22 +170,22 @@ json *json_new_null(const char *name)
 
 /*
  * Returns:
- * - A reference to parent->left if parent is empty
- * - A reference to the last child->right otherwise
+ * - A reference to parent->child if parent is empty
+ * - A reference to the last child->next otherwise
  * parent can not be NULL
  */
 static json **link(json *parent)
 {
-    json *node = parent->left;
+    json *node = parent->child;
 
     if (node != NULL)
     {
-        while (node->right != NULL)
+        while (node->next != NULL)
         {
-            node = node->right;
+            node = node->next;
         }
     }
-    return node ? &node->right : &parent->left;
+    return node ? &node->next : &parent->child;
 }
 
 json *json_push_front(json *parent, json *child)
@@ -198,9 +198,9 @@ json *json_push_front(json *parent, json *child)
     {
         return NULL;
     }
+    child->next = parent->child;
     child->parent = parent;
-    child->right = parent->left;
-    parent->left = child;
+    parent->child = child;
     return child;
 }
 
@@ -244,8 +244,8 @@ json *json_append_to(json *node, json *next)
         return NULL;
     }
     next->parent = parent;
-    next->right = node->right;
-    node->right = next;
+    next->next = node->next;
+    node->next = next;
     return next;
 }
 
@@ -256,13 +256,13 @@ void json_free(json *node)
 
     while (node != parent)
     {
-        next = node->left;
-        node->left = NULL;
+        next = node->child;
+        node->child = NULL;
         if (next == NULL)
         {
-            if (node->right != NULL)
+            if (node->next != NULL)
             {
-                next = node->right;
+                next = node->next;
             }
             else
             {

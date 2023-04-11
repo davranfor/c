@@ -5,8 +5,8 @@
 
 struct json
 {
+    json *parent, *child, *next;
     char *name, *value;
-    json *left, *right, *parent;
     enum json_type type;
 };
 

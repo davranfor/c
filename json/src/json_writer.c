@@ -124,7 +124,7 @@ static int buffer_write_node(json_buffer *buffer, const json *node, int depth)
             CHECK(buffer_write(buffer, node->value));
             break;
     }
-    if (node->left == NULL)
+    if (node->child == NULL)
     {
         /* Prints an empty "object" or an empty "array" {} [] */
         switch (node->type)
@@ -138,7 +138,7 @@ static int buffer_write_node(json_buffer *buffer, const json *node, int depth)
             default:
                 break;
         }
-        if ((depth > 0) && (node->right != NULL))
+        if ((depth > 0) && (node->next != NULL))
         {
             CHECK(buffer_write(buffer, ","));
         }
@@ -150,7 +150,7 @@ static int buffer_write_node(json_buffer *buffer, const json *node, int depth)
 static int buffer_write_next(json_buffer *buffer, const json *node, int depth)
 {
     /* if "array" or "object" */
-    if (node->left != NULL)
+    if (node->child != NULL)
     {
         for (int i = 0; i < depth; i++)
         {
@@ -167,7 +167,7 @@ static int buffer_write_next(json_buffer *buffer, const json *node, int depth)
             default:
                 break;
         }
-        if ((depth > 0) && (node->right != NULL))
+        if ((depth > 0) && (node->next != NULL))
         {
            CHECK(buffer_write(buffer, ","));
         }
@@ -187,14 +187,14 @@ static int buffer_encode(json_buffer *buffer, const json *node)
         {
             return 0;
         }
-        if (node->left != NULL)
+        if (node->child != NULL)
         {
-            node = node->left;
+            node = node->child;
             depth++;
         }
-        else if ((depth > 0) && (node->right != NULL))
+        else if ((depth > 0) && (node->next != NULL))
         {
-            node = node->right;
+            node = node->next;
         }
         else
         {
@@ -205,9 +205,9 @@ static int buffer_encode(json_buffer *buffer, const json *node)
                 {
                     return 0;
                 }
-                if (node->right != NULL)
+                if (node->next != NULL)
                 {
-                    node = node->right;
+                    node = node->next;
                     goto loop;
                 }
             }

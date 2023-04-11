@@ -37,7 +37,7 @@ static int is(const json *node, int (*func)(const json *))
 {
     while (func(node) != 0)
     {
-        node = node->right;
+        node = node->next;
     }
     return node == NULL;
 }
@@ -48,14 +48,14 @@ static int is_unique(const json *node, int (*func)(const json *))
 
     while (func(node) != 0)
     {
-        for (const json *item = head; item != node; item = item->right)
+        for (const json *item = head; item != node; item = item->next)
         {
             if (json_equal(node, item))
             {
                 return 0;
             }
         }
-        node = node->right;
+        node = node->next;
     }
     return node == NULL;
 }
@@ -75,7 +75,7 @@ int json_is(const json *node, enum json_query query)
         {
             return 0;
         }
-        return (node = node->left) ? is(node, func) : 0;
+        return (node = node->child) ? is(node, func) : 0;
     }
     if ((query >= arrayOfItems) && (query <= arrayOfNulls))
     {
@@ -83,7 +83,7 @@ int json_is(const json *node, enum json_query query)
         {
             return 0;
         }
-        return (node = node->left) ? is(node, func) : 0;
+        return (node = node->child) ? is(node, func) : 0;
     }
     if ((query >= objectOfOptionalItems) && (query <= objectOfOptionalNulls))
     {
@@ -91,7 +91,7 @@ int json_is(const json *node, enum json_query query)
         {
             return 0;
         }
-        return (node = node->left) ? is(node, func) : 1;
+        return (node = node->child) ? is(node, func) : 1;
     }
     if ((query >= arrayOfOptionalItems) && (query <= arrayOfOptionalNulls))
     {
@@ -99,7 +99,7 @@ int json_is(const json *node, enum json_query query)
         {
             return 0;
         }
-        return (node = node->left) ? is(node, func) : 1;
+        return (node = node->child) ? is(node, func) : 1;
     }
     if ((query >= objectOfUniqueItems) && (query <= objectOfUniqueNulls))
     {
@@ -107,7 +107,7 @@ int json_is(const json *node, enum json_query query)
         {
             return 0;
         }
-        return (node = node->left) ? is_unique(node, func) : 1;
+        return (node = node->child) ? is_unique(node, func) : 1;
     }
     if ((query >= arrayOfUniqueItems) && (query <= arrayOfUniqueNulls))
     {
@@ -115,7 +115,7 @@ int json_is(const json *node, enum json_query query)
         {
             return 0;
         }
-        return (node = node->left) ? is_unique(node, func) : 1;
+        return (node = node->child) ? is_unique(node, func) : 1;
     }
     return 0;
 }
@@ -342,7 +342,7 @@ json *json_child(const json *node)
     {
         return NULL;
     }
-    return node->left;
+    return node->child;
 }
 
 json *json_next(const json *node)
@@ -351,7 +351,7 @@ json *json_next(const json *node)
     {
         return NULL;
     }
-    return node->right;
+    return node->next;
 }
 
 /* Locates a child node by name */
@@ -359,7 +359,7 @@ json *json_find(const json *root, const char *name)
 {
     json *node;
 
-    if ((root != NULL) && (node = root->left))
+    if ((root != NULL) && (node = root->child))
     {
         while (node != NULL)
         {
@@ -367,7 +367,7 @@ json *json_find(const json *root, const char *name)
             {
                 return node;
             }
-            node = node->right;
+            node = node->next;
         }
     }
     return NULL;
@@ -378,7 +378,7 @@ json *json_find_next(const json *root, const char *name)
 {
     json *node;
 
-    if ((root != NULL) && (node = root->right))
+    if ((root != NULL) && (node = root->next))
     {
         while (node != NULL)
         {
@@ -386,7 +386,7 @@ json *json_find_next(const json *root, const char *name)
             {
                 return node;
             }
-            node = node->right;
+            node = node->next;
         }
     }
     return NULL;
@@ -400,7 +400,7 @@ json *json_match(const json *root, const char *name, size_t length)
 {
     json *node;
 
-    if ((root != NULL) && (node = root->left))
+    if ((root != NULL) && (node = root->child))
     {
         while (node != NULL)
         {
@@ -410,7 +410,7 @@ json *json_match(const json *root, const char *name, size_t length)
             {
                 return node;
             }
-            node = node->right;
+            node = node->next;
         }
     }
     return NULL;
@@ -466,7 +466,7 @@ json *json_item(const json *root, size_t item)
 {
     json *node;
 
-    if ((root != NULL) && (node = root->left))
+    if ((root != NULL) && (node = root->child))
     {
         size_t count = 0;
 
@@ -476,7 +476,7 @@ json *json_item(const json *root, size_t item)
             {
                 return node;
             }
-            node = node->right;
+            node = node->next;
         }
     }
     return NULL;
@@ -486,11 +486,11 @@ size_t json_items(const json *node)
 {
     size_t count = 0;
 
-    if ((node != NULL) && (node = node->left))
+    if ((node != NULL) && (node = node->child))
     {
         while (node != NULL)
         {
-            node = node->right;
+            node = node->next;
             count++;
         }
     }
@@ -503,11 +503,11 @@ size_t json_offset(const json *node)
 
     if ((node != NULL) && (node->parent != NULL))
     {
-        const json *iter = node->parent->left;
+        const json *iter = node->parent->child;
 
         while (iter != node)
         {
-            iter = iter->right;
+            iter = iter->next;
             offset++;
         }
     }
@@ -535,13 +535,13 @@ static int equal(const json *a, const json *b, int depth)
     {
         return 0;
     }
-    if ((a->left == NULL) ^ (b->left == NULL))
+    if ((a->child == NULL) ^ (b->child == NULL))
     {
         return 0;
     }
     if (depth > 0)
     {
-        if ((a->right == NULL) ^ (b->right == NULL))
+        if ((a->next == NULL) ^ (b->next == NULL))
         {
             return 0;
         }
@@ -591,16 +591,16 @@ int json_equal(const json *a, const json *b)
 
     while (equal(a, b, depth))
     {
-        if (a->left != NULL)
+        if (a->child != NULL)
         {
-            a = a->left;
-            b = b->left;
+            a = a->child;
+            b = b->child;
             depth++;
         }
-        else if ((depth > 0) && (a->right != NULL))
+        else if ((depth > 0) && (a->next != NULL))
         {
-            a = a->right;
-            b = b->right;
+            a = a->next;
+            b = b->next;
         }
         else
         {
@@ -608,10 +608,10 @@ int json_equal(const json *a, const json *b)
             {
                 a = a->parent;
                 b = b->parent;
-                if (a->right != NULL)
+                if (a->next != NULL)
                 {
-                    a = a->right;
-                    b = b->right;
+                    a = a->next;
+                    b = b->next;
                     goto end;
                 }
             }
@@ -638,23 +638,23 @@ int json_traverse(const json *node, json_callback func, void *data)
         {
             return result;
         }
-        if (node->left != NULL)
+        if (node->child != NULL)
         {
-            node = node->left;
+            node = node->child;
             depth++;
         }
-        else if ((depth > 0) && (node->right != NULL))
+        else if ((depth > 0) && (node->next != NULL))
         {
-            node = node->right;
+            node = node->next;
         }
         else
         {
             while (depth-- > 0)
             {
                 node = node->parent;
-                if (node->right != NULL)
+                if (node->next != NULL)
                 {
-                    node = node->right;
+                    node = node->next;
                     goto loop;
                 }
             }
