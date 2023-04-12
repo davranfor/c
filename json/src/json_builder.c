@@ -210,11 +210,11 @@ json *json_push_fast(json *parent, json *where, json *child)
     }
     else
     {
-        return json_append_to(where, child);
+        return json_push_after(where, child);
     }
 }
 
-json *json_insert_at(json *where, json *child)
+json *json_push_before(json *where, json *child)
 {
     json *parent = json_parent(where);
 
@@ -245,7 +245,7 @@ json *json_insert_at(json *where, json *child)
     return child;
 }
 
-json *json_append_to(json *where, json *child)
+json *json_push_after(json *where, json *child)
 {
     json *parent = json_parent(where);
 
@@ -325,6 +325,74 @@ json *json_pop(json *child)
             iter = iter->next;
         }
         iter->next = child->next;
+    }
+    child->parent = NULL;
+    child->next = NULL;
+    return child;
+}
+
+json *json_insert(json *parent, json *child, size_t index)
+{
+    if (!json_is_iterable(parent) || (child == NULL) || (child->parent != NULL))
+    {
+        return NULL;
+    }
+    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
+    {
+        return NULL;
+    }
+    if ((parent->child == NULL) || (index == 0))
+    {
+        child->next = parent->child;
+        parent->child = child;
+    }
+    else
+    {
+        json *node = parent->child;
+        
+        while ((index > 1) && (node->next != NULL))
+        {
+            node = node->next;
+            index--;
+        }
+        child->next = node->next;
+        node->next = child;
+    }
+    child->parent = parent;
+    return child;
+}
+
+json *json_delete(json *parent, size_t index)
+{
+    json *child = json_child(parent);
+
+    if (child == NULL)
+    {
+        return NULL;
+    }
+
+    if (index == 0)
+    {
+        parent->child = child->next;
+    }
+    else
+    {
+        json *node = child;
+
+        while ((index > 1) && (node->next != NULL))
+        {
+            node = node->next;
+            index--;
+        }
+        if (node->next != NULL)
+        {
+            child = node->next;
+            node->next = child->next;
+        }
+        else
+        {
+            return NULL;
+        }
     }
     child->parent = NULL;
     child->next = NULL;
