@@ -160,7 +160,7 @@ json *json_new_null(const char *name)
 
 json *json_push_front(json *parent, json *child)
 {
-    if (!json_is_iterable(parent) || (child == NULL))
+    if (!json_is_iterable(parent) || (child == NULL) || (child->parent != NULL))
     {
         return NULL;
     }
@@ -176,7 +176,80 @@ json *json_push_front(json *parent, json *child)
 
 json *json_push_back(json *parent, json *child)
 {
-    if (!json_is_iterable(parent) || (child == NULL))
+    if (!json_is_iterable(parent) || (child == NULL) || (child->parent != NULL))
+    {
+        return NULL;
+    }
+    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
+    {
+        return NULL;
+    }
+    if (parent->child == NULL)
+    {
+        parent->child = child;
+    }
+    else
+    {
+        json *node = parent->child;
+
+        while (node->next != NULL)
+        {
+            node = node->next;
+        }
+        node->next = child;
+    }
+    child->parent = parent;
+    return child;
+}
+
+json *json_push_fast(json *parent, json *where, json *child)
+{
+    if (where == NULL)
+    {
+        return json_push_back(parent, child);
+    }
+    else
+    {
+        return json_append_to(where, child);
+    }
+}
+
+json *json_insert_at(json *where, json *child)
+{
+    json *parent = json_parent(where);
+
+    if ((parent == NULL) || (child == NULL) || (child->parent != NULL))
+    {
+        return NULL;
+    }
+    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
+    {
+        return NULL;
+    }
+    if (parent->child == where)
+    {
+        parent->child = child;
+    }
+    else
+    {
+        json *node = parent->child;
+
+        while (node->next != where)
+        {
+            node = node->next;
+        }
+        node->next = child;
+    }
+    child->parent = parent;
+    child->next = where;
+    return child;
+}
+
+json *json_append_to(json *where, json *child)
+{
+    json *parent = json_parent(where);
+
+    if ((parent == NULL) || (child == NULL) || (child->parent != NULL))
     {
         return NULL;
     }
@@ -185,45 +258,77 @@ json *json_push_back(json *parent, json *child)
         return NULL;
     }
     child->parent = parent;
-    if (parent->child == NULL)
-    {
-        parent->child = child;
-    }
-    else
-    {
-        json_last(parent)->next = child;
-    }
+    child->next = where->next;
+    where->next = child;
     return child;
 }
 
-json *json_push_fast(json *parent, json *node, json *next)
+json *json_pop_front(json *parent)
 {
-    if (node == NULL)
+    json *child = json_child(parent);
+
+    if (child == NULL)
     {
-        return json_push_back(parent, next);
+        return NULL;
+    }
+    parent->child = child->next;
+    child->parent = NULL;
+    child->next = NULL;
+    return child;
+}
+
+json *json_pop_back(json *parent)
+{
+    json *child = json_child(parent);
+
+    if (child == NULL)
+    {
+        return NULL;
+    }
+    if (child->next == NULL)
+    {
+        parent->child = NULL;
     }
     else
     {
-        return json_append_to(node, next);
+        json *node = child;
+
+        while (node->next->next != NULL)
+        {
+            node = node->next;
+        }
+        child = node->next;
+        node->next = NULL;
     }
+    child->parent = NULL;
+    return child;
 }
 
-json *json_append_to(json *node, json *next)
+json *json_pop(json *child)
 {
-    json *parent = json_parent(node);
+    json *parent = json_parent(child);
 
-    if ((parent == NULL) || (next == NULL))
+    if (parent == NULL)
     {
-        return NULL;
+        return child;
     }
-    if ((parent->type == JSON_OBJECT) ^ (next->name != NULL))
+    if (parent->child == child)
     {
-        return NULL;
+        parent->child = child->next;
     }
-    next->parent = parent;
-    next->next = node->next;
-    node->next = next;
-    return next;
+    else
+    {
+        json *iter = parent->child;
+
+        while (iter->next != child)
+        {
+            iter = iter->next;
+        }
+        iter->next = child->next;
+    }
+    child->parent = NULL;
+    child->next = NULL;
+    return child;
 }
 
 void json_free(json *node)

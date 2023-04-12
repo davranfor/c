@@ -119,7 +119,11 @@ json *json_new_null(const char *);
 json *json_push_front(json *, json *);
 json *json_push_back(json *, json *);
 json *json_push_fast(json *, json *, json *);
+json *json_insert_at(json *, json *);
 json *json_append_to(json *, json *);
+json *json_pop_front(json *);
+json *json_pop_back(json *);
+json *json_pop(json *);
 void json_free(json *);
 // ============================================================================
 // Parser
