@@ -118,14 +118,14 @@ json *json_new_boolean(const char *, int);
 json *json_new_null(const char *);
 json *json_push_front(json *, json *);
 json *json_push_back(json *, json *);
-json *json_push_fast(json *, json *, json *);
 json *json_push_before(json *, json *);
 json *json_push_after(json *, json *);
+json *json_push_at(json *, json *, size_t);
+json *json_push_fast(json *, json *, json *);
+json *json_pop(json *);
 json *json_pop_front(json *);
 json *json_pop_back(json *);
-json *json_pop(json *);
-json *json_insert(json *, json *, size_t);
-json *json_delete(json *, size_t);
+json *json_pop_at(json *, size_t);
 void json_free(json *);
 // ============================================================================
 // Parser

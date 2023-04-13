@@ -158,13 +158,27 @@ json *json_new_null(const char *name)
     return new_type(JSON_NULL, name, str);
 }
 
+/* push helper */
+static int not_pushable(const json *parent, const json *child)
+{
+    if ((parent == NULL) || (parent->value != NULL)
+      || (child == NULL) || (child->parent != NULL))
+    {
+        return 1;
+    }
+    // parent being object and child without name
+    // or
+    // parent being array and child with name 
+    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
+    {
+        return 1;
+    }
+    return 0;
+}
+
 json *json_push_front(json *parent, json *child)
 {
-    if (!json_is_iterable(parent) || (child == NULL) || (child->parent != NULL))
-    {
-        return NULL;
-    }
-    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
+    if (not_pushable(parent, child))
     {
         return NULL;
     }
@@ -176,11 +190,7 @@ json *json_push_front(json *parent, json *child)
 
 json *json_push_back(json *parent, json *child)
 {
-    if (!json_is_iterable(parent) || (child == NULL) || (child->parent != NULL))
-    {
-        return NULL;
-    }
-    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
+    if (not_pushable(parent, child))
     {
         return NULL;
     }
@@ -202,27 +212,11 @@ json *json_push_back(json *parent, json *child)
     return child;
 }
 
-json *json_push_fast(json *parent, json *where, json *child)
-{
-    if (where == NULL)
-    {
-        return json_push_back(parent, child);
-    }
-    else
-    {
-        return json_push_after(where, child);
-    }
-}
-
 json *json_push_before(json *where, json *child)
 {
     json *parent = json_parent(where);
 
-    if ((parent == NULL) || (child == NULL) || (child->parent != NULL))
-    {
-        return NULL;
-    }
-    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
+    if (not_pushable(parent, child))
     {
         return NULL;
     }
@@ -249,17 +243,79 @@ json *json_push_after(json *where, json *child)
 {
     json *parent = json_parent(where);
 
-    if ((parent == NULL) || (child == NULL) || (child->parent != NULL))
-    {
-        return NULL;
-    }
-    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
+    if (not_pushable(parent, child))
     {
         return NULL;
     }
     child->parent = parent;
     child->next = where->next;
     where->next = child;
+    return child;
+}
+
+json *json_push_at(json *parent, json *child, size_t index)
+{
+    if (not_pushable(parent, child))
+    {
+        return NULL;
+    }
+    if ((parent->child == NULL) || (index == 0))
+    {
+        child->next = parent->child;
+        parent->child = child;
+    }
+    else
+    {
+        json *node = parent->child;
+        
+        while ((index > 1) && (node->next != NULL))
+        {
+            node = node->next;
+            index--;
+        }
+        child->next = node->next;
+        node->next = child;
+    }
+    child->parent = parent;
+    return child;
+}
+
+json *json_push_fast(json *parent, json *where, json *child)
+{
+    if (where == NULL)
+    {
+        return json_push_back(parent, child);
+    }
+    else
+    {
+        return json_push_after(where, child);
+    }
+}
+
+json *json_pop(json *child)
+{
+    json *parent = json_parent(child);
+
+    if (parent == NULL)
+    {
+        return child;
+    }
+    if (parent->child == child)
+    {
+        parent->child = child->next;
+    }
+    else
+    {
+        json *iter = parent->child;
+
+        while (iter->next != child)
+        {
+            iter = iter->next;
+        }
+        iter->next = child->next;
+    }
+    child->parent = NULL;
+    child->next = NULL;
     return child;
 }
 
@@ -304,65 +360,7 @@ json *json_pop_back(json *parent)
     return child;
 }
 
-json *json_pop(json *child)
-{
-    json *parent = json_parent(child);
-
-    if (parent == NULL)
-    {
-        return child;
-    }
-    if (parent->child == child)
-    {
-        parent->child = child->next;
-    }
-    else
-    {
-        json *iter = parent->child;
-
-        while (iter->next != child)
-        {
-            iter = iter->next;
-        }
-        iter->next = child->next;
-    }
-    child->parent = NULL;
-    child->next = NULL;
-    return child;
-}
-
-json *json_insert(json *parent, json *child, size_t index)
-{
-    if (!json_is_iterable(parent) || (child == NULL) || (child->parent != NULL))
-    {
-        return NULL;
-    }
-    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
-    {
-        return NULL;
-    }
-    if ((parent->child == NULL) || (index == 0))
-    {
-        child->next = parent->child;
-        parent->child = child;
-    }
-    else
-    {
-        json *node = parent->child;
-        
-        while ((index > 1) && (node->next != NULL))
-        {
-            node = node->next;
-            index--;
-        }
-        child->next = node->next;
-        node->next = child;
-    }
-    child->parent = parent;
-    return child;
-}
-
-json *json_delete(json *parent, size_t index)
+json *json_pop_at(json *parent, size_t index)
 {
     json *child = json_child(parent);
 
@@ -370,7 +368,6 @@ json *json_delete(json *parent, size_t index)
     {
         return NULL;
     }
-
     if (index == 0)
     {
         parent->child = child->next;
