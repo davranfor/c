@@ -221,7 +221,7 @@ const char *json_set_name(json *node, const char *name)
 }
 
 /* set helper */
-static char *set_value(json *node, enum json_type type, char *value)
+static const char *set_value(json *node, enum json_type type, char *value)
 {
     if (value == NULL)
     {
