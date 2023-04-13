@@ -13,7 +13,7 @@ static int valid_char(char c)
     return (c == '\b') || (c == '\f') || (c == '\n') || (c == '\r') || (c == '\t');
 }
 
-static size_t copy_size(const char *str)
+static size_t string_size(const char *str)
 {
     const char *ptr = str;
 
@@ -28,9 +28,9 @@ static size_t copy_size(const char *str)
     return (size_t)(str - ptr) + 1;
 }
 
-static char *copy(const char *str)
+static char *copy_string(const char *str)
 {
-    size_t size = copy_size(str);
+    size_t size = string_size(str);
 
     if (size == 0)
     {
@@ -46,13 +46,49 @@ static char *copy(const char *str)
     return ptr;
 }
 
+static char *copy_integer(long long number)
+{
+    size_t size = 1 + (size_t)snprintf(NULL, 0, "%lld", number);
+    char *str = malloc(size);
+
+    if (str != NULL)
+    {
+        snprintf(str, size, "%lld", number);
+    }
+    return str;
+}
+
+static char *copy_real(unsigned long long number)
+{
+    size_t size = 1 + (size_t)snprintf(NULL, 0, "%llu", number);
+    char *str = malloc(size);
+
+    if (str != NULL)
+    {
+        snprintf(str, size, "%llu", number);
+    }
+    return str;
+}
+
+static char *copy_double(double number, int decimals)
+{
+    size_t size = 1 + (size_t)snprintf(NULL, 0, "%.*f", decimals, number);
+    char *str = malloc(size);
+
+    if (str != NULL)
+    {
+        snprintf(str, size, "%.*f", decimals, number);
+    }
+    return str;
+}
+
 static json *new_type(enum json_type type, const char *key, char *value)
 {
     char *name = NULL;
 
     if (key != NULL)
     {
-        name = copy(key);
+        name = copy_string(key);
         if (name == NULL)
         {
             free(value);
@@ -88,7 +124,7 @@ json *json_new_array(const char *name)
 
 json *json_new_string(const char *name, const char *value)
 {
-    char *str = copy(value);
+    char *str = copy_string(value);
 
     if (str == NULL)
     {
@@ -99,46 +135,43 @@ json *json_new_string(const char *name, const char *value)
 
 json *json_new_integer(const char *name, long long value)
 {
-    size_t size = 1 + (size_t)snprintf(NULL, 0, "%lld", value);
-    char *str = malloc(size);
+    char *str = copy_integer(value);
 
     if (str == NULL)
     {
         return NULL;
     }
-    snprintf(str, size, "%lld", value);
     return new_type(JSON_INTEGER, name, str);
 }
 
 json *json_new_real(const char *name, unsigned long long value)
 {
-    size_t size = 1 + (size_t)snprintf(NULL, 0, "%llu", value);
-    char *str = malloc(size);
+    char *str = copy_real(value);
 
     if (str == NULL)
     {
         return NULL;
     }
-    snprintf(str, size, "%llu", value);
     return new_type(JSON_INTEGER, name, str);
 }
 
 json *json_new_double(const char *name, double value, int decimals)
 {
-    size_t size = 1 + (size_t)snprintf(NULL, 0, "%.*f", decimals, value);
-    char *str = malloc(size);
+    char *str = copy_double(value, decimals);
 
     if (str == NULL)
     {
         return NULL;
     }
-    snprintf(str, size, "%.*f", decimals, value);
-    return new_type(decimals == 0 ? JSON_INTEGER : JSON_DOUBLE, name, str);
+
+    enum json_type type = decimals ? JSON_DOUBLE : JSON_INTEGER;
+
+    return new_type(type, name, str);
 }
 
 json *json_new_boolean(const char *name, int value)
 {
-    char *str = value ? copy("true") : copy("false");
+    char *str = copy_string(value ? "true" : "false");
 
     if (str == NULL)
     {
@@ -149,13 +182,112 @@ json *json_new_boolean(const char *name, int value)
 
 json *json_new_null(const char *name)
 {
-    char *str = copy("null");
+    char *str = copy_string("null");
 
     if (str == NULL)
     {
         return NULL;
     }
     return new_type(JSON_NULL, name, str);
+}
+
+const char *json_set_name(json *node, const char *name)
+{
+    if (node == NULL)
+    {
+        return NULL;
+    }
+    if ((node->parent != NULL) && ((node->name == NULL) != (name == NULL)))
+    {
+        return NULL;
+    }
+    if (name == NULL)
+    {
+        free(node->name);
+        node->name = NULL;
+    }
+    else
+    {
+        char *str = copy_string(name);
+
+        if (str == NULL)
+        {
+            return NULL;
+        }
+        free(node->name);
+        node->name = str;
+    }
+    return node->name;
+}
+
+/* set helper */
+static char *set_value(json *node, enum json_type type, char *value)
+{
+    if (value == NULL)
+    {
+        return NULL;
+    }
+    node->type = type;
+    free(node->value);
+    node->value = value;
+    return node->value;
+}
+
+const char *json_set_string(json *node, const char *value)
+{
+    if ((node == NULL) || (node->value == NULL) || (value == NULL))
+    {
+        return NULL;
+    }
+    return set_value(node, JSON_STRING, copy_string(value));
+}
+
+const char *json_set_integer(json *node, long long value)
+{
+    if ((node == NULL) || (node->value == NULL))
+    {
+        return NULL;
+    }
+    return set_value(node, JSON_INTEGER, copy_integer(value));
+}
+
+const char *json_set_real(json *node, unsigned long long value)
+{
+    if ((node == NULL) || (node->value == NULL))
+    {
+        return NULL;
+    }
+    return set_value(node, JSON_INTEGER, copy_real(value));
+}
+
+const char *json_set_double(json *node, double value, int decimals)
+{
+    if ((node == NULL) || (node->value == NULL))
+    {
+        return NULL;
+    }
+
+    enum json_type type = decimals ? JSON_DOUBLE : JSON_INTEGER;
+
+    return set_value(node, type, copy_double(value, decimals));
+}
+
+const char *json_set_boolean(json *node, int value)
+{
+    if ((node == NULL) || (node->value == NULL))
+    {
+        return NULL;
+    }
+    return set_value(node, JSON_BOOLEAN, copy_string(value ? "true" : "false"));
+}
+
+const char *json_set_null(json *node)
+{
+    if ((node == NULL) || (node->value == NULL))
+    {
+        return NULL;
+    }
+    return set_value(node, JSON_NULL, copy_string("null"));
 }
 
 /* push helper */
