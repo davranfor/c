@@ -372,17 +372,15 @@ json *json_last(const json *root)
 /* Locates a child node by name */
 json *json_find(const json *root, const char *name)
 {
-    json *node;
-
-    if ((root != NULL) && (node = root->child))
+    if (root == NULL)
     {
-        while (node != NULL)
+        return NULL;
+    }
+    for (json *node = root->child; node != NULL; node = node->next)
+    {
+        if ((node->name != NULL) && (strcmp(node->name, name) == 0))
         {
-            if ((node->name != NULL) && (strcmp(node->name, name) == 0))
-            {
-                return node;
-            }
-            node = node->next;
+            return node;
         }
     }
     return NULL;
@@ -391,17 +389,15 @@ json *json_find(const json *root, const char *name)
 /* Locates the next sibling by name */
 json *json_find_next(const json *root, const char *name)
 {
-    json *node;
-
-    if ((root != NULL) && (node = root->next))
+    if (root == NULL)
     {
-        while (node != NULL)
+        return NULL;
+    }
+    for (json *node = root->next; node != NULL; node = node->next)
+    {
+        if ((node->name != NULL) && (strcmp(node->name, name) == 0))
         {
-            if ((node->name != NULL) && (strcmp(node->name, name) == 0))
-            {
-                return node;
-            }
-            node = node->next;
+            return node;
         }
     }
     return NULL;
@@ -413,19 +409,17 @@ json *json_find_next(const json *root, const char *name)
  */
 json *json_match(const json *root, const char *name, size_t length)
 {
-    json *node;
-
-    if ((root != NULL) && (node = root->child))
+    if (root == NULL)
     {
-        while (node != NULL)
+        return NULL;
+    }
+    for (json *node = root->child; node != NULL; node = node->next)
+    {
+        if ((node->name != NULL) &&
+            (strncmp(node->name, name, length) == 0) &&
+            (node->name[length] == '\0'))
         {
-            if ((node->name != NULL) &&
-                (strncmp(node->name, name, length) == 0) &&
-                (node->name[length] == '\0'))
-            {
-                return node;
-            }
-            node = node->next;
+            return node;
         }
     }
     return NULL;
@@ -479,19 +473,15 @@ json *json_node(const json *root, const char *path)
 /* Locates an item by offset */
 json *json_item(const json *root, size_t item)
 {
-    json *node;
-
-    if ((root != NULL) && (node = root->child))
+    if (root == NULL)
     {
-        size_t count = 0;
-
-        while (node != NULL)
+        return NULL;
+    }
+    for (json *node = root->child; node != NULL; node = node->next)
+    {
+        if (item-- == 0)
         {
-            if (count++ == item)
-            {
-                return node;
-            }
-            node = node->next;
+            return node;
         }
     }
     return NULL;
@@ -499,17 +489,18 @@ json *json_item(const json *root, size_t item)
 
 size_t json_items(const json *node)
 {
-    size_t count = 0;
-
-    if ((node != NULL) && (node = node->child))
+    if (node == NULL)
     {
-        while (node != NULL)
-        {
-            node = node->next;
-            count++;
-        }
+        return 0;
     }
-    return count;
+
+    size_t items = 0;
+
+    for (node = node->child; node != NULL; node = node->next)
+    {
+        items++;
+    }
+    return items;
 }
 
 size_t json_offset(const json *node)
