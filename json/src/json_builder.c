@@ -235,7 +235,7 @@ static const char *set_value(json *node, enum json_type type, char *value)
 
 const char *json_set_string(json *node, const char *value)
 {
-    if ((node == NULL) || (node->value == NULL) || (value == NULL))
+    if ((node == NULL) || (node->value == NULL))
     {
         return NULL;
     }
