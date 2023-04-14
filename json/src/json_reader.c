@@ -372,13 +372,13 @@ json *json_last(const json *root)
 /* Locates a child node by name */
 json *json_find(const json *root, const char *name)
 {
-    if (root == NULL)
+    if ((root == NULL) || (root->type != JSON_OBJECT))
     {
         return NULL;
     }
     for (json *node = root->child; node != NULL; node = node->next)
     {
-        if ((node->name != NULL) && (strcmp(node->name, name) == 0))
+        if (strcmp(node->name, name) == 0)
         {
             return node;
         }
@@ -389,13 +389,13 @@ json *json_find(const json *root, const char *name)
 /* Locates the next sibling by name */
 json *json_find_next(const json *root, const char *name)
 {
-    if (root == NULL)
+    if ((root == NULL) || (root->name == NULL))
     {
         return NULL;
     }
     for (json *node = root->next; node != NULL; node = node->next)
     {
-        if ((node->name != NULL) && (strcmp(node->name, name) == 0))
+        if (strcmp(node->name, name) == 0)
         {
             return node;
         }
@@ -409,14 +409,13 @@ json *json_find_next(const json *root, const char *name)
  */
 json *json_match(const json *root, const char *name, size_t length)
 {
-    if (root == NULL)
+    if ((root == NULL) || (root->type != JSON_OBJECT))
     {
         return NULL;
     }
     for (json *node = root->child; node != NULL; node = node->next)
     {
-        if ((node->name != NULL) &&
-            (strncmp(node->name, name, length) == 0) &&
+        if ((strncmp(node->name, name, length) == 0) &&
             (node->name[length] == '\0'))
         {
             return node;
