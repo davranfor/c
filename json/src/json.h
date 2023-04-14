@@ -33,9 +33,9 @@ enum json_query
     objectOfArrays,
     objectOfStrings,
     objectOfIntegers,
+    objectOfReals,
     objectOfDoubles,
     objectOfNumbers,
-    objectOfReals,
     objectOfBooleans,
     objectOfNulls,
 
@@ -46,9 +46,9 @@ enum json_query
     arrayOfArrays,
     arrayOfStrings,
     arrayOfIntegers,
+    arrayOfReals,
     arrayOfDoubles,
     arrayOfNumbers,
-    arrayOfReals,
     arrayOfBooleans,
     arrayOfNulls,
 
@@ -59,9 +59,9 @@ enum json_query
     objectOfOptionalArrays,
     objectOfOptionalStrings,
     objectOfOptionalIntegers,
+    objectOfOptionalReals,
     objectOfOptionalDoubles,
     objectOfOptionalNumbers,
-    objectOfOptionalReals,
     objectOfOptionalBooleans,
     objectOfOptionalNulls,
 
@@ -72,9 +72,9 @@ enum json_query
     arrayOfOptionalArrays,
     arrayOfOptionalStrings,
     arrayOfOptionalIntegers,
+    arrayOfOptionalReals,
     arrayOfOptionalDoubles,
     arrayOfOptionalNumbers,
-    arrayOfOptionalReals,
     arrayOfOptionalBooleans,
     arrayOfOptionalNulls,
 
@@ -85,9 +85,9 @@ enum json_query
     objectOfUniqueArrays,
     objectOfUniqueStrings,
     objectOfUniqueIntegers,
+    objectOfUniqueReals,
     objectOfUniqueDoubles,
     objectOfUniqueNumbers,
-    objectOfUniqueReals,
     objectOfUniqueBooleans,
     objectOfUniqueNulls,
 
@@ -98,9 +98,9 @@ enum json_query
     arrayOfUniqueArrays,
     arrayOfUniqueStrings,
     arrayOfUniqueIntegers,
+    arrayOfUniqueReals,
     arrayOfUniqueDoubles,
     arrayOfUniqueNumbers,
-    arrayOfUniqueReals,
     arrayOfUniqueBooleans,
     arrayOfUniqueNulls,
 };
@@ -123,12 +123,12 @@ const char *json_set_real(json *, unsigned long long);
 const char *json_set_double(json *, double, int);
 const char *json_set_boolean(json *, int);
 const char *json_set_null(json *);
+json *json_push_fast(json *, json *, json *);
 json *json_push_front(json *, json *);
 json *json_push_back(json *, json *);
 json *json_push_before(json *, json *);
 json *json_push_after(json *, json *);
 json *json_push_at(json *, json *, size_t);
-json *json_push_fast(json *, json *, json *);
 json *json_pop(json *);
 json *json_pop_front(json *);
 json *json_pop_back(json *);

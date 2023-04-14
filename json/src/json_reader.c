@@ -24,9 +24,9 @@ static int (*func_array[])(const json *) =
     json_is_array,
     json_is_string,
     json_is_integer,
+    json_is_real,
     json_is_double,
     json_is_number,
-    json_is_real,
     json_is_boolean,
     json_is_null,
 };

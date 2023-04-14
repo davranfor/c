@@ -308,6 +308,18 @@ static int not_pushable(const json *parent, const json *child)
     return 0;
 }
 
+json *json_push_fast(json *parent, json *where, json *child)
+{
+    if (where == NULL)
+    {
+        return json_push_back(parent, child);
+    }
+    else
+    {
+        return json_push_after(where, child);
+    }
+}
+
 json *json_push_front(json *parent, json *child)
 {
     if (not_pushable(parent, child))
@@ -410,18 +422,6 @@ json *json_push_at(json *parent, json *child, size_t index)
     }
     child->parent = parent;
     return child;
-}
-
-json *json_push_fast(json *parent, json *where, json *child)
-{
-    if (where == NULL)
-    {
-        return json_push_back(parent, child);
-    }
-    else
-    {
-        return json_push_after(where, child);
-    }
 }
 
 json *json_pop(json *child)
