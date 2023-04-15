@@ -233,6 +233,27 @@ char *json_encode(const json *node)
     return text;
 }
 
+char *json_encode_string(const json *node)
+{
+    if (node->value == NULL)
+    {
+        return NULL;
+    }
+
+    json_buffer buffer = {NULL, 0, 0};
+    char *text = NULL;
+
+    if (buffer_parse(&buffer, node->value))
+    {
+        text = buffer.text;
+    }
+    else
+    {
+        free(buffer.text);
+    }
+    return text;
+}
+
 int json_write(const json *node, FILE *file)
 {
     char *str = json_encode(node);
@@ -263,8 +284,9 @@ static int buffer_write_path(json_buffer *buffer, const json *node)
     {
         if (node->name != NULL)
         {
-            CHECK(buffer_write(buffer, "."));
+            CHECK(buffer_write(buffer, "[\""));
             CHECK(buffer_parse(buffer, node->name));
+            CHECK(buffer_write(buffer, "\"]"));
         }
         if (node->parent->type == JSON_ARRAY)
         {

@@ -397,13 +397,13 @@ json *json_push_after(json *where, json *child)
     return child;
 }
 
-json *json_push_at(json *parent, json *child, size_t index)
+json *json_push_at(json *parent, json *child, size_t item)
 {
     if (not_pushable(parent, child))
     {
         return NULL;
     }
-    if ((parent->child == NULL) || (index == 0))
+    if ((parent->child == NULL) || (item == 0))
     {
         child->next = parent->child;
         parent->child = child;
@@ -412,10 +412,10 @@ json *json_push_at(json *parent, json *child, size_t index)
     {
         json *node = parent->child;
         
-        while ((index > 1) && (node->next != NULL))
+        while ((item > 1) && (node->next != NULL))
         {
             node = node->next;
-            index--;
+            item--;
         }
         child->next = node->next;
         node->next = child;
@@ -492,7 +492,7 @@ json *json_pop_back(json *parent)
     return child;
 }
 
-json *json_pop_at(json *parent, size_t index)
+json *json_pop_at(json *parent, size_t item)
 {
     json *child = json_child(parent);
 
@@ -500,7 +500,7 @@ json *json_pop_at(json *parent, size_t index)
     {
         return NULL;
     }
-    if (index == 0)
+    if (item == 0)
     {
         parent->child = child->next;
     }
@@ -508,10 +508,10 @@ json *json_pop_at(json *parent, size_t index)
     {
         json *node = child;
 
-        while ((index > 1) && (node->next != NULL))
+        while ((item > 1) && (node->next != NULL))
         {
             node = node->next;
-            index--;
+            item--;
         }
         if (node->next != NULL)
         {

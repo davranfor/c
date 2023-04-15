@@ -217,15 +217,13 @@ int json_is_any(const json *node)
 int json_is_iterable(const json *node)
 {
     return (node != NULL)
-        && ((node->type == JSON_OBJECT) ||
-            (node->type == JSON_ARRAY));
+        && (node->value == NULL);
 }
 
 int json_is_scalar(const json *node)
 {
     return (node != NULL)
-        && (node->type != JSON_OBJECT)
-        && (node->type != JSON_ARRAY);
+        && (node->value != NULL);
 }
 
 int json_is_object(const json *node)
@@ -268,8 +266,8 @@ int json_is_double(const json *node)
 int json_is_number(const json *node)
 {
     return (node != NULL)
-        && ((node->type == JSON_INTEGER) ||
-            (node->type == JSON_DOUBLE));
+       && ((node->type == JSON_INTEGER)
+       ||  (node->type == JSON_DOUBLE));
 }
 
 int json_is_boolean(const json *node)

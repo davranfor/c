@@ -25,11 +25,19 @@ static void raise(const json *node, const char *title)
         fprintf(stderr, "%s: %s\n", title, path);
         free(path);
     }
-    if (json_string(node))
+    if (json_is_scalar(node))
     {
-        const char *fmt = json_is_string(node) ? " -> \"%s\"\n" : " -> %s\n";
+        if (json_is_string(node))
+        {
+            char *str = json_encode_string(node);
 
-        fprintf(stderr, fmt, json_string(node));
+            fprintf(stderr, " -> \"%s\"\n", str);
+            free(str);
+        }
+        else
+        {
+            fprintf(stderr, " -> %s\n", json_string(node));
+        }
     }
 }
 
