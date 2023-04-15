@@ -235,7 +235,7 @@ char *json_encode(const json *node)
 
 char *json_encode_string(const json *node)
 {
-    if (node->value == NULL)
+    if ((node == NULL) || (node->value == NULL))
     {
         return NULL;
     }
