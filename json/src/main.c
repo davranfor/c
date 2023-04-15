@@ -16,28 +16,28 @@ static json *parse(const char *path)
     return node;
 }
 
-static void raise(const json *node, const char *title)
+static void raise(const char *title, const json *node)
 {
     char *path = json_path(node);
 
     if (path != NULL)
     {
-        fprintf(stderr, "%s: %s\n", title, path);
+        fprintf(stderr, "%s\n-> %s\n", title, path);
         free(path);
     }
-    if (json_is_scalar(node))
+    if (json_is_string(node))
     {
-        if (json_is_string(node))
-        {
-            char *str = json_encode_string(node);
+        char *str = json_encode_string(node);
 
-            fprintf(stderr, " -> \"%s\"\n", str);
+        if (str != NULL)
+        {
+            fprintf(stderr, "-> \"%s\"\n", str);
             free(str);
         }
-        else
-        {
-            fprintf(stderr, " -> %s\n", json_string(node));
-        }
+    }
+    else if (json_is_scalar(node))
+    {
+        fprintf(stderr, "-> %s\n", json_string(node));
     }
 }
 
@@ -47,9 +47,9 @@ static int callback(const json *node, const json *rule, int event, void *data)
 
     const char *event_title[] = {"Warning", "Error", "Malformed schema"};
 
-    fprintf(stderr, "\n%s:\n", event_title[event]);
-    raise(rule, "Testing rule");
-    raise(node, "Testing node");
+    fprintf(stderr, "\n[%s]\n", event_title[event]);
+    raise("Testing", rule);
+    raise("on node", node);
     return 1;
 }
 
