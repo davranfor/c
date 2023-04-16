@@ -725,284 +725,281 @@ static int validate(json_schema *schema,
     {
         raise_error(schema, rule, node);
     }
-    while (rule != NULL)
+    for (; rule != NULL; rule = json_next(rule))
     {
         const tester test = get_test(rule);
 
-        if (test != NULL)
+        if (test == NULL)
         {
-            switch (test(rule, node))
+            raise_warning(schema, rule, node);
+            continue;
+        }
+        switch (test(rule, node))
+        {
+            case SCHEMA_DEPENDENT_SCHEMAS:
             {
-                case SCHEMA_DEPENDENT_SCHEMAS:
+                const json *next = json_child(rule);
+
+                while (next != NULL)
                 {
-                    const json *next = json_child(rule);
-
-                    while (next != NULL)
-                    {
-                        if (json_find(node, json_name(next)))
-                        {
-                            valid &= validate(schema, json_child(next), node, flag);
-                        }
-                        else
-                        {
-                            validate(schema, json_child(next), NULL, 1);
-                        }
-                        next = json_next(next);
-                    }
-                }
-                break;
-                case SCHEMA_PROPERTIES:
-                {
-                    const json *item = json_is_object(node) ? node : NULL;
-                    const json *next = json_child(rule);
-
-                    if (item == NULL)
-                    {
-                        while (next != NULL)
-                        {
-                            validate(schema, json_child(next), item, 1);
-                            next = json_next(next);
-                        }
-                    }
-                    else while (next != NULL)
-                    {
-                        item = json_find(node, json_name(next));
-                        do valid &= validate(schema, json_child(next), item, flag);
-                        while ((item = json_find_next(item, json_name(next))));
-                        next = json_next(next);
-                    }
-                }
-                break;
-                case SCHEMA_PATTERN_PROPERTIES:
-                {
-                    const json *head = json_is_object(node) ? json_child(node) : NULL;
-                    const json *next = json_child(rule);
-
-                    while (next != NULL)
-                    {
-                        const char *regex = json_name(next);
-                        const json *item = head;
-                        int count = 0;
-
-                        while (item != NULL)
-                        {
-                            if (test_regex(regex, json_name(item)))
-                            {
-                                valid &= validate(schema, json_child(next), item, flag);
-                                count++;
-                            }
-                            item = json_next(item);
-                        }
-                        if (count == 0)
-                        {
-                            validate(schema, json_child(next), NULL, 1);
-                        }
-                        next = json_next(next);
-                    }
-                }
-                break;
-                case SCHEMA_ADDITIONAL_PROPERTIES:
-                {
-                    const json *properties = json_find(json_parent(rule), "properties");
-                    const json *item = json_is_object(node) ? json_child(node) : NULL;
-                    const json *next = json_child(rule);
-                    int count = 0;
-
-                    if (json_is(properties, objectOfOptionalObjects))
-                    {
-                        while (item != NULL)
-                        {
-                            if (!json_find(properties, json_name(item)))
-                            {
-                                valid &= validate(schema, next, item, flag);
-                                count++;
-                            }
-                            item = json_next(item);
-                        }
-                    }
-                    if (count == 0)
-                    {
-                        validate(schema, next, NULL, 1);
-                    }
-                }
-                break;
-                case SCHEMA_ITEMS:
-                {
-                    const json *item = json_is_array(node) ? json_child(node) : NULL;
-                    const json *next = json_child(rule);
-
-                    if (item == NULL)
-                    {
-                        validate(schema, next, item, 1);
-                    }
-                    else while (item != NULL)
-                    {
-                        valid &= validate(schema, next, item, flag);
-                        item = json_next(item);
-                    }
-                }
-                break;
-                case SCHEMA_ADDITIONAL_ITEMS:
-                {
-                    const json *next = json_child(rule);
-                    const json *item = NULL;
-
-                    if (json_is_array(node))
-                    {
-                        const json *items = json_find(json_parent(rule), "items");
-
-                        if (json_is(items, arrayOfOptionalObjects))
-                        {
-                            item = json_item(node, json_items(items));
-                        }
-                    }
-                    if (item == NULL)
-                    {
-                        validate(schema, next, item, 1);
-                    }
-                    else while (item != NULL)
-                    {
-                        valid &= validate(schema, next, item, flag);
-                        item = json_next(item);
-                    }
-                }
-                break;
-                case SCHEMA_TUPLES:
-                {
-                    const json *item = json_is_array(node) ? json_child(node) : NULL;
-                    const json *next = json_child(rule);
-
-                    if (item == NULL)
-                    {
-                        while (next != NULL)
-                        {
-                            validate(schema, json_child(next), item, 1);
-                            next = json_next(next);
-                        }
-                    }
-                    else while (next != NULL)
-                    {
-                        valid &= validate(schema, json_child(next), item, flag);
-                        next = json_next(next);
-                        item = json_next(item);
-                    }
-                }
-                break;
-                case SCHEMA_REF:
-                {
-                    const json *next = handle_ref(schema, rule, node);
-
-                    if (next != NULL)
+                    if (json_find(node, json_name(next)))
                     {
                         valid &= validate(schema, json_child(next), node, flag);
                     }
-                }
-                break;
-                case SCHEMA_NOT:
-                {
-                    int old_valid = valid;
-
-                    valid = !validate(schema, json_child(rule), node, 1);
-                    if (flag == 0)
+                    else
                     {
-                        if (valid)
-                        {
-                            valid = old_valid;
-                        }
-                        else
-                        {
-                            raise_invalid(schema, rule, node);
-                        }
+                        validate(schema, json_child(next), NULL, 1);
                     }
+                    next = json_next(next);
                 }
-                break;
-                case SCHEMA_ALL_OF:
-                case SCHEMA_ANY_OF:
-                case SCHEMA_ONE_OF:
-                {
-                    const json *next = json_child(rule);
-                    int old_valid = valid;
-                    int count = 0;
+            }
+            break;
+            case SCHEMA_PROPERTIES:
+            {
+                const json *item = json_is_object(node) ? node : NULL;
+                const json *next = json_child(rule);
 
-                    valid = 1;
+                if (item == NULL)
+                {
                     while (next != NULL)
                     {
-                        if (count++ == 0)
-                        {
-                            valid = validate(schema, json_child(next), node, 1);
-                        }
-                        else if (test == test_all_of)
-                        {
-                            valid &= validate(schema, json_child(next), node, 1);
-                        }
-                        else if (test == test_any_of)
-                        {
-                            valid |= validate(schema, json_child(next), node, 1);
-                        }
-                        else if (test == test_one_of)
-                        {
-                            valid ^= validate(schema, json_child(next), node, 1);
-                        }
+                        validate(schema, json_child(next), item, 1);
                         next = json_next(next);
                     }
-                    if (flag == 0)
-                    {
-                        if (valid)
-                        {
-                            valid = old_valid;
-                        }
-                        else
-                        {
-                            raise_invalid(schema, rule, node);
-                        }
-                    }
                 }
-                break;
-                case SCHEMA_IF:
+                else while (next != NULL)
                 {
-                    int cond_valid = validate(schema, json_child(rule), node, 1);
-                    int cond;
+                    item = json_find(node, json_name(next));
+                    do valid &= validate(schema, json_child(next), item, flag);
+                    while ((item = json_find_next(item, json_name(next))));
+                    next = json_next(next);
+                }
+            }
+            break;
+            case SCHEMA_PATTERN_PROPERTIES:
+            {
+                const json *head = json_is_object(node) ? json_child(node) : NULL;
+                const json *next = json_child(rule);
 
-                    while ((cond = handle_cond(&rule, cond_valid)) != -1)
+                while (next != NULL)
+                {
+                    const char *regex = json_name(next);
+                    const json *item = head;
+                    int count = 0;
+
+                    while (item != NULL)
                     {
-                        if (cond == 1)
+                        if (test_regex(regex, json_name(item)))
                         {
-                            valid &= validate(schema, json_child(rule), node, flag);
+                            valid &= validate(schema, json_child(next), item, flag);
+                            count++;
                         }
-                        else
+                        item = json_next(item);
+                    }
+                    if (count == 0)
+                    {
+                        validate(schema, json_child(next), NULL, 1);
+                    }
+                    next = json_next(next);
+                }
+            }
+            break;
+            case SCHEMA_ADDITIONAL_PROPERTIES:
+            {
+                const json *properties = json_find(json_parent(rule), "properties");
+                const json *item = json_is_object(node) ? json_child(node) : NULL;
+                const json *next = json_child(rule);
+                int count = 0;
+
+                if (json_is(properties, objectOfOptionalObjects))
+                {
+                    while (item != NULL)
+                    {
+                        if (!json_find(properties, json_name(item)))
                         {
-                            validate(schema, json_child(rule), NULL, 1);
+                            valid &= validate(schema, next, item, flag);
+                            count++;
                         }
+                        item = json_next(item);
                     }
                 }
-                break;
-                case SCHEMA_THEN:
-                case SCHEMA_ELSE:
+                if (count == 0)
                 {
-                    validate(schema, json_child(rule), NULL, 1);
+                    validate(schema, next, NULL, 1);
                 }
-                break;
-                case SCHEMA_INVALID:
+            }
+            break;
+            case SCHEMA_ITEMS:
+            {
+                const json *item = json_is_array(node) ? json_child(node) : NULL;
+                const json *next = json_child(rule);
+
+                if (item == NULL)
                 {
-                    if (flag == 0)
+                    validate(schema, next, item, 1);
+                }
+                else while (item != NULL)
+                {
+                    valid &= validate(schema, next, item, flag);
+                    item = json_next(item);
+                }
+            }
+            break;
+            case SCHEMA_ADDITIONAL_ITEMS:
+            {
+                const json *next = json_child(rule);
+                const json *item = NULL;
+
+                if (json_is_array(node))
+                {
+                    const json *items = json_find(json_parent(rule), "items");
+
+                    if (json_is(items, arrayOfOptionalObjects))
+                    {
+                        item = json_item(node, json_items(items));
+                    }
+                }
+                if (item == NULL)
+                {
+                    validate(schema, next, item, 1);
+                }
+                else while (item != NULL)
+                {
+                    valid &= validate(schema, next, item, flag);
+                    item = json_next(item);
+                }
+            }
+            break;
+            case SCHEMA_TUPLES:
+            {
+                const json *item = json_is_array(node) ? json_child(node) : NULL;
+                const json *next = json_child(rule);
+
+                if (item == NULL)
+                {
+                    while (next != NULL)
+                    {
+                        validate(schema, json_child(next), item, 1);
+                        next = json_next(next);
+                    }
+                }
+                else while (next != NULL)
+                {
+                    valid &= validate(schema, json_child(next), item, flag);
+                    next = json_next(next);
+                    item = json_next(item);
+                }
+            }
+            break;
+            case SCHEMA_REF:
+            {
+                const json *next = handle_ref(schema, rule, node);
+
+                if (next != NULL)
+                {
+                    valid &= validate(schema, json_child(next), node, flag);
+                }
+            }
+            break;
+            case SCHEMA_NOT:
+            {
+                int old_valid = valid;
+
+                valid = !validate(schema, json_child(rule), node, 1);
+                if (flag == 0)
+                {
+                    if (valid)
+                    {
+                        valid = old_valid;
+                    }
+                    else
                     {
                         raise_invalid(schema, rule, node);
                     }
-                    valid = 0;
                 }
-                break;
-                case SCHEMA_ERROR:
-                {
-                    raise_error(schema, rule, node);
-                }
-                break;
             }
+            break;
+            case SCHEMA_ALL_OF:
+            case SCHEMA_ANY_OF:
+            case SCHEMA_ONE_OF:
+            {
+                const json *next = json_child(rule);
+                int old_valid = valid;
+                int count = 0;
+
+                valid = 1;
+                while (next != NULL)
+                {
+                    if (count++ == 0)
+                    {
+                        valid = validate(schema, json_child(next), node, 1);
+                    }
+                    else if (test == test_all_of)
+                    {
+                        valid &= validate(schema, json_child(next), node, 1);
+                    }
+                    else if (test == test_any_of)
+                    {
+                        valid |= validate(schema, json_child(next), node, 1);
+                    }
+                    else if (test == test_one_of)
+                    {
+                        valid ^= validate(schema, json_child(next), node, 1);
+                    }
+                    next = json_next(next);
+                }
+                if (flag == 0)
+                {
+                    if (valid)
+                    {
+                        valid = old_valid;
+                    }
+                    else
+                    {
+                        raise_invalid(schema, rule, node);
+                    }
+                }
+            }
+            break;
+            case SCHEMA_IF:
+            {
+                int cond_valid = validate(schema, json_child(rule), node, 1);
+                int cond;
+
+                while ((cond = handle_cond(&rule, cond_valid)) != -1)
+                {
+                    if (cond == 1)
+                    {
+                        valid &= validate(schema, json_child(rule), node, flag);
+                    }
+                    else
+                    {
+                        validate(schema, json_child(rule), NULL, 1);
+                    }
+                }
+            }
+            break;
+            case SCHEMA_THEN:
+            case SCHEMA_ELSE:
+            {
+                validate(schema, json_child(rule), NULL, 1);
+            }
+            break;
+            case SCHEMA_INVALID:
+            {
+                if (flag == 0)
+                {
+                    raise_invalid(schema, rule, node);
+                }
+                valid = 0;
+            }
+            break;
+            case SCHEMA_ERROR:
+            {
+                raise_error(schema, rule, node);
+            }
+            break;
         }
-        else
-        {
-            raise_warning(schema, rule, node);
-        }
-        rule = json_next(rule);
     }
     schema->depth--;
     return valid;

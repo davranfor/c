@@ -230,7 +230,7 @@ static const char *set_value(json *node, enum json_type type, char *value)
     node->type = type;
     free(node->value);
     node->value = value;
-    return node->value;
+    return value;
 }
 
 const char *json_set_string(json *node, const char *value)

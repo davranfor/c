@@ -373,7 +373,6 @@ static json *create_next(json *node)
 /* Parse document - returns an error position or NULL on success */
 static const char *parse(json *node, const char *left)
 {
-    const json *parent = node ? node->parent : NULL;
     const char *right = NULL;
     const char *token;
 
@@ -487,7 +486,7 @@ static const char *parse(json *node, const char *left)
                 break;
             case '\0':
                 /* Bad closed document */
-                if (node->parent != parent)
+                if (node->parent != NULL)
                 {
                     return left;
                 }
