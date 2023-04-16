@@ -187,7 +187,7 @@ int json_traverse(const json *, json_callback, void *);
 // Writer
 // ============================================================================
 char *json_encode(const json *);
-char *json_encode_string(const json *);
+char *json_encode_value(const json *);
 int json_write(const json *, FILE *);
 int json_print(const json *);
 char *json_path(const json *);

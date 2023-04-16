@@ -233,7 +233,20 @@ char *json_encode(const json *node)
     return text;
 }
 
-char *json_encode_string(const json *node)
+static int buffer_encode_value(json_buffer *buffer, const json *node)
+{
+    if (node->type == JSON_STRING)
+    {
+        CHECK(buffer_quote(buffer, node->value));
+    }
+    else
+    {
+        CHECK(buffer_write(buffer, node->value));
+    }
+    return 1;
+}
+
+char *json_encode_value(const json *node)
 {
     if ((node == NULL) || (node->value == NULL))
     {
@@ -243,7 +256,7 @@ char *json_encode_string(const json *node)
     json_buffer buffer = {NULL, 0, 0};
     char *text = NULL;
 
-    if (buffer_parse(&buffer, node->value))
+    if (buffer_encode_value(&buffer, node))
     {
         text = buffer.text;
     }
