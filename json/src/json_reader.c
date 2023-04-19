@@ -422,49 +422,22 @@ json *json_match(const json *root, const char *name, size_t length)
     return NULL;
 }
 
-/* Locates a node by path */
-json *json_node(const json *root, const char *path)
+/* Locates the next sibling by name given a length */
+json *json_match_next(const json *root, const char *name, size_t length)
 {
-    json *node = NULL;
-
-    if (path[0] == '/')
+    if ((root == NULL) || (root->name == NULL))
     {
-        node = json_root(root);
-        path += 1;
+        return NULL;
     }
-    else
+    for (json *node = root->next; node != NULL; node = node->next)
     {
-        node = json_self(root);
+        if ((strncmp(node->name, name, length) == 0) &&
+            (node->name[length] == '\0'))
+        {
+            return node;
+        }
     }
-    while ((node != NULL) && (*path != '\0'))
-    {
-        const char *end = path + strcspn(path, "/");
-        size_t length = (size_t)(end - path);
-
-        /* Locate by #item */
-        if ((node->type == JSON_ARRAY) && (strspn(path, "0123456789") == length))
-        {
-            node = json_item(node, strtoul(path, NULL, 10));
-        }
-        /* . Current node */
-        else if ((length == 1) && (path[0] == '.'))
-        {
-            /* noop */
-        }
-        /* .. Parent node */
-        else if ((length == 2) && (path[0] == '.') && (path[1] == '.'))
-        {
-            node = node->parent;
-        }
-        /* Locate by name */
-        else
-        {
-            node = json_match(node, path, length);
-        }
-        /* Adjust pointer to path */
-        path = (*end == '\0') ? end : end + 1;
-    }
-    return node;
+    return NULL;
 }
 
 /* Locates an item by offset */

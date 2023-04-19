@@ -44,8 +44,8 @@ static int callback(const json *node, const json *rule, int event, void *data)
     const char *event_title[] = {"Warning", "Invalid", "Malformed schema"};
 
     fprintf(stderr, "\n[%s]\n", event_title[event]);
-    raise("Testing:", rule);
-    raise("On node:", node);
+    raise("Testing:", node);
+    raise("On rule:", rule);
     return 1;
 }
 

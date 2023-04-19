@@ -332,7 +332,7 @@ int test_is_url(const char *str)
     return 0;
 }
 
-int test_regex(const char *pattern, const char *str)
+int test_regex(const char *str, const char *pattern)
 {
     regex_t regex;
     int valid = 0;

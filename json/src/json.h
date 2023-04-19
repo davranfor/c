@@ -176,7 +176,7 @@ json *json_last(const json *);
 json *json_find(const json *, const char *);
 json *json_find_next(const json *, const char *);
 json *json_match(const json *, const char *, size_t);
-json *json_node(const json *, const char *);
+json *json_match_next(const json *, const char *, size_t);
 json *json_item(const json *, size_t);
 size_t json_items(const json *);
 size_t json_offset(const json *);
@@ -191,6 +191,10 @@ char *json_encode_value(const json *);
 int json_write(const json *, FILE *);
 int json_print(const json *);
 char *json_path(const json *);
+// ============================================================================
+// Pointer
+// ============================================================================
+json *json_pointer(const json *, const char *);
 
 #endif /* JSON_H */
 

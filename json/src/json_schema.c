@@ -43,7 +43,7 @@ enum
 #define equal(a, b) (strcmp((a), (b)) == 0)
 
 static void notify(json_schema *schema,
-    const json *rule, const json *node, int event)
+    const json *node, const json *rule, int event)
 {
     int aborted = 0;
 
@@ -58,74 +58,74 @@ static void notify(json_schema *schema,
 }
 
 static void raise_warning(json_schema *schema,
-    const json *rule, const json *node)
+    const json *node, const json *rule)
 {
-    notify(schema, rule, node, JSON_SCHEMA_WARNING);
+    notify(schema, node, rule, JSON_SCHEMA_WARNING);
 }
 
 static void raise_invalid(json_schema *schema,
-    const json *rule, const json *node)
+    const json *node, const json *rule)
 {
-    notify(schema, rule, node, JSON_SCHEMA_INVALID);
+    notify(schema, node, rule, JSON_SCHEMA_INVALID);
 }
 
 static void raise_error(json_schema *schema,
-    const json *rule, const json *node)
+    const json *node, const json *rule)
 {
-    notify(schema, rule, node, JSON_SCHEMA_ERROR);
+    notify(schema, node, rule, JSON_SCHEMA_ERROR);
 }
 
-static int test_error(const json *rule, const json *node)
+static int test_error(const json *node, const json *rule)
 {
     (void)rule;
     (void)node;
     return SCHEMA_ERROR;
 }
 
-static int test_valid(const json *rule, const json *node)
+static int test_valid(const json *node, const json *rule)
 {
     (void)rule;
     (void)node;
     return SCHEMA_VALID;
 }
 
-static int test_is_object(const json *rule, const json *node)
+static int test_is_object(const json *node, const json *rule)
 {
     (void)node;
     return json_is_object(rule) ? SCHEMA_VALID : SCHEMA_ERROR;
 }
 
-static int test_is_array(const json *rule, const json *node)
+static int test_is_array(const json *node, const json *rule)
 {
     (void)node;
     return json_is_array(rule) ? SCHEMA_VALID : SCHEMA_ERROR;
 }
 
-static int test_is_string(const json *rule, const json *node)
+static int test_is_string(const json *node, const json *rule)
 {
     (void)node;
     return json_is_string(rule) ? SCHEMA_VALID : SCHEMA_ERROR;
 }
 
-static int test_is_boolean(const json *rule, const json *node)
+static int test_is_boolean(const json *node, const json *rule)
 {
     (void)node;
     return json_is_boolean(rule) ? SCHEMA_VALID : SCHEMA_ERROR;
 }
 
-static int test_ref(const json *rule, const json *node)
+static int test_ref(const json *node, const json *rule)
 {
     (void)node;
     return json_is_string(rule) ? SCHEMA_REF : SCHEMA_ERROR;
 }
 
-static int test_not(const json *rule, const json *node)
+static int test_not(const json *node, const json *rule)
 {
     (void)node;
     return json_is_object(rule) ? SCHEMA_NOT : SCHEMA_ERROR;
 }
 
-static int test_all_of(const json *rule, const json *node)
+static int test_all_of(const json *node, const json *rule)
 {
     (void)node;
     return json_is(rule, arrayOfOptionalObjects)
@@ -133,7 +133,7 @@ static int test_all_of(const json *rule, const json *node)
         : SCHEMA_ERROR;
 }
 
-static int test_any_of(const json *rule, const json *node)
+static int test_any_of(const json *node, const json *rule)
 {
     (void)node;
     return json_is(rule, arrayOfOptionalObjects)
@@ -141,7 +141,7 @@ static int test_any_of(const json *rule, const json *node)
         : SCHEMA_ERROR;
 }
 
-static int test_one_of(const json *rule, const json *node)
+static int test_one_of(const json *node, const json *rule)
 {
     (void)node;
     return json_is(rule, arrayOfOptionalObjects)
@@ -149,19 +149,19 @@ static int test_one_of(const json *rule, const json *node)
         : SCHEMA_ERROR;
 }
 
-static int test_if(const json *rule, const json *node)
+static int test_if(const json *node, const json *rule)
 {
     (void)node;
     return json_is_object(rule) ? SCHEMA_IF : SCHEMA_ERROR;
 }
 
-static int test_then(const json *rule, const json *node)
+static int test_then(const json *node, const json *rule)
 {
     (void)node;
     return json_is_object(rule) ? SCHEMA_THEN : SCHEMA_ERROR;
 }
 
-static int test_else(const json *rule, const json *node)
+static int test_else(const json *node, const json *rule)
 {
     (void)node;
     return json_is_object(rule) ? SCHEMA_ELSE : SCHEMA_ERROR;
@@ -185,7 +185,7 @@ static unsigned add_type(const char *type, unsigned value)
     return 0;
 }
 
-static int test_type(const json *rule, const json *node)
+static int test_type(const json *node, const json *rule)
 {
     unsigned mask = 0;
 
@@ -221,16 +221,16 @@ static int test_type(const json *rule, const json *node)
     return 1;
 }
 
-static int test_const(const json *rule, const json *node)
+static int test_const(const json *node, const json *rule)
 {
-    if ((node != NULL) && !json_equal(rule, node))
+    if ((node != NULL) && !json_equal(node, rule))
     {
         return 0;
     }
     return 1;
 }
 
-static int test_enum(const json *rule, const json *node)
+static int test_enum(const json *node, const json *rule)
 {
     if (!json_is_array(rule))
     {
@@ -240,7 +240,7 @@ static int test_enum(const json *rule, const json *node)
     {
         for (rule = json_child(rule); rule != NULL; rule = json_next(rule))
         {
-            if (json_equal(rule, node))
+            if (json_equal(node, rule))
             {
                 return 1;
             }
@@ -250,7 +250,7 @@ static int test_enum(const json *rule, const json *node)
     return 1;
 }
 
-static int find_required(const json *rule, const json *node)
+static int find_required(const json *node, const json *rule)
 {
     for (rule = json_child(rule); rule != NULL; rule = json_next(rule))
     {
@@ -262,20 +262,20 @@ static int find_required(const json *rule, const json *node)
     return 1;
 }
 
-static int test_required(const json *rule, const json *node)
+static int test_required(const json *node, const json *rule)
 {
     if (json_is(rule, arrayOfOptionalStrings))
     {
         if (json_is_object(node))
         {
-            return find_required(rule, node);
+            return find_required(node, rule);
         }
         return 1;
     }
     return SCHEMA_ERROR;
 }
 
-static int test_dependent_required(const json *rule, const json *node)
+static int test_dependent_required(const json *node, const json *rule)
 {
     if (!json_is_object(rule))
     {
@@ -292,7 +292,7 @@ static int test_dependent_required(const json *rule, const json *node)
         }
         if (valid && json_is_object(node))
         {
-            if (json_find(node, json_name(rule)) && !find_required(rule, node))
+            if (json_find(node, json_name(rule)) && !find_required(node, rule))
             {
                 valid = 0;
             }
@@ -301,7 +301,7 @@ static int test_dependent_required(const json *rule, const json *node)
     return valid;
 }
 
-static int test_dependent_schemas(const json *rule, const json *node)
+static int test_dependent_schemas(const json *node, const json *rule)
 {
     (void)node;
     return json_is(rule, objectOfOptionalObjects)
@@ -309,7 +309,7 @@ static int test_dependent_schemas(const json *rule, const json *node)
         : SCHEMA_ERROR;
 }
 
-static int test_properties(const json *rule, const json *node)
+static int test_properties(const json *node, const json *rule)
 {
     (void)node;
     return json_is(rule, objectOfOptionalObjects)
@@ -317,7 +317,7 @@ static int test_properties(const json *rule, const json *node)
         : SCHEMA_ERROR;
 }
 
-static int test_pattern_properties(const json *rule, const json *node)
+static int test_pattern_properties(const json *node, const json *rule)
 {
     (void)node;
     return json_is(rule, objectOfOptionalObjects)
@@ -325,7 +325,7 @@ static int test_pattern_properties(const json *rule, const json *node)
         : SCHEMA_ERROR;
 }
 
-static int test_additional_properties(const json *rule, const json *node)
+static int test_additional_properties(const json *node, const json *rule)
 {
     if (json_is_object(rule))
     {
@@ -353,7 +353,7 @@ static int test_additional_properties(const json *rule, const json *node)
     return 1;
 }
 
-static int test_min_properties(const json *rule, const json *node)
+static int test_min_properties(const json *node, const json *rule)
 {
     if (!json_is_real(rule))
     {
@@ -366,7 +366,7 @@ static int test_min_properties(const json *rule, const json *node)
     return 1;
 }
 
-static int test_max_properties(const json *rule, const json *node)
+static int test_max_properties(const json *node, const json *rule)
 {
     if (!json_is_real(rule))
     {
@@ -379,7 +379,7 @@ static int test_max_properties(const json *rule, const json *node)
     return 1;
 }
 
-static int test_items(const json *rule, const json *node)
+static int test_items(const json *node, const json *rule)
 {
     if (json_is_boolean(rule))
     {
@@ -398,7 +398,7 @@ static int test_items(const json *rule, const json *node)
     return SCHEMA_ERROR;
 }
 
-static int test_additional_items(const json *rule, const json *node)
+static int test_additional_items(const json *node, const json *rule)
 {
     if (json_is_object(rule))
     {
@@ -420,7 +420,7 @@ static int test_additional_items(const json *rule, const json *node)
     return 1;
 }
 
-static int test_min_items(const json *rule, const json *node)
+static int test_min_items(const json *node, const json *rule)
 {
     if (!json_is_real(rule))
     {
@@ -433,7 +433,7 @@ static int test_min_items(const json *rule, const json *node)
     return 1;
 }
 
-static int test_max_items(const json *rule, const json *node)
+static int test_max_items(const json *node, const json *rule)
 {
     if (!json_is_real(rule))
     {
@@ -446,7 +446,7 @@ static int test_max_items(const json *rule, const json *node)
     return 1;
 }
 
-static int test_unique_items(const json *rule, const json *node)
+static int test_unique_items(const json *node, const json *rule)
 {
     if (!json_is_boolean(rule))
     {
@@ -474,7 +474,7 @@ static size_t get_length(const char *str)
     return length;
 }
 
-static int test_min_length(const json *rule, const json *node)
+static int test_min_length(const json *node, const json *rule)
 {
     if (!json_is_real(rule))
     {
@@ -487,7 +487,7 @@ static int test_min_length(const json *rule, const json *node)
     return 1;
 }
 
-static int test_max_length(const json *rule, const json *node)
+static int test_max_length(const json *node, const json *rule)
 {
     if (!json_is_real(rule))
     {
@@ -500,7 +500,7 @@ static int test_max_length(const json *rule, const json *node)
     return 1;
 }
 
-static int test_format(const json *rule, const json *node)
+static int test_format(const json *node, const json *rule)
 {
     if (!json_is_string(rule))
     {
@@ -527,13 +527,13 @@ static int test_format(const json *rule, const json *node)
         }
         else
         {
-            return test_regex(name, json_string(node));
+            return test_regex(json_string(node), name);
         }
     }
     return 1;
 }
 
-static int test_pattern(const json *rule, const json *node)
+static int test_pattern(const json *node, const json *rule)
 {
     if (!json_is_string(rule))
     {
@@ -541,12 +541,12 @@ static int test_pattern(const json *rule, const json *node)
     }
     if (json_is_string(node))
     {
-        return test_regex(json_string(rule), json_string(node));
+        return test_regex(json_string(node), json_string(rule));
     }
     return 1;
 }
 
-static int test_minimum(const json *rule, const json *node)
+static int test_minimum(const json *node, const json *rule)
 {
     if (!json_is_number(rule))
     {
@@ -566,7 +566,7 @@ static int test_minimum(const json *rule, const json *node)
     return 1;
 }
 
-static int test_maximum(const json *rule, const json *node)
+static int test_maximum(const json *node, const json *rule)
 {
     if (!json_is_number(rule))
     {
@@ -586,7 +586,7 @@ static int test_maximum(const json *rule, const json *node)
     return 1;
 }
 
-static int test_multiple_of(const json *rule, const json *node)
+static int test_multiple_of(const json *node, const json *rule)
 {
     if (json_number(rule) <= 0)
     {
@@ -600,20 +600,20 @@ static int test_multiple_of(const json *rule, const json *node)
 }
 
 static const json *handle_ref(json_schema *schema,
-    const json *rule, const json *node)
+    const json *node, const json *rule)
 {
     const char *ref = json_string(rule);
     
     if (ref[0] != '#')
     {
-        raise_error(schema, rule, node);
+        raise_error(schema, node, rule);
     }
 
-    const json *next = ref[1] ? json_node(rule, ref + 1) : schema->root;
+    const json *next = ref[1] ? json_pointer(rule, ref + 1) : schema->root;
 
     if (!json_is_object(next))
     {
-        raise_error(schema, rule, node);
+        raise_error(schema, node, rule);
     }
     if (node == NULL)
     {
@@ -717,13 +717,13 @@ static tester get_test(const json *rule)
 }
 
 static int validate(json_schema *schema,
-    const json *rule, const json *node, int flag)
+    const json *node, const json *rule, int flag)
 {
     int valid = 1;
 
     if (schema->depth++ > SCHEMA_MAX_DEPTH)
     {
-        raise_error(schema, rule, node);
+        raise_error(schema, node, rule);
     }
     for (; rule != NULL; rule = json_next(rule))
     {
@@ -731,10 +731,10 @@ static int validate(json_schema *schema,
 
         if (test == NULL)
         {
-            raise_warning(schema, rule, node);
+            raise_warning(schema, node, rule);
             continue;
         }
-        switch (test(rule, node))
+        switch (test(node, rule))
         {
             case SCHEMA_DEPENDENT_SCHEMAS:
             {
@@ -744,11 +744,11 @@ static int validate(json_schema *schema,
                 {
                     if (json_find(node, json_name(next)))
                     {
-                        valid &= validate(schema, json_child(next), node, flag);
+                        valid &= validate(schema, node, json_child(next), flag);
                     }
                     else
                     {
-                        validate(schema, json_child(next), NULL, 1);
+                        validate(schema, NULL, json_child(next), 1);
                     }
                     next = json_next(next);
                 }
@@ -763,14 +763,14 @@ static int validate(json_schema *schema,
                 {
                     while (next != NULL)
                     {
-                        validate(schema, json_child(next), item, 1);
+                        validate(schema, item, json_child(next), 1);
                         next = json_next(next);
                     }
                 }
                 else while (next != NULL)
                 {
                     item = json_find(node, json_name(next));
-                    do valid &= validate(schema, json_child(next), item, flag);
+                    do valid &= validate(schema, item, json_child(next), flag);
                     while ((item = json_find_next(item, json_name(next))));
                     next = json_next(next);
                 }
@@ -789,16 +789,16 @@ static int validate(json_schema *schema,
 
                     while (item != NULL)
                     {
-                        if (test_regex(regex, json_name(item)))
+                        if (test_regex(json_name(item), regex))
                         {
-                            valid &= validate(schema, json_child(next), item, flag);
+                            valid &= validate(schema, item, json_child(next), flag);
                             count++;
                         }
                         item = json_next(item);
                     }
                     if (count == 0)
                     {
-                        validate(schema, json_child(next), NULL, 1);
+                        validate(schema, NULL, json_child(next), 1);
                     }
                     next = json_next(next);
                 }
@@ -817,7 +817,7 @@ static int validate(json_schema *schema,
                     {
                         if (!json_find(properties, json_name(item)))
                         {
-                            valid &= validate(schema, next, item, flag);
+                            valid &= validate(schema, item, next, flag);
                             count++;
                         }
                         item = json_next(item);
@@ -825,7 +825,7 @@ static int validate(json_schema *schema,
                 }
                 if (count == 0)
                 {
-                    validate(schema, next, NULL, 1);
+                    validate(schema, NULL, next, 1);
                 }
             }
             break;
@@ -836,11 +836,11 @@ static int validate(json_schema *schema,
 
                 if (item == NULL)
                 {
-                    validate(schema, next, item, 1);
+                    validate(schema, item, next, 1);
                 }
                 else while (item != NULL)
                 {
-                    valid &= validate(schema, next, item, flag);
+                    valid &= validate(schema, item, next, flag);
                     item = json_next(item);
                 }
             }
@@ -861,11 +861,11 @@ static int validate(json_schema *schema,
                 }
                 if (item == NULL)
                 {
-                    validate(schema, next, item, 1);
+                    validate(schema, item, next, 1);
                 }
                 else while (item != NULL)
                 {
-                    valid &= validate(schema, next, item, flag);
+                    valid &= validate(schema, item, next, flag);
                     item = json_next(item);
                 }
             }
@@ -879,25 +879,25 @@ static int validate(json_schema *schema,
                 {
                     while (next != NULL)
                     {
-                        validate(schema, json_child(next), item, 1);
+                        validate(schema, item, json_child(next), 1);
                         next = json_next(next);
                     }
                 }
                 else while (next != NULL)
                 {
-                    valid &= validate(schema, json_child(next), item, flag);
-                    next = json_next(next);
+                    valid &= validate(schema, item, json_child(next), flag);
                     item = json_next(item);
+                    next = json_next(next);
                 }
             }
             break;
             case SCHEMA_REF:
             {
-                const json *next = handle_ref(schema, rule, node);
+                const json *next = handle_ref(schema, node, rule);
 
                 if (next != NULL)
                 {
-                    valid &= validate(schema, json_child(next), node, flag);
+                    valid &= validate(schema, node, json_child(next), flag);
                 }
             }
             break;
@@ -905,7 +905,7 @@ static int validate(json_schema *schema,
             {
                 int old_valid = valid;
 
-                valid = !validate(schema, json_child(rule), node, 1);
+                valid = !validate(schema, node, json_child(rule), 1);
                 if (flag == 0)
                 {
                     if (valid)
@@ -914,7 +914,7 @@ static int validate(json_schema *schema,
                     }
                     else
                     {
-                        raise_invalid(schema, rule, node);
+                        raise_invalid(schema, node, rule);
                     }
                 }
             }
@@ -932,19 +932,19 @@ static int validate(json_schema *schema,
                 {
                     if (count++ == 0)
                     {
-                        valid = validate(schema, json_child(next), node, 1);
+                        valid = validate(schema, node, json_child(next), 1);
                     }
                     else if (test == test_all_of)
                     {
-                        valid &= validate(schema, json_child(next), node, 1);
+                        valid &= validate(schema, node, json_child(next), 1);
                     }
                     else if (test == test_any_of)
                     {
-                        valid |= validate(schema, json_child(next), node, 1);
+                        valid |= validate(schema, node, json_child(next), 1);
                     }
                     else if (test == test_one_of)
                     {
-                        valid ^= validate(schema, json_child(next), node, 1);
+                        valid ^= validate(schema, node, json_child(next), 1);
                     }
                     next = json_next(next);
                 }
@@ -956,25 +956,25 @@ static int validate(json_schema *schema,
                     }
                     else
                     {
-                        raise_invalid(schema, rule, node);
+                        raise_invalid(schema, node, rule);
                     }
                 }
             }
             break;
             case SCHEMA_IF:
             {
-                int cond_valid = validate(schema, json_child(rule), node, 1);
+                int cond_valid = validate(schema, node, json_child(rule), 1);
                 int cond;
 
                 while ((cond = handle_cond(&rule, cond_valid)) != -1)
                 {
                     if (cond == 1)
                     {
-                        valid &= validate(schema, json_child(rule), node, flag);
+                        valid &= validate(schema, node, json_child(rule), flag);
                     }
                     else
                     {
-                        validate(schema, json_child(rule), NULL, 1);
+                        validate(schema, NULL, json_child(rule), 1);
                     }
                 }
             }
@@ -982,21 +982,21 @@ static int validate(json_schema *schema,
             case SCHEMA_THEN:
             case SCHEMA_ELSE:
             {
-                validate(schema, json_child(rule), NULL, 1);
+                validate(schema, NULL, json_child(rule), 1);
             }
             break;
             case SCHEMA_INVALID:
             {
                 if (flag == 0)
                 {
-                    raise_invalid(schema, rule, node);
+                    raise_invalid(schema, node, rule);
                 }
                 valid = 0;
             }
             break;
             case SCHEMA_ERROR:
             {
-                raise_error(schema, rule, node);
+                raise_error(schema, node, rule);
             }
             break;
         }
@@ -1021,9 +1021,9 @@ int json_validate(const json *node, const json *rule,
     }
     if (json_is_object(rule))
     {
-        return validate(&schema, json_child(rule), node, 0);
+        return validate(&schema, node, json_child(rule), 0);
     }
-    raise_error(&schema, rule, node);
+    raise_error(&schema, node, rule);
     return 0;
 }
 
