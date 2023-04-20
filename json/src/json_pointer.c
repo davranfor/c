@@ -11,44 +11,43 @@ By performing the substitutions in this order, an implementation avoids the erro
 turning '~01' first into '~1' and then into '/', which would be incorrect
 (the string '~01' correctly becomes '~1' after transformation).
 */
-static int compare(const char *a, const char *b)
+static int compare(const char *a, const char *b, size_t length)
 {
-    for (;;)
-    {
-        const char *p = a;
+    const char *end = b + length;
 
-        while (*a != '\0')
+    while (b < end)
+    {
+        if (*a == '/')
         {
-            if (*a != *b)
+            if ((b[0] == '~') && (b[1] == '1'))
             {
-                break;
+                a += 1;
+                b += 2;
+                continue;
             }
-            a++;
-            b++;
+            return 0;
         }
-        if (*a == '\0')
+        if (*a == '~')
         {
-            if ((*b == '/') || (*b == '\0'))
+            if ((b[0] == '~') && (b[1] == '0'))
             {
-                return 1;
+                a += 1;
+                b += 2;
+                continue;
             }
+            return 0;
         }
-        else if ((a[0] == '/') && (b[0] == '~') && (b[1] == '1'))
+        if (*a != *b)
         {
-            a += 1;
-            b += 2;
-            continue;
+            break;
         }
-        else if ((a > p) && (a[-1] == '~') && (b[-1] == '~') && (b[0] == '0'))
-        {
-            b += 1;
-            continue;
-        }
-        return 0;
+        a++;
+        b++;
     }
+    return (*a == '\0') && (b == end);
 }
 
-static json *equal(const json *root, const char *name)
+static json *equal(const json *root, const char *name, size_t length)
 {
     if ((root == NULL) || (root->type != JSON_OBJECT))
     {
@@ -56,7 +55,7 @@ static json *equal(const json *root, const char *name)
     }
     for (json *node = root->child; node != NULL; node = node->next)
     {
-        if (compare(node->name, name))
+        if (compare(node->name, name, length))
         {
             return node;
         }
@@ -98,7 +97,7 @@ json *json_pointer(const json *root, const char *path)
         /* Locate by name */
         else
         {
-            node = equal(node, path);
+            node = equal(node, path, length);
         }
         /* Adjust pointer to path */
         path = (*end == '\0') ? end : end + 1;
