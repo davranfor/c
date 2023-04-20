@@ -11,10 +11,8 @@ By performing the substitutions in this order, an implementation avoids the erro
 turning '~01' first into '~1' and then into '/', which would be incorrect
 (the string '~01' correctly becomes '~1' after transformation).
 */
-static int compare(const char *a, const char *b, size_t length)
+static int compare(const char *a, const char *b, const char *end)
 {
-    const char *end = b + length;
-
     while (b < end)
     {
         if (*a == '/')
@@ -47,7 +45,7 @@ static int compare(const char *a, const char *b, size_t length)
     return (*a == '\0') && (b == end);
 }
 
-static json *equal(const json *root, const char *name, size_t length)
+static json *equal(const json *root, const char *name, const char *end)
 {
     if ((root == NULL) || (root->type != JSON_OBJECT))
     {
@@ -55,7 +53,7 @@ static json *equal(const json *root, const char *name, size_t length)
     }
     for (json *node = root->child; node != NULL; node = node->next)
     {
-        if (compare(node->name, name, length))
+        if (compare(node->name, name, end))
         {
             return node;
         }
@@ -80,12 +78,11 @@ json *json_pointer(const json *root, const char *path)
     while ((node != NULL) && (*path != '\0'))
     {
         const char *end = path + strcspn(path, "/");
-        size_t length = (size_t)(end - path);
 
         /* Locate by #item */
         if (node->type == JSON_ARRAY)
         {
-            if (strspn(path, "0123456789") == length)
+            if (path + strspn(path, "0123456789") == end)
             {
                 node = json_item(node, strtoul(path, NULL, 10));
             }
@@ -97,7 +94,7 @@ json *json_pointer(const json *root, const char *path)
         /* Locate by name */
         else
         {
-            node = equal(node, path, length);
+            node = equal(node, path, end);
         }
         /* Adjust pointer to path */
         path = (*end == '\0') ? end : end + 1;
