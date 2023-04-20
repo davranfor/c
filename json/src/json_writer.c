@@ -182,7 +182,6 @@ static int buffer_encode(json_buffer *buffer, const json *node)
 
     while (node != NULL)
     {
-        loop:
         if (!buffer_write_node(buffer, node, depth))
         {
             return 0;
@@ -208,10 +207,13 @@ static int buffer_encode(json_buffer *buffer, const json *node)
                 if (node->next != NULL)
                 {
                     node = node->next;
-                    goto loop;
+                    break;
                 }
             }
-            break;
+            if (depth <= 0)
+            {
+                break;
+            }
         }
     }
     return 1;

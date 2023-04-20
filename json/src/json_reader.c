@@ -588,12 +588,14 @@ int json_equal(const json *a, const json *b)
                 {
                     a = a->next;
                     b = b->next;
-                    goto end;
+                    break;
                 }
             }
-            return 1;
+            if (depth <= 0)
+            {
+                return 1;
+            }
         }
-        end:;
     }
     return 0;
 }
@@ -609,7 +611,6 @@ int json_traverse(const json *node, json_callback func, void *data)
 
     while (node != NULL)
     {
-        loop:
         if ((result = func(node, depth, data)))
         {
             return result;
@@ -631,10 +632,13 @@ int json_traverse(const json *node, json_callback func, void *data)
                 if (node->next != NULL)
                 {
                     node = node->next;
-                    goto loop;
+                    break;
                 }
             }
-            break;
+            if (depth <= 0)
+            {
+                break;
+            }
         }
     }
     return 0;
