@@ -10,26 +10,20 @@ static int compare(const char *name, const char *path, const char *end)
         /* Any occurrence of '~' in 'name' must match with '~0' in 'path' */
         if (*name == '~')
         {
-            if ((path[0] == '~') && (path[1] == '0'))
-            {
-                path += 1;
-            }
-            else
+            if ((path[0] != '~') || (path[1] != '0'))
             {
                 return 0;
             }
+            path++;
         }
         /* Any occurrence of '/' in 'name' must match with '~1' in 'path' */
         else if (*name == '/')
         {
-            if ((path[0] == '~') && (path[1] == '1'))
-            {
-                path += 1;
-            }
-            else
+            if ((path[0] != '~') || (path[1] != '1'))
             {
                 return 0;
             }
+            path++;
         }
         /* Doesn't match */
         else if (*name != *path)
@@ -77,14 +71,11 @@ json *json_pointer(const json *root, const char *path)
         /* Locate by #item */
         if (node->type == JSON_ARRAY)
         {
-            if (path + strspn(path, "0123456789") == end)
-            {
-                node = json_item(node, strtoul(path, NULL, 10));
-            }
-            else
+            if (path + strspn(path, "0123456789") != end)
             {
                 return NULL;
             }
+            node = json_item(node, strtoul(path, NULL, 10));
         }
         /* Locate by name */
         else
