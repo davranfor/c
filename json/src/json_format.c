@@ -11,9 +11,10 @@
 #include <regex.h>
 #include "json_format.h"
 
-static int valid_mask(const char *mask, const char *str)
+static const char *valid_mask(const char *mask, const char *str)
 {
     /**
+     *  \'  quote text since next tilde (inner tildes must be escaped with \\)
      *  \\  next character is a literal (not a function) (required)
      *  \?  next character is a literal (not a function) (optional)
      *  0   isdigit (required)
@@ -24,18 +25,36 @@ static int valid_mask(const char *mask, const char *str)
      *  w   isalnum (optional)
      *  X   isxdigit (required)
      *  x   isxdigit (optional)
-     *  *   end (returns the position if there is more text to scan or 1)
+     *  *   return the string at this position
      */
 
-    const char *ptr = str;
+    int quoted = 0;
 
     while (*mask != '\0')
     {
-        int (*func)(int) = NULL;
+        int (*function)(int) = NULL;
         int required = 0;
 
-        switch (*mask)
+        if (quoted)
         {
+            if (*mask == '\'')
+            {
+                quoted = 0;
+                mask++;
+                continue;
+            }
+            if (*mask == '\\')
+            {
+                mask++;
+            }
+            required = 1;
+        }
+        else switch (*mask)
+        {
+            case '\'':
+                quoted = 1;
+                mask++;
+                continue;
             case '\\':
                 required = 1;
                 mask++;
@@ -44,35 +63,35 @@ static int valid_mask(const char *mask, const char *str)
                 mask++;
                 break;
             case '0':
-                func = isdigit;
+                function = isdigit;
                 required = 1;
                 break;
             case '9':
-                func = isdigit;
+                function = isdigit;
                 break;
             case 'A':
-                func = isalpha;
+                function = isalpha;
                 required = 1;
                 break;
             case 'a':
-                func = isalpha;
+                function = isalpha;
                 break;
             case 'W':
-                func = isalnum;
+                function = isalnum;
                 required = 1;
                 break;
             case 'w':
-                func = isalnum;
+                function = isalnum;
                 break;
             case 'X':
-                func = isxdigit;
+                function = isxdigit;
                 required = 1;
                 break;
             case 'x':
-                func = isxdigit;
+                function = isxdigit;
                 break;
             case '*':
-                return *str ? (int)(str - ptr) : 1;
+                return str;
             default:
                 required = 1;
                 break;
@@ -80,9 +99,9 @@ static int valid_mask(const char *mask, const char *str)
 
         int valid;
 
-        if (func != NULL)
+        if (function != NULL)
         {
-            valid = func((unsigned char)*str);
+            valid = function((unsigned char)*str);
         }
         else
         {
@@ -98,7 +117,7 @@ static int valid_mask(const char *mask, const char *str)
         }
         else if (required)
         {
-            return 0;
+            return NULL;
         }
         if (*mask == '\0')
         {
@@ -106,7 +125,7 @@ static int valid_mask(const char *mask, const char *str)
         }
         mask++;
     }
-    return *mask == *str;
+    return (*mask == *str) ? str : NULL;
 }
 
 static int year_is_leap(long year)
@@ -139,10 +158,10 @@ static int is_date(long year, long month, long day)
     return 1;
 }
 
-static int is_date_helper(const char *str)
+static const char *valid_date(const char *str)
 {
     const char *mask = "0000-00-00*";
-    int valid = valid_mask(mask, str);
+    const char *valid = valid_mask(mask, str);
 
     if (valid)
     {
@@ -153,25 +172,27 @@ static int is_date_helper(const char *str)
             return valid;
         }
     }
-    return 0;
+    return NULL;
 }
 
 int test_is_date(const char *str)
 {
-    return is_date_helper(str) == 1;
+    const char *valid = valid_date(str);
+
+    return valid && (*valid == '\0');
 }
 
 static int is_time_suffix(const char *str)
 {
     return valid_mask("+09:00", str)
         || valid_mask("-09:00", str)
-        || valid_mask("Z", str);
+        || valid_mask("\\Z", str);
 }
 
 int test_is_time(const char *str)
 {
     const char *mask = "00:00:00*";
-    int valid = valid_mask(mask, str);
+    const char *valid = valid_mask(mask, str);
 
     if (valid)
     {
@@ -179,7 +200,7 @@ int test_is_time(const char *str)
             (strtol(&str[3], NULL, 10) < 60) &&
             (strtol(&str[6], NULL, 10) < 60))
         {
-            return valid > 1 ? is_time_suffix(&str[valid]) : 1;
+            return *valid ? is_time_suffix(valid) : 1;
         }
     }
     return 0;
@@ -187,16 +208,16 @@ int test_is_time(const char *str)
 
 int test_is_date_time(const char *str)
 {
-    int valid = is_date_helper(str);
+    const char *valid = valid_date(str);
 
-    if ((valid > 1) && (str[valid] == 'T'))
+    if (valid && (*valid == 'T'))
     {
-        return test_is_time(&str[valid + 1]);    
+        return test_is_time(valid + 1);
     }
     return 0;
 }
 
-static int is_hostname_helper(const char *str, int can_end_with_dot)
+static int is_hostname(const char *str, int can_end_with_dot)
 {
     const char *ptr = str;
     size_t count = 0;
@@ -229,7 +250,7 @@ static int is_hostname_helper(const char *str, int can_end_with_dot)
 
 int test_is_hostname(const char *str)
 {
-    return is_hostname_helper(str, 1);
+    return is_hostname(str, 1);
 }
 
 int test_is_email(const char *str)
@@ -247,7 +268,7 @@ int test_is_email(const char *str)
         return 0;
     }
     /* Maximum of 255 characters in the "domain part" (after the "@") */
-    return is_hostname_helper(at + 1, 0);
+    return is_hostname(at + 1, 0);
 }
 
 int test_is_ipv4(const char *str)
@@ -273,12 +294,13 @@ int test_is_ipv4(const char *str)
 
 int test_is_ipv6(const char *str)
 {
+    int colons = 0, pair = 0;
     const char *mask = "xxxx:*";
-    int colons = 0, pair = 0, length = 0;
+    const char *valid;
 
-    while ((length = valid_mask(mask, str)))
+    while ((valid = valid_mask(mask, str)))
     {
-        str += length;
+        str = valid;
         if (++colons > 7)
         {
             return 0;
@@ -309,15 +331,15 @@ int test_is_uuid(const char *str)
 {
     const char *mask = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX";
 
-    return valid_mask(mask, str);
+    return valid_mask(mask, str) != NULL;
 }
 
 int test_is_url(const char *str)
 {
-    const char *mask = "http\?s://*";
-    int valid = valid_mask(mask, str);
+    const char *mask = "\'http\'\?s://*";
+    const char *valid = valid_mask(mask, str);
 
-    if (valid > 1)
+    if (valid && *valid)
     {
         const char *allow = "abcdefghijklmnopqrstuvwxyz"
                             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
