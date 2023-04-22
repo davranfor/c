@@ -14,7 +14,7 @@
 static const char *valid_mask(const char *mask, const char *str)
 {
     /**
-     *  \'  quote text since next tilde (inner tildes must be escaped with \\)
+     *  \'  quote text until next quote (inner quotes must be escaped with \\)
      *  \\  next character is a literal (not a function) (required)
      *  \?  next character is a literal (not a function) (optional)
      *  0   isdigit (required)
@@ -90,23 +90,15 @@ static const char *valid_mask(const char *mask, const char *str)
             case 'x':
                 function = isxdigit;
                 break;
-            case '*':
-                return str;
             default:
                 required = 1;
                 break;
+            case '*':
+                return str;
         }
 
-        int valid;
+        int valid = function ? function((unsigned char)*str) : (*str == *mask);
 
-        if (function != NULL)
-        {
-            valid = function((unsigned char)*str);
-        }
-        else
-        {
-            valid = (*mask == *str);
-        }
         if (valid)
         {
             if (*str == '\0')
@@ -125,7 +117,7 @@ static const char *valid_mask(const char *mask, const char *str)
         }
         mask++;
     }
-    return (*mask == *str) ? str : NULL;
+    return (*str == *mask) ? str : NULL;
 }
 
 static int year_is_leap(long year)
@@ -241,7 +233,7 @@ static int is_hostname(const char *str, int can_end_with_dot)
         }
         ptr++;
     }
-    if ((ptr == str) || ((ptr - str) >= 256) || (ptr[-1] == '-'))
+    if ((ptr == str) || ((ptr - str) > 255) || (ptr[-1] == '-'))
     {
         return 0;
     }
@@ -262,12 +254,12 @@ int test_is_email(const char *str)
 
     const char *at = strrchr(str, '@');
 
-    /* Maximum of 64 characters in the "local part" (before the "@") */
+    // Maximum of 64 characters in the "local part" (before the "@")
     if ((at == NULL) || (at == str) || (at[-1] == '.') || (at > (str + 64)))
     {
         return 0;
     }
-    /* Maximum of 255 characters in the "domain part" (after the "@") */
+    // Maximum of 255 characters in the "domain part" (after the "@")
     return is_hostname(at + 1, 0);
 }
 
@@ -292,39 +284,54 @@ int test_is_ipv4(const char *str)
     return 0;
 }
 
+/**
+ * ipv6 addresses can consist of:
+ * - 2-6 ipv6 segments abbreviated with a double colon with or without ipv4
+ * - 6 ipv6 segments separated by single colons with ipv4
+ * - 6-8 ipv6 segments abbreviated with a double colon without ipv4
+ * - 8 ipv6 segments separated by single colons without ipv4
+ */
 int test_is_ipv6(const char *str)
 {
-    int colons = 0, pair = 0;
-    const char *mask = "xxxx:*";
-    const char *valid;
+    const char *mask = "xxxx:*", *valid = str, *end = str;
+    int colons = 0, pairs = 0;
 
-    while ((valid = valid_mask(mask, str)))
+    while ((valid = valid_mask(mask, valid)) && (colons < 7))
     {
-        str = valid;
-        if (++colons > 7)
+        // The double colon may only be used once
+        if ((colons > 0) && (valid == end + 1))
         {
-            return 0;
-        }
-        /* if double colon :: */
-        if (str[-1] == str[0])
-        {
-            /* The double colon may only be used once */
-            if (pair != 0)
+            if (pairs != 0)
             {
                 return 0;
             }
-            pair = colons + 1;
+            pairs = 1;
         }
+        colons += 1;
+        end = valid;
     }
-    if ((colons < 2) || ((colons < 7) && (pair == 0)))
+    // Can not start with a single colon (except abbr. '::')
+    if ((str[0] == ':') && (str[1] != ':'))
     {
         return 0;
     }
-    if (str[0] == '\0')
+    // 6 ipv6 segments separated by single colons with ipv4
+    if ((colons == 5) && (pairs == 0))
     {
-        return pair == colons;
+        return test_is_ipv4(end);
     }
-    return valid_mask("xxxx", str) || test_is_ipv4(str);
+    // 6-8 ipv6 segments abbreviated with a double colon without ipv4
+    if ((colons >= 5) && (pairs == 1))
+    {
+        return !!valid_mask("xxxx", end);
+    }
+    // 8 ipv6 segments separated by single colons without ipv4
+    if ((colons == 7) && (pairs == 0))
+    {
+        return !!valid_mask("Xxxx", end);
+    }
+    // 2-6 segments abbreviated with a double colon with or without ipv4
+    return (pairs == 1) && (!!valid_mask("xxxx", end) || test_is_ipv4(end));
 }
 
 int test_is_uuid(const char *str)
@@ -359,13 +366,10 @@ int test_regex(const char *str, const char *pattern)
     regex_t regex;
     int valid = 0;
 
-    /* Compile regular expression */
     if (regcomp(&regex, pattern, REG_EXTENDED | REG_NOSUB) == 0)
     {
-        /* Execute regular expression */
         valid = regexec(&regex, str, 0, NULL, 0) == 0;
     }
-    /* Free regular expression */
     regfree(&regex);
     return valid;
 }
