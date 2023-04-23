@@ -31,15 +31,11 @@ static int compare(const char *name, const char *path, const char *end)
             return 0;
         }
     }
-    return (*name == '\0') && (path == end);
+    return (*name == '\0');
 }
 
-static json *equal(const json *root, const char *path, const char *end)
+static json *get_by_name(const json *root, const char *path, const char *end)
 {
-    if ((root == NULL) || (root->type != JSON_OBJECT))
-    {
-        return NULL;
-    }
     for (json *node = root->child; node != NULL; node = node->next)
     {
         if (compare(node->name, path, end))
@@ -50,40 +46,43 @@ static json *equal(const json *root, const char *path, const char *end)
     return NULL;
 }
 
+static json *get_by_item(const json *root, const char *path, const char *end)
+{
+    if (path + strspn(path, "0123456789") != end)
+    {
+        return NULL;
+    }
+
+    unsigned long item = strtoul(path, NULL, 10);
+
+    for (json *node = root->child; node != NULL; node = node->next)
+    {
+        if (item-- == 0)
+        {
+            return node;
+        }
+    }
+    return NULL;
+}
+
+static const char *next(const char *path, const char *delim)
+{
+    return path + strcspn(path, delim);
+}
+
 /* Locates a node by path */
 json *json_pointer(const json *root, const char *path)
 {
-    json *node = NULL;
+    json *node = (*path == '/') ? path++, json_root(root) : json_self(root);
 
-    if (path[0] == '/')
-    {
-        node = json_root(root);
-        path += 1;
-    }
-    else
-    {
-        node = json_self(root);
-    }
     while ((node != NULL) && (*path != '\0'))
     {
-        const char *end = path + strcspn(path, "/");
+        const char *end = next(path, "/");
 
-        /* Locate by #item */
-        if (node->type == JSON_ARRAY)
-        {
-            if (path + strspn(path, "0123456789") != end)
-            {
-                return NULL;
-            }
-            node = json_item(node, strtoul(path, NULL, 10));
-        }
-        /* Locate by name */
-        else
-        {
-            node = equal(node, path, end);
-        }
-        /* Adjust pointer to path */
-        path = (*end == '\0') ? end : end + 1;
+        node = (node->type == JSON_OBJECT)
+            ? get_by_name(node, path, end)
+            : get_by_item(node, path, end);
+        path = *end ? end + 1 : end;
     }
     return node;
 }
