@@ -11,7 +11,7 @@
 #include <regex.h>
 #include "json_format.h"
 
-static const char *valid_mask(const char *str, const char *mask)
+static const char *test_mask(const char *str, const char *mask)
 {
     /**
      *  \'  quote text until next quote (inner quotes must be escaped with \\)
@@ -120,12 +120,12 @@ static const char *valid_mask(const char *str, const char *mask)
     return (*str == *mask) ? str : NULL;
 }
 
-static int year_is_leap(long year)
+static int year_is_leap(int year)
 {
     return (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
 }
 
-static int month_days(long month, long year)
+static int month_days(int month, int year)
 {
     static const int days[2][12] =
     {
@@ -137,7 +137,7 @@ static int month_days(long month, long year)
     return days[leap][month - 1];
 }
 
-static int is_date(long year, long month, long day)
+static int is_date(int year, int month, int day)
 {
     if ((month < 1) || (month > 12))
     {
@@ -150,16 +150,15 @@ static int is_date(long year, long month, long day)
     return 1;
 }
 
-static const char *valid_date(const char *str)
+static const char *test_date(const char *str)
 {
-    const char *mask = "0000-00-00*";
-    const char *date = valid_mask(str, mask);
+    const char *date = test_mask(str,"0000-00-00*");
 
     if (date != NULL)
     {
-        if (is_date(strtol(&str[0], NULL, 10),
-                    strtol(&str[5], NULL, 10),
-                    strtol(&str[8], NULL, 10)))
+        if (is_date((int)strtol(&str[0], NULL, 10),
+                    (int)strtol(&str[5], NULL, 10),
+                    (int)strtol(&str[8], NULL, 10)))
         {
             return date;
         }
@@ -169,20 +168,19 @@ static const char *valid_date(const char *str)
 
 int test_is_date(const char *str)
 {
-    return (str = valid_date(str)) && (*str == '\0');
+    return (str = test_date(str)) && (*str == '\0');
 }
 
 static int is_time_suffix(const char *str)
 {
-    return valid_mask(str, "+09:00")
-        || valid_mask(str, "-09:00")
-        || valid_mask(str, "\\Z");
+    return test_mask(str, "+09:00")
+        || test_mask(str, "-09:00")
+        || test_mask(str, "\\Z");
 }
 
 int test_is_time(const char *str)
 {
-    const char *mask = "00:00:00*";
-    const char *time = valid_mask(str, mask);
+    const char *time = test_mask(str, "00:00:00*");
 
     if (time != NULL)
     {
@@ -198,86 +196,106 @@ int test_is_time(const char *str)
 
 int test_is_date_time(const char *str)
 {
-    if ((str = valid_date(str)) && (*str == 'T'))
+    if ((str = test_date(str)) && (*str == 'T'))
     {
         return test_is_time(str + 1);
     }
     return 0;
 }
 
-static int is_hostname(const char *str, int can_end_with_dot)
+static const char *test_hostname(const char *str)
 {
-    const char *ptr = str;
-    size_t count = 0;
-
-    while (*ptr != '\0')
+    // Must start with a digit or alpha character
+    if (!isalnum((unsigned char)*str))
     {
-        if (isalnum((unsigned char)*ptr) || ((*ptr == '-') && (count > 0)))
+        return NULL;
+    }
+
+    size_t label_length = 0, length = 0;
+
+    while (*str != '\0')
+    {
+        // Don't allow "--" or "-." or ".-" or ".."
+        if (((str[0] == '-') || (str[0] == '.')) &&
+            ((str[1] == '-') || (str[1] == '.')))
         {
-            if (++count == 64)
+            return NULL;
+        }
+        // Each label must be between 1 and 63 characters long
+        // The entire hostname (including the delimiting dots
+        // but not a trailing dot) has a maximum of 253 chars
+        if (isalnum((unsigned char)*str) || (*str == '-'))
+        {
+            if ((label_length++ == 63) || (length >= 253))
             {
-                return 0;
+                return NULL;
             }
         }
-        else if ((*ptr == '.') && (count > 0) && (ptr[-1] != '-'))
+        else if (*str == '.')
         {
-            count = 0;
+            label_length = 0;
         }
         else
         {
-            return 0;
+            return NULL;
         }
-        ptr++;
+        length++;
+        str++;
     }
-    if ((ptr == str) || ((ptr - str) > 255) || (ptr[-1] == '-'))
-    {
-        return 0;
-    }
-    return (count == 0) ? can_end_with_dot : 1;
+    // Can not end with hyphen
+    return (str[-1] != '-') ? str : NULL;
 }
 
 int test_is_hostname(const char *str)
 {
-    return is_hostname(str, 1);
+    return test_hostname(str) ? 1 : 0;
 }
 
 int test_is_email(const char *str)
 {
-    if ((str[0] == ' ') || (str[0] == '.'))
+    // The local part can not start with space, dot or at symbol
+    if ((*str == ' ') || (*str == '.') || (*str == '@'))
     {
         return 0;
     }
 
-    const char *at = strrchr(str, '@');
+    size_t mbs = 0;
 
-    // Maximum of 64 characters in the "local part" (before the "@")
-    if ((at == NULL) || (at == str) || (at[-1] == '.') || (at > (str + 64)))
+    // Maximum of 63 unicode characters in the local part
+    while ((*str != '@') && (*str != '\0') && (mbs < 63))
+    {
+        if ((*str & 0xc0) != 0x80)
+        {
+            mbs++;
+        }
+        str++;
+    }
+    // The local part can not end with a dot
+    if ((str[0] != '@') || (str[-1] == '.'))
     {
         return 0;
     }
-    // Maximum of 255 characters in the "domain part" (after the "@")
-    return is_hostname(at + 1, 0);
+    // The domain part can not end with a dot
+    return (str = test_hostname(str + 1)) && (str[-1] != '.');
 }
 
 int test_is_ipv4(const char *str)
 {
-    const char *mask = "099.099.099.099";
-
-    if (valid_mask(str, mask))
+    if (!test_mask(str, "099.099.099.099"))
     {
-        char *ptr;
-
-        for (int byte = 0; byte < 4; byte++)
-        {
-            if (strtol(str, &ptr, 10) > 255)
-            {
-                return 0;
-            }
-            str = ptr + 1;
-        }
-        return 1;
+        return 0;
     }
-    return 0;
+    for (int byte = 0; byte < 4; byte++)
+    {
+        char *end;
+
+        if (strtol(str, &end, 10) > 255)
+        {
+            return 0;
+        }
+        str = end + 1;
+    }
+    return 1;
 }
 
 /**
@@ -289,13 +307,13 @@ int test_is_ipv4(const char *str)
  */
 int test_is_ipv6(const char *str)
 {
-    const char *mask = "xxxx:*", *valid = str, *end = str;
+    const char *mask = "xxxx:*", *end = str, *next;
     int colons = 0, abbrev = 0;
 
-    while ((valid = valid_mask(valid, mask)) && (colons < 7))
+    while ((next = test_mask(end, mask)) && (colons < 7))
     {
         // The double colon may only be used once
-        if ((colons > 0) && (valid == end + 1))
+        if ((colons > 0) && (next == end + 1))
         {
             if (abbrev != 0)
             {
@@ -303,8 +321,8 @@ int test_is_ipv6(const char *str)
             }
             abbrev = 1;
         }
-        colons += 1;
-        end = valid;
+        end = next;
+        colons++;
     }
     // Can not start with a single colon (except abbrev. '::')
     if ((str[0] == ':') && (str[1] != ':'))
@@ -319,26 +337,25 @@ int test_is_ipv6(const char *str)
     // 6-8 ipv6 segments abbreviated with double colon without ipv4
     if ((colons >= 5) && (abbrev == 1))
     {
-        return !!valid_mask(end, "xxxx");
+        return test_mask(end, "xxxx") ? 1 : 0;
     }
     // 8 ipv6 segments separated by single colons without ipv4
     if ((colons == 7) && (abbrev == 0))
     {
-        return !!valid_mask(end, "Xxxx");
+        return test_mask(end, "Xxxx") ? 1 : 0;
     }
     // 2-6 segments abbreviated with a double colon with or without ipv4
-    return (abbrev == 1) && (!!valid_mask(end, "xxxx") || test_is_ipv4(end));
+    return (abbrev == 1) && (test_mask(end, "xxxx") || test_is_ipv4(end));
 }
 
 int test_is_uuid(const char *str)
 {
-    return !!valid_mask(str, "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX");
+    return test_mask(str, "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX") ? 1 : 0;
 }
 
 int test_is_url(const char *str)
 {
-    const char *mask = "\'http\'\?s://*";
-    const char *url = valid_mask(str, mask);
+    const char *url = test_mask(str, "\'http\'\?s://*");
 
     if (url && *url)
     {
