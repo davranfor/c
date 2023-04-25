@@ -1,5 +1,5 @@
-/*! 
- *  \brief     JSON Schema validator
+/*!
+ *  \brief     json and json-schema library for C
  *  \author    David Ranieri <davranfor@gmail.com>
  *  \copyright GNU Public License.
  */
@@ -211,7 +211,7 @@ static const char *test_hostname(const char *str)
         return NULL;
     }
 
-    size_t label_length = 0, length = 0;
+    int label_length = 0, length = 0;
 
     while (*str != '\0')
     {
@@ -259,7 +259,7 @@ int test_is_email(const char *str)
         return 0;
     }
 
-    size_t mbs = 0;
+    int mbs = 0;
 
     // Maximum of 63 unicode characters in the local part
     while ((*str != '@') && (*str != '\0') && (mbs < 63))
@@ -289,11 +289,14 @@ int test_is_ipv4(const char *str)
     {
         char *end;
 
-        if (strtol(str, &end, 10) > 255)
+        if (strtol(str, &end, 10) < 256)
+        {
+            str = end + 1;
+        }
+        else
         {
             return 0;
         }
-        str = end + 1;
     }
     return 1;
 }
@@ -308,44 +311,42 @@ int test_is_ipv4(const char *str)
 int test_is_ipv6(const char *str)
 {
     const char *mask = "xxxx:*", *end = str, *next;
-    int colons = 0, abbrev = 0;
+    int colons = 0, abbrv = 0;
 
     while ((next = test_mask(end, mask)) && (colons < 7))
     {
-        // The double colon may only be used once
-        if ((colons > 0) && (next == end + 1))
+        // Double colon may only be used once
+        if ((colons++ > 0) && (next == end + 1))
         {
-            if (abbrev != 0)
+            if (abbrv++ > 0)
             {
                 return 0;
             }
-            abbrev = 1;
         }
         end = next;
-        colons++;
     }
-    // Can not start with a single colon (except abbrev. '::')
+    // Can not start with a single colon (except abbr.v '::')
     if ((str[0] == ':') && (str[1] != ':'))
     {
         return 0;
     }
     // 6 ipv6 segments separated by single colons and required ipv4
-    if ((colons == 5) && (abbrev == 0))
+    if ((colons == 5) && (abbrv == 0))
     {
         return test_is_ipv4(end);
     }
     // 6-8 ipv6 segments abbreviated with double colon without ipv4
-    if ((colons >= 5) && (abbrev == 1))
+    if ((colons >= 5) && (abbrv == 1))
     {
         return test_mask(end, "xxxx") ? 1 : 0;
     }
     // 8 ipv6 segments separated by single colons without ipv4
-    if ((colons == 7) && (abbrev == 0))
+    if ((colons == 7) && (abbrv == 0))
     {
         return test_mask(end, "Xxxx") ? 1 : 0;
     }
     // 2-6 segments abbreviated with a double colon with or without ipv4
-    return (abbrev == 1) && (test_mask(end, "xxxx") || test_is_ipv4(end));
+    return (abbrv == 1) && (test_mask(end, "xxxx") || test_is_ipv4(end));
 }
 
 int test_is_uuid(const char *str)
