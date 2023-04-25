@@ -11,6 +11,8 @@
 #include <regex.h>
 #include "json_format.h"
 
+#define is_utf8(c) (((c) & 0xc0) != 0x80)
+
 static const char *test_mask(const char *str, const char *mask)
 {
     /**
@@ -261,12 +263,12 @@ int test_is_email(const char *str)
 
     int mbs = 0;
 
-    // Maximum of 63 unicode characters in the local part
-    while ((*str != '@') && (*str != '\0') && (mbs < 63))
+    // Max. 63 UTF8 chars in the local part
+    while ((*str != '@') && (*str != '\0'))
     {
-        if ((*str & 0xc0) != 0x80)
+        if (is_utf8(*str) && (mbs++ == 63))
         {
-            mbs++;
+            return 0;
         }
         str++;
     }

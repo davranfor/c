@@ -15,6 +15,7 @@
 #define is_cntrl(c) iscntrl((unsigned char)(c))
 #define is_digit(c) isdigit((unsigned char)(c))
 #define is_xdigit(c) isxdigit((unsigned char)(c))
+#define is_utf8(c) (((c) & 0xc0) != 0x80)
 
 /* Check whether a character is a json token */
 static int is_token(int c)
@@ -533,8 +534,7 @@ static void set_error(const char *str, const char *end, json_error *error)
             error->line++;
             error->column = 1;
         }
-        /* ASCII character or the first byte of a multibyte character */
-        else if ((*str & 0xc0) != 0x80)
+        else if (is_utf8(*str))
         {
             error->column++;
         }

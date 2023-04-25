@@ -13,7 +13,7 @@ static int compare(const char *name, const char *path, const char *end)
 {
     for (; path < end; name++, path++)
     {
-        /* Any occurrence of '~' in 'name' must match with '~0' in 'path' */
+        // '~' in name must match with '~0' in path
         if (*name == '~')
         {
             if ((path[0] != '~') || (path[1] != '0'))
@@ -22,7 +22,7 @@ static int compare(const char *name, const char *path, const char *end)
             }
             path++;
         }
-        /* Any occurrence of '/' in 'name' must match with '~1' in 'path' */
+        // '/' in name must match with '~1' in path
         else if (*name == '/')
         {
             if ((path[0] != '~') || (path[1] != '1'))
@@ -31,7 +31,7 @@ static int compare(const char *name, const char *path, const char *end)
             }
             path++;
         }
-        /* Doesn't match */
+        // Doesn't match
         else if (*name != *path)
         {
             return 0;
