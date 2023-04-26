@@ -10,6 +10,7 @@
 #include <setjmp.h>
 #include <math.h>
 #include "json.h"
+#include "json_macros.h"
 #include "json_format.h"
 #include "json_schema.h"
 
@@ -41,7 +42,6 @@ enum
 #define SCHEMA_MAX_DEPTH 1024
 
 #define equal(a, b) (strcmp((a), (b)) == 0)
-#define is_utf8(c) (((c) & 0xc0) != 0x80)
 
 static void notify(json_schema *schema,
     const json *node, const json *rule, int event)

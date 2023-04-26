@@ -7,11 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <regex.h>
+#include "json_macros.h"
 #include "json_format.h"
-
-#define is_utf8(c) (((c) & 0xc0) != 0x80)
 
 static const char *test_mask(const char *str, const char *mask)
 {
@@ -99,7 +97,9 @@ static const char *test_mask(const char *str, const char *mask)
                 return str;
         }
 
-        int valid = function ? function((unsigned char)*str) : (*str == *mask);
+        int valid = function
+            ? function((unsigned char)*str)
+            : *str == *mask;
 
         if (valid)
         {
@@ -208,7 +208,7 @@ int test_is_date_time(const char *str)
 static const char *test_hostname(const char *str)
 {
     // Must start with a digit or alpha character
-    if (!isalnum((unsigned char)*str))
+    if (!is_alnum(*str))
     {
         return NULL;
     }
@@ -226,7 +226,7 @@ static const char *test_hostname(const char *str)
         // Each label must be between 1 and 63 characters long
         // The entire hostname (including the delimiting dots
         // but not a trailing dot) has a maximum of 253 chars
-        if (isalnum((unsigned char)*str) || (*str == '-'))
+        if ((*str == '-') || is_alnum(*str))
         {
             if ((label_length++ == 63) || (length >= 253))
             {

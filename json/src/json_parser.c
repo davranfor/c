@@ -7,15 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <errno.h>
 #include "json_struct.h"
-
-#define is_space(c) isspace((unsigned char)(c))
-#define is_cntrl(c) iscntrl((unsigned char)(c))
-#define is_digit(c) isdigit((unsigned char)(c))
-#define is_xdigit(c) isxdigit((unsigned char)(c))
-#define is_utf8(c) (((c) & 0xc0) != 0x80)
+#include "json_macros.h"
 
 /* Check whether a character is a json token */
 static int is_token(int c)
@@ -460,7 +454,8 @@ static const char *parse(json *node, const char *left)
                     if (left == token)
                     {
                         /* Remove empty group: {} or [] */
-                        if ((node->parent->child == node) && (node->name == NULL))
+                        if ((node->parent->child == node) &&
+                            (node->name == NULL))
                         {
                             node = delete_child(node->parent);
                             break;
@@ -520,34 +515,39 @@ static const char *parse(json *node, const char *left)
 
 static void clear_error(json_error *error)
 {
-    error->line = error->column = 0;
+    if (error != NULL)
+    {
+        error->line = error->column = 0;
+    }
 }
 
 static void set_error(const char *str, const char *end, json_error *error)
 {
-    error->line = error->column = 1;
-
-    while (str < end)
+    if (error != NULL)
+    {
+        error->line = error->column = 1;
+    }
+    else
+    {
+        return;
+    }
+    for (; str < end; str++)
     {
         if (*str == '\n')
         {
             error->line++;
             error->column = 1;
         }
-        else if (is_utf8(*str))
+        else
         {
-            error->column++;
+            error->column += is_utf8(*str);
         }
-        str++;
     }
 }
 
 json *json_parse(const char *str, json_error *error)
 {
-    if (error != NULL)
-    {
-        clear_error(error);
-    }
+    clear_error(error);
 
     json *node = create_node();
 
@@ -557,10 +557,7 @@ json *json_parse(const char *str, json_error *error)
 
         if (end != NULL)
         {
-            if (error != NULL)
-            {
-                set_error(str, end, error);
-            }
+            set_error(str, end, error);
             json_free(node);
             return NULL;
         }
@@ -617,10 +614,7 @@ json *json_parse_file(const char *path, json_error *error)
 
     if (str == NULL)
     {
-        if (error != NULL)
-        {
-            clear_error(error);
-        }
+        clear_error(error);
         return NULL;
     }
 

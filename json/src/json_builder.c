@@ -7,12 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include "json_macros.h"
 #include "json_struct.h"
 
 static int valid_char(char c)
 {
-    if (!iscntrl((unsigned char)c))
+    if (!is_cntrl(c))
     {
         return 1;
     }
