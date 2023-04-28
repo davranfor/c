@@ -12,11 +12,11 @@
 
 static int valid_char(char c)
 {
-    if (!is_cntrl(c))
+    if ((c == '\b') || (c == '\f') || (c == '\n') || (c == '\r') || (c == '\t'))
     {
         return 1;
     }
-    return (c == '\b') || (c == '\f') || (c == '\n') || (c == '\r') || (c == '\t');
+    return !is_cntrl(c);
 }
 
 static size_t string_size(const char *str)
@@ -207,35 +207,31 @@ const char *json_set_name(json *node, const char *name)
     {
         return NULL;
     }
-    if (name == NULL)
-    {
-        free(node->name);
-        node->name = NULL;
-    }
-    else
-    {
-        char *str = copy_string(name);
 
+    char *str = NULL;
+
+    if (name != NULL)
+    {
+        str = copy_string(name);
         if (str == NULL)
         {
             return NULL;
         }
-        free(node->name);
-        node->name = str;
     }
-    return node->name;
+    free(node->name);
+    node->name = str;
+    return str;
 }
 
 /* set helper */
 static const char *set_value(json *node, enum json_type type, char *value)
 {
-    if (value == NULL)
+    if (value != NULL)
     {
-        return NULL;
+        node->type = type;
+        free(node->value);
+        node->value = value;
     }
-    node->type = type;
-    free(node->value);
-    node->value = value;
     return value;
 }
 
@@ -461,13 +457,12 @@ json *json_pop_front(json *parent)
 {
     json *child = json_child(parent);
 
-    if (child == NULL)
+    if (child != NULL)
     {
-        return NULL;
+        parent->child = child->next;
+        child->parent = NULL;
+        child->next = NULL;
     }
-    parent->child = child->next;
-    child->parent = NULL;
-    child->next = NULL;
     return child;
 }
 

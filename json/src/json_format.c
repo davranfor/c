@@ -11,7 +11,7 @@
 #include "json_macros.h"
 #include "json_format.h"
 
-static const char *test_mask(const char *str, const char *mask)
+static const char *test_mask(const char *text, const char *mask)
 {
     /**
      *  \'  quote text until next quote (inner quotes must be escaped with \\)
@@ -94,32 +94,31 @@ static const char *test_mask(const char *str, const char *mask)
                 required = 1;
                 break;
             case '*':
-                return str;
+                return text;
         }
 
         int valid = function
-            ? function((unsigned char)*str)
-            : *str == *mask;
+            ? function((unsigned char)*text)
+            : *text == *mask;
 
         if (valid)
         {
-            if (*str == '\0')
+            if (*text == '\0')
             {
                 break;
             }
-            str++;
+            text++;
         }
         else if (required)
         {
             return NULL;
         }
-        if (*mask == '\0')
+        if (*mask != '\0')
         {
-            break;
+            mask++;
         }
-        mask++;
     }
-    return (*str == *mask) ? str : NULL;
+    return (*text == *mask) ? text : NULL;
 }
 
 static int year_is_leap(int year)
@@ -375,14 +374,14 @@ int test_is_url(const char *str)
     return 0;
 }
 
-int test_regex(const char *str, const char *pattern)
+int test_regex(const char *text, const char *pattern)
 {
     regex_t regex;
     int valid = 0;
 
     if (regcomp(&regex, pattern, REG_EXTENDED | REG_NOSUB) == 0)
     {
-        valid = regexec(&regex, str, 0, NULL, 0) == 0;
+        valid = regexec(&regex, text, 0, NULL, 0) == 0;
     }
     regfree(&regex);
     return valid;

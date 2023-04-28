@@ -358,25 +358,10 @@ json *json_next(const json *node)
     return node->next;
 }
 
-/* Returns the last node of an interable */
-json *json_last(const json *root)
-{
-    json *node = NULL;
-
-    if ((root != NULL) && (node = root->child))
-    {
-        while (node->next != NULL)
-        {
-            node = node->next;
-        }
-    }
-    return node;
-}
-
 /* Locates a child node by name */
 json *json_find(const json *root, const char *name)
 {
-    if ((root == NULL) || (root->type != JSON_OBJECT))
+    if ((root == NULL) || (root->type != JSON_OBJECT) || (name == NULL))
     {
         return NULL;
     }
@@ -393,7 +378,7 @@ json *json_find(const json *root, const char *name)
 /* Locates the next sibling by name */
 json *json_find_next(const json *root, const char *name)
 {
-    if ((root == NULL) || (root->name == NULL))
+    if ((root == NULL) || (root->name == NULL) || (name == NULL))
     {
         return NULL;
     }
@@ -407,46 +392,7 @@ json *json_find_next(const json *root, const char *name)
     return NULL;
 }
 
-/*
- * Locates a child node by name given a name length
- * Useful to stop comparing when there is more text after the name
- */
-json *json_match(const json *root, const char *name, size_t length)
-{
-    if ((root == NULL) || (root->type != JSON_OBJECT))
-    {
-        return NULL;
-    }
-    for (json *node = root->child; node != NULL; node = node->next)
-    {
-        if ((strncmp(node->name, name, length) == 0) &&
-            (node->name[length] == '\0'))
-        {
-            return node;
-        }
-    }
-    return NULL;
-}
-
-/* Locates the next sibling by name given a length */
-json *json_match_next(const json *root, const char *name, size_t length)
-{
-    if ((root == NULL) || (root->name == NULL))
-    {
-        return NULL;
-    }
-    for (json *node = root->next; node != NULL; node = node->next)
-    {
-        if ((strncmp(node->name, name, length) == 0) &&
-            (node->name[length] == '\0'))
-        {
-            return node;
-        }
-    }
-    return NULL;
-}
-
-/* Locates an item by offset */
+/* Locates an item (child) by offset */
 json *json_item(const json *root, size_t item)
 {
     if (root == NULL)
@@ -463,6 +409,7 @@ json *json_item(const json *root, size_t item)
     return NULL;
 }
 
+/* Number of items of an iterable */
 size_t json_items(const json *node)
 {
     if (node == NULL)
@@ -511,6 +458,7 @@ int json_depth(const json *node)
     return depth;
 }
 
+/* json_equal helper */
 static int equal(const json *a, const json *b, int depth)
 {
     if (a->type != b->type)
@@ -607,8 +555,8 @@ int json_equal(const json *a, const json *b)
 }
 
 /*
- * Sends all nodes to a callback "func"
- * Exit when all nodes are read or when "func" returns a non 0 value
+ * Sends all nodes to a callback func providing depth and user-data
+ * Exit when all nodes are read or func returns a non 0 value
  */
 int json_traverse(const json *node, json_callback func, void *data)
 {
