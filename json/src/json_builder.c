@@ -37,19 +37,13 @@ static size_t string_size(const char *str)
 static char *copy_string(const char *str)
 {
     size_t size = string_size(str);
+    char *ptr;
 
-    if (size == 0)
+    if ((size > 0) && (ptr = malloc(size)))
     {
-        return NULL;
+        return memcpy(ptr, str, size);
     }
-
-    char *ptr = malloc(size);
-
-    if (ptr == NULL)
-    {
-        return NULL;
-    }
-    return memcpy(ptr, str, size);
+    return NULL;
 }
 
 static char *copy_integer(long long number)
