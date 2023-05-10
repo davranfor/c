@@ -71,17 +71,17 @@ static json *get_by_item(const json *root, const char *path, const char *end)
     return NULL;
 }
 
-static const char *path_find(const char *path, const char *delim)
+static const char *next_path(const char *path)
 {
-    return path + strcspn(path, delim);
+    return path + strcspn(path, "/");
 }
 
 /* json_pointer helper */
 static json *pointer(json *node, const char *path)
 {
-    while ((node != NULL) && (path[0] != '\0'))
+    while ((node != NULL) && (*path != '\0'))
     {
-        const char *end = path_find(path, "/");
+        const char *end = next_path(path);
 
         node = (node->type == JSON_OBJECT)
             ? get_by_name(node, path, end)
@@ -94,12 +94,12 @@ static json *pointer(json *node, const char *path)
 /* Locates a node by path */
 json *json_pointer(const json *node, const char *path)
 {
-    if (path != NULL)
+    if (path == NULL)
     {
-        return (*path == '/')
-            ? pointer(json_root(node), path + 1)
-            : pointer(json_self(node), path);
+        return NULL;
     }
-    return NULL;
+    return (*path == '/')
+        ? pointer(json_root(node), path + 1)
+        : pointer(json_self(node), path);
 }
 
