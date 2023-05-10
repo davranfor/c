@@ -153,7 +153,7 @@ static int is_date(int year, int month, int day)
 
 static const char *test_date(const char *str)
 {
-    const char *date = test_mask(str,"0000-00-00*");
+    const char *date = test_mask(str, "0000-00-00*");
 
     if (date != NULL)
     {

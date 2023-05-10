@@ -45,11 +45,11 @@ static char *copy_string(const char *str)
 
     char *ptr = malloc(size);
 
-    if (ptr != NULL)
+    if (ptr == NULL)
     {
-        memcpy(ptr, str, size);
+        return NULL;
     }
-    return ptr;
+    return memcpy(ptr, str, size);
 }
 
 static char *copy_integer(long long number)
