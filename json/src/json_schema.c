@@ -362,7 +362,7 @@ static int test_min_properties(const json *node, const json *rule)
     }
     if (json_is_object(node))
     {
-        return json_items(node) >= json_real(rule);
+        return json_size(node) >= json_real(rule);
     }
     return 1;
 }
@@ -375,7 +375,7 @@ static int test_max_properties(const json *node, const json *rule)
     }
     if (json_is_object(node))
     {
-        return json_items(node) <= json_real(rule);
+        return json_size(node) <= json_real(rule);
     }
     return 1;
 }
@@ -415,7 +415,7 @@ static int test_additional_items(const json *node, const json *rule)
 
         if (json_is(items, arrayOfOptionalObjects))
         {
-            return json_items(node) <= json_items(items);
+            return json_size(node) <= json_size(items);
         }
     }
     return 1;
@@ -429,7 +429,7 @@ static int test_min_items(const json *node, const json *rule)
     }
     if (json_is_array(node))
     {
-        return json_items(node) >= json_real(rule);
+        return json_size(node) >= json_real(rule);
     }
     return 1;
 }
@@ -442,7 +442,7 @@ static int test_max_items(const json *node, const json *rule)
     }
     if (json_is_array(node))
     {
-        return json_items(node) <= json_real(rule);
+        return json_size(node) <= json_real(rule);
     }
     return 1;
 }
@@ -857,7 +857,7 @@ static int validate(json_schema *schema,
 
                     if (json_is(items, arrayOfOptionalObjects))
                     {
-                        item = json_item(node, json_items(items));
+                        item = json_at(node, json_size(items));
                     }
                 }
                 if (item == NULL)

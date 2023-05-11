@@ -358,7 +358,24 @@ json *json_next(const json *node)
     return node->next;
 }
 
-/* Locates a child node by name */
+/* Locates a child by index */
+json *json_at(const json *root, size_t index)
+{
+    if (root == NULL)
+    {
+        return NULL;
+    }
+    for (json *node = root->child; node != NULL; node = node->next)
+    {
+        if (index-- == 0)
+        {
+            return node;
+        }
+    }
+    return NULL;
+}
+
+/* Locates a child by name */
 json *json_find(const json *root, const char *name)
 {
     if ((root == NULL) || (root->type != JSON_OBJECT) || (name == NULL))
@@ -392,40 +409,24 @@ json *json_find_next(const json *root, const char *name)
     return NULL;
 }
 
-/* Locates an item (child) by offset */
-json *json_item(const json *root, size_t item)
-{
-    if (root == NULL)
-    {
-        return NULL;
-    }
-    for (json *node = root->child; node != NULL; node = node->next)
-    {
-        if (item-- == 0)
-        {
-            return node;
-        }
-    }
-    return NULL;
-}
-
-/* Number of items of an iterable */
-size_t json_items(const json *node)
+/* Number of childs of an iterable */
+size_t json_size(const json *node)
 {
     if (node == NULL)
     {
         return 0;
     }
 
-    size_t items = 0;
+    size_t size = 0;
 
     for (node = node->child; node != NULL; node = node->next)
     {
-        items++;
+        size++;
     }
-    return items;
+    return size;
 }
 
+/* Position of the node into an interable */
 size_t json_offset(const json *node)
 {
     size_t offset = 0;
@@ -443,6 +444,7 @@ size_t json_offset(const json *node)
     return offset;
 }
 
+/* Number of edges from the root node to the passed node */
 int json_depth(const json *node)
 {
     int depth = 0;

@@ -10,7 +10,7 @@
 #include "json_macros.h"
 #include "json_struct.h"
 
-static int valid_char(char c)
+static int test_char(char c)
 {
     if ((c == '\b') || (c == '\f') || (c == '\n') || (c == '\r') || (c == '\t'))
     {
@@ -23,27 +23,23 @@ static size_t string_size(const char *str)
 {
     const char *ptr = str;
 
-    while (*str != '\0')
+    while (test_char(*str))
     {
-        if (!valid_char(*str))
-        {
-            return 0;
-        }
         str++;
     }
-    return (size_t)(str - ptr) + 1;
+    return (*str == '\0') ? (size_t)(str - ptr) + 1 : 0;
 }
 
 static char *copy_string(const char *str)
 {
     size_t size = string_size(str);
-    char *ptr;
+    char *ptr = NULL;
 
     if ((size > 0) && (ptr = malloc(size)))
     {
-        return memcpy(ptr, str, size);
+        memcpy(ptr, str, size);
     }
-    return NULL;
+    return ptr;
 }
 
 static char *copy_integer(long long number)
@@ -297,11 +293,7 @@ static int not_pushable(const json *parent, const json *child)
     // parent being object and child without name
     // or
     // parent being array and child with name 
-    if ((parent->type == JSON_OBJECT) ^ (child->name != NULL))
-    {
-        return 1;
-    }
-    return 0;
+    return ((parent->type == JSON_OBJECT) ^ (child->name != NULL));
 }
 
 json *json_push_fast(json *parent, json *where, json *child)
