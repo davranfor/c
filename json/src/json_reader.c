@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include "json_struct.h"
 
@@ -302,13 +303,18 @@ int json_is_null(const json *node)
         && (node->type == JSON_NULL);
 }
 
+/**
+ * Silence compiler.
+ * Useful to return a non constant 'json *node' when a function
+ * gets 'const json *node' as argument and returns the same node.
+ * For example calling 'x = json_pointer(node, "");'
+ * returns the same node that was passed.
+ */
 json *json_self(const json *node)
 {
-    /* Silence compiler due to const to non-const conversion */
-    union {const json *constant; json *not_constant;} cast_to = {node};
+    uintptr_t cast = (uintptr_t)(const void *)node;
 
-    (void) cast_to.constant;
-    return cast_to.not_constant;
+    return (void *)cast;
 }
 
 json *json_root(const json *node)
