@@ -18,7 +18,7 @@ static size_t string_size(const char *str)
     {
         str++;
     }
-    return (*str == '\0') ? (size_t)(str - ptr) + 1 : 0;
+    return (size_t)(*str == '\0' ? str - ptr + 1 : 0);
 }
 
 static char *copy_string(const char *str)

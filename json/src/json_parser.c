@@ -66,7 +66,7 @@ static int is_double(const char *left, const char *right)
 {
     while (left <= right)
     {
-        if ((*left == '.') || (*left == 'e') || (*left == 'E'))
+        if ((*left == '.') || (*left == 'E') || (*left == 'e'))
         {
             return 1;
         }
@@ -107,7 +107,7 @@ static int ucn_to_mb(const char *str, char *buf)
 
     unsigned codepoint = (unsigned)strtoul(hex, NULL, 16);
 
-    /* Copy "as is" if is not a valid json char */
+    /* Copy "as is" if is not a valid json character */
     if (!json_valid_char(codepoint))
     {
         memcpy(buf, str - 1, 6);
