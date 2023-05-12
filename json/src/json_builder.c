@@ -7,23 +7,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "json_macros.h"
 #include "json_struct.h"
-
-static int test_char(char c)
-{
-    if ((c == '\b') || (c == '\f') || (c == '\n') || (c == '\r') || (c == '\t'))
-    {
-        return 1;
-    }
-    return !is_cntrl(c);
-}
+#include "json_macros.h"
 
 static size_t string_size(const char *str)
 {
     const char *ptr = str;
 
-    while (test_char(*str))
+    while (json_valid_char(*str))
     {
         str++;
     }

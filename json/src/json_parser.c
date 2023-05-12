@@ -94,16 +94,6 @@ static int is_ucn(const char *str)
         && is_xdigit(*str);
 }
 
-/* Check whether a UCN converted to codepoint is valid */
-static int valid_ucn(unsigned c)
-{
-    if ((c == '\b') || (c == '\f') || (c == '\n') || (c == '\r') || (c == '\t'))
-    {
-        return 1;
-    }
-    return !is_cntrl(c);
-}
-
 /*
  * Converts UCN to multibyte
  * Returns the length of the multibyte in bytes
@@ -117,8 +107,8 @@ static int ucn_to_mb(const char *str, char *buf)
 
     unsigned codepoint = (unsigned)strtoul(hex, NULL, 16);
 
-    /* Copy "as is" if invalid */
-    if (!valid_ucn(codepoint))
+    /* Copy "as is" if is not a valid json char */
+    if (!json_valid_char(codepoint))
     {
         memcpy(buf, str - 1, 6);
         return 6;
@@ -132,14 +122,14 @@ static int ucn_to_mb(const char *str, char *buf)
     else if (codepoint <= 0x7ff)
     {
         buf[0] = (char)(0xc0 | ((codepoint >> 6) & 0x1f));
-        buf[1] = (char)(0x80 | (codepoint & 0x3f));
+        buf[1] = (char)(0x80 |  (codepoint & 0x3f));
         return 2;
     }
     else // if (codepoint <= 0xffff)
     {
         buf[0] = (char)(0xe0 | ((codepoint >> 12) & 0x0f));
         buf[1] = (char)(0x80 | ((codepoint >> 6) & 0x3f));
-        buf[2] = (char)(0x80 | (codepoint & 0x3f));
+        buf[2] = (char)(0x80 |  (codepoint & 0x3f));
         return 3;
     }
 }
