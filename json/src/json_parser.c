@@ -11,16 +11,7 @@
 #include "json_struct.h"
 #include "json_macros.h"
 
-/* Check whether a character is a json token */
-static int is_token(int c)
-{
-    return (c == '{') || (c == '}')
-        || (c == '[') || (c == ']')
-        || (c == ':') || (c == ',')
-        || (c == '\0');
-}
-
-/* Returns the type of a token group character */
+/* Returns the type of an iterable by token */
 static enum json_type token_type(int token)
 {
     switch (token)
@@ -31,6 +22,15 @@ static enum json_type token_type(int token)
         case '[':
         case ']': return JSON_ARRAY;
     }
+}
+
+/* Check whether a character is a token */
+static int is_token(int c)
+{
+    return (c == '{') || (c == '}')
+        || (c == '[') || (c == ']')
+        || (c == ':') || (c == ',')
+        || (c == '\0');
 }
 
 /* Check whether a string is a valid number */
@@ -75,8 +75,7 @@ static int is_double(const char *left, const char *right)
     return 0;
 }
 
-/* Check whether a character is an escape character */
-static int is_esc(const char *str)
+static int is_escape(const char *str)
 {
     char c = *str;
 
@@ -84,8 +83,7 @@ static int is_esc(const char *str)
            (c == 'b')  || (c == 'f') || (c == 'n') || (c == 'r') || (c == 't');
 }
 
-/* Check whether a character is an UCN (Universal character name) "\uxxxx" */
-static int is_ucn(const char *str)
+static int is_unicode(const char *str)
 {
     return ((*str++) == 'u')
         && is_xdigit(*str++)
@@ -95,10 +93,10 @@ static int is_ucn(const char *str)
 }
 
 /*
- * Converts UCN to multibyte
+ * Converts Unicode to multibyte
  * Returns the length of the multibyte in bytes
  */
-static int ucn_to_mb(const char *str, char *buf)
+static int unicode_to_mb(const char *str, char *buf)
 {
     char hex[5] = "";
 
@@ -146,12 +144,12 @@ static const char *scan_quoted(const char *str)
         }
         if (*str == '\\')
         {
-            if (is_esc(str + 1))
+            if (is_escape(str + 1))
             {
                 str += 2;
                 continue;
             }
-            if (is_ucn(str + 1))
+            if (is_unicode(str + 1))
             {
                 str += 6;
                 continue;
@@ -256,7 +254,7 @@ static char *copy(const char *str, size_t length)
                 case 'r': *ptr++ = '\r'; break;
                 case 't': *ptr++ = '\t'; break;
                 case 'u':
-                    ptr += ucn_to_mb(str, ptr);
+                    ptr += unicode_to_mb(str, ptr);
                     str += 4;
                     break;
             }

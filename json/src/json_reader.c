@@ -569,10 +569,11 @@ int json_equal(const json *a, const json *b)
 int json_traverse(const json *node, json_callback func, void *data)
 {
     int depth = 0;
-    int result;
 
     while (node != NULL)
     {
+        int result;
+
         if ((result = func(node, depth, data)))
         {
             return result;
