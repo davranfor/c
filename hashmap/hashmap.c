@@ -69,12 +69,14 @@ hashmap *hashmap_create(
 
 static void reset(hashmap *map)
 {
+    hashmap *next = map->next;
+
     free(map->list);
-    map->list = map->next->list;
-    map->room = map->next->room;
-    map->size = map->next->size;
-    map->next = map->next->next;
-    free(map->next);
+    map->list = next->list;
+    map->room = next->room;
+    map->size = next->size;
+    map->next = next->next;
+    free(next);
 }
 
 static hashmap *rehash(hashmap *map, struct node *node)
@@ -88,7 +90,7 @@ static hashmap *rehash(hashmap *map, struct node *node)
             return NULL;
         }
     
-        struct node *temp = node->next;
+        struct node *next = node->next;
 
         if (size == map->size--)
         {
@@ -99,7 +101,7 @@ static hashmap *rehash(hashmap *map, struct node *node)
         {
             free(node);
         }
-        node = temp;
+        node = next;
     }
     if (map->size == 0)
     {
