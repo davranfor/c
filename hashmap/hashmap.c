@@ -287,8 +287,6 @@ void *hashmap_copy(const hashmap *map, size_t *size)
 
 void hashmap_destroy(hashmap *map, void (*func)(void *))
 {
-    void *temp;
-
     while (map != NULL)
     {
         for (size_t index = 0; map->size > 0; index++)
@@ -301,19 +299,26 @@ void hashmap_destroy(hashmap *map, void (*func)(void *))
                 {
                     func(node->data);
                 }
-                temp = node;
-                node = node->next;
-                if (temp != map->list + index)
+                if (node != map->list + index)
                 {
-                    free(temp);
+                    struct node *next = node->next;
+
+                    free(node);
+                    node = next;
+                }
+                else
+                {
+                    node = node->next;
                 }
                 map->size--;
             } while (node != NULL);
         }
-        temp = map->next;
+
+        hashmap *next = map->next;
+
         free(map->list);
         free(map);
-        map = temp;
+        map = next;
     }
 }
 
