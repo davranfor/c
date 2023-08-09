@@ -28,6 +28,13 @@ static char *keytostr(int key)
     return str;
 }
 
+static unsigned long hash_key(const void *item)
+{
+    const struct data *data = item;
+
+    return hash_ulong((unsigned long)data->key);
+}
+
 static int comp_key(const void *pa, const void *pb)
 {
     const struct data *a = pa;
@@ -36,6 +43,9 @@ static int comp_key(const void *pa, const void *pb)
     return a->key < b->key ? -1 : a->key > b->key;
 }
 
+/* Comparison function for pointer to pointer
+ * Useful to compare arrays like:
+ * struct data **data;
 static int comp_pkey(const void *pa, const void *pb)
 {
     const struct data *a = *(const struct data * const *)pa;
@@ -43,30 +53,24 @@ static int comp_pkey(const void *pa, const void *pb)
 
     return a->key < b->key ? -1 : a->key > b->key;
 }
-
-static unsigned long hash_key(const void *item)
-{
-    const struct data *data = item;
-
-    return hash_ulong((unsigned long)data->key);
-}
+*/
 
 /* The compare by value version
-static int comp_value(const void *pa, const void *pb)
-{
-    const struct data *a = pa;
-    const struct data *b = pb;
-
-    return strcmp(a->value, b->value);
-}
-
 static unsigned long hash_value(const void *item)
 {
     const struct data *data = item;
 
     return hash_str((const unsigned char *)data->value);
 }
-*/
+
+ static int comp_value(const void *pa, const void *pb)
+ {
+     const struct data *a = pa;
+     const struct data *b = pb;
+
+     return strcmp(a->value, b->value);
+ }
+ */
 
 static void delete(void *data)
 {
@@ -75,30 +79,6 @@ static void delete(void *data)
 }
 
 static hashmap *map;
-
-static void copy(void)
-{
-    struct data **data;
-    size_t size;
-
-    puts("\nWalking on a copy ...");
-    data = hashmap_copy(map, &size);
-    if (data == NULL)
-    {
-        if (size > 0)
-        {
-            perror("hashmap_copy");
-            exit(EXIT_FAILURE);
-        }
-        return;
-    }
-    qsort(data, size, sizeof *data, comp_pkey);
-    for (size_t i = 0; i < size; i++)
-    {
-        printf("%d %s\n", data[i]->key, data[i]->value);
-    }
-    free(data);
-}
 
 static void clean(void)
 {
@@ -113,7 +93,7 @@ int main(void)
     atexit(clean);
     srand((unsigned)time(NULL));
 
-    map = hashmap_create(comp_key, hash_key, NELEMS);
+    map = hashmap_create(hash_key, comp_key, NELEMS);
     if (map == NULL)
     {
         perror("hashmap_create");
@@ -174,9 +154,6 @@ int main(void)
             delete(item);
         }
     }
-
-    (void)copy;
-    //copy();
 
     free(data);
     return 0;
