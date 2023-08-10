@@ -67,14 +67,14 @@ hashmap *hashmap_create(
     return map;
 }
 
-static struct node *insert(struct node *next, void *data)
+static struct node *insert(void *data, struct node *next)
 {
     struct node *node = malloc(sizeof *node);
 
     if (node != NULL)
     {
-        node->next = next;
         node->data = data;
+        node->next = next;
     }
     return node;
 }
@@ -147,7 +147,7 @@ void *hashmap_insert(hashmap *map, void *data)
             }
             node = node->next;
         }
-        *head = insert(*head, data);
+        *head = insert(data, *head);
         if (*head == NULL)
         {
             return NULL;
