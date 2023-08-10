@@ -67,18 +67,6 @@ hashmap *hashmap_create(
     return map;
 }
 
-static struct node *create_node(void *data)
-{
-    struct node *node = malloc(sizeof *node);
-
-    if (node != NULL)
-    {
-        node->data = data;
-        node->next = NULL;
-    }
-    return node;
-}
-
 static void reset(hashmap *map)
 {
     hashmap *next = map->next;
@@ -93,11 +81,10 @@ static void reset(hashmap *map)
 
 static void move(hashmap *map, struct node *node)
 {
-    unsigned long hash = map->hash(node->data);
-    struct node **list = map->list + hash % map->room;
+    struct node **head = map->list + map->hash(node->data) % map->room;
 
-    node->next = *list;
-    *list = node;
+    node->next = *head;
+    *head = node;
     map->size++;
 }
 
@@ -105,10 +92,10 @@ static hashmap *rehash(hashmap *map, unsigned long hash)
 {
     while (map->next != NULL)
     {
-        struct node **list = map->list + hash % map->room;
-        struct node *node = *list;
+        struct node **head = map->list + hash % map->room;
+        struct node *node = *head;
 
-        *list = NULL;
+        *head = NULL;
         while (node != NULL)
         {
             struct node *next = node->next;
@@ -137,8 +124,8 @@ void *hashmap_insert(hashmap *map, void *data)
 
         map = rehash(map, hash);
 
-        struct node **list = map->list + hash % map->room;
-        struct node *node = *list;
+        struct node **head = map->list + hash % map->room;
+        struct node *node = *head;
 
         while (node != NULL)
         {
@@ -146,14 +133,16 @@ void *hashmap_insert(hashmap *map, void *data)
             {
                 return node->data;
             }
-            list = &(node->next);
-            node = *list;
+            node = node->next;
         }
-        *list = create_node(data);
-        if (*list == NULL)
+        node = malloc(sizeof *node);
+        if (node == NULL)
         {
             return NULL;
         }
+        node->data = data;
+        node->next = *head;
+        *head = node;
         // If more than 75% occupied then create a new table
         if (++map->size > map->room - map->room / 4)
         {
@@ -176,8 +165,8 @@ void *hashmap_delete(hashmap *map, const void *data)
 
         map = rehash(map, hash);
 
-        struct node **list = map->list + hash % map->room;
-        struct node *node = *list, *prev = NULL;
+        struct node **head = map->list + hash % map->room;
+        struct node *node = *head, *prev = NULL;
 
         while (node != NULL)
         {
@@ -191,7 +180,7 @@ void *hashmap_delete(hashmap *map, const void *data)
                 }
                 else
                 {
-                    *list = node->next;
+                    *head = node->next;
                 }
                 free(node);
                 map->size--;
