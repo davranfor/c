@@ -67,6 +67,18 @@ hashmap *hashmap_create(
     return map;
 }
 
+static struct node *insert(struct node *next, void *data)
+{
+    struct node *node = malloc(sizeof *node);
+
+    if (node != NULL)
+    {
+        node->next = next;
+        node->data = data;
+    }
+    return node;
+}
+
 static void reset(hashmap *map)
 {
     hashmap *next = map->next;
@@ -135,14 +147,11 @@ void *hashmap_insert(hashmap *map, void *data)
             }
             node = node->next;
         }
-        node = malloc(sizeof *node);
-        if (node == NULL)
+        *head = insert(*head, data);
+        if (*head == NULL)
         {
             return NULL;
         }
-        node->data = data;
-        node->next = *head;
-        *head = node;
         // If more than 75% occupied then create a new table
         if (++map->size > map->room - map->room / 4)
         {
