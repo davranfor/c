@@ -2,6 +2,7 @@
 C generic data structures and utilities
 - BinMap - Binary growable map
 - DynArray - Dynamic growable array (pointers)
+- Garray -Dynamic array with exponential growth
 - HashMap - Optimized hash table
 - List - Stacks, queues, deques, circular lists
 - RBTree - Red-Black tree
