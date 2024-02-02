@@ -39,11 +39,6 @@ garray *garray_create(size_t szof)
     return array;    
 }
 
-size_t garray_size(garray *array)
-{
-    return array->size;    
-}
-
 void *garray_grow(garray *array)
 {
     unsigned i = ulog2(array->size + 1);
@@ -69,6 +64,11 @@ void *garray_at(garray *array, size_t index)
 
     index = index + 1 - (1u << i);
     return (unsigned char *)array->pointer[i] + (array->szof * index);
+}
+
+size_t garray_size(garray *array)
+{
+    return array->size;    
 }
 
 void garray_destroy(garray *array)
