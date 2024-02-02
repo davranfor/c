@@ -40,15 +40,15 @@ garray *garray_create(size_t szof)
 
 void *garray_grow(garray *array)
 {
-    unsigned i = ulog2(array->size + 1);
+    unsigned i = ulog2(++array->size);
     unsigned n = 1u << i;
-    size_t index = array->size + 1 - n;
+    size_t index = array->size - n;
 
     if ((index == 0) && !(array->pointer[i] = malloc(array->szof * n)))
     {
+        array->size--;
         return NULL;
     }
-    array->size++;
     return (unsigned char *)array->pointer[i] + (array->szof * index);
 }
 
@@ -59,9 +59,9 @@ void *garray_at(garray *array, size_t index)
         return NULL;
     }
 
-    unsigned i = ulog2(index + 1);
+    unsigned i = ulog2(++index);
 
-    index = index + 1 - (1u << i);
+    index -= 1u << i;
     return (unsigned char *)array->pointer[i] + (array->szof * index);
 }
 
