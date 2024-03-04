@@ -224,6 +224,34 @@ void *hashmap_search(const hashmap *map, const void *data)
     return NULL;
 }
 
+void *hashmap_walk(const hashmap *map,
+    void *(*callback)(void *, void *), void *cookie)
+{
+    while (map != NULL)
+    {
+        size_t size = map->size;
+
+        for (size_t index = 0; size > 0; index++)
+        {
+            struct node *node = map->list[index];
+
+            while (node != NULL)
+            {
+                void *result = callback(node->data, cookie);
+
+                if (result != NULL)
+                {
+                    return result;
+                }
+                node = node->next;
+                size--;
+            }
+        }
+        map = map->next;
+    }
+    return NULL;
+}
+
 size_t hashmap_size(const hashmap *map)
 {
     size_t size = 0;
@@ -236,7 +264,7 @@ size_t hashmap_size(const hashmap *map)
     return size;
 }
 
-void hashmap_destroy(hashmap *map, void (*function)(void *))
+void hashmap_destroy(hashmap *map, void (*callback)(void *))
 {
     while (map != NULL)
     {
@@ -248,9 +276,9 @@ void hashmap_destroy(hashmap *map, void (*function)(void *))
             {
                 struct node *next = node->next;
 
-                if (function != NULL)
+                if (callback != NULL)
                 {
-                    function(node->data);
+                    callback(node->data);
                 }
                 free(node);
                 node = next;

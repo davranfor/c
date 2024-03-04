@@ -17,6 +17,7 @@ hashmap *hashmap_create(
 void *hashmap_insert(hashmap *, void *);
 void *hashmap_delete(hashmap *, const void *);
 void *hashmap_search(const hashmap *, const void *);
+void *hashmap_walk(const hashmap *, void *(*)(void *, void *), void *);
 size_t hashmap_size(const hashmap *);
 void hashmap_destroy(hashmap *, void (*)(void *));
 unsigned long hash_str(const unsigned char *);

@@ -72,6 +72,23 @@ static unsigned long hash_value(const void *item)
  }
  */
 
+static void *print(void *item, void *cookie)
+{
+    struct data *data = item;
+    int *params = cookie;
+
+    if (params[0] == 0)
+    {
+        printf("printing first %d elements\n", params[1]); 
+    }
+    if (params[0]++ < params[1])
+    {
+        printf("%02d) %d %s\n", params[0], data->key, data->value);
+        return NULL;
+    }
+    return data;
+}
+ 
 static void delete(void *data)
 {
     free(((struct data *)data)->value);
@@ -143,6 +160,9 @@ int main(void)
     {
         printf("%d %s found\n", item->key, item->value);
     }
+
+    // Print 10 records
+    hashmap_walk(map, print, (int []){0, 10});
 
     // Delete records
     for (data->key = 0; data->key < 10; data->key++)
