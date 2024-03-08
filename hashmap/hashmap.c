@@ -229,9 +229,7 @@ void *hashmap_walk(const hashmap *map,
 {
     while (map != NULL)
     {
-        size_t size = map->size;
-
-        for (size_t index = 0; size > 0; index++)
+        for (size_t index = 0, size = map->size; size > 0; index++)
         {
             struct node *node = map->list[index];
 
